@@ -40,6 +40,8 @@ Project Start Date: October 18, 2000
 #define PlugNamedef "Network (http)"
 #define PlugVersdef .60
 
+extern BMessage *HTTPSettings;
+
 //!The size of the receive buffer.
 #define BUFFER_SIZE 10240
 
@@ -160,29 +162,42 @@ HTTPv4::HTTPv4(BMessage *info, const char *msg_sys_name)
 			cache_user_token=CacheSystem->Register(Type(),"HTTP Protocol Add-on");
 		else
 			Debug("Cache System not loaded; will look for it later.");
-		
-		//Should we use a proxy server?
-		if (info->HasBool("use_proxy_server"))
+		if (info->HasMessage("httpv4_settings"))
 		{
-			info->FindBool("use_proxy_server",&use_proxy_server);
+			info->FindMessage("httpv4_settings",0,HTTPSettings);
+		}
+		//Should we use a proxy server?
+		if (HTTPSettings->HasBool("use_proxy_server"))
+		{
+			HTTPSettings->FindBool("use_proxy_server",&use_proxy_server);
 			if (use_proxy_server)
 			{
-				if (info->HasString("proxy_server_host"))
-					info->FindString("proxy_server_host",&proxy_server_host);
+				if (HTTPSettings->HasString("proxy_server_host"))
+					HTTPSettings->FindString("proxy_server_host",&proxy_server_host);
 				else
+				{
+					HTTPSettings->AddString("proxy_server_host",NULL);
 					proxy_server_host=NULL;
+				}
 				if (proxy_server_host==NULL)
 				{
 					use_proxy_server=false;
 					Debug("Use of a proxy server has been requested, however no proxy server address was supplied. Themis will attempt to access servers directly.");
 				}
-				if (info->HasInt16("proxy_server_port"))
-					info->FindInt16("proxy_server_port",(int16*)&proxy_server_port);
+				if (HTTPSettings->HasInt16("proxy_server_port"))
+					HTTPSettings->FindInt16("proxy_server_port",(int16*)&proxy_server_port);
+				else
+					HTTPSettings->AddInt16("proxy_server_port",0);
 			}
 		}
-		if (info->HasBool("enable_cookies"))
-			info->FindBool("enable_cookies",&enable_cookies);
-			
+		else
+		{
+			HTTPSettings->AddBool("use_proxy_server",false);
+		}
+		if (HTTPSettings->HasBool("enable_cookies"))
+			HTTPSettings->FindBool("enable_cookies",&enable_cookies);
+		else
+			HTTPSettings->AddBool("enable_cookies",true);	
 //		use_proxy_server=true;
 		info->FindPointer("tcp_manager",(void**)&tcp_manager);
 		CookieMonster=new CookieManager();
@@ -254,8 +269,8 @@ void HTTPv4::Init()
 	pipelining=true;
 	_terminate_=0;
 	use_proxy_server=false;
-	proxy_server_host="192.168.0.5";
-	proxy_server_port=3128;
+	proxy_server_host=NULL;
+	proxy_server_port=0;//Squid Proxy server's default port is 3128
 	send_referral_info=true;
 }
 char *HTTPv4::PlugName(void)
@@ -425,6 +440,15 @@ void HTTPv4::Stop(void)
 	if (CacheSystem!=NULL)
 	 	CacheSystem->Unregister(cache_user_token);
 	CacheSystem=NULL;
+	if (AppSettings!=NULL)
+	{
+		AppSettings->PrintToStream();
+		if (AppSettings->HasMessage("httpv4_settings"))
+			AppSettings->ReplaceMessage("httpv4_settings",HTTPSettings);
+		else
+			AppSettings->AddMessage("httpv4_settings",HTTPSettings);
+		AppSettings->PrintToStream();
+	}
 	status_t stat;
 	wait_for_thread(layer_manager_thid,&stat);
 }
