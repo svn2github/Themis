@@ -562,7 +562,7 @@ http_request *httplayer::AddRequest(BMessage *info) {
 		delete info;
 		delete request;
 		request=NULL;
-		return;
+		return request;
 #else
 // We have and want to be able to use OpenSSL in Themis.
 		printf("Request is to: %s:%u\nURI: %s\n",request->host,request->port,request->uri);
