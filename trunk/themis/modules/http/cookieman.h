@@ -58,7 +58,7 @@ struct cookie_st {
 	//! Location of the cookie on disk (if applicable)
 	entry_ref ref;
 	cookie_st() {
-		discard=true;
+		discard=false;
 		secure=false;
 		name=NULL;
 		value=NULL;

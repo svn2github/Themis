@@ -737,6 +737,8 @@ int32 CookieManager::SetCookie(const char *header, const char *request_host, con
 					}
 					cookie_st *cur2=cookie_head;
 					count++;
+					if (!cur->discard)
+						SaveCookie(cur);
 					if (cur2==NULL) {
 						cookie_head=cur;
 						cur2=cur->next;
@@ -850,16 +852,33 @@ void CookieManager::ClearExpiredCookies() {
 			if (cur->expiredate<=currenttime) {
 				if (cur==cookie_head) {
 					cookie_head=cookie_head->next;
+					BEntry ent(&cur->ref);
+					if (ent.Exists())
+						ent.Remove();
 					delete cur;
 					last=cur=cookie_head;
 					continue;
 				} else {
 					last->next=cur->next;
+					BEntry ent(&cur->ref);
+					if (ent.Exists())
+						ent.Remove();
 					delete cur;
 					cur=last->next;
 					continue;
 				}
+			} else {
+				if (cur->discard) {
+					BEntry ent(&cur->ref);
+					if (ent.Exists()) {
+						ent.Remove();
+					}
+					ent.Unset();
+					
+				}
+				
 			}
+			
 			last=cur;
 			cur=cur->next;
 		}
@@ -941,7 +960,12 @@ void CookieManager::ProcessAttributes(const char *attributes,cookie_st *cookie, 
 				char *space=NULL;
 				char *last=NULL;
 				space=strchr(datestr,' ');
+				char *hyphen=strchr(datestr,'-');
 				last=strchr(space+1,' ');
+				if (hyphen==NULL) {
+					last=strchr(last+1,' ');
+					last=strchr(last+1,' ');
+				}
 				len=last-space;
 				date=new char[len+1];
 				memset(date,0,len+1);
@@ -963,10 +987,20 @@ void CookieManager::ProcessAttributes(const char *attributes,cookie_st *cookie, 
 				time_st.tm_sec=atoi(tymearr[2]);
 //printf("time: %d:%d:%d\n",time_st.tm_hour,time_st.tm_min,time_st.tm_sec);			
 				delete tyme;
+				char *date2=new char[strlen(date)+1];
+				memset(date2,0,strlen(date)+1);
+				strcpy(date2,date);
 				char *datearr[3];
-				datearr[0]=strtok(date,"-");
-				for (int i=1; i<3; i++) 
-					datearr[i]=strtok(NULL,"-");
+				char *c="- ";
+				ProcessAttributes_Date1:
+				datearr[0]=strtok(date,c);
+				printf("datearr[0]: %s\n",datearr[0]);
+				printf("c: %d\n",c[0]);
+				delete date2;
+				for (int i=1; i<3; i++) {
+					datearr[i]=strtok(NULL,c);
+					printf("datearr[%d]: %s\n",i,datearr[i]);
+				}
 				int32 val=0;
 				for (int i=0; i<3; i++) {
 					if (isdigit(datearr[i][0])) {

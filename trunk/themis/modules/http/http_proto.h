@@ -29,7 +29,9 @@ Project Start Date: October 18, 2000
 
 #ifndef _http_proto
 #define _http_proto
+//#ifdef _Themis_
 #include "httplayer.h"
+//#endif
 #include "protocol_plugin.h"
 #include "optionshandler.h"
 #include "smt.h"
@@ -51,7 +53,9 @@ class http_protocol:public ProtocolPlugClass
      BList *queue;
      int32 benval;
      sem_id httpsem;
+//#ifdef _Themis_
 	 httplayer *HTTP;
+//#endif
 	 http_opt_handler *HOH;  
 	 BView *view;
 	 BWindow *win;
@@ -74,7 +78,9 @@ class http_protocol:public ProtocolPlugClass
 	 void AddMenuItems(BMenu *menu);
 	 void RemoveMenuItems();
 	 struct smt_st *smthead;
+//#ifdef _Themis_
 	 friend httplayer;
+//#endif
   	 int32 Type();
  	 status_t ReceiveBroadcast(BMessage *msg);
 	 status_t BroadcastReply(BMessage *msg);
