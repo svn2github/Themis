@@ -94,6 +94,11 @@ class cacheman: public CachePlug {
 		virtual bool AcquireWriteLock(uint32 usertoken,int32 objecttoken);
 		virtual void ReleaseWriteLock(uint32 usertoken, int32 objecttoken);
 		void ClearContent(uint32 usertoken, int32 objecttoken);
+		off_t SaveToDisk(uint32 usertoken, int32 objecttoken, entry_ref target_ref,bool overwrite=false);
+		off_t SaveToDisk(uint32 usertoken, int32 objecttoken, BPositionIO *target_obj, off_t offset=-1);
+		off_t SaveToDisk(uint32 usertoken, int32 objecttoken, const char *filepath, bool overwrite=false);
+		
+		BPositionIO *ObjectIOPointer(uint32 usertoken, int32 objecttoken);
 };
 
 #endif

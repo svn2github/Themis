@@ -27,6 +27,7 @@ Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.co
 Project Start Date: October 18, 2000
 */
 #include "cacheplug.h"
+#include <File.h>
 
 
 CachePlug::CachePlug(BMessage *info)
@@ -125,4 +126,5 @@ ssize_t CachePlug::SetLength(uint32 usertoken, int32 objecttoken, size_t length)
 
 void CachePlug::ClearCache(uint32 which){
 }
+
 

@@ -102,7 +102,8 @@ CACHEADDONSOURCES= \
 	cache/cacheman.cpp \
 	cache/cache_main.cpp \
 	cache/diskcacheobject.cpp \
-	cache/ramcacheobject.cpp
+	cache/ramcacheobject.cpp \
+	cache/dfcacheobject.cpp
 COOKIEADDONSOURCES= \
 	cookie/cookiemain.cpp \
 	cookie/cookieman.cpp

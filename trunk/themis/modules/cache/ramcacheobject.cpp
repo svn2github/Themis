@@ -91,6 +91,11 @@ RAMCacheObject::~RAMCacheObject(){
 	}
 	contentlength=0L;
 }
+BPositionIO *RAMCacheObject::IOPointer()
+{
+	return databuffer;
+}
+
 ssize_t RAMCacheObject::Read(uint32 usertoken, void *buffer, size_t size)
 {
 	CacheUser *user=FindUser(usertoken);

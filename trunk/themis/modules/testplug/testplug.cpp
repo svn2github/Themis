@@ -152,6 +152,7 @@ status_t testplug::ReceiveBroadcast(BMessage *msg){
 					CacheSys=NULL;
 					
 				}break;
+				case ProtocolConnectionClosed:
 				case ReturnedData: {
 					printf("[TESTPLUG] Returned data\n");
 					msg->PrintToStream();

@@ -81,6 +81,11 @@ DiskCacheObject::~DiskCacheObject()
 {
 	CloseFile();
 }
+BPositionIO *DiskCacheObject::IOPointer() 
+{
+	return file;
+}
+
 void DiskCacheObject::SetRef(entry_ref aref) 
 {
 	ref=aref;
@@ -148,24 +153,29 @@ uint32 DiskCacheObject::Type()
 
 ssize_t DiskCacheObject::Read(uint32 usertoken, void *buffer, size_t size)
 {
+
 	CacheUser *user=FindUser(usertoken);
 	ssize_t dsize=0;
-	if (buffer==NULL)
-		return B_ERROR;
-	if (user!=NULL) {
-		if (file==NULL) {
-			OpenFile();
-		}
-		if (file!=NULL) {
-			file->Lock();
-			file->Seek(user->ReadPosition(),SEEK_SET);
-			dsize=file->Read(buffer,size);
-			user->SetReadPosition(file->Position());
-			file->Unlock();
-		}
-		
-	} else
-		dsize=B_ERROR;
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		if (buffer==NULL)
+			return B_ERROR;
+		if (user!=NULL) {
+			if (file==NULL) {
+				OpenFile();
+			}
+			if (file!=NULL) {
+				file->Lock();
+				file->Seek(user->ReadPosition(),SEEK_SET);
+				dsize=file->Read(buffer,size);
+				user->SetReadPosition(file->Position());
+				file->Unlock();
+			}
+			
+		} else
+			dsize=B_ERROR;
+	}
+	
 	return dsize;
 }
 
@@ -292,7 +302,7 @@ BMessage *DiskCacheObject::GetInfo()
 			memset(attname,0,B_ATTR_NAME_LENGTH+1);
 		}
 		node.Unlock();
-	//	attributes->PrintToStream();
+		attributes->PrintToStream();
 	}
 	return attributes;
 }

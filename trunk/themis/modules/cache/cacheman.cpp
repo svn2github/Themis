@@ -27,6 +27,7 @@ Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.co
 Project Start Date: October 18, 2000
 */
 #include "cacheman.h"
+#include "dfcacheobject.h"
 #include "commondefs.h"
 #include "plugman.h"
 #include "ramcacheobject.h"
@@ -533,6 +534,9 @@ int32 cacheman::CreateObject(uint32 usertoken, const char *URL, uint32 type)
 	switch (type) {
 		case TYPE_RAM: {
 			object=new RAMCacheObject(object_token_value++,URL);
+		}break;
+		case TYPE_DISK_FILE: {
+			object=new DFCacheObject(object_token_value++,URL);
 		}break;
 		default:{
 			object=new DiskCacheObject(object_token_value++,URL,ref);
@@ -1354,8 +1358,12 @@ ssize_t cacheman::GetCacheSize(uint32 which){
 		case TYPE_RAM:
 			type=TYPE_RAM;
 			break;
+		case TYPE_DISK_FILE:
+			type=TYPE_DISK_FILE;
+			break;
+		
 		default:
-			type=TYPE_DISK|TYPE_RAM;
+			type=TYPE_DISK|TYPE_RAM|TYPE_DISK_FILE;
 	}
 	if ((type&TYPE_DISK)!=0) {
 		BEntry ent(cachepath.Path(),true);
@@ -1392,6 +1400,11 @@ ssize_t cacheman::GetCacheSize(uint32 which){
 				if (object->Type()==TYPE_DISK)
 					totalsize+=object->Size();
 					break;
+			case TYPE_DISK_FILE:
+				if (object->Type()==TYPE_DISK_FILE)
+					totalsize+=object->Size();
+					break;
+			
 			default:
 				totalsize+=object->Size();
 		}
@@ -1501,5 +1514,151 @@ status_t cacheman::SetObjectAttr(uint32 usertoken,int32 objecttoken, BMessage *i
 		}
 	}
 	return B_ERROR;
+}
+off_t cacheman::SaveToDisk(uint32 usertoken, int32 objecttoken, entry_ref target_ref,bool overwrite)
+{
+	off_t bytes_written=0L;
+	
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		CacheObject *object=FindObject(objecttoken);
+		if (object!=NULL) {
+			int32 write_opts=B_WRITE_ONLY|B_CREATE_FILE;
+			if (overwrite)
+				write_opts|=B_ERASE_FILE;
+			else
+				write_opts|=B_FAIL_IF_EXISTS;
+			
+			BFile *file=new BFile(&target_ref,write_opts);
+			if ((file!=NULL) && (file->InitCheck()==B_OK)) {
+				unsigned char *buff=new unsigned char[65536];
+				off_t bytes_read=0L;
+				off_t file_size=0L;
+				file_size=object->Size();
+				ssize_t chunk=0L;
+				
+				while (bytes_read<file_size) {
+					memset(buff,0,65536);
+					chunk=object->Read(usertoken,buff,65536);
+					bytes_read+=chunk;
+					bytes_written+=file->Write(buff,chunk);
+				}
+				file->Sync();
+				delete file;
+				
+				memset(buff,0,65536);
+				
+				delete buff;
+			} else {
+				if (file!=NULL)
+					delete file;
+			}
+			
+			
+		}
+		
+	}
+	return bytes_written;
+	
+}
+
+off_t cacheman::SaveToDisk(uint32 usertoken, int32 objecttoken, BPositionIO *target_obj, off_t offset)
+{
+	off_t bytes_written=0L;
+	
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		CacheObject *object=FindObject(objecttoken);
+		if (object!=NULL) {
+			if (target_obj!=NULL) {
+				unsigned char *buff=new unsigned char[65536];
+				off_t bytes_read=0L;
+				off_t file_size=0L;
+				file_size=object->Size();
+				ssize_t chunk=0L;
+				if (offset==-1)
+					target_obj->Seek(0,SEEK_END);
+				else
+					target_obj->Seek(offset,SEEK_SET);
+				
+				while (bytes_read<file_size) {
+					memset(buff,0,65536);
+					chunk=object->Read(usertoken,buff,65536);
+					bytes_read+=chunk;
+					bytes_written+=target_obj->Write(buff,chunk);
+				}
+				
+				memset(buff,0,65536);
+				
+				delete buff;
+			} 			
+			
+		}
+		
+	}
+	return bytes_written;
+}
+
+off_t cacheman::SaveToDisk(uint32 usertoken, int32 objecttoken, const char *filepath, bool overwrite)
+{
+	off_t bytes_written=0L;
+	
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		CacheObject *object=FindObject(objecttoken);
+		if (object!=NULL) {
+			int32 write_opts=B_WRITE_ONLY|B_CREATE_FILE;
+			if (overwrite)
+				write_opts|=B_ERASE_FILE;
+			else
+				write_opts|=B_FAIL_IF_EXISTS;
+			
+			BFile *file=new BFile(filepath,write_opts);
+			if ((file!=NULL) && (file->InitCheck()==B_OK)) {
+				unsigned char *buff=new unsigned char[65536];
+				off_t bytes_read=0L;
+				off_t file_size=0L;
+				file_size=object->Size();
+				ssize_t chunk=0L;
+				
+				while (bytes_read<file_size) {
+					memset(buff,0,65536);
+					chunk=object->Read(usertoken,buff,65536);
+					bytes_read+=chunk;
+					bytes_written+=file->Write(buff,chunk);
+				}
+				file->Sync();
+				delete file;
+				
+				memset(buff,0,65536);
+				
+				delete buff;
+			} else {
+				if (file!=NULL)
+					delete file;
+			}
+			
+			
+		}
+		
+	}
+	return bytes_written;
+}
+BPositionIO *cacheman::ObjectIOPointer(uint32 usertoken, int32 objecttoken)
+{
+	BPositionIO *io_ptr=NULL;
+	BAutolock alock(lock);
+	
+	if (alock.IsLocked()) {
+		CacheObject *object=FindObject(objecttoken);
+		
+		if (object!=NULL) {
+			io_ptr=object->IOPointer();
+			
+		}
+	
+	}
+	return io_ptr;
+	
 }
 		 

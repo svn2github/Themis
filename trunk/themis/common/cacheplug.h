@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2002 Raymond "Z3R0 One" Rodgers. All Rights Reserved.
+Copyright (c) 2003 Raymond "Z3R0 One" Rodgers. All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -23,7 +23,7 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
+Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@bbnk.dhs.org)
 Project Start Date: October 18, 2000
 */
 /*!
@@ -39,6 +39,7 @@ Project Start Date: October 18, 2000
 #include "cacheuser.h"
 #include <Locker.h>
 #include <Autolock.h>
+#include <DataIO.h>
 
 
 //!The basis for any and all of Themis' cache systems.
@@ -114,6 +115,13 @@ that user token to access the cache system.
 		//! manipulation of the write lock privilleges for any given object.
 		virtual bool AcquireWriteLock(uint32 usertoken,int32 objecttoken)=0;
 		virtual void ReleaseWriteLock(uint32 usertoken, int32 objecttoken)=0;
+		
+		virtual off_t SaveToDisk(uint32 usertoken, int32 objecttoken, entry_ref target_ref,bool overwrite=false)=0;
+		virtual off_t SaveToDisk(uint32 usertoken, int32 objecttoken, BPositionIO *target_obj, off_t offset=-1)=0;
+		virtual off_t SaveToDisk(uint32 usertoken, int32 objecttoken, const char *filepath, bool overwrite=false)=0;
+		
+		virtual BPositionIO *ObjectIOPointer(uint32 usertoken, int32 objecttoken)=0;
+	
 		static const int32 CACHE_OBJECT_REMOVED='corm';
 };
 

@@ -82,7 +82,10 @@ enum MsgSysTargets
 	MS_TARGET_TYPE_DISK=0x406,//!< Send message to members that process data on disk only. Useful really only with cache target.
 	MS_TARGET_TYPE_RAM=0x408,//!< Send message to members that process data in RAM only. Useful really only with cache target.
 	MS_TARGET_PROTO_HTTP=0x804,//!< Send message to the HTTP Protocol object.
+	MS_TARGET_PROTO_FILE=0x806,//!< Send message to the FILE Protocol object.
+	MS_TARGET_PROTO_FTP=0x808,//!< Send message to the FTP Protocol object.
 	MS_TARGET_HTTP_PROTOCOL=(MS_TARGET_PROTO_HTTP|MS_TARGET_PROTOCOL),//!< More correct way to target the HTTP protocol in a message.
+	
 	MS_TARGET_CACHE_SYSTEM=0x1004,//!< More correct way to target the cache system object.
 	MS_TARGET_HTML_PARSER=(0x1006|MS_TARGET_PARSER),//!< Send a message to the HTML parser object.
 	MS_TARGET_CSS_PARSER=(0x1008|MS_TARGET_PARSER),//!< Send a message to the CSS parser object.

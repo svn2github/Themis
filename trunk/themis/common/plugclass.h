@@ -75,6 +75,7 @@ add a command to makelinks.sh to create this link in your plug-in's directory.
 #define TYPE_ALL 0x404
 #define TYPE_DISK	0x406
 #define TYPE_RAM	0x408
+#define TYPE_DISK_FILE	0x40a
 #define PROTO_HTTP	0x804
 #define PROTO_FTP	0x806
 #define PROTO_SMTP	0x808

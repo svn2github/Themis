@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2002 Raymond "Z3R0 One" Rodgers. All Rights Reserved.
+Copyright (c) 2003 Raymond "Z3R0 One" Rodgers. All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -23,38 +23,40 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
+Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@bbnk.dhs.org)
 Project Start Date: October 18, 2000
 */
-#ifndef _ram_cache_object_
-#define _ram_cache_object_
-
+#ifndef _disk_file_cache_object_
+#define _disk_file_cache_object_
 #include "cacheobject.h"
-#include <DataIO.h>
+#include <SupportDefs.h>
 #include <Message.h>
-class RAMCacheObject: public CacheObject {
+#include "cacheuser.h"
+#include <Locker.h>
+#include <File.h>
+#include <Entry.h>
+
+class DFCacheObject: public CacheObject {
 	private:
-		BMallocIO *databuffer;
-		char *name, *host, *mimetype, *path, *etag, *lastmodified,*expires,*contentmd5;
-		off_t contentlength;
+		BFile *file;
+		entry_ref ref;
+	
 	public:
-		RAMCacheObject(int32 token,const char *URL);
-		~RAMCacheObject();
+		DFCacheObject(int32 token, const char *URL);
+		~DFCacheObject();
 		BPositionIO *IOPointer();
-		virtual BMessage *GetInfo();
 		ssize_t Read(uint32 usertoken, void *buffer, size_t size);
 		ssize_t Write(uint32 usertoken, void *buffer, size_t size);
-		ssize_t SetLength(uint32 usertoken, int32 objecttoken, size_t length);
-		virtual ssize_t WriteAttr(uint32 usertoken, const char *attrname, type_code type,void *data,size_t size);
-		virtual ssize_t ReadAttr(uint32 usertoken,  const char *attrname, type_code type, void *data, size_t size);
-		status_t RemoveAttr(uint32 usertoken, const char *attrname);
-		void ClearContent(uint32 usertoken);
-		virtual off_t Size();
+		off_t Size();
+	
 		void ClearFile();
+		void ClearContent(uint32 usertoken);
 		uint32 Type();
+		BMessage *GetInfo();
+		ssize_t WriteAttr(uint32 usertoken, const char *attrname, type_code type,void *data,size_t size);
+		ssize_t ReadAttr(uint32 usertoken,  const char *attrname, type_code type, void *data, size_t size);
+	
 };
-
-
-
 #endif
+
 

@@ -33,6 +33,7 @@ Project Start Date: October 18, 2000
 #include <Message.h>
 #include "cacheuser.h"
 #include <Locker.h>
+#include <DataIO.h>
 /*!
 \brief Object Oriented linked list representation of cached data.
 	The CacheObject class represents the actual cached file, whether it is on disk
@@ -60,6 +61,8 @@ class CacheObject {
 		CacheObject(int32 token,const char *URL);
 		//! The destructor.
 		virtual ~CacheObject();
+		virtual BPositionIO *IOPointer()=0;
+	
 		//! Determines if this cache object is used by a particular cache user object.
 		virtual bool IsUsedBy(uint32 usertoken);
 		//! Removes a particular cache user token from the CacheUser linked list.

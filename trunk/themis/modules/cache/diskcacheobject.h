@@ -44,6 +44,8 @@ class DiskCacheObject: public CacheObject {
 		DiskCacheObject(int32 objecttoken, const char *URL);
 		DiskCacheObject(int32 objecttoken, const char *URL, entry_ref aref);
 		~DiskCacheObject();
+		BPositionIO *IOPointer();
+	
 		void SetRef(entry_ref aref);
 		ssize_t Read(uint32 usertoken, void *buffer, size_t size);
 		ssize_t Write(uint32 usertoken, void *buffer, size_t size);

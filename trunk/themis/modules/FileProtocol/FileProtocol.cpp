@@ -174,30 +174,37 @@ status_t FileProtocol	::	ReceiveBroadcast( BMessage * message )	{
 				}
 
 				// Put the file contents in the cache
-				int32 objectToken = cache->CreateObject( userToken, fileLocation.c_str() ,TYPE_RAM);
+				int32 objectToken = cache->CreateObject( userToken, fileLocation.c_str() ,TYPE_DISK_FILE);
 				
-				char * buffer = new char[ kBufferSize ];
-				unsigned int bytesRead = 0;
-				unsigned int totalBytes = 0;
-				file.read( buffer, kBufferSize );
-				bytesRead = file.gcount();
-				totalBytes = bytesRead;
-				cache->Write( userToken, objectToken, buffer, bytesRead );
-				while (  bytesRead == kBufferSize )	{
-					totalBytes += bytesRead;
-					file.read( buffer, kBufferSize );
-					bytesRead = file.gcount();
-					cache->Write( userToken, objectToken, buffer, bytesRead );
-				}
-				delete[] buffer;
-				cache->ReleaseWriteLock( userToken, objectToken );
-				printf( "Written %i bytes\n", totalBytes );
+//				char * buffer = new char[ kBufferSize ];
+//				unsigned int bytesRead = 0;
+//				unsigned int totalBytes = 0;
+//				file.read( buffer, kBufferSize );
+//				bytesRead = file.gcount();
+//				totalBytes = bytesRead;
+//				cache->Write( userToken, objectToken, buffer, bytesRead );
+//				while (  bytesRead == kBufferSize )	{
+//					totalBytes += bytesRead;
+//					file.read( buffer, kBufferSize );
+//					bytesRead = file.gcount();
+//					cache->Write( userToken, objectToken, buffer, bytesRead );
+//				}
+//				delete[] buffer;
+//				cache->ReleaseWriteLock( userToken, objectToken );
+//				printf( "Written %i bytes\n", totalBytes );
 				BMessage * fileMessage = new BMessage( ProtocolConnectionClosed );
+				int32 id=0;
+				message->FindInt32("window_uid",&id);
+				fileMessage->AddInt32("window_uid",id);
+				message->FindInt32("tab_uid",&id);
+				fileMessage->AddInt32("tab_uid",id);
+				message->FindInt32("view_uid",&id);
+				fileMessage->AddInt32("view_uid",id);
 				fileMessage->AddInt32( "command", COMMAND_INFO );
 				fileMessage->AddBool( "request_done", true );
 				fileMessage->AddString( "url", fileLocation.c_str() );
 				fileMessage->AddInt32( "cache_object_token", objectToken );
-				fileMessage->AddInt64( "bytes_received", totalBytes );
+				fileMessage->AddInt64( "bytes_received", cache->GetObjectSize(userToken,objectToken) );
 				Broadcast( MS_TARGET_ALL, fileMessage );
 				delete fileMessage;
 			}
