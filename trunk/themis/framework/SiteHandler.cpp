@@ -498,7 +498,7 @@ SiteHandler::ReceiveBroadcast(
 							render->AddInt32( "site_id", site_id );
 							render->AddInt32( "url_id", url_id );
 							
-							printf( "SiteHandler: sending UH_RENDER_START\n" );
+							printf( "SiteHandler: sending SH_RENDER_START\n" );
 							
 							Broadcast( MS_TARGET_RENDERER, render );
 							
