@@ -877,10 +877,6 @@ http_protocol::http_protocol()
   benval=0;
   Cancel=0;
   Window=NULL;
-  RawBuffer=new BMallocIO;
-  RawBuffer->SetBlockSize(B_PAGE_SIZE);
-  buffer=new BMallocIO;
-  buffer->SetBlockSize(B_PAGE_SIZE);
   thread=-1;
   Threads=new BList(1);
   queue=new BList(1);
@@ -929,8 +925,6 @@ http_protocol::~http_protocol()
      }
    }
   delete queue;
-  delete buffer;
-  delete RawBuffer;
   InitInfo=NULL;
  }
 int32 http_protocol::SpawnThread(BMessage *info)
