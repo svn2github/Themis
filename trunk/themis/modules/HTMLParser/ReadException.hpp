@@ -23,16 +23,19 @@ class ReadException	{
 		string mErrorMessage;
 		bool mFatal;
 		bool mEof;
+		bool mWrongTag;
 	
 	public:
 		ReadException( unsigned int aLineNr, unsigned int aCharNr,
-							   string aErrorMessage, bool aFatal = false, bool aEof = false );
+							   string aErrorMessage, bool aFatal = false, bool aEof = false,
+							   bool aWrongTag = false );
 		~ReadException();
-		unsigned int getCharNr();
-		unsigned int getLineNr();
-		string getErrorMessage();
-		bool isFatal();
-		bool isEof();
+		unsigned int getCharNr() const;
+		unsigned int getLineNr() const;
+		string getErrorMessage() const;
+		bool isFatal() const;
+		bool isEof() const;
+		bool isWrongTag() const;
 		void setFatal( bool aFatal = true );
 		
 };

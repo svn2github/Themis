@@ -90,12 +90,27 @@ void ElementDeclParser	::	processDeclaration()	{
 	}
 	catch( ReadException r )	{
 		// Not declared content. Must be a content model
-		try	{
-			processContentModel( element );
+		if ( element->hasChildNodes() )	{
+			// Name group. Assuming has connector as child
+			TNodeShared connector = make_shared( element->getFirstChild() );
+			TNodeShared child = make_shared( connector->getFirstChild() );
+			TElementShared firstElement = shared_static_cast<TElement>( child );
+			try	{
+				processContentModel( firstElement );
+			}
+			catch( ReadException r )	{
+				r.setFatal();
+				throw r;
+			}
 		}
-		catch( ReadException r )	{
-			r.setFatal();
-			throw r;
+		else	{
+			try	{
+				processContentModel( element );
+			}
+			catch( ReadException r )	{
+				r.setFatal();
+				throw r;
+			}
 		}
 	}
 
@@ -136,9 +151,9 @@ TElementShared ElementDeclParser	::	processElementType()	{
 	}
 
 	try	{
-		text = processNameGroup();
-		TElementShared element = mDTD->createElement( text );
-		return element;
+		
+		TElementShared group = processNameGroup();
+		return group;
 	}
 	catch( ReadException r )	{
 		if ( r.isFatal() )	{
@@ -266,9 +281,14 @@ TElementShared ElementDeclParser	::	processModelGroup()	{
 	while ( smgFound )	{
 		try	{
 			subModelGroup = processSubModelGroup();
-			TNodeShared first = make_shared( subModelGroup->getFirstChild() );
-			subModelGroup->insertBefore( firstPart, first );
-			firstPart = subModelGroup;
+			if ( subModelGroup->getNodeName() == firstPart->getNodeName() )	{
+				firstPart->appendChild( make_shared( subModelGroup->getFirstChild() ) );
+			}
+			else	{
+				TNodeShared first = make_shared( subModelGroup->getFirstChild() );
+				subModelGroup->insertBefore( firstPart, first );
+				firstPart = subModelGroup;
+			}
 		}
 		catch( ReadException r )	{
 			// No sub model group. Exit the loop
@@ -368,7 +388,7 @@ TElementShared ElementDeclParser	::	processPrimContentToken()	{
 	}
 	try	{
 		process( kPCDATA );
-		primContentToken = mDTD->createElement( kPCDATA );
+		primContentToken = mDTD->createElement( mRni + kPCDATA );
 	}
 	catch( ReadException r )	{
 		r.setFatal();

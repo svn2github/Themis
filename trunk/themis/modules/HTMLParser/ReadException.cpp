@@ -9,13 +9,15 @@
 #include "ReadException.hpp"
 
 ReadException	::	ReadException( unsigned int aLineNr, unsigned int aCharNr,
-												   string aErrorMessage, bool aFatal, bool aEof )	{
+												   string aErrorMessage, bool aFatal, bool aEof,
+												   bool aWrongTag )	{
 		
 	mLineNr = aLineNr;
 	mCharNr = aCharNr;
 	mErrorMessage = aErrorMessage;
 	mFatal = aFatal;
 	mEof = aEof;
+	mWrongTag = aWrongTag;
 		
 }
 
@@ -23,33 +25,39 @@ ReadException	::	~ReadException()	{
 	
 }
 
-unsigned int ReadException	::	getCharNr()	{
+unsigned int ReadException	::	getCharNr() const	{
 
 	return mCharNr;
 	
 }
 
-unsigned int ReadException	::	getLineNr()	{
+unsigned int ReadException	::	getLineNr() const	{
 	
 	return mLineNr;
 	
 }
 
-string ReadException	::	getErrorMessage()	{
+string ReadException	::	getErrorMessage() const	{
 	
 	return mErrorMessage;
 	
 }
 
-bool ReadException	::	isFatal()	{
+bool ReadException	::	isFatal() const	{
 	
 	return mFatal;
 	
 }
 
-bool ReadException	::	isEof()	{
+bool ReadException	::	isEof() const	{
 	
 	return mEof;
+	
+}
+
+bool ReadException	::	isWrongTag() const	{
+	
+	return mWrongTag;
 	
 }
 

@@ -88,7 +88,7 @@ class BaseParser	{
 		string processRepParData();
 		string processRepCharData();
 		string processGI();
-		string processNameGroup();
+		TElementShared processNameGroup();
 		string processNameTokenGroup();
 		TElementShared processConnector();
 		void processAttrValueSpec();

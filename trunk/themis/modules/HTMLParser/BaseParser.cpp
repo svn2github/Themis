@@ -4,6 +4,7 @@
 
 // Standard C headers
 #include <stdio.h>
+#include <ctype.h>
 
 // BaseParser headers
 #include "BaseParser.hpp"
@@ -274,13 +275,13 @@ string BaseParser	::	processName()	{
 		throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(), "Not a name" );
 	}
 	
-	name += mDocText->getChar();
+	name += toupper( mDocText->getChar() );
 	char c = mDocText->nextChar();
 	
 	while ( isalnum( c ) ||
 			  c == '-' ||
 			  c == '.' )	{
-		name += c;
+		name += toupper( c );
 		c = mDocText->nextChar();
 	}
 	
@@ -484,21 +485,34 @@ string BaseParser	::	processGI()	{
 	
 }
 
-string BaseParser	::	processNameGroup()	{
+TElementShared BaseParser	::	processNameGroup()	{
 
 	process( mGrpo );
-	
+
+	TElementShared grpo = mDTD->createElement( "()" );
+
 	processTsStar();
 	
-	processName();
+	string name = processName();
+	TElementShared firstPart = mDTD->createElement( name );
 
+	TElementShared subGroup;
 	bool inGroup = true;
 	while ( inGroup )	{
 		try	{
 			processTsStar();
-			processConnector();
+			TElementShared connector = processConnector();
 			processTsStar();
-			processName();
+			name = processName();
+			TElementShared element = mDTD->createElement( name );
+			if ( connector->getNodeName() == firstPart->getNodeName() )	{
+				firstPart->appendChild( element );
+			}
+			else	{
+				connector->appendChild( firstPart );
+				connector->appendChild( element );
+				firstPart = connector;
+			}
 		}
 		catch( ReadException r )	{
 			inGroup = false;
@@ -513,8 +527,10 @@ string BaseParser	::	processNameGroup()	{
 		r.setFatal();
 		throw r;
 	}
+
+	grpo->appendChild( firstPart );
 	
-	return "";
+	return grpo;
 	
 }
 
