@@ -832,7 +832,6 @@ string HTMLParser	::	getString( bool aConserveSpaces )	{
 	string result;
 
 	if ( mPos != mContent.size() )	{
-		cout << "Character to be recognized: " << mContent[mPos] << endl;
 		switch ( mContent[mPos] )	{
 			case '>' :	{
 				cout << "Getting text...\n";
@@ -847,14 +846,16 @@ string HTMLParser	::	getString( bool aConserveSpaces )	{
 				break;
 			}
 			case '=' :	{
-				cout << "Getting attribute value...\n";
+				cout << "Getting attribute value: ";
 				result = getAttrValue();
+				cout << result << endl;
 				mStringType = ATTRVALUE;
 				break;
 			}
 			default :	{
-				cout << "Getting attribute...\n";
+				cout << "Getting attribute: ";
 				result = getAttribute();
+				cout << result << endl;
 				mStringType = ATTR;
 			}
 		}
@@ -1020,6 +1021,10 @@ void HTMLParser	::	headTag( TElementShared aParent )	{
 				emptyElementTag( element );
 				continue;
 			}
+			if ( isCommentTag() )	{
+				commentTag( element );
+				continue;
+			}
 			
 			// Not a known tag
 			cout << "headTag: Unknown tag found: " << mTag << ". Skipping...\n";
@@ -1072,6 +1077,10 @@ void HTMLParser	::	normalHeadTag( TElementShared aParent )	{
 			}
 		}
 		else	{
+			if ( isCommentTag() )	{
+				commentTag( element );
+				continue;
+			}
 			cout << "normalHead: Unknown tag found: " << mTag << ". Skipping...\n";
 			skipTag();
 		}
@@ -1101,8 +1110,6 @@ void HTMLParser	::	bodyStyleTag( TElementShared aParent, bool aInsideForm )	{
 	while ( insideBodyStyle )	{
 		// Warning: more possible than a tag only
 		string data = getString();
-
-		cout << "Received string " << data.size() << ": " << data << endl;
 
 		switch ( mStringType )	{
 			case ATTR :	{
@@ -1190,8 +1197,6 @@ void HTMLParser	::	adressTag( TElementShared aParent )	{
 	while ( insideAdress )	{
 
 		string data = getString();
-
-		cout << "Received string " << data.size() << ": " << data << endl;
 
 		switch ( mStringType )	{
 			case ATTR :	{
@@ -1356,8 +1361,6 @@ void HTMLParser	::	flowLevelTag( TElementShared aParent )	{
 		// Warning: more possible than a tag only
 		string data = getString();
 
-		cout << "Received string " << data.size() << ": " << data << endl;
-
 		switch ( mStringType )	{
 			case ATTR :	{
 				attribute = data;
@@ -1467,8 +1470,6 @@ void HTMLParser	::	pTag( TElementShared aParent )	{
 		
 		string data = getString();
 
-		cout << "Received string " << data.size() << ": " << data << endl;
-
 		switch ( mStringType )	{
 			case ATTR :	{
 				attribute = data;
@@ -1570,8 +1571,6 @@ void HTMLParser	::	listTag( TElementShared aParent )	{
 		// Warning: more possible than a tag only
 		string data = getString();
 
-		cout << "Received string " << data.size() << ": " << data << endl;
-
 		switch ( mStringType )	{
 			case ATTR :	{
 				attribute = data;
@@ -1650,8 +1649,6 @@ void HTMLParser	::	tableTag( TElementShared aParent )	{
 		// Warning: more possible than a tag only
 		string data = getString();
 
-		cout << "Received string " << data.size() << ": " << data << endl;
-
 		switch ( mStringType )	{
 			case ATTR :	{
 				attribute = data;
@@ -1729,8 +1726,6 @@ void HTMLParser	::	trTag( TElementShared aParent )	{
 		// Warning: more possible than a tag only
 		string data = getString();
 
-		cout << "Received string " << data.size() << ": " << data << endl;
-
 		switch ( mStringType )	{
 			case ATTR :	{
 				attribute = data;
@@ -1803,8 +1798,6 @@ void HTMLParser	::	preTag( TElementShared aParent )	{
 	while ( insidePre )	{
 		
 		string data = getString( true );
-
-		cout << "Received string " << data.size() << ": " << data << endl;
 
 		switch ( mStringType )	{
 			case ATTR :	{
@@ -1902,8 +1895,6 @@ void HTMLParser	::	emptyElementTag( TElementShared aParent )	{
 		
 		string data = getString();
 
-		cout << "Received string " << data.size() << ": " << data << endl;
-
 		switch ( mStringType )	{
 			case ATTR :	{
 				attribute = data;
@@ -1947,8 +1938,6 @@ void HTMLParser	::	selectTag( TElementShared aParent, bool aConserveSpaces )	{
 	
 	while ( insideSelect )	{
 		string data = getString();
-
-		cout << "Received string " << data.size() << ": " << data << endl;
 
 		switch ( mStringType )	{
 			case ATTR :	{
@@ -2025,8 +2014,6 @@ void HTMLParser	::	pcDataTag( TElementShared aParent, bool aConserveSpaces )	{
 	while ( insidePcData )	{
 		string data = getString( aConserveSpaces );
 
-		cout << "Received string " << data.size() << ": " << data << endl;
-
 		switch ( mStringType )	{
 			case ATTR :	{
 				attribute = data;
@@ -2052,9 +2039,12 @@ void HTMLParser	::	pcDataTag( TElementShared aParent, bool aConserveSpaces )	{
 						continue;
 					}
 		
-					// Not a known tag
-					cout << "pcData: Unknown tag found: " << mTag << ". Skipping...\n";
-					skipTag();
+					cout << mTag << " closed implicitly\n";
+	
+					// End the while loop
+					insidePcData = false;
+					backPedal();
+					continue;
 					
 				}
 				else	{			
@@ -2065,14 +2055,21 @@ void HTMLParser	::	pcDataTag( TElementShared aParent, bool aConserveSpaces )	{
 						insidePcData = false;
 					}
 					else	{
-						cout << "pcData: Unknown closing tag found: " << mTag << ". Skipping...\n";
+						cout << mTag << " closed implicitly\n";
+		
+						// End the while loop
+						insidePcData = false;
+						backPedal();
+						continue;
 					}
 				}
 				break;
 			}
 			case TEXT :	{
 				if ( ( data.compare( " " ) && data.compare( "" ) ) || ( aConserveSpaces && data.compare( "" ) ) )	{
-					cout << "Text found in illegal place. Skipping...\n";
+					cout << "Text is:" << endl << data << endl;
+					TTextShared text = mDocument->createText( data );
+					element->appendChild( text );
 				}
 				break;
 			}
@@ -2094,8 +2091,6 @@ void HTMLParser	::	appletTag( TElementShared aParent, bool aConserveSpaces, bool
 	
 	while ( insideApplet )	{
 		string data = getString();
-
-		cout << "Received string " << data.size() << ": " << data << endl;
 
 		switch ( mStringType )	{
 			case ATTR :	{
@@ -2175,8 +2170,6 @@ void HTMLParser	::	mapTag( TElementShared aParent )	{
 	while ( insideMap )	{
 		string data = getString();
 
-		cout << "Received string " << data.size() << ": " << data << endl;
-
 		switch ( mStringType )	{
 			case ATTR :	{
 				attribute = data;
@@ -2253,8 +2246,6 @@ void HTMLParser	::	normalTextTag( TElementShared aParent, bool aConserveSpaces, 
 	while ( insideNormalText )	{
 		
 		string data = getString( aConserveSpaces );
-
-		cout << "Received string " << data.size() << ": " << data << endl;
 
 		switch ( mStringType )	{
 			case ATTR :	{
