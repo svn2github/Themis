@@ -75,7 +75,7 @@ void TableElement::EFrameResized(float deltaWidth, float deltaHeight)
 	frame.PrintToStream();		
 	
 	//TODO: Should be enhanced later
-	ProportionalResizingAndMoving(deltaWidth,deltaHeight);
+	//ProportionalResizingAndMoving(deltaWidth,deltaHeight);
 	
 	printf(" to: ");
 	frame.PrintToStream();

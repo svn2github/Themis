@@ -102,10 +102,16 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 					document = *typer;		
 					DOMTrees.push_back(document);								
 					//Start Processing in a new thread so people think it'll work faster ;-))
-					preprocess_thread_param param = {document,this,message->FindInt32("view_id")};
+					int32 view_id;
+					message->FindInt32( "view_id", &view_id );
+					// allocate the struct on the heap now ;)
+					preprocess_thread_param* param = new preprocess_thread_param;
+					param->document = document;
+					param->renderer = this;
+					param->viewID = view_id;
 					//feeding the random generator
 					srand(time(NULL));
-					thread_id id = spawn_thread(PreProcess,THREAD_NAME[rand()%THREAD_NAMES],30,(void *)&param);								
+					thread_id id = spawn_thread(PreProcess,THREAD_NAME[rand()%THREAD_NAMES],30,(void *)param);								
 					resume_thread(id);
 				} break;
 /*				case ReturnedData:{ //OLD WAY TO DO

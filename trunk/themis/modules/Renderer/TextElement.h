@@ -16,19 +16,23 @@
 class TextElement : public UIElement
 {
 	public:
-						TextElement(UIBox frame,  TNodePtr node, const char *text, BFont *font,
-									rgb_color high, float size = 0);
+								TextElement(TNodePtr node, const char *text, 
+										    BFont *font, rgb_color high, 
+										    float size = 0);
 									
-		virtual 		~TextElement();
+		virtual 				~TextElement();
 		
-		virtual void	EDraw();
-		virtual	void	EFrameResized(float width, float height);
+		virtual void			EDraw();
+		virtual	void			EFrameResized(float width, float height);
+		virtual ElementFrame	GetElementFrame();
 				
 	protected:
-				//The text as given by the parser and the one cut in lines
-				//to enter the element's frame.
-				BString	 	text;
-				char		**linedText;
+				//see ElementFrame in UIElement.h
+				BPoint			startPoint;
+				BPoint			endPoint;
+				
+				//The text as given by the parser 
+				char		*text;
 				
 				BFont   	font;
 				
@@ -36,13 +40,20 @@ class TextElement : public UIElement
 				font_height	fh;
 				
 				//high color (low being into all UIElements)				
-				rgb_color	high;
+				rgb_color	highcolor;
 				
 				//Funcs and datas which are here to create the linedText array
-				int32		TextForFrame(char *text);
-		inline	int32		LineStartingAt(int32 n);
-								
-				BList		endsOfLines;
+				int32		TextForFrame(char *string);
+				
+				BList		startsOfLines;				
+				BList		lengthsOfLines;
+	
+		/*Very important note about the frame field of UIElement. It's use
+		is different from others class. In another class (Bitmap or whatever)
+		the frame tells the drawing algorithm the frame in which it can draw.
+		Here the frame is the result of the drawing and says where the text 
+		actually is. The limits of the drawing are set by the parent 
+		element (parent element containing the text).*/
 };
 
 #endif

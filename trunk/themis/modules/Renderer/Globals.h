@@ -16,7 +16,7 @@
 #define RGB_RED						255,0,0
 #define RGB_GREEN					0,255,0
 #define RGB_BLUE					0,0,255
-#define RGB_YELLOW_WHITE			255,255,241
+#define RGB_YELLOW_WHITE			255,255,230
 
 //Defaults colors
 #define T_DEFAULT_BACKGROUND   		RGB_YELLOW_WHITE

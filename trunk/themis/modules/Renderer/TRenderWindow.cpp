@@ -5,7 +5,7 @@
 #include "Globals.h"
 #include "TRenderWindow.h"
 
-TRenderWindow::TRenderWindow(TRenderView *view) : BWindow(BRect(100,100,700,450),"Rendering...nothing but \"ing\" like \"wing\".",B_TITLED_WINDOW,B_NOT_ANCHORED_ON_ACTIVATE)
+TRenderWindow::TRenderWindow(TRenderView *view) : BWindow(view->frame.MarginRect().OffsetBySelf(121,121),"Rendering...nothing but \"ing\" like \"wing\".",B_TITLED_WINDOW,B_NOT_ANCHORED_ON_ACTIVATE)
 {
 	panel = NULL;
 	AddChild(TRenderWindow::view = view);
@@ -33,5 +33,6 @@ void TRenderWindow::MessageReceived(BMessage *message)
 
 bool TRenderWindow::QuitRequested()
 {
+	be_app->PostMessage(B_QUIT_REQUESTED);
 	return true;
 }

@@ -15,6 +15,7 @@ UIElement::UIElement(UIBox frame, TNodePtr node)
 	isZoomable 			  = true;
 	nextLayer			  = NULL;
 	parentView			  = NULL;
+	previousElement		  = NULL;
 	SetColor(&lowcolor,0,1,0);
 	
 	parentElement		  = NULL;
@@ -24,16 +25,14 @@ UIElement::UIElement(UIBox frame, TNodePtr node)
 	//The following values are UA dependants (we can choose them)
 	minHeight = minWidth = 0;
 	maxHeight = maxWidth = 3000;
-	
 }
 
 UIElement::~UIElement()
 {
 	if (nextLayer)
-		for (int32 j=0; j<nextLayer->CountItems(); j++)
+		while (nextLayer->CountItems() > 0)
 			delete (UIElement *)(nextLayer->RemoveItem((int32)0));
 	delete nextLayer;
-
 }
 
 void UIElement::EAddChild(UIElement *element)
@@ -50,7 +49,12 @@ void UIElement::EAddChild(UIElement *element)
 	//If the Element inherit from BeOS UI Element,add it to BeOS BViews' tree.
 	if (dynamic_cast <BView *> (element))
 		parentView->AddChild(dynamic_cast <BView *> (element));
-		
+	
+	if (!nextLayer)
+		nextLayer = new BList();
+	
+	element->previousElement = (UIElement *)nextLayer->LastItem();
+			
 	nextLayer->AddItem(element);
 }
 
@@ -107,7 +111,7 @@ void UIElement::EMouseMoved(BPoint point, uint32 transit, const BMessage *messag
 	//See TRenderView::MouseMoved()
 }
 
-void UIElement::EFrameResized(float deltaWidth, float deltaHeight)
+void UIElement::EFrameResized(float width, float height)
 {
 	//Do the calculus of the new frame for the element (for derivated classes)
 	
@@ -131,9 +135,17 @@ void UIElement::EFrameResized(float deltaWidth, float deltaHeight)
 	//Then forward to next layer
 	if (nextLayer) 
 		for (int32 i=0; i<nextLayer->CountItems(); i++)
-			((UIElement *)nextLayer->ItemAt(i))->EFrameResized(deltaWidth,deltaHeight);	
+			((UIElement *)nextLayer->ItemAt(i))->EFrameResized(width,height);	
 }
 
+//This version is used by all drawing elements but textelement ones that overrides it
+ElementFrame UIElement::GetElementFrame()
+{
+	ElementFrame element = {false,frame,frame.ContentRect().RightBottom()};	
+	return element;
+}
+
+/*
 void UIElement::ProportionalResizingAndMoving(float deltaWidth, float deltaHeight)
 {
 	frame.right  = frame.left + frame.Width()*deltaWidth;
@@ -142,4 +154,4 @@ void UIElement::ProportionalResizingAndMoving(float deltaWidth, float deltaHeigh
 	frame.left = frame.left*deltaWidth; 
 	frame.top  = frame.top*deltaHeight;
 }
-
+*/

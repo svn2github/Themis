@@ -10,9 +10,10 @@
 #include "TRenderView.h"
 #include "Utils.h"
 
-#define  TEXT "Heya girls ! As you can see if you type enough text"
+//An example of text
+char *TEXT = "azkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijez azkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijezazkoep dlksqp dsqdjlksqjdidqhjfezio ijfoezvklc vkozkkl ijez";
 
-TRenderView::TRenderView(UIBox frame, TNodePtr node) : BView(frame.MarginRect(),"God",B_FOLLOW_ALL_SIDES,B_WILL_DRAW | B_FRAME_EVENTS) , UIElement(UIBox(frame.Width(),frame.Height()),node)
+TRenderView::TRenderView(UIBox frame, TNodePtr node) : BView(frame.MarginRect(),"TRenderView P0waa !!",B_FOLLOW_ALL_SIDES,B_WILL_DRAW | B_FRAME_EVENTS) , UIElement(UIBox(frame.Width(),frame.Height()),node)
 {	
 	//The default High and Low Color for Themis
 	SetViewColor(T_DEFAULT_BACKGROUND);
@@ -35,13 +36,17 @@ TRenderView::TRenderView(UIBox frame, TNodePtr node) : BView(frame.MarginRect(),
 //	EAddChild(rect);
 //	TextLinkElement *el = new TextLinkElement(BRect(30,30,190,60),TEXT,(BFont *)be_plain_font,HighColor());
 //	rect->EAddChild(el);
+	TNodePtr node;
+	TextLinkElement *text = new TextLinkElement(node,TEXT,(BFont *)be_plain_font,HighColor());
+	EAddChild(text);
 	//=============================================================================
+	FrameResized(frame.ContentRect().Width(),frame.ContentRect().Height());
 }
 
 TRenderView::~TRenderView()
 {}
 
-void TRenderView::SetLowColor( rgb_color color)
+void TRenderView::SetLowColor(rgb_color color)
 {
 	UIElement::lowcolor = color;
 	
@@ -56,8 +61,6 @@ void TRenderView::Draw(BRect updateRect)
 			if (((UIElement *)nextLayer->ItemAt(i))->frame.Intersects(updateRect))
 				((UIElement *)nextLayer->ItemAt(i))->EDraw();
 	
-	printf("TRENDERVIEW HAS %d ITEMS IN IT'S BLIST\n",nextLayer->CountItems());
-	
 	/*Many drawing above (mostly when drawing BBitmaps) are done asynchronously for speed
 	 (DrawBitmapAsync() for instance) so we got to Sync() for safety. */
 	Sync();
@@ -65,7 +68,7 @@ void TRenderView::Draw(BRect updateRect)
 
 void TRenderView::FrameResized(float width, float height)
 {
-	BRect oldRect = UIElement::frame;
+	/*BRect oldRect = UIElement::frame;
 	
 	printf("TRENDERVIEW: Calling FrameResized(%f,%f)\n",width,height);
 	printf("TRENDERVIEW: Frame changed from: ");
@@ -77,6 +80,12 @@ void TRenderView::FrameResized(float width, float height)
 	
 	//Calling EFrameResized with RELATIVES VALUES : THE RELATIVE VARIATION ! ! ! !
 	EFrameResized(frame.Width()/oldRect.Width(),frame.Height()/oldRect.Height());
+	*/
+	UIElement::frame = Bounds();
+	EFrameResized(width,height);
+	
+	//Complete redraw after frame resized
+	Invalidate();
 }
 
 void TRenderView::MouseDown(BPoint point)
@@ -93,14 +102,24 @@ void TRenderView::MouseMoved(BPoint point, uint32 transit, const BMessage *messa
 {
 	UIElement *onTop = FindElementFor(point);
 	
-	if (onTop == currentMouseOver)
+	printf ("--------\n");
+	printf("%d elements in list\n",nextLayer->CountItems());
+	printf("address: of the element: %d, onTop: %d\n",nextLayer->FirstItem(),onTop);
+	printf("address of the view: %d\n",this);
+	
+	printf("onTop = %d, currentMouseOver = %d\n",onTop,currentMouseOver);
+	
+	if (onTop == currentMouseOver){
 		onTop->EMouseMoved(point,B_INSIDE_VIEW,message);
+		printf("Not sending cause no need\n");
+	}
 	else {
 		onTop->EMouseMoved(point,B_ENTERED_VIEW,message);
 		currentMouseOver->EMouseMoved(point,B_EXITED_VIEW,message);
 		if (onTop->cursor != currentMouseOver->cursor)
 			SetViewCursor(onTop->cursor,true);
 		currentMouseOver = onTop;
+		printf("sending to %d an event message\n");
 	}
 }
 

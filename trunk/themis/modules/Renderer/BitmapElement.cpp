@@ -17,11 +17,11 @@ BitmapElement::BitmapElement(UIBox frame,  TNodePtr node, const char *url) : UIE
 	//Send a message to the Image handler so it downloads the image,
 	//turn it into a series of BBitmap and send it back with it's 
 	//additional infos (animation, period, number of images
-	BMessage message(IH_LOAD_IMAGE);
-	message.AddPointer("element",(void *)this);
-	message.AddString("URL",url);
+//	BMessage message(IH_LOAD_IMAGE);
+//	message.AddPointer("element",(void *)this);
+//	message.AddString("URL",url);
 	
-	parentView->renderer->Broadcast(MS_TARGET_IMAGE_HANDLER,&message);
+//	parentView->renderer->Broadcast(MS_TARGET_IMAGE_HANDLER,&message);
 }
 
 BitmapElement::~BitmapElement()

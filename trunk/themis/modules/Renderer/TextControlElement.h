@@ -14,7 +14,7 @@
 class TextControlElement : public BTextControl , public UIElement
 {
 	public:
-						TextControlElement(UIBox frame,  TNodePtr node, const char *name, 
+						TextControlElement(UIBox frame, TNodePtr node, const char *name, 
 										   const char *text, BMessage *message,
 										   uint32 resizingMode = B_FOLLOW_LEFT | B_FOLLOW_TOP,
 										   uint32 flags = B_WILL_DRAW | B_NAVIGABLE);

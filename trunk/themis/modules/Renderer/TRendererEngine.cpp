@@ -30,7 +30,7 @@ int32 Renderer::PreProcess(void *data)
 	preprocess_thread_param *cdata = (preprocess_thread_param *)data;
 
 	//The new view
-	TRenderView *view = new TRenderView(UIBox(800,450),cdata->document);
+	TRenderView *view = new TRenderView(UIBox(800,450),cdata->document);	
 	view->viewID   = cdata->viewID;
 	view->renderer = cdata->renderer;
 
@@ -179,9 +179,8 @@ void Renderer::Process( TNodePtr node, UIElement *element)
 					}break;
 				case TEXT_NODE:{
 					TTextPtr		textChild 		= shared_static_cast <TText> (child);
-					UIBox 			frame			= element->frame;
 					UIElement		*uiChild 	 	= NULL ;
-					uiChild = new TextElement(frame,child,textChild->getWholeText().c_str(), 
+					uiChild = new TextElement(child,textChild->getWholeText().c_str(), 
 							    (BFont *)be_plain_font,SetColorSelf(RGB_BLACK),12.0);
 					
 					

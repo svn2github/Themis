@@ -4,8 +4,8 @@
 #include "TextLinkElement.h"
 #include "Utils.h"
 
-TextLinkElement::TextLinkElement(UIBox frame,  TNodePtr node, const char *text, BFont *font, rgb_color high, bool underlinedOnMouseOver = true, float size = 0)
-				   : TextElement(frame,node,text,font,high,size)
+TextLinkElement::TextLinkElement(TNodePtr node, const char *text, BFont *font, rgb_color high, bool underlinedOnMouseOver = true, float size = 0)
+				   : TextElement(node,text,font,high,size)
 {
 	//Temporary
 	SetColor(&over,RGB_BLUE);
@@ -22,8 +22,8 @@ void TextLinkElement::EMouseMoved(BPoint point, uint32 transit, const BMessage *
 		return;
 	
 	// transit == B_ENTERED_VIEW or transit == B_EXITED_VIEW
-	rgb_color temp = high;
-	high = over;
+	rgb_color temp = highcolor;
+	highcolor = over;
 	over = temp;			
 
 	//Not working yet cause SetFace() does nothing !!!
