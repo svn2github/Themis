@@ -297,6 +297,27 @@ class PlugClass {
 		virtual status_t ReceiveBroadcast(BMessage *msg);
 		virtual status_t BroadcastReply(BMessage *msg);
 		virtual int32 Type();
+		
+		//The following functions return NULL unless overridden. See each description
+		//for more details on the functionality.
+		
+		virtual char *AboutViewLabel();//name as it should appear in the About window list
+		virtual BView *AboutView();
+			/*
+				The top level view to add to the about window. If no view is returned,
+				basic information (PlugName(), PlugID(), and PlugVersion()) will
+				be used to generate a simple about view.
+			*/
+		virtual char *SettingsViewLabel();//name as it should appear in the settings list
+		virtual BView *SettingsView();
+			/*
+				The top level view to add to the settings window. Be sure to SetTarget()
+				any controls to this view in either the constructor, AllAttached(), or
+				AttachedToWindow(). Otherwise your view will not receive messages for
+				it's controls and widgets! AttachedToWindow() or AllAttached() is the
+				best place to do this!
+			*/
+	
 };
 
 #endif 

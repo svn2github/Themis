@@ -26,51 +26,27 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
-#ifndef javascript_manager
-#define javascript_manager
-
-#include "plugclass.h"
-#include "jsdefs.h"
-#include <Handler.h>
-#include <Message.h>
-#include <SupportDefs.h>
-#include <StorageKit.h>
-
-#include "jsapi.h"
-
-struct jsscripts_st {
-	JSContext *context;
-	jsscripts_st *next;
-	jsscripts_st() {
-		context=NULL;
-		next=NULL;
-	}
-};
-
-
-
-class jsman: public BHandler, public PlugClass {
+#ifndef _themis_about_view_
+#define _themis_about_view_
+#include <View.h>
+#include <Box.h>
+#include <ListView.h>
+#include <ScrollView.h>
+#include <Button.h>
+#include <List.h>
+class aboutview:public BView {
 	private:
-		JSVersion version;
-		JSRuntime *rt;
-		JSObject *glob, *it;
-		JSBool builtins;
-		JSContext *cx;
-		bool js_enabled;
-		jsscripts_st *script_head;
+		BButton *OkB;
+		BScrollView *scroll;
+		BListView *listv;
+		BBox *outerbox;
+		BBox *innerbox;
+		BList *items;
 	public:
-		jsman(BMessage *info=NULL);
-		~jsman();
+		aboutview(BRect frame, const char *name, uint32 resizem, uint32 flags);
+		~aboutview();
 		void MessageReceived(BMessage *msg);
-		bool IsHandler();
-		BHandler *Handler();
-		bool IsPersistent();
-		uint32 PlugID(){return PlugIDdef;};
-		char *PlugName(){return PlugNamedef;};
-		float PlugVersion(){return PlugVersdef;};
-		void Heartbeat();
-		status_t ReceiveBroadcast(BMessage *msg);
-		int32 Type();
+		void AttachedToWindow();
 };
 
 #endif

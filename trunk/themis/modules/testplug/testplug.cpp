@@ -157,13 +157,22 @@ status_t testplug::ReceiveBroadcast(BMessage *msg){
 				case ReturnedData: {
 					BString mime;
 					BString url;
-					int64 br=0,cl=0;
+					uint64 br=0,cl=0;
 					BPositionIO *data=NULL;
 					msg->FindString("mimetype",&mime);
-					if ((mime.ICompare("image/png")==0) || (mime.ICompare("image/gif")==0) || (mime.ICompare("image/jpeg")==0)) {
-						msg->FindInt64("content-length",&cl);
-						msg->FindInt64("bytes-received",&br);
+					printf("testplug: checking mime type - ");
+					fflush(stdout);
+					
+					if ((mime.ICompare("image/png")==0) || (mime.ICompare("image/jpeg")==0)) {
+						printf("supported\n");
+						msg->FindInt64("content-length",(int64*)&cl);
+						msg->FindInt64("bytes-received",(int64*)&br);
 						msg->FindPointer("data_pointer",(void**)&data);
+						msg->FindString("url",&url);
+						printf("content-length: %lu\n",cl);
+						printf("bytes received: %lu\n",br);
+						printf("data pointer: %p\n",data);
+						
 						iwind *cur=NULL;
 						if ((cl==0) && (br>0)) {
 							//unknown size...
@@ -172,7 +181,9 @@ status_t testplug::ReceiveBroadcast(BMessage *msg){
 								whead=new iwind;
 								cur=whead;
 								cur->url=url;
-								cur->win=new imagewin((char*)url.String());
+									BString title("Themis - TestPlug Image: ");
+									title <<url;
+								cur->win=new imagewin((char*)title.String());
 							} else {
 								cur=whead;
 								iwind *last=NULL;
@@ -187,7 +198,9 @@ status_t testplug::ReceiveBroadcast(BMessage *msg){
 									cur=new iwind;
 									last->next=cur;
 									cur->url=url;
-									cur->win=new imagewin((char*)url.String());
+									BString title("Themis - TestPlug Image: ");
+									title <<url;
+									cur->win=new imagewin((char*)title.String());
 									
 								}
 								
@@ -217,8 +230,10 @@ status_t testplug::ReceiveBroadcast(BMessage *msg){
 								}
 								cur->url=url;
 								printf("creating an image window by the name of %s\n",url.String());
+									BString title("Themis - TestPlug Image: ");
+									title <<url;
 								
-								cur->win=new imagewin((char*)url.String());
+								cur->win=new imagewin((char*)title.String());
 								cur->win->Lock();
 								
 								cur->win->view->image=BTranslationUtils::GetBitmap(data);
@@ -230,8 +245,9 @@ status_t testplug::ReceiveBroadcast(BMessage *msg){
 						}
 						
 						
+					} else {
+						printf(" unsupported: %s\n",mime.String());
 					}
-					
 				}break;
 			}
 			
@@ -245,7 +261,6 @@ status_t testplug::ReceiveBroadcast(BMessage *msg){
 			if (msg->HasBool("supportedmimetypes")) {
 				BMessage types(SupportedMIMEType);
 				types.AddString("mimetype","image/jpeg");
-				types.AddString("mimetype","image/gif");
 				types.AddString("mimetype","image/png");
 				types.AddInt32("command",COMMAND_INFO);
 				PlugClass *plug=NULL;

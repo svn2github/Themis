@@ -1,4 +1,35 @@
 ========
+8 September 2002
+========
+Many changes were made within the last few days, and the commit prior to this one went almost undocumented. I will attempt to include those changes in this file.
+
+common/plugclass.*
+Added two new commands COMMAND_ASSUME_RESPONSIBILITY and COMMAND_RELEASE_RESOURCE, new targets TARGET_APPLICATION and TARGET_DOM, and new functions AboutViewLabel(), AboutView(), SettingsViewLabel(), and SettingsView(). All but the new targets are described in the header file.
+
+common/plugman.*
+Added additional argument to the Broadcast() function.
+
+common/tcplayer.*
+Added new callback support; this time for notifying protocols when a connection has closed.
+
+framework/app.*
+Added the aboutwin.h file to add enable the newly created about window.
+
+framework/aboutwin.* framework/aboutview.*
+Newly created, but very much incomplete, about window and view.
+
+framework/win.cpp
+Commented out remaining references to Parser, and added a shortcut to access the about window: Shift-Alt-a.
+
+modules/http/*
+Additional fixes everywhere... HTTP layer now sends a broadcast (targeted by mime type if possible) everytime it receives data, and when a request is completed.
+
+modules/cache/*
+A major and important fix. Up until now, if the cache had a URL in storage, it would either erase the cached file and/or set its size to zero (0) to make sure that it would be properly updated. This functionality has been removed. Cached files, when its determined that they have not been updated, will now be properly read from disk [upon request].
+
+modules/testplug/*
+Added image viewing capability for jpeg and png images. Until today, it also would try to view gif images, but since the gif translator is not included in BeOS by default, and this is just a test plug-in, I removed the support for gif images. Images will be displayed in a separate window.
+========
 26 August 2002
 ========
 All plug-ins

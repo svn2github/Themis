@@ -38,6 +38,10 @@ Project Start Date: October 18, 2000
 
 httplayer *meHTTP;
 tcplayer *__TCP;
+void ConnectClosed(connection *conn)
+{
+	meHTTP->ConnectionClosed(conn);
+}
 
 void DataReceived(connection *conn) 
 {
@@ -112,6 +116,19 @@ httplayer::~httplayer()
 	delete lock;
 }
 
+void httplayer::ConnectionClosed(connection *conn) 
+{
+	http_request *cur=requests_head;
+	while (cur!=NULL) {
+		if (cur->conn==conn)
+			break;
+		cur=cur->next;
+	}
+	if (cur!=NULL) {
+		CloseRequest(cur);
+	}
+	cur=NULL;
+}
 
 void httplayer::SetTCP(tcplayer *_TCP) {
 //	printf("Entered SetTCP\n");
@@ -124,6 +141,7 @@ void httplayer::SetTCP(tcplayer *_TCP) {
 	fflush(stdout);
 	TCP->Lock();
 	TCP->SetDRCallback((int32)'http',DataReceived,LockHTTP,UnlockHTTP);
+	TCP->SetConnectionClosedCB((int32)'http',ConnectClosed);
 	TCP->Unlock();
 	}
 //	printf("Leaving SetTCP\n");
@@ -827,6 +845,8 @@ void httplayer::ProcessHeaders(http_request *request,void *buffer,int size) {
 			case 3: {
 				if (request->status==304) {
 					//update the cache, show the current data, and then return.
+					DoneWithHeaders(request);
+					
 					return;
 					
 				}
@@ -1061,7 +1081,7 @@ void httplayer::DoneWithHeaders(http_request *request) {
 			BMessenger *msgr=new BMessenger(CachePlug->Handler(),NULL,NULL);
 			msgr->SendMessage(ci,request->cacheinfo);
 			delete ci;
-			request->cacheinfo->PrintToStream();
+//			request->cacheinfo->PrintToStream();
 			if (request->data==NULL) {
 				entry_ref ref;
 				request->cacheinfo->FindRef("ref",&ref);
@@ -1078,18 +1098,23 @@ void httplayer::DoneWithHeaders(http_request *request) {
 			ui->AddString("host",request->host);
 			ui->AddString("path",request->uri);
 			ui->AddRef("ref",&ref);
+			BString mime;
+			request->cacheinfo->FindString("mime_type",&mime);
+			ui->AddString("content-type",mime);
+			ui->AddString("mime_type",mime);
+			
 			while (curhead!=NULL) {
 				ui->AddString(curhead->name,curhead->value);
 				curhead=curhead->next;
 			}
 			BMessenger *msgr=new BMessenger(CachePlug->Handler(),NULL,NULL);
 			msgr->SendMessage(ui,reply);
-			reply->PrintToStream();
+//			reply->PrintToStream();
 			delete request->cacheinfo;
 			request->cacheinfo=reply;
 			delete ui;
 			if (request->data==NULL) {
-				printf("Creating cache file.\n");
+				printf("Creating/opening cache file.\n");
 				request->data=new BFile(&ref,B_READ_WRITE);
 			}
 			
@@ -1104,6 +1129,71 @@ void httplayer::DoneWithHeaders(http_request *request) {
 	}
 	if ((request->bytesremaining==-1) && (request->http_v_major==1) && (request->http_v_minor==0)) {
 		request->receivetilclosed=true;
+	}
+	if (request->status==304) {
+		BMessage *msg=new BMessage(ReturnedData);
+		msg->AddInt32("command",COMMAND_INFO);
+		msg->AddPointer("data_pointer",request->data);
+		msg->AddString("url",request->url);
+		msg->AddBool("request_done",true);
+		char *result=NULL;
+		BString mime;
+		printf("Need to read file from cache 2348\n");
+		request->cacheinfo->PrintToStream();
+		request->cacheinfo->FindString("mime_type",&mime);
+		msg->AddString("mimetype",mime);
+		
+		result=mime.LockBuffer(0);
+/*
+		if (request->cache!=DoesNotUseCache)
+			((BFile*)request->data)->GetSize((off_t *)&request->bytesreceived);
+		else
+			request->bytesreceived=((BMallocIO*)request->data)->BufferLength();
+*/		
+		request->data->Seek(0,SEEK_END);
+		request->bytesreceived=request->data->Position();
+		printf("request->bytesreceived: %lu\n",request->bytesreceived);
+		
+		request->contentlen=request->bytesreceived;
+		request->data->Seek(0,SEEK_SET);
+		
+		int32 target=0;
+		if (result!=NULL) {
+			msg->AddString("mimetype",result);
+			char *slash=strchr(result,'/');
+			if (strncasecmp("text",result,slash-result)==0) {
+				if (strncasecmp("html",slash+1,strlen(result)-((slash+1)-result))==0) {
+					target=HTML_PARSER;
+				} else
+					target=TARGET_HANDLER|CONTENT_TEXT|TARGET_PARSER;
+			}
+			if (strncasecmp("image",result,slash-result)==0) {
+				target=IMAGE_HANDLER;
+			}
+			if (strncasecmp("audio",result,slash-result)==0) {
+				target=AUDIO_HANDLER;
+			}
+			if (strncasecmp("video",result,slash-result)==0) {
+				target=VIDEO_HANDLER;
+			}
+			if (strncasecmp("application",result,slash-result)==0) {
+				target=TARGET_PARSER|TARGET_HANDLER;
+			}
+			slash=NULL;
+		} else 
+			target=TARGET_PARSER|TARGET_HANDLER;
+		mime.UnlockBuffer(-1);
+		
+		
+		result=NULL;
+		msg->AddInt64("content-length",request->bytesreceived);
+		msg->AddInt64("bytes-received",request->bytesreceived);
+		BMessage container;
+		container.AddMessage("message",msg);
+		delete msg;
+		printf("Sending broadcast to handlers and parsers.\n");
+		
+		Proto->PlugMan->Broadcast(Proto->PlugID(),target,&container);
 	}
 	
 }
@@ -1246,6 +1336,11 @@ if (!lock->IsLocked()) {
 	msg->AddInt32("command",COMMAND_INFO);
 	msg->AddPointer("data_pointer",request->data);
 	msg->AddString("url",request->url);
+	if (request->done)
+		msg->AddBool("request_done",true);
+	else
+		msg->AddBool("request_done",false);
+	
 	char *result=NULL;
 	result=FindHeader(request,"content-type");
 	int32 target=0;
@@ -1292,6 +1387,8 @@ if (!lock->IsLocked()) {
 void httplayer::CloseRequest(http_request *request) {
 //	acquire_sem(connhandle_sem);
 	//atomic_add(&request->done,1);
+	int result=request->conn->result;
+	
 	Done(request);
 	if (request->conn!=NULL) {
 		TCP->Lock();
@@ -1307,6 +1404,27 @@ void httplayer::CloseRequest(http_request *request) {
 	}
 	if (request->conn_released!=0)
 		request->conn_released=0;
+	BMessage *msg=new BMessage(ProtocolConnectionClosed);
+	msg->AddInt64("bytes-received",request->bytesreceived);
+	msg->AddString("url",request->url);
+	msg->AddInt32("From",Proto->PlugID());
+	msg->AddPointer("FromPointer",Proto);
+	if ((request->contentlen!=0) && (request->bytesreceived==request->contentlen))
+		msg->AddBool("request_done",true);
+	else {
+		if ((request->contentlen==0) && (request->chunked) && (result<=0))
+			msg->AddBool("request_done",true);
+		else {
+			
+			msg->AddBool("request_done",true);
+			msg->AddInt32("status",UnexpectedDisconnect);
+		}
+	}
+	
+	if (request->contentlen!=0)
+		msg->AddInt64("content-length",request->contentlen);
+	
+	
 //	release_sem(connhandle_sem);
 
 }

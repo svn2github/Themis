@@ -170,6 +170,7 @@ struct DRCallback_st
 {
 	int32 protocol;
 	void (*callback)(connection *conn);
+	void (*connclosedcb)(connection *conn);
 	int32 (*Lock)(int32 timeout=-1);
 	void (*Unlock)(void);
 	DRCallback_st *next;
@@ -179,7 +180,7 @@ struct DRCallback_st
 		callback=NULL;
 		Lock=NULL;
 		Unlock=NULL;
-		
+		connclosedcb=NULL;
 	}
 	
 };
@@ -209,6 +210,8 @@ class tcplayer {
 		int32 Manager();
 		status_t Quit();
 		void SetDRCallback(int32 proto,void (*DataReceived)(connection* conn),int32 (*Lock)(int32 timeout=-1),void(*Unlock)(void));
+		void SetConnectionClosedCB(int32 proto, void (*connclosedcb)(connection *conn));
+	
 		bool IsValid(connection *conn);
 		connection *conn_head;//first connection
 		connection *prev_conn;

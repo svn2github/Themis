@@ -200,3 +200,18 @@ status_t PlugClass::BroadcastReply(BMessage *msg) {
 	return PLUG_REPLY_RECEIVED;
 }
 
+char *PlugClass::AboutViewLabel() {
+	return NULL;
+}
+
+BView *PlugClass::AboutView() {
+	return NULL;
+}
+
+char *PlugClass::SettingsViewLabel() {
+	return NULL;
+}
+
+BView *PlugClass::SettingsView() {
+	return NULL;
+}

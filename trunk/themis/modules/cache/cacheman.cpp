@@ -202,7 +202,9 @@ void cacheman::MessageReceived(BMessage *mmsg)
                 }
                if (strcasecmp(attname,"Themis:mime_type")==0)
                 {
+					
                  node.ReadAttr("Themis:mime_type",B_STRING_TYPE,0,data,ai.size);
+					printf("**** CACHE: MIME TYPE FOUND: %s ****\n",data);
                  fname="mime_type";
                 }
                if (strcasecmp(attname,"Themis:path")==0)
@@ -269,7 +271,7 @@ void cacheman::MessageReceived(BMessage *mmsg)
           BEntry ent(pth.Path(),true);
           ent.GetRef(&ref);
          }
-        BFile *file=new BFile(&ref,B_CREATE_FILE|B_ERASE_FILE|B_READ_WRITE);
+        BFile *file=new BFile(&ref,B_CREATE_FILE|B_READ_WRITE);//|B_ERASE_FILE
         BNode *node=new BNode(&ref);
         node->Lock();
         BNodeInfo *ni=new BNodeInfo(node);
@@ -394,7 +396,7 @@ void cacheman::MessageReceived(BMessage *mmsg)
      	entry_ref ref;
      	msg->FindRef("ref",&ref);
      	BFile *file=new BFile(&ref,B_READ_WRITE);
-     	file->SetSize(0);
+//     	file->SetSize(0);
      	delete file;
         BNode *node=new BNode(&ref);
         node->Lock();

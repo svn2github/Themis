@@ -269,6 +269,7 @@ class httplayer {
 		void SetTCP(tcplayer *_TCP);
 		void CloseRequest(http_request *request);
 		bool ResubmitRequest(http_request *request);
+		void ConnectionClosed(connection *conn);
 		void DReceived(connection *conn);
 		httplayer(tcplayer *_TCP);
 		~httplayer();

@@ -26,51 +26,53 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
-#ifndef javascript_manager
-#define javascript_manager
+#include "aboutview.h"
+#include <Messenger.h>
+#include <Window.h>
 
-#include "plugclass.h"
-#include "jsdefs.h"
-#include <Handler.h>
-#include <Message.h>
-#include <SupportDefs.h>
-#include <StorageKit.h>
+aboutview::aboutview(BRect frame, const char *name, uint32 resizem, uint32 flags)
+	:BView(frame,name,resizem,flags) 
+{
+	SetViewColor(216,216,216);
+	BRect r(Bounds());
+	r.InsetBy(10,10);
+	r.bottom-=20;
+	outerbox=new BBox(r,"outer-about-box",B_FOLLOW_ALL,B_WILL_DRAW|B_FRAME_EVENTS|B_NAVIGABLE_JUMP,B_FANCY_BORDER);
+	AddChild(outerbox);
+	r=Bounds();
+	r.bottom-=10.0;
+	r.top=r.bottom-15.0;
+	r.left=(r.right/2.0)-20.0;
+	r.right=(r.right/2.0)+20.0;
+	OkB=new BButton(r,"Ok-button","Done",(new BMessage(B_OK)),B_WILL_DRAW|B_NAVIGABLE);
+	AddChild(OkB);
+	items=NULL;
+	
+}
 
-#include "jsapi.h"
-
-struct jsscripts_st {
-	JSContext *context;
-	jsscripts_st *next;
-	jsscripts_st() {
-		context=NULL;
-		next=NULL;
+aboutview::~aboutview() 
+{
+	if (items!=NULL) {
+		delete items;
+		
 	}
-};
+	
+}
+void aboutview::MessageReceived(BMessage *msg) 
+{
+	switch(msg->what) {
+		case B_OK: {
+			BMessenger *msgr=new BMessenger(NULL,(BLooper*)Window(),NULL);
+			msgr->SendMessage(B_QUIT_REQUESTED);
+			delete msgr;
+		}break;
+		default:
+			BView::MessageReceived(msg);
+	}
+	
+}
 
-
-
-class jsman: public BHandler, public PlugClass {
-	private:
-		JSVersion version;
-		JSRuntime *rt;
-		JSObject *glob, *it;
-		JSBool builtins;
-		JSContext *cx;
-		bool js_enabled;
-		jsscripts_st *script_head;
-	public:
-		jsman(BMessage *info=NULL);
-		~jsman();
-		void MessageReceived(BMessage *msg);
-		bool IsHandler();
-		BHandler *Handler();
-		bool IsPersistent();
-		uint32 PlugID(){return PlugIDdef;};
-		char *PlugName(){return PlugNamedef;};
-		float PlugVersion(){return PlugVersdef;};
-		void Heartbeat();
-		status_t ReceiveBroadcast(BMessage *msg);
-		int32 Type();
-};
-
-#endif
+void aboutview::AttachedToWindow() 
+{
+	OkB->SetTarget(this);
+}

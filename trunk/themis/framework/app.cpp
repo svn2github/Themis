@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2000 Z3R0 One. All Rights Reserved. 
+Copyright (c) 2002 Raymond "Z3R0 One" Rodgers. All Rights Reserved. 
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -23,7 +23,7 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
+Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
 #include "app.h"
@@ -39,6 +39,7 @@ App::App(const char *appsig)
 	AppSettings=new BMessage;
 	LoadSettings();
 	app_info ai;
+	AWin=NULL;
 	GetAppInfo(&ai);
 	entry_ref appdirref;
 	BEntry *ent=new BEntry(&ai.ref);
@@ -67,9 +68,19 @@ App::App(const char *appsig)
 }
 App::~App(){
 	SaveSettings();
-	delete AppSettings;
+	if (AppSettings!=NULL)
+		delete AppSettings;
 	AppSettings=NULL;
 }
+void App::AboutRequested() {
+	if (AWin==NULL) {
+		AWin=new aboutwin(BRect(100,100,600,300),"About Themis",B_TITLED_WINDOW,B_ASYNCHRONOUS_CONTROLS|B_NOT_MINIMIZABLE);
+	} else {
+		AWin->Activate(true);
+	}
+	
+}
+
 bool App::QuitRequested(){
 	printf("app destructor\n");
 	status_t stat;
@@ -133,78 +144,88 @@ void App::InitSettings(char *settings_path) {
 }
 
 status_t App::LoadSettings() {
-	status_t ret=B_OK;
-	BPath path;
-	if (find_directory(B_USER_SETTINGS_DIRECTORY,&path)==B_OK) {
-		path.Append("Themis/",true);
-		BEntry prefsent(path.Path(),true);
-		if (prefsent.Exists()) {
-			prefsent.GetPath(&path);
-			path.Append("Themis Settings",false);
-			prefsent.SetTo(path.Path(),true);
+	if (AppSettings!=NULL) {
+			
+		status_t ret=B_OK;
+		BPath path;
+		if (find_directory(B_USER_SETTINGS_DIRECTORY,&path)==B_OK) {
+			path.Append("Themis/",true);
+			BEntry prefsent(path.Path(),true);
 			if (prefsent.Exists()) {
-				BFile *file=new BFile(&prefsent,B_READ_ONLY);
-				ret=file->InitCheck();
-				if (ret!=B_OK) {
+				prefsent.GetPath(&path);
+				path.Append("Themis Settings",false);
+				prefsent.SetTo(path.Path(),true);
+				if (prefsent.Exists()) {
+					BFile *file=new BFile(&prefsent,B_READ_ONLY);
+					ret=file->InitCheck();
+					if (ret!=B_OK) {
+						delete file;
+						InitSettings();
+						return ret;
+					}
+					
+					file->Lock();
+					ret|=AppSettings->Unflatten(file);
+					file->Unlock();
 					delete file;
-					InitSettings();
+					printf("Settings loaded.\n");
+					AppSettings->PrintToStream();
 					return ret;
+					
+				} else {
+					path.GetParent(&path);
+					InitSettings((char*)path.Path());
+					SaveSettings();
+					return B_OK;
 				}
 				
-				file->Lock();
-				ret|=AppSettings->Unflatten(file);
-				file->Unlock();
-				delete file;
-				printf("Settings loaded.\n");
-				AppSettings->PrintToStream();
-				return ret;
-				
 			} else {
-				path.GetParent(&path);
+				create_directory(path.Path(),0777);
 				InitSettings((char*)path.Path());
 				SaveSettings();
 				return B_OK;
+				
 			}
 			
 		} else {
-			create_directory(path.Path(),0777);
-			InitSettings((char*)path.Path());
-			SaveSettings();
-			return B_OK;
-			
 		}
-		
-	} else {
+		return ret;
 	}
-	return ret;
+	return B_ERROR;
 	
 }
 status_t App::SaveSettings() {
-	status_t ret=B_OK;
-	
-	BString fname,dname;
-	AppSettings->FindString("settings_directory",&dname);
-	AppSettings->FindString("settings_file",&fname);
-	BEntry ent(dname.String());
-	if (!ent.Exists()) {
-		ret=create_directory(dname.String(),0777);
+	if (AppSettings!=NULL) {
+		
+		status_t ret=B_OK;
+		
+		BString fname,dname;
+		AppSettings->FindString("settings_directory",&dname);
+		AppSettings->FindString("settings_file",&fname);
+		BEntry ent(dname.String());
+		if (!ent.Exists()) {
+			ret=create_directory(dname.String(),0777);
+			if (ret!=B_OK) {
+				printf("Couldn't create Themis settings directory.\n");
+				return ret;
+			}
+			
+		}
+		BFile *file=new BFile(fname.String(),B_CREATE_FILE|B_ERASE_FILE|B_WRITE_ONLY);
+		ret=file->InitCheck();
 		if (ret!=B_OK) {
-			printf("Couldn't create Themis settings directory.\n");
+			printf("Unable to create Themis settings file\n");
+			delete file;
 			return ret;
 		}
 		
-	}
-	BFile *file=new BFile(fname.String(),B_CREATE_FILE|B_ERASE_FILE|B_WRITE_ONLY);
-	ret=file->InitCheck();
-	if (ret!=B_OK) {
-		printf("Unable to create Themis settings file\n");
+		file->Lock();
+		ret=AppSettings->Flatten(file);
+		file->Unlock();
 		delete file;
+		
 		return ret;
 	}
+	return B_ERROR;
 	
-	file->Lock();
-	ret=AppSettings->Flatten(file);
-	file->Unlock();
-	delete file;
-	return ret;
 }

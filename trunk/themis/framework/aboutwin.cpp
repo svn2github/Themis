@@ -26,51 +26,32 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
-#ifndef javascript_manager
-#define javascript_manager
+#include "aboutwin.h"
+#include "app.h"
+aboutwin::aboutwin(BRect frame, const char *title, window_type type, uint32 flags, uint32 wspaces)
+	:BWindow(frame,title,type,flags,wspaces) 
+{
+	view=new aboutview(Bounds(),"aboutview",B_FOLLOW_ALL,B_WILL_DRAW|B_NAVIGABLE_JUMP);
+	AddChild(view);
+	
+	Show();
+}
 
-#include "plugclass.h"
-#include "jsdefs.h"
-#include <Handler.h>
-#include <Message.h>
-#include <SupportDefs.h>
-#include <StorageKit.h>
+aboutwin::~aboutwin() 
+{
+}
 
-#include "jsapi.h"
+bool aboutwin::QuitRequested() 
+{
+	((App*)be_app)->AWin=NULL;
+	return true;
+}
 
-struct jsscripts_st {
-	JSContext *context;
-	jsscripts_st *next;
-	jsscripts_st() {
-		context=NULL;
-		next=NULL;
+void aboutwin::MessageReceived(BMessage *msg)
+{
+	switch(msg->what) {
+		default:
+			BWindow::MessageReceived(msg);
 	}
-};
-
-
-
-class jsman: public BHandler, public PlugClass {
-	private:
-		JSVersion version;
-		JSRuntime *rt;
-		JSObject *glob, *it;
-		JSBool builtins;
-		JSContext *cx;
-		bool js_enabled;
-		jsscripts_st *script_head;
-	public:
-		jsman(BMessage *info=NULL);
-		~jsman();
-		void MessageReceived(BMessage *msg);
-		bool IsHandler();
-		BHandler *Handler();
-		bool IsPersistent();
-		uint32 PlugID(){return PlugIDdef;};
-		char *PlugName(){return PlugNamedef;};
-		float PlugVersion(){return PlugVersdef;};
-		void Heartbeat();
-		status_t ReceiveBroadcast(BMessage *msg);
-		int32 Type();
-};
-
-#endif
+	
+}

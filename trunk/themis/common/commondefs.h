@@ -88,6 +88,8 @@ Project Start Date: October 18, 2000
 #define ThreadDone 'done'
 #define ProtocolResponse 'prsp'
 #define ReloadData 'rldt'
+#define ProtocolConnectionClosed '_pcc'
+#define UnexpectedDisconnect 'unds'
 
 //This is to update the displayed URL; usually done from the protocol.
 #define UpdateDisplayedURL 'udur'

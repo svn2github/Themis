@@ -238,8 +238,8 @@ int32 tcplayer::Manager() {
 						cur=callback_head;
 						while (cur!=NULL) {
 							if (cur->protocol==current->proto_id) {
-								atomic_add(&current->callbackdone,1);
 								if (cur->Lock(100000)==B_OK) {
+									atomic_add(&current->callbackdone,1);
 									cur->callback(current);
 									cur->Unlock();
 								}
@@ -575,6 +575,16 @@ if (target->socket!=-1)
 		}
 	}
 #endif
+	DRCallback_st *cur=callback_head;
+	while (cur!=NULL) {
+		if (cur->protocol==target->proto_id) {
+			if (cur->connclosedcb!=NULL)
+				cur->connclosedcb(target);
+			break;
+		}
+		cur=cur->next;
+	}
+	
 //	release_sem(conn_sem);
 }
 
@@ -969,6 +979,37 @@ status_t tcplayer::Quit() {
 	release_sem(tcp_mgr_sem);
 	return status;
 }
+void tcplayer::SetConnectionClosedCB(int32 proto, void (*connclosedcb)(connection *conn)) 
+{
+	if ((callback_head==NULL) || (firstcb==1)) {
+		callback_head=new DRCallback_st;
+		callback_head->connclosedcb=connclosedcb;
+		callback_head->protocol=proto;
+		atomic_add(&firstcb,-1);
+	} else {
+		DRCallback_st *cur=callback_head;
+		DRCallback_st *last=NULL;
+		
+		while (cur!=NULL) {
+			if (cur->protocol==proto)
+				break;
+			last=cur;
+			cur=cur->next;
+		}
+		if (cur==NULL) {
+			last->next=cur=new DRCallback_st;
+			cur->connclosedcb=connclosedcb;
+			cur->protocol=proto;
+
+		} else {
+			cur->connclosedcb=connclosedcb;
+		}
+		
+	}
+	
+	
+}
+
 void tcplayer::SetDRCallback(int32 proto,void (*DataReceived)(connection *conn),int32 (*Lock)(int32 timeout),void(*Unlock)(void)) {
 //	acquire_sem(cb_sem);
 	printf("SetDRCallback: %p\n",callback_head);

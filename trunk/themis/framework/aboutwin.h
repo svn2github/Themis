@@ -26,51 +26,21 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
-#ifndef javascript_manager
-#define javascript_manager
+#ifndef _themis_about_win
+#define _themis_about_win
+#include <Window.h>
+#include "aboutview.h"
 
-#include "plugclass.h"
-#include "jsdefs.h"
-#include <Handler.h>
-#include <Message.h>
-#include <SupportDefs.h>
-#include <StorageKit.h>
-
-#include "jsapi.h"
-
-struct jsscripts_st {
-	JSContext *context;
-	jsscripts_st *next;
-	jsscripts_st() {
-		context=NULL;
-		next=NULL;
-	}
-};
-
-
-
-class jsman: public BHandler, public PlugClass {
+class aboutwin:public BWindow {
 	private:
-		JSVersion version;
-		JSRuntime *rt;
-		JSObject *glob, *it;
-		JSBool builtins;
-		JSContext *cx;
-		bool js_enabled;
-		jsscripts_st *script_head;
+		aboutview *view;
+	
 	public:
-		jsman(BMessage *info=NULL);
-		~jsman();
+		aboutwin(BRect frame, const char *title, window_type type, uint32 flags, uint32 wspaces=B_CURRENT_WORKSPACE);
+		~aboutwin();
+		bool QuitRequested();
 		void MessageReceived(BMessage *msg);
-		bool IsHandler();
-		BHandler *Handler();
-		bool IsPersistent();
-		uint32 PlugID(){return PlugIDdef;};
-		char *PlugName(){return PlugNamedef;};
-		float PlugVersion(){return PlugVersdef;};
-		void Heartbeat();
-		status_t ReceiveBroadcast(BMessage *msg);
-		int32 Type();
 };
+
 
 #endif

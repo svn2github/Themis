@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2000 Z3R0 One. All Rights Reserved. 
+Copyright (c) 2002 Raymond "Z3R0 One" Rodgers. All Rights Reserved. 
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -23,7 +23,7 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
+Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
 #ifndef _appclass
@@ -32,15 +32,17 @@ Project Start Date: October 18, 2000
 #include "win.h"
 #include "appdefines.h"
 #include "plugman.h"
-
+#include "aboutwin.h"
 
 class App:public BApplication {
 	private:
 		Win *win;
 		void InitSettings(char *settings_path=NULL);
 	public:
+		aboutwin *AWin;
 		status_t LoadSettings();
 		status_t SaveSettings();
+		void AboutRequested();
 		App(const char *appsig);
 		~App();
 		bool QuitRequested();

@@ -29,6 +29,7 @@ Project Start Date: October 18, 2000
 #include "win.h"
 #include "commondefs.h"
 #include "protocol_plugin.h"
+#include "AppDefs.h"
 int WinH=800;
 int WinW=600;
 
@@ -40,16 +41,20 @@ Win::Win(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspa
 //  Parser=new HTMLParser;
 //  Parser->View=View;
 //  View->Parser=Parser;
+	AddShortcut('a',B_SHIFT_KEY,(new BMessage(B_ABOUT_REQUESTED)));
 	AddChild(View);
 }
 bool Win::QuitRequested() {
-  BMessenger *msgr=new BMessenger(NULL,Parser,NULL);
-  msgr->SendMessage(B_QUIT_REQUESTED);
-  delete msgr;
+//  BMessenger *msgr=new BMessenger(NULL,Parser,NULL);
+ // msgr->SendMessage(B_QUIT_REQUESTED);
+ // delete msgr;
 	return true;
 }
 void Win::MessageReceived(BMessage *msg) {
 	switch(msg->what) {
+		case B_ABOUT_REQUESTED: {
+			be_app_messenger.SendMessage(B_ABOUT_REQUESTED);
+		}break;
 		case PlugInLoaded: {
 					
 			protocol_plugin *pobj=NULL;
