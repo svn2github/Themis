@@ -56,6 +56,10 @@ ThemisNavView::AttachedToWindow( void )
 void
 ThemisNavView::Draw( BRect updaterect )
 {
+	// compromise for now
+	// make the updaterect the Bounds rectangle
+	updaterect = Bounds();
+	
 	rgb_color lo = LowColor();
 	
 	SetLowColor( fBackgroundColor );
@@ -75,8 +79,6 @@ ThemisNavView::Draw( BRect updaterect )
 		B_SOLID_LOW );
 	
 	SetLowColor( lo );
-	
-	BView::Draw( updaterect );
 }
 
 void

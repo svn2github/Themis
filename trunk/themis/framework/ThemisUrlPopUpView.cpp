@@ -38,15 +38,19 @@ void
 ThemisUrlPopUpView::Draw( BRect updaterect )
 {
 	//cout << "ThemisUrlPopUpView::Draw()" << endl;
+	
+	// compromise for now
+	// make the updaterect the Bounds rectangle
+	updaterect = Bounds();
 			
 	rgb_color hi = HighColor();
-	
-	SetHighColor( 255,255,255 );
-	FillRect( updaterect, B_SOLID_HIGH );
 	
 	SetHighColor( fDarkGrayColor );
 	StrokeRect( updaterect, B_SOLID_HIGH );
 	
+	SetHighColor( 255,255,255 );
+	updaterect.InsetBy( 1, 1 );
+	FillRect( updaterect, B_SOLID_HIGH );
 	
 	
 	SetHighColor( hi );

@@ -66,6 +66,10 @@ ThemisUrlView::Draw( BRect updaterect )
 {
 	//cout << "ThemisUrlView::Draw()" << endl;
 	
+	// compromise for now
+	// make the updaterect the Bounds rectangle
+	updaterect = Bounds();
+	
 	rgb_color hi = HighColor();	
 	
 	// the outer margin
