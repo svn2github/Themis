@@ -228,6 +228,22 @@ void Win::MessageReceived(BMessage *msg) {
 			// happen.. if here, then it should go into here later :D
 			
 		}break;
+		case BUTTON_BACK :
+		{
+			break;
+		};
+		case BUTTON_FORWARD :
+		{
+			break;
+		}
+		case BUTTON_STOP :
+		{
+			break;
+		}
+		case BUTTON_HOME :
+		{
+			break;
+		}
 		case CLOSE_OTHER_TABS :
 		{
 			// this function is used for the tab-pop-up-menu function
@@ -459,19 +475,15 @@ void Win::MessageReceived(BMessage *msg) {
 			}
 			break;
 		}
+		case BUTTON_RELOAD :
 		case URL_OPEN :
 		{
-			cout << "URL_OPEN received" << endl;
+			if( msg->what == URL_OPEN )
+				printf( "URL_OPEN\n" );
+			else
+				printf( "BUTTON_RELOAD\n" );
 			
-			// if the urlpopupwindow exists
-			//if( urlpopupwindow != NULL )
-			//	PostMessage( CLOSE_URLPOPUP );
-			
-			// the above doesnt work as fast as expected...i am hindering the
-			// tab-selection by mouse when the urlpopupwindow is open
-			// the above wouldnt have closed the urlpopupwindow as needed,
-			// and as the code further down under uses ThemisTabView::Select()
-			// i need to make sure we get rid of the urlpopupwindow right now
+			// close urlpopup if needed
 			if( urlpopupwindow  )
 			{	
 				urlpopupwindow->Lock();
@@ -482,14 +494,11 @@ void Win::MessageReceived(BMessage *msg) {
 			// get the url
 			BString url;
 			if( msg->HasString( "url_to_open" ) )
-			{
 				url = msg->FindString( "url_to_open" );
-			}
 			else
-			{
 				url = navview->urlview->Text();
-			}
-			cout << "URL_OPEN: url_to_open: " << url.String() << endl;
+			
+			cout << "requested url: " << url.String() << endl;
 			
 			// stop, if there is no url, or about:blank
 			if( url.Length() == 0 )
@@ -510,7 +519,7 @@ void Win::MessageReceived(BMessage *msg) {
 			{
 				int32 tab_index = msg->FindInt32( "tab_to_open_in" );
 				
-				tabview->TabAt( msg->FindInt32( "tab_to_open_in" ) )->SetView( fakesite );
+				tabview->TabAt( tab_index )->SetView( fakesite );
 				tab_uid = ( ( ThemisTab* )tabview->TabAt( tab_index ) )->UniqueID();
 			}
 			else
@@ -527,6 +536,7 @@ void Win::MessageReceived(BMessage *msg) {
 			if( CurrentFocus() != NULL )
 				CurrentFocus()->MakeFocus( false );
 			tabview->TabAt( selection )->View()->MakeFocus( true );
+			
 			char *usepass=NULL;
 			char *workurl=NULL;
 			BString urlS=url.String();
@@ -538,6 +548,8 @@ void Win::MessageReceived(BMessage *msg) {
 			strcpy(url_,url.String());
 			strcpy(workurl,url_);
 			protocol=HTTPPlugin;
+			urlS=url;
+			
 			if (urlS.Length()>0) {
 				int32 pos=urlS.FindFirst("://");
 				int32 atpos=urlS.FindFirst('@');
@@ -615,66 +627,51 @@ void Win::MessageReceived(BMessage *msg) {
 			url=workurl;
 
 
-				printf( "Win: creating info message\n" );			
-//			if (pobj!=NULL) {
-				BMessage *info=new BMessage;
-//				info->AddPointer("tcp_layer_ptr",TCP);
-//				info->AddPointer("top_view",tabview->TabAt( selection )->View());
-//				info->AddPointer("window",this);
-				info->AddInt16( "window_uid", UniqueID() );
-				info->AddInt16( "tab_uid", tab_uid );
-				info->AddInt16( "view_uid", view_uid );
-//				info->AddPointer("parser",Parser);
-				info->AddPointer("plug_manager",PluginManager);
-				info->AddPointer("main_menu_bar",menubar);
-				info->AddPointer("file_menu",filemenu);
-				info->AddPointer("options_menu",optionsmenu);
-				info->AddString("target_url",workurl);
-				delete workurl;
+			printf( "Win: creating info message\n" );			
+
+			BMessage *info=new BMessage;
+			info->AddInt16( "window_uid", UniqueID() );
+			info->AddInt16( "tab_uid", tab_uid );
+			info->AddInt16( "view_uid", view_uid );
+			info->AddPointer("plug_manager",PluginManager);
+			info->AddPointer("main_menu_bar",menubar);
+			info->AddPointer("file_menu",filemenu);
+			info->AddPointer("options_menu",optionsmenu);
+			info->AddString("target_url",workurl);
+			
+			if( msg->what == URL_OPEN )
 				info->AddInt32("action",LoadingNewPage);
-				if (usepass!=NULL) {
-					
+			else
+				info->AddInt32("action",ReloadData);
+
+			delete workurl;
+			
+			if (usepass!=NULL) {
 					info->AddString("username:password",usepass);
 					memset(usepass,0,strlen(usepass)+1);
 					delete usepass;
-				}
+			}
 				
-				printf("info: %p\n",info);
-				info->PrintToStream();
-				printf("Win: telling cache that a new page is being loaded.\n");
-/*
-	8/2/03 from Raymond:	I commented out "bcast" because it isn't actually being sent anywhere.
-*/				
-//				BMessage *bcast=new BMessage;
+			if( msg->what == URL_OPEN )
+			{
+				printf("Win: telling MS_TARGET_ALL that a new page is being loaded.\n");
+		
 				BMessage *lnp=new BMessage(LoadingNewPage);
 				lnp->AddInt32("command",COMMAND_INFO);
-//				bcast->AddMessage("message",lnp);
 				Broadcast(MS_TARGET_ALL,lnp);
 				delete lnp;
-//				delete bcast;
-//				bcast=new BMessage(BroadcastMessage);
-				info->AddInt32("command",COMMAND_RETRIEVE);
-//				bcast->AddMessage("message",info);
-//				bcast->AddInt32("targets",TARGET_PROTOCOL);
-//				bcast->AddInt32("source",TARGET_VIEW);
-				info->AddInt32("targets",TARGET_PROTOCOL);
-				info->AddInt32("source",TARGET_VIEW);
+			}
+
+			info->AddInt32("command",COMMAND_RETRIEVE);
+			info->AddInt32("targets",TARGET_PROTOCOL);
+			info->AddInt32("source",TARGET_VIEW);
 			
+			info->PrintToStream();
 			
-//				BMessenger *msgr=new BMessenger(NULL,PluginManager,NULL);
-//				msgr->SendMessage(bcast);
-//				delete msgr;
-				
-				printf("Win: sending request broadcast.\n");
-				Broadcast(MS_TARGET_PROTOCOL,info);
-				printf("Win: done with request broadcast\n");
-			
-			//	PluginManager->Broadcast(TARGET_VIEW,TARGET_PROTOCOL,bcast);
-//				delete bcast;
-				delete info;
-			
-//				pobj->GetURL(info);
-//			}
+			printf("Win: Sending request broadcast to MS_TARGET_PROTOCOL.\n");
+			Broadcast(MS_TARGET_PROTOCOL,info);
+			delete info;
+			printf("Win: Done with request broadcast.\n");
 			
 		}break;
 		case URL_TYPED :
@@ -697,171 +694,6 @@ void Win::MessageReceived(BMessage *msg) {
 			
 			
 		}break;
-		case BUTTON_RELOAD: {
-			printf("reload...\n");
-			BString url;
-			if( msg->HasString( "url_to_open" ) )
-			{
-				url = msg->FindString( "url_to_open" );
-			}
-			else
-			{
-				url = navview->urlview->Text();
-			}
-			cout << "URL_OPEN: url_to_open: " << url.String() << endl;
-			
-			// stop, if there is no url, or about:blank
-			if( url.Length() == 0 )
-				break;
-			if( strncmp( url.String(), "about:blank", 11 ) == 0 )
-				break;
-			
-			// create the fakesite ( later the renderview )
-			FakeSite* fakesite = new FakeSite(
-				( tabview->ContainerView() )->Bounds(),
-				url.String(), ( ( App* )be_app )->GetNewUniqueID(), this );
-			
-			uint32 selection = tabview->Selection();
-			int16 tab_uid = 0;
-			int16 view_uid = fakesite->UniqueID();
-						
-			if( msg->HasInt32( "tab_to_open_in" ) )
-			{
-				int32 tab_index = msg->FindInt32( "tab_to_open_in" );
-				
-				tabview->TabAt( msg->FindInt32( "tab_to_open_in" ) )->SetView( fakesite );
-				tab_uid = ( ( ThemisTab* )tabview->TabAt( tab_index ) )->UniqueID();
-			}
-			else
-			{
-				tabview->TabAt( selection )->SetView( fakesite );
-				tab_uid = ( ( ThemisTab* )tabview->TabAt( selection ) )->UniqueID();
-			}
-			
-			if( msg->FindBool( "hidden" ) == true )
-				tabview->DrawTabs();
-			else
-				tabview->Select( selection );
-						
-			if( CurrentFocus() != NULL )
-				CurrentFocus()->MakeFocus( false );
-			tabview->TabAt( selection )->View()->MakeFocus( true );
-			char *usepass=NULL;
-			char *workurl=NULL;
-			BString urlS=url.String();
-			int len=strlen(url.String());
-			char *url_=new char[len+1];
-			workurl=new char[len+1];
-			memset(url_,0,len+1);
-			memset(workurl,0,len+1);
-			strcpy(url_,url.String());
-			strcpy(workurl,url_);
-			protocol=HTTPPlugin;
-			urlS=url;
-			
-			if (urlS.Length()>0) {
-				int32 pos=urlS.FindFirst("://");
-				int32 atpos=urlS.FindFirst('@');
-				int32 firstslash=urlS.FindFirst('/',7);
-				printf("pos: %ld\tat: %ld\tfs: %ld\n",pos,atpos,firstslash);
-				
-				if (atpos>0) {
-					int32 secondat=urlS.FindFirst('@',atpos+1);
-					if (((secondat!=B_ERROR) && (firstslash!=B_ERROR) && (secondat<firstslash)) 
-						||  ((firstslash==B_ERROR) && (secondat!=B_ERROR))) {
-						atpos=secondat;
-					}			
-					printf("second at: %ld\n",secondat);
-					
-					if (atpos<firstslash) {
-						if (pos!=B_ERROR) {
-							int32 plen=atpos-(pos+3);
-							usepass=new char[plen+1];
-							memset(usepass,0,plen+1);
-							urlS.MoveInto(usepass,pos+3,plen);
-							printf("usepass: %s\tlen: %ld\n",usepass,plen);
-							
-						} else {
-							usepass=new char[atpos+1];
-							memset(usepass,0,atpos+1);
-							urlS.MoveInto(usepass,0,atpos);
-							printf("usepass: %s\tlen: %ld\n",usepass,atpos);
-							
-						}
-						urlS.RemoveFirst("@");
-						
-					} else {
-						if (firstslash==B_ERROR) {
-							usepass=new char[atpos+1];
-							memset(usepass,0,atpos+1);
-							urlS.MoveInto(usepass,0,atpos);
-							urlS.RemoveFirst("@");
-						}
-					}
-				}
-				
-				printf("urlS: %s\n",urlS.String());
-				if (pos!=B_ERROR) {
-					char *protostr=new char[pos+1];
-					memset(protostr,0,pos+1);
-					strncpy(protostr,url_,pos);
-					for (int i=0; i<pos;i++)
-						protostr[i]=tolower(protostr[i]);
-					protocol=strtoval(protostr);
-					delete protostr;
-				}
-			}
-			delete url_;
-			ProtocolPlugClass *pobj=(ProtocolPlugClass*)PluginManager->FindPlugin(protocol);
-			if (urlS.Length()==0) {
-				return;
-			}
-			if ((urlS.FindFirst("://")==B_ERROR) || (urlS.FindFirst("://")>=6)) {
-				urlS.Prepend("http://");
-				delete workurl;
-				workurl=new char[urlS.Length()+1];
-				memset(workurl,0,urlS.Length()+1);
-				urlS.CopyInto(workurl,0,urlS.Length());
-			} else {
-				memset(workurl,0,strlen(workurl)+1);
-				delete workurl;
-				workurl=new char[urlS.Length()+1];
-				memset(workurl,0,urlS.Length()+1);
-				urlS.CopyInto(workurl,0,urlS.Length());
-				
-			}
-			
-			url=workurl;
-				BMessage *info=new BMessage;
-				info->AddInt16( "window_uid", UniqueID() );
-				info->AddInt16( "tab_uid", tab_uid );
-				info->AddInt16( "view_uid", view_uid );
-				info->AddPointer("plug_manager",PluginManager);
-				info->AddPointer("main_menu_bar",menubar);
-				info->AddPointer("file_menu",filemenu);
-				info->AddPointer("options_menu",optionsmenu);
-				info->AddString("target_url",workurl);
-				info->AddInt32("action",ReloadData);
-			
-				delete workurl;
-				if (usepass!=NULL) {
-					info->AddString("username:password",usepass);
-					memset(usepass,0,strlen(usepass)+1);
-					delete usepass;
-				}
-				
-				info->AddInt32("command",COMMAND_RETRIEVE);
-				info->AddMessage("message",info);
-				info->AddInt32("targets",TARGET_PROTOCOL);
-				info->AddInt32("source",TARGET_VIEW);
-				Broadcast(MS_TARGET_PROTOCOL,info);
-				delete info;
-			
-		}break;
-		case BUTTON_STOP: {
-			
-		}break;
-		
 		case WINDOW_NEW :
 		{
 			// resend the message to the app
