@@ -198,7 +198,18 @@ HTTPv4::HTTPv4(BMessage *info, const char *msg_sys_name)
 			HTTPSettings->FindBool("enable_cookies",&enable_cookies);
 		else
 			HTTPSettings->AddBool("enable_cookies",true);	
-//		use_proxy_server=true;
+		if (HTTPSettings->HasInt32("use_useragent"))
+		{
+			HTTPSettings->FindInt32("use_useragent",(int32*)&use_useragent);
+			if (use_useragent==USER_AGENT_CUSTOM)
+			{
+				HTTPSettings->FindString("custom_useragent",&custom_useragent);
+			}
+		}
+		else
+		{
+			HTTPSettings->AddInt32("use_useragent",0);
+		}
 		info->FindPointer("tcp_manager",(void**)&tcp_manager);
 		CookieMonster=new CookieManager();
 		auth_manager=new AuthManager(this,AuthManager::AUTHENTICATION_TYPE_ALL);
@@ -1120,6 +1131,7 @@ void HTTPv4::BuildRequest(build_request_st *bri)
 		}break;
 		case USER_AGENT_CUSTOM:
 		{
+			new_item->request_string<<"User-Agent: " <<custom_useragent<<"\r\n";
 		}break;
 		default:
 		{//add no user agent

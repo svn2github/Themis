@@ -412,8 +412,10 @@ class HTTPv4: public ProtocolPlugClass
 			USER_AGENT_MOZILLA  "Mozilla/5.0 (BeOS; BePC; rv: 4.0) Themis http://themis.sourceforge.net)"
 			USER_AGENT_INTERNETEXPLORER  "Mozilla/5.0 (compatible; MSIE 6.0; BeOS ; Themis http://themis.sourceforge.net)"
 			USER_AGENT_CUSTOM  User provided string.
+			USER_AGENT_NONE don't use a user agent string.
 		*/
 		uint32 use_useragent;
+		const char *custom_useragent;
 		/*!
 			\brief This function is called by the AuthManager to set specific proxy authentication information.
 		*/
