@@ -31,6 +31,7 @@ Project Start Date: October 18, 2000
 #include "plugman.h"
 #include "ramcacheobject.h"
 #include <kernel/fs_index.h>
+#include <time.h>
 #include <Autolock.h>
 #include <stdio.h>
 #include <kernel/OS.h>
@@ -1188,8 +1189,39 @@ status_t cacheman::CheckIndices()
  }
 status_t cacheman::FindCacheDir()
  {
-  BPath path;
-  status_t stat;
+	status_t stat=B_ERROR;
+	if (AppSettings!=NULL) {
+		BPath path;
+		BString temp;
+		FindCache_SetEntry1:
+		AppSettings->FindString("settings_directory",&temp);
+		if (temp.Length()>0) {
+			path.SetTo(temp.String());
+			path.Append("cache");
+			FindCache_SetEntry2:
+			BEntry entry(path.Path(),true);
+			if (entry.Exists()) {
+				if (entry.IsDirectory()) {
+					goto FindCache_SetPath;
+				} else {
+					BString t2=temp;
+					t2<<"cache"<<time(NULL);
+					path.SetTo(t2.String());
+					goto FindCache_SetEntry2;
+				}
+			} else {
+				FindCache_CreateDirectory:
+				stat=create_directory(path.Path(),0700);
+				FindCache_SetPath:
+				cachepath=path;
+				stat=B_OK;
+			}
+		} else {
+			temp="/boot/home/config/settings/Themis/";
+			goto FindCache_SetEntry1;
+		}
+	}
+  /*
   if ((stat=find_directory(B_USER_SETTINGS_DIRECTORY,&path))==B_OK)
    {
 	path.Append("Themis");
@@ -1227,100 +1259,8 @@ status_t cacheman::FindCacheDir()
 		cachepath=path;
 		stat=B_OK;
 	}
-	
-/*
-    if((stat=path.Append("Themis"))==B_OK)
-     {
-      BEntry entry(path.Path(),true);
-      if ((stat=entry.InitCheck())==B_OK)
-       {
-        if (entry.Exists())
-         {
-          if (entry.IsDirectory())
-           {
-            if ((stat=path.Append("cache"))==B_OK)
-             {
-             	entry.SetTo(path.Path(),true);
-              if (entry.Exists())
-               {
-                if (entry.IsDirectory())
-                 {
-                  cachepath=path;
-                 }
-                else
-                 stat=B_ERROR;
-               }
-              else
-               {
-                stat=create_directory(path.Path(),0700);
-                cachepath=path;
-               }
-             }
-            return stat;
-           }
-          else
-           {
-            path.GetParent(&path);
-            if ((stat=path.Append("ThemisWeb"))==B_OK)
-             {
-              entry.SetTo(path.Path(),true);
-              if ((stat=entry.InitCheck())==B_OK)
-               {
-                if (entry.Exists())
-                 {
-                  if (entry.IsDirectory())
-                   {
-                    if ((stat=path.Append("cache"))==B_OK)
-                     {
-                      entry.SetTo(path.Path(),true);
-                      if (entry.Exists())
-                       {
-                        if (entry.IsDirectory())
-                         {
-                          cachepath=path;
-                         }
-                        else
-                         stat=B_ERROR;
-                       }
-                      else
-                       {
-                        stat=create_directory(path.Path(),0700);
-                        cachepath=path;
-                       }
-                     }
-                    return stat;
-                   }
-                  else
-                   stat=B_ERROR;
-                  return stat;
-                 }
-                else
-                 {
-                  path.Append("cache");
-                  stat=create_directory(path.Path(),0700);
-                  cachepath=path;
-                 }
-               }
-              return stat;
-             }
-            return stat;
-           }
-         }
-        else
-         {
-          if ((stat=path.Append("cache"))==B_OK)
-           {
-            stat=create_directory(path.Path(),0700);
-           }
-          cachepath=path;
-          return stat;
-         }
-       }
-      return stat;
-     }
-    return stat;
-*/
    }
+   */
   return stat; 
  }
 ssize_t cacheman::GetObjectSize(uint32 usertoken, int32 objecttoken){
