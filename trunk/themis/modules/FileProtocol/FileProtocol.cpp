@@ -32,7 +32,7 @@ BMessage * appSettings;
 
 status_t Initialize( void * info )	{
 	
-	printf( "Calling Initialize of FileProtocol...\n" );
+	printf( "FILE_PROTO: Calling Initialize of FileProtocol...\n" );
 	
 	fileProt = NULL;
 	if ( info != NULL )	{
@@ -160,16 +160,16 @@ status_t FileProtocol	::	ReceiveBroadcast( BMessage * message )	{
 		case COMMAND_RETRIEVE:	{
 			const char * url;
 			message->FindString( "target_url", &url );
-			printf( "Requesting url: %s\n", url );
+			printf( "FILE_PROTO: Requesting url: %s\n", url );
 			string urlString( url );
 			string protocolString( urlString.substr( 0, 7 ) );
 			string fileLocation( urlString.substr( 7, urlString.size() - 7 ) );
 			if ( ! protocolString.compare( "file://" ) )	{
-				printf( "Is a file\n" );
-				printf( "File location: %s\n", fileLocation.c_str() );
+				printf( "FILE_PROTO: Is a file\n" );
+				printf( "FILE_PROTO: File location: %s\n", fileLocation.c_str() );
 				ifstream file( fileLocation.c_str(), ios::binary | ios::in );
 				if ( ! file )	{
-					printf( "Error loading file\n" );
+					printf( "FILE_PROTO: Error loading file\n" );
 					break;
 				}
 
@@ -177,7 +177,7 @@ status_t FileProtocol	::	ReceiveBroadcast( BMessage * message )	{
 				int32 objectToken =
 					cache->CreateObject( userToken, fileLocation.c_str(), TYPE_DISK_FILE );
 				
-				BMessage * fileMessage = new BMessage( ProtocolConnectionClosed );
+				BMessage * fileMessage = new BMessage( UH_LOADING_PROGRESS );
 				int32 id=0;
 				message->FindInt32("view_id",&id);
 				fileMessage->AddInt32("view_id",id);
@@ -190,7 +190,7 @@ status_t FileProtocol	::	ReceiveBroadcast( BMessage * message )	{
 				delete fileMessage;
 			}
 			else	{
-				printf( "Not a file\n" );
+				printf( "FILE_PROTO: Not a file\n" );
 			}
 			break;
 		}

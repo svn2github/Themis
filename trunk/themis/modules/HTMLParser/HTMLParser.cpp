@@ -202,14 +202,19 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * aMessage )	{
 					}
 					break;
 				}
-				case ProtocolConnectionClosed:	{
+				//case ProtocolConnectionClosed:	{
+				case UH_PARSE_DOC_START :	{
+					
+					printf( "HTMLPARSER: UH_PARSE_DOC_START.\n" );
+					
 					bool requestDone = false;
 					aMessage->FindBool( "request_done", &requestDone );
 					
-					if ( !requestDone )	{
-						// I'll wait
-						break;
-					}
+//					if ( !requestDone )	{
+//						// I'll wait
+//						printf( "HTMLPARSER: request_done false!\n" );
+//						break;
+//					}
 					
 					/* temporarily added by emwe */
 					int32 view_id = 0;
@@ -228,13 +233,18 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * aMessage )	{
 					aMessage->FindString( "url", &url );
 					if ( url == NULL )	{
 						// What the heck
+						printf( "HTMLPARSER: Aborting. No url specified.\n" );
 						break;
 					}
+					
+					printf( "HTMLPARSER: url: %s\n", url );
 			
 					int32 fileToken = mCache->FindObject( mUserToken, url );
 					ssize_t fileSize = mCache->GetObjectSize( mUserToken, fileToken );
 					
 					if ( fileSize == 0 )	{
+						printf( "HTMLPARSER: Requested file is 0 bytes long. Something is wrong here\n" );
+						
 						Debug( "Requested file is 0 bytes long. Something is wrong here",
 								   PlugID() );
 						break;

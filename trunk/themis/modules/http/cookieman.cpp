@@ -1615,12 +1615,12 @@ void CookieManager::SaveAllCookies() {
 
 status_t CookieManager::ReceiveBroadcast(BMessage *msg) 
 {
-	printf("CookieManager::ReceiveBroadcast()\n");
+//	printf("CookieManager::ReceiveBroadcast()\n");
 	return B_OK;
 }
 uint32 CookieManager::BroadcastTarget() 
 {
-	printf("CookieManager\n");
+//	printf("CookieManager\n");
 	return MS_TARGET_COOKIE_MANAGER;
 }
 

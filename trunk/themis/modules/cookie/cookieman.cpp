@@ -83,7 +83,7 @@ status_t cookieman::ReceiveBroadcast(BMessage *msg){
 			
 		}break;
 		default: {
-			msg->PrintToStream();
+			//msg->PrintToStream();
 			return PLUG_DOESNT_HANDLE;
 		}
 	

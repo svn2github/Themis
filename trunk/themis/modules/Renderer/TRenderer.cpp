@@ -147,7 +147,7 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 					PreProcess(doc_number,view_number,rect,userInterface);
 					}break; */
 				default:{
-					printf("Renderer doesn't handle this broadcast\n");
+//					printf("Renderer doesn't handle this broadcast\n");
 					return PLUG_DOESNT_HANDLE;	
 					}
 			}	

@@ -68,7 +68,7 @@ status_t Initialize(void *info)
 //	}
 //	if (imsg->HasPointer("plug_manager"))
 //		imsg->FindPointer("plug_manager",(void**)&PlugMan);
-	printf("(http) TCP layer: %p\n",TCP);
+	printf("HTTP_PROTO: TCP layer: %p\n",TCP);
 #endif
 	http_protocol *proto=NULL;
   proto=new http_protocol(imsg,"HTTP Protocol");
@@ -82,7 +82,7 @@ status_t Initialize(void *info)
  }
 status_t Shutdown(bool now)
  {
-	printf("1234 HTTP Being Shutdown\n");
+	printf("HTTP_PROTO: 1234 HTTP Being Shutdown\n");
 {
 //			BAutolock alock(lock);
 //	if (alock.IsLocked()) {
@@ -120,7 +120,7 @@ protocol_plugin* GetObject(void)
  }
 void quitalarm(int signum)
 {
-	printf("it went and hung on me, damn it! It's so dead now...\n");
+	printf("HTTP_PROTO: it went and hung on me, damn it! It's so dead now...\n");
 	kill_thread(HTTP_proto->HTTP->thread);
 	
 }
@@ -130,7 +130,7 @@ int32 http_protocol::Type()
 	return HTTP_PROTOCOL;
 }
 status_t http_protocol::BroadcastReply(BMessage *msg){
-	printf("http proto: BroadcastReply\n");
+	printf("HTTP_PROTO: BroadcastReply\n");
 	
 	int32 cmd=0;
 	msg->FindInt32("command",&cmd);
@@ -179,8 +179,8 @@ status_t http_protocol::BroadcastReply(BMessage *msg){
 				}break;
 				case CachedObject: 
 				case CacheObjectNotFound: {
-					printf("two\n");
-					printf("http: reply from cache received.\n");
+					printf("HTTP_PROTO: CacheObjectNotFound\n");
+					printf("HTTP_PROTO: reply from cache received.\n");
 					cache_reply=new BMessage(*msg);
 					release_sem(HTTP->cache_sem);
 				}break;
@@ -200,8 +200,8 @@ status_t http_protocol::BroadcastReply(BMessage *msg){
 status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 {
 	
-	printf("http_protocol::ReceiveBroadcast()\n");
-	msg->PrintToStream();
+//	printf("http_protocol::ReceiveBroadcast()\n");
+//	msg->PrintToStream();
 	
 	status_t stat=B_ERROR;
 	BAutolock alock(lock);
@@ -237,9 +237,9 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 		
 	}
 	if (command==COMMAND_RETRIEVE)
-		printf("http: command is retrieve\n");
+//		printf("HTTP_PROTO: command is retrieve\n");
 	if (command==COMMAND_INFO)
-		printf("http: command is info\n");
+//		printf("HTTP_PROTO: command is info\n");
 	switch (command) {
 		case COMMAND_RETRIEVE: {
 			int32 action=0;
@@ -272,10 +272,10 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 			//rmsg=NULL;
 		}break;
 		case COMMAND_INFO: {
-			printf("HTTP Info what: %ld\n",msg->what);
+//			printf("HTTP_PROTO: Info what: %ld\n",msg->what);
 			switch(msg->what) {
 				case B_QUIT_REQUESTED: {
-					printf("HTTP has received B_QUIT_REQUESTED\n");
+					printf("HTTP_PROTO: has received B_QUIT_REQUESTED\n");
 //					HTTP->Lock();
 					 if (HTTP->CacheSys!=NULL)
 					 	HTTP->CacheSys->Unregister(HTTP->CacheToken);
@@ -283,7 +283,7 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 //					HTTP->Unlock();
 				}break;
 				case LoadingNewPage: {
-					printf("Do something useful when winview says we're loading a new page.\n");
+//					printf("HTTP_PROTO: Do something useful when winview says we're loading a new page.\n");
 				}break;
 				case PlugInUnLoaded: {
 					uint32 type=0;
@@ -294,7 +294,7 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 							HTTP->CacheToken=0;
 							HTTP->CacheSys=NULL;
 //							HTTP->Unlock();
-							printf("Cache system unloaded.\n");
+							printf("HTTP_PROTO: Cache system unloaded.\n");
 						}break;
 						default: {
 							
@@ -315,7 +315,7 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 //								HTTP->Lock();
 										HTTP->CacheSys=(CachePlug*)pobj;
 										HTTP->CacheToken=HTTP->CacheSys->Register(Type(),"HTTP Protocol Add-on");
-										printf("*** Loaded CacheToken & object: %lu %p\n",HTTP->CacheToken,HTTP->CacheSys);
+										printf("HTTP_PROTO: *** Loaded CacheToken & object: %lu %p\n",HTTP->CacheToken,HTTP->CacheSys);
 //								HTTP->Unlock();
 							}
 							
@@ -338,7 +338,8 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 					
 				}break;
 				default: {
-					msg->PrintToStream();
+					;
+//					msg->PrintToStream();
 					//display the message info, but otherwise ignore it
 				}
 			}
@@ -347,7 +348,7 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 			return PLUG_DOESNT_HANDLE;
 	}
 	}
-	printf("http_protocol::ReceiveBroadcast() exiting\n");
+//	printf("http_protocol::ReceiveBroadcast() exiting\n");
 }
 bool http_protocol::IsPersistent(){
 	return true;
@@ -386,7 +387,7 @@ http_protocol::http_protocol(BMessage *info,const char *msg_sys_name)
 	else {
 		AppSettings=NULL;
 	}
-	 printf("@@!!\tAppSettings_p %p\tAppSettings %p\n",AppSettings_p,AppSettings);
+	 printf("HTTP_PROTO: @@!!\tAppSettings_p %p\tAppSettings %p\n",AppSettings_p,AppSettings);
  	uses_heartbeat=true;
  	Window=NULL;
 	 smthead=NULL;
@@ -428,12 +429,12 @@ http_protocol::http_protocol(BMessage *info,const char *msg_sys_name)
 http_protocol::~http_protocol() {
 	lock->Lock();
 	
-	printf("http_protocol destructor\n");
-	 printf("@@##\tAppSettings_p %p\t%AppSettings %p\n",AppSettings_p,AppSettings);
+	printf("HTTP_PROTO:  destructor\n");
+	 printf("HTTP_PROTO: @@##\tAppSettings_p %p\t%AppSettings %p\n",AppSettings_p,AppSettings);
 //	Stop();
-	printf("Locking HTTP Layer.\n");
+	printf("HTTP_PROTO: Locking HTTP Layer.\n");
 //	HTTP->Lock();
-	printf("Stopping HTTP Layer.\n");
+	printf("HTTP_PROTO: Stopping HTTP Layer.\n");
 	signal(SIGALRM,&quitalarm);
 	set_alarm(5000000,B_ONE_SHOT_RELATIVE_ALARM);
 	
@@ -441,7 +442,7 @@ http_protocol::~http_protocol() {
 	set_alarm(B_INFINITE_TIMEOUT,B_PERIODIC_ALARM);
 	
 	delete HTTP;
-	printf("http: Window: %p\n",Window);
+	printf("HTTP_PROTO: Window: %p\n",Window);
 	if (smthead!=NULL) {
 		smt_st *cur=smthead;
 		while (smthead!=NULL) {
@@ -450,13 +451,13 @@ http_protocol::~http_protocol() {
 			smthead=cur;
 		}
 	}
-	printf("~http_protocol end\n");
+	printf("HTTP_PROTO: ~http_protocol end\n");
 	lock->Unlock();
 	delete lock;
 	
  }
 uint32 http_protocol::BroadcastTarget() {
-	printf("HTTP\n");
+//	printf("HTTP\n");
 	return MS_TARGET_HTTP_PROTOCOL;
 }
 int32 http_protocol::SpawnThread(BMessage *info)
@@ -467,11 +468,11 @@ void http_protocol::Stop()
  {
 // 	HTTP->Lock();
 	 if (HTTP->CacheSys!=NULL) {
-	 	printf("Unregistering from cache system.\n");
+	 	printf("HTTP_PROTO: Unregistering from cache system.\n");
 		 
 	 	HTTP->CacheSys->Unregister(HTTP->CacheToken);
 	 }
-	printf("done unregistering.\n");
+	printf("HTTP_PROTO: done unregistering.\n");
 	 if (((*AppSettings_p)!=NULL) && (*AppSettings_p==AppSettings)) {
 	 	if (AppSettings->HasMessage("cookie_settings"))
 	 		AppSettings->ReplaceMessage("cookie_settings",HTTP->CookieMonster->CookieSettings);
@@ -480,16 +481,16 @@ void http_protocol::Stop()
 	 }
  }
 void http_protocol::AddMenuItems(BMenu *menu) {
-	printf("http proto: Window %p\n",Window);
+	printf("HTTP_PROTO: Window %p\n",Window);
 	BAutolock alock(Lock);
 	if (alock.IsLocked()) {
-	printf("http_protocol AddMenuItems\n");
+	printf("HTTP_PROTO: AddMenuItems\n");
 	if (Window!=NULL) {
 //		Window->Lock();
 		Window->AddHandler(HOH);
 		HOH->browserident->SetTargetForItems(HOH);
 		
-		printf("handler added\n");
+		printf("HTTP_PROTO: handler added\n");
 		
 //		Window->Unlock();
 	}
@@ -540,10 +541,10 @@ int32 http_protocol::GetURL(BMessage *info)
 	 if (info->HasPointer("tcp_layer_ptr"))
 	 	info->FindPointer("tcp_layer_ptr",(void**)&TCP);
 */
-		printf("trying to lock HTTP\n");
+		printf("HTTP_PROTO: trying to lock HTTP\n");
 	 
 //		HTTP->Lock();
-		printf("lock successful\n");
+		printf("HTTP_PROTO: lock successful\n");
 	 
 //	 printf("TCP %p\n HTTP::TCP %p\n",TCP,HTTP->TCP);
 /*	
@@ -601,7 +602,7 @@ int32 http_protocol::ThreadFunc(void *info)
  }
 void http_protocol::FindURI(const char *url,BString &host,uint16 *port,BString &uri,bool *secure)
  {
-printf("finding uri...\n");
+printf("HTTP_PROTO: finding uri...\n");
 	 
   BString master(url),servant;
   int32 href,urltype,slash,colon,quote;
@@ -620,7 +621,7 @@ printf("finding uri...\n");
     master.CopyInto(servant,urltype+3,master.Length()-urltype+3);
     BString urlkind;
     master.CopyInto(urlkind,0,urltype);
-	printf("urlkind: %s\n",urlkind.String());
+	printf("HTTP_PROTO: urlkind: %s\n",urlkind.String());
 	if (urlkind.ICompare("https")==0)
 		*secure=true;
     master=servant;
@@ -652,13 +653,13 @@ printf("finding uri...\n");
    }
    
   host=master.String();
-  printf("Done.\n");
+  printf("HTTP_PROTO: Done.\n");
 	 
   }
 void http_protocol::ConnectionEstablished(connection *conn)
 {
 
-	printf("Connection established!!\n");
+	printf("HTTP_PROTO: Connection established!!\n");
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
 #ifndef NEWNET
