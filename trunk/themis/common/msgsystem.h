@@ -143,6 +143,16 @@ it for encapsulation!!
 		struct msgsysclient_st {
 			MessageSystem *ptr;//!< Pointer to the MessageSystem member.
 			msgsysclient_st *next;//!< Next member in the linked list.
+			msgsysclient_st()
+			{
+				ptr=NULL;
+				next=NULL;
+			}
+			~msgsysclient_st()
+			{
+				ptr=NULL;
+				next=NULL;
+			}
 		};
 /*!
 \brief Pointer to the first member in the msgsysclient_st linked list.
@@ -263,6 +273,8 @@ This is the number of targets that received the most recently broadcast message.
 		BLocker _processmessage_lock_;
 	
 		BLocker local_msg_sys_lock;
+		
+		volatile int32 _broadcast_complete_;
 	
 	public:
 		static const int32 DEBUG_INFO_MSG='dbim';

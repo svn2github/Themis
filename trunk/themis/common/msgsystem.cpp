@@ -31,6 +31,7 @@ Project Start Date: October 18, 2000
 #include <Autolock.h>
 #include <stdio.h>
 #include <OS.h>
+#include <String.h>
 volatile int32 MessageSystem::broadcast_target_count=0;
 MessageSystem::msgsysclient_st *MessageSystem::MsgSysClients=NULL;
 BLocker MessageSystem::msgsyslock;
@@ -61,11 +62,11 @@ MessageSystem::~MessageSystem()
 	BAutolock alock(msgsyslock);
 	if (alock.IsLocked()) {
 		_ms_receiver_quit_=1;
+//		status_t stat;
+//		wait_for_thread(_msg_receiver_thread_,&stat);
 		release_sem(_msg_receiver_sem_);
 		delete_sem(_msg_receiver_sem_);
 //		delete _message_queue_;
-		status_t stat;
-		wait_for_thread(_msg_receiver_thread_,&stat);
 	}
 }
 int32 MessageSystem::MS_Start_Thread(void *arg) 
@@ -83,8 +84,10 @@ const char * MessageSystem::MsgSysObjectName() {
 	return MS_Name;
 }
 void MessageSystem::Debug(const char *message, int32 plugid) {
+	if (_Quit_Thread_)
+		return;
 	BMessage debug(DEBUG_INFO_MSG);
-	debug.AddInt32( "command", COMMAND_INFO );
+	debug.AddInt32( "command", DEBUG_INFO_MSG );
 	if (plugid!=-1)
 		debug.AddInt32( "pluginID", plugid );
 	debug.AddString("message",message);
@@ -94,9 +97,8 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 {
 	while (!_Quit_Thread_) {
 		if (acquire_sem(process_sem)==B_OK) {
-#ifdef DEBUG
-			printf("MessageSystem::_ProcessBroadcasts_\n");
-#endif
+			if (_Quit_Thread_)
+				break;
 			if (has_data(_ProcessThread_)) {
 //				BMessage *msg;
 				thread_id sender_thread;
@@ -109,44 +111,81 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 				container->FindPointer("broadcaster_pointer",(void**)&broadcaster);
 				container->FindInt32("broadcast_targets",(int32*)&targets);
 				container->FindInt32("broadcaster_target_id",(int32*)&sender_target_id);
-//				printf("Sender: %lu\nTarget: %lu\ntest 1: %lu\ntest 2: %lu\n",sender_target_id,targets,MS_TARGET_APPLICATION&targets,MS_TARGET_UNKNOWN&targets);
 				BMessage *msg=new BMessage();
 				container->FindMessage("parcel",msg);
 				msg->AddPointer("_broadcast_origin_pointer_",broadcaster);
-//				printf("Broadcasting this message:\n");
-//				msg->PrintToStream();
 				msgsysclient_st *cur=MsgSysClients;
 				volatile uint32 current_target=0;
 				bool found=false;
 				broadcaster->broadcast_status_code=B_OK;
 				broadcaster->broadcast_successful_receives=0;
+				MessageSystem *member;
+				msgsysclient_st *verifier;
+				volatile int32 member_found;
+				BString member_name;
+//				printf("Message sender is %s\n",broadcaster->MsgSysObjectName());
 				while (cur!=NULL) {
-//					printf("getting current broadcast target id\n");
-					if (cur->ptr==NULL) {
-						cur=cur->next;
+					if (_Quit_Thread_)
+						break;
+					if (msgsyslock.LockWithTimeout(25000)==B_OK)
+					{
+					member_found=0;
+					member=NULL;
+					verifier=MsgSysClients;
+					while (verifier!=NULL)
+					{
+						if (verifier==cur)
+						{
+							atomic_add(&member_found,1);
+							break;
+						}
+						verifier=verifier->next;
+					}
+					if (!member_found)
+					{
+						cur=MsgSysClients;
+						msgsyslock.Unlock();
 						continue;
 					}
-					current_target=cur->ptr->BroadcastTarget();
-//					if (targets==MS_TARGET_PROTOCOL)
-//						printf("targets: 0x%-2x\tcurrent: 0x%-2x\tcomparison: 0x%-2x\n",targets,current_target,current_target&targets);
+					if (cur->ptr==NULL) {
+						cur=cur->next;
+						msgsyslock.Unlock();
+						continue;
+					}
+					member_name=cur->ptr->MsgSysObjectName();
+					member=cur->ptr;
+					
+					current_target=member->BroadcastTarget();
 					switch(targets) {
 						case MS_TARGET_UNKNOWN: {
 							found=true;
-//							printf("\t*** Attempt to send broadcast to unknown target. Duh!\n");
+						}break;
+						case MS_TARGET_DEBUG: {
+							if (current_target==MS_TARGET_DEBUG)
+							{
+								found=true;
+								_message_targets_++;
+								member->_message_queue_.Lock();
+								member->_message_queue_.AddMessage(new BMessage(*msg));
+								member->_message_queue_.Unlock();
+								if (member->_msg_receiver_running_==0) {
+									member->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,member->MS_Name,B_LOW_PRIORITY,member);
+									resume_thread(member->_msg_receiver_thread_);
+
+								}
+								broadcaster->broadcast_successful_receives++;
+								
+							}
 						}break;
 						case MS_TARGET_ALL: {
 							found=true;
-//							broadcaster->broadcast_status_code|=cur->ptr->ReceiveBroadcast(msg);
 							_message_targets_++;
-								cur->ptr->_message_queue_.Lock();
-								cur->ptr->_message_queue_.AddMessage(new BMessage(*msg));
-								cur->ptr->_message_queue_.Unlock();
-								if (cur->ptr->_msg_receiver_running_==0) {
-							//		status_t status;
-							//		wait_for_thread(cur->ptr->_msg_receiver_thread_,&status);
-//									release_sem(cur->ptr->_msg_receiver_sem_);
-									cur->ptr->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,cur->ptr->MS_Name,B_LOW_PRIORITY,cur->ptr);
-									resume_thread(cur->ptr->_msg_receiver_thread_);
+								member->_message_queue_.Lock();
+								member->_message_queue_.AddMessage(new BMessage(*msg));
+								member->_message_queue_.Unlock();
+								if (member->_msg_receiver_running_==0) {
+									member->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,member->MS_Name,B_LOW_PRIORITY,member);
+									resume_thread(member->_msg_receiver_thread_);
 
 								}
 							broadcaster->broadcast_successful_receives++;
@@ -155,25 +194,18 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 
 						case MS_TARGET_PROTOCOL: {
 							if ((current_target&MS_TARGET_PROTOCOL)!=0) {
-	//							printf("A protocol has been found. %s (0x%-2x;0x%-2x)\n",cur->ptr->MsgSysObjectName(),current_target,current_target&0x40);
 								
 								found=true;
 								broadcaster->broadcast_successful_receives++;
-								cur->ptr->_message_queue_.Lock();
-								cur->ptr->_message_queue_.AddMessage(new BMessage(*msg));
-								cur->ptr->_message_queue_.Unlock();
-								if (cur->ptr->_msg_receiver_running_==0) {
-							//		status_t status;
-							//		wait_for_thread(cur->ptr->_msg_receiver_thread_,&status);
-//									release_sem(cur->ptr->_msg_receiver_sem_);
-									cur->ptr->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,cur->ptr->MS_Name,B_LOW_PRIORITY,cur->ptr);
-									resume_thread(cur->ptr->_msg_receiver_thread_);
+								member->_message_queue_.Lock();
+								member->_message_queue_.AddMessage(new BMessage(*msg));
+								member->_message_queue_.Unlock();
+								if (member->_msg_receiver_running_==0) {
+									member->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,member->MS_Name,B_LOW_PRIORITY,member);
+									resume_thread(member->_msg_receiver_thread_);
 
 								}
-							}// else {
-	//							printf("%s does not seem to be a protocol; bypassing...\n",cur->ptr->MsgSysObjectName());						
-	//						}
-							
+							}							
 						}break;
 
 
@@ -181,15 +213,12 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 							if (current_target==sender_target_id) {
 								found=true;
 								broadcaster->broadcast_successful_receives++;
-								cur->ptr->_message_queue_.Lock();
-								cur->ptr->_message_queue_.AddMessage(new BMessage(*msg));
-								cur->ptr->_message_queue_.Unlock();
-								if (cur->ptr->_msg_receiver_running_==0) {
-							//		status_t status;
-							//		wait_for_thread(cur->ptr->_msg_receiver_thread_,&status);
-//									release_sem(cur->ptr->_msg_receiver_sem_);
-									cur->ptr->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,cur->ptr->MS_Name,B_LOW_PRIORITY,cur->ptr);
-									resume_thread(cur->ptr->_msg_receiver_thread_);
+								member->_message_queue_.Lock();
+								member->_message_queue_.AddMessage(new BMessage(*msg));
+								member->_message_queue_.Unlock();
+								if (member->_msg_receiver_running_==0) {
+									member->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,member->MS_Name,B_LOW_PRIORITY,member);
+									resume_thread(member->_msg_receiver_thread_);
 
 								}
 								
@@ -199,20 +228,16 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 							
 						}break;
 						default: {
-//							printf("default\n");
 							if (((current_target&targets)>=1) || (current_target==targets) ) {
+//								printf("Sending message to %s\n",member_name.String());
 								found=true;
-//								printf("calling ReceiveBroadcast()\n");
 								broadcaster->broadcast_successful_receives++;
-								cur->ptr->_message_queue_.Lock();
-								cur->ptr->_message_queue_.AddMessage(new BMessage(*msg));
-								cur->ptr->_message_queue_.Unlock();
-								if (cur->ptr->_msg_receiver_running_==0) {
-							//		status_t status;
-							//		wait_for_thread(cur->ptr->_msg_receiver_thread_,&status);
-//									release_sem(cur->ptr->_msg_receiver_sem_);
-									cur->ptr->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,cur->ptr->MS_Name,B_LOW_PRIORITY,cur->ptr);
-									resume_thread(cur->ptr->_msg_receiver_thread_);
+								member->_message_queue_.Lock();
+								member->_message_queue_.AddMessage(new BMessage(*msg));
+								member->_message_queue_.Unlock();
+								if (member->_msg_receiver_running_==0) {
+									member->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,member->MS_Name,B_LOW_PRIORITY,member);
+									resume_thread(member->_msg_receiver_thread_);
 
 								}
 //								broadcaster->broadcast_status_code|=cur->ptr->ReceiveBroadcast(msg);
@@ -222,8 +247,20 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 						}
 						
 					}
-					
 					cur=cur->next;
+					msgsyslock.Unlock();
+					}
+				}
+				atomic_add(&broadcaster->_broadcast_complete_,1);
+				if (_Quit_Thread_)
+				{//make sure we stop delivering messages as well; messages can sometimes generate more messages...
+					msgsysclient_st *cur=MsgSysClients;
+					while (cur!=NULL)
+					{
+						atomic_add(&cur->ptr->_ms_receiver_quit_,1);
+						cur=cur->next;
+					}
+					break;
 				}
 				if (!found) {
 					MessageSystem *ptr=NULL;
@@ -246,14 +283,14 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 
 void MessageSystem::Broadcast(uint32 targets,BMessage *msg) 
 {
+//	printf("%s is attempting to send a broadcast.\n",MsgSysObjectName());
+		if (_Quit_Thread_!=0)
+			return;//ignore new broadcasts if we're shutting down.
 	BAutolock alock(&local_msg_sys_lock);
 	if (alock.IsLocked()) {
-		
 	if (acquire_sem(transmit_sem)==B_OK) {
-//		printf("MessageSystem::Broadcast\n");
+		_broadcast_complete_=0;
 		if (msg!=NULL) {
-					
-			msg->PrintToStream();
 			BMessage *container=new BMessage();
 			container->AddInt32("broadcast_targets",targets);
 			container->AddPointer("broadcaster_pointer",this);
@@ -349,7 +386,7 @@ int32 MessageSystem::_ProcessMessage_(void *arg)
 	//me->_msg_receiver_thread_=0;
 //	}
 //	printf("exiting thread\n");
-	exit_thread(0L);
+//	exit_thread(0L);
 	return 0L;
 }
 
@@ -375,23 +412,27 @@ status_t MessageSystem::BroadcastReply(BMessage *msg)
 void MessageSystem::MsgSysUnregister(MessageSystem *target){
 	BAutolock alock(msgsyslock);
 	if (alock.IsLocked()) {
+		BString name=target->MsgSysObjectName();
+		printf("%s is unregistering from the message system\n",name.String());
 		msgsysclient_st *cur=MsgSysClients, *last=MsgSysClients;
 		while (cur!=NULL) {
 			if (cur->ptr==target) {
 				if (cur==MsgSysClients) {
 					MsgSysClients=MsgSysClients->next;
-					delete cur;
+ 					delete cur;
 				} else {
 					last->next=cur->next;
 					delete cur;
 				}
+				cur=NULL;
 				break;
 			}
 			last=cur;
 			cur=cur->next;
 		}
+		broadcast_target_count--;
+		printf("%s is now unregistered\n",name.String());
 	}
-	broadcast_target_count--;
 }
 int32 MessageSystem::CountMembers() {
 	int32 count=0;

@@ -271,6 +271,8 @@ bool plugman::QuitRequested() {
 	Broadcast(MS_TARGET_ALL,msg);
 	delete msg;
 	printf("Waiting for Quit Broadcast to finish.\n");
+	while(!_broadcast_complete_)
+		;
 	if (acquire_sem(quit_sem)==B_OK)
 		release_sem(quit_sem);
 	delete_sem(quit_sem);
@@ -313,6 +315,10 @@ status_t plugman::UnloadAllPlugins(bool clean) {
 				}
 				if (get_image_symbol(cur->sysid,"Shutdown",B_SYMBOL_TYPE_TEXT,(void**)&Shutdown)==B_OK)
 					(*Shutdown)(true);
+					if (cur->uses_heartbeat) {
+						atomic_add(&heartcount,-1);
+						cur->uses_heartbeat=false;
+					}
 				unload_add_on(cur->sysid);
 		} else {
 #ifdef DEBUG

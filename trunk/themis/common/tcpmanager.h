@@ -49,8 +49,11 @@ namespace _Themis_Networking_ {
 This class is what the older TCPLayer class should have been. It is designed to handle
 multiple connections to multiple hosts quickly and efficiently.
 */
+	class Connection;
 	class TCPManager {
 		private:
+		friend class Connection;
+		//void RemoveConnection(Connection *target);
 /*!
 \brief Quits the TCPManager thread.
 
@@ -68,7 +71,7 @@ multiple connections to multiple hosts quickly and efficiently.
 
 
 */
-			BLocker *lock;
+			BLocker lock;
 #ifdef USEOPENSSL
 /*!
 \brief SSL method if available.

@@ -125,8 +125,8 @@ struct connection {
 		pptr=NULL;
 	}
 	~connection() {
-		printf("Connection going away, socket %ld",socket);
-		printf(" (%s)\n",open ? "open":"closed");
+//		printf("Connection going away, socket %ld",socket);
+//		printf(" (%s)\n",open ? "open":"closed");
 		fflush(stdout);
 		char addr[200];
 		uint16 port;

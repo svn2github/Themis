@@ -74,65 +74,43 @@ tcplayer::tcplayer() {
 	static bool initialized = false;
 	
 	if (atomic_or(&initcount, 1) == 0) {
-#ifdef DEBUG
-	printf("Initializing SSL Library\n");
-#endif
+//	printf("Initializing SSL Library\n");
 		
 		SSL_library_init();
-#ifdef DEBUG
-		printf("loading error strings.\n");
-#endif
+//		printf("loading error strings.\n");
 		
 		SSL_load_error_strings();
 		initialized = true;
 	} else {
 		while (!initialized) snooze(50000);
 	}
-#ifdef DEBUG
-printf("loading ssl algorithms\n");
-#endif
+//printf("loading ssl algorithms\n");
 	
 	SSLeay_add_ssl_algorithms();
-#ifdef DEBUG
-printf("creating ssl client method\n");
-#endif
+//printf("creating ssl client method\n");
 	
 		sslmeth = SSLv23_client_method();
-#ifdef DEBUG
-printf("creating ssl context\n");
-#endif
+//printf("creating ssl context\n");
 	
 		sslctx=SSL_CTX_new (sslmeth);
-#ifdef DEBUG
-		printf("setting ssl context options\n");
-#endif
+//		printf("setting ssl context options\n");
 	
 	SSL_CTX_set_options(sslctx, SSL_OP_ALL);
-#ifdef DEBUG
-	printf("setting default verify paths\n");
-#endif
+//	printf("setting default verify paths\n");
 	
 	SSL_CTX_set_default_verify_paths(sslctx);
-#ifdef DEBUG
 	if (sslctx==NULL)
-		printf("SSL Context creation error\n");
-#endif
+		printf("TCPLAYER: SSL Context creation error\n");
 	unsigned char buf[17];
 	memset(buf,0,17);
-#ifdef DEBUG
-	printf("doing rand stuff...\n");
-#endif
+//	printf("doing rand stuff...\n");
 	RAND_egd("/tmp/test.rnd");
 	
 	 do{
-#ifdef DEBUG
-		printf("rand while loop\n");
-#endif
+//		printf("rand while loop\n");
 		
 		for (int i=0;i<16;i++) {
-#ifdef DEBUG
-			printf("rand for loop\n");
-#endif
+//			printf("rand for loop\n");
 			
 			srand(real_time_clock());
 			buf[i]=(real_time_clock_usecs()/system_time())%128+(rand()%128);
@@ -140,33 +118,23 @@ printf("creating ssl context\n");
 		RAND_seed(buf,16);
 	}while(RAND_status()!=1);
 	
-#ifdef DEBUG
-	printf("RAND status: %d\n",RAND_status());
-#endif
+//	printf("RAND status: %d\n",RAND_status());
 #endif
 }
 
 tcplayer::~tcplayer() {
-#ifdef DEBUG
-	printf("tcp_layer destructor, %ld connections\n",Connections());
-#endif
+//	printf("tcp_layer destructor, %ld connections\n",Connections());
 	if (conn_head!=NULL) {
 		connection *cur=conn_head;
-#ifdef DEBUG
-		printf("tcplayer: deleting connections:\n");
-#endif
+//		printf("tcplayer: deleting connections:\n");
 		while (conn_head!=NULL) {
-#ifdef DEBUG
-			printf("tcplayer: deleting connection %p\n",cur);
-#endif
+//			printf("tcplayer: deleting connection %p\n",cur);
 			cur=conn_head->next;
 			delete conn_head;
 			conn_head=cur;
 		}
 	}
-#ifdef DEBUG
-printf("clearing out callbacks.\n");
-#endif
+//printf("clearing out callbacks.\n");
 	if (callback_head!=NULL) {
 		DRCallback_st *cur=callback_head;
 		while (callback_head!=NULL) {
@@ -176,9 +144,7 @@ printf("clearing out callbacks.\n");
 		}
 		
 	}
-#ifdef DEBUG
-printf("done clearing callbacks.\n");
-#endif
+//printf("done clearing callbacks.\n");
 #ifdef USEOPENSSL
 	if (sslctx!=NULL)
 		SSL_CTX_free (sslctx);
@@ -186,9 +152,7 @@ printf("done clearing callbacks.\n");
 	delete_sem(tcp_mgr_sem);
 	delete_sem(tcplayer_sem);
 	delete lock;
-#ifdef DEBUG
-	printf("~tcplayer end\n");
-#endif
+//	printf("~tcplayer end\n");
 }
 /*
 int32 tcplayer::Lock(int32 timeout) 
@@ -222,15 +186,11 @@ void tcplayer::Start() {
 		thread=spawn_thread(StartManager,"tcp_layer_manager",B_LOW_PRIORITY,this);
 		resume_thread(thread);
 	} else {
-#ifdef DEBUG
-		fprintf(stderr,"tcp_layer_manager already running.\n");
-#endif
+//		fprintf(stderr,"tcp_layer_manager already running.\n");
 	}
 }
 int32 tcplayer::StartManager(void *arg) {
-#ifdef DEBUG
-	printf("tcp_layer starting\n");
-#endif
+//	printf("tcp_layer starting\n");
 	tcplayer* obj=(tcplayer*)arg;
 	return obj->Manager();
 }
@@ -286,12 +246,12 @@ int32 tcplayer::Manager() {
 				}
 				//delete above lines			
 				if ((curtime>=timeout) && (curtime<(timeout+current->time_to_live))) {
-					printf("Manager disconnect 1\n");
+//					printf("Manager disconnect 1\n");
 					CloseConnection(current);
 					continue;
 				} else {
 					if ((curtime>=timeout) && (curtime>=(timeout+current->time_to_live))) {
-					printf("Manager disconnect 2\n");
+//					printf("Manager disconnect 2\n");
 						KillConnection(current);
 						continue;
 					}
@@ -299,7 +259,7 @@ int32 tcplayer::Manager() {
 			} else {
 				if ((errno!=EINPROGRESS) && (errno!=EALREADY))
 					if ((curtime>=timeout) && (curtime>=(timeout+current->time_to_live))) {
-					printf("Manager disconnect 3\n");
+//					printf("Manager disconnect 3\n");
 						KillConnection(current);
 						continue;
 					}
@@ -307,9 +267,7 @@ int32 tcplayer::Manager() {
 		}
 //		lock->Unlock();
 		if (conn_queue!=NULL) {
-#ifdef DEBUG
-			printf("Processing queued connections...\n");
-#endif
+//			printf("Processing queued connections...\n");
 			connection *qcur=conn_queue,*next;
 			conn_queue=NULL;
 			while (qcur!=NULL) {
@@ -319,9 +277,7 @@ int32 tcplayer::Manager() {
 				ConnectTo(qcur);
 				qcur=next;
 			}
-#ifdef DEBUG
-			printf("Done with queued connections.\n");
-#endif
+//			printf("Done with queued connections.\n");
 		}
 		snooze(15000);
 	}
@@ -345,9 +301,7 @@ uint32 tcplayer::Connections() {
 }
 connection* tcplayer::QueueConnect(ProtocolPlugClass *Proto,int32 protoid,char *host,int16 port, bool ssl, bool forcenew) {
 	BAutolock alock(lock);
-#ifdef DEBUG
-	printf("QueueConnect\n");
-#endif
+//	printf("QueueConnect\n");
 //	while (!alock.IsLocked()) {
 //		snooze(10000);
 //	}
@@ -372,16 +326,12 @@ connection* tcplayer::QueueConnect(ProtocolPlugClass *Proto,int32 protoid,char *
 			cur->next=conn;
 		}
 	}
-#ifdef DEBUG
-	printf("QueueConnect done.\n");
-#endif
+//	printf("QueueConnect done.\n");
 	return conn;
 }
 connection* tcplayer::ConnectTo(connection *target) {
 	BAutolock alock(lock);
-#ifdef DEBUG
-	printf("Attempting to connect to %s:%d from queue.\n",target->addrstr.String(),target->port);
-#endif
+//	printf("Attempting to connect to %s:%d from queue.\n",target->addrstr.String(),target->port);
 	connection *conn=target;
 	if (alock.IsLocked()) {
 	int32 sockproto=0;
@@ -405,9 +355,7 @@ connection* tcplayer::ConnectTo(connection *target) {
 			cur=cur->next;
 		}
 		if ((cur!=NULL) && (cur!=conn)) {
-#ifdef DEBUG
-			printf("found existing connection:\t%s:%d\t%s:%d\n",cur->addrstr.String(),cur->port,conn->addrstr.String(),conn->port);
-#endif
+//			printf("found existing connection:\t%s:%d\t%s:%d\n",cur->addrstr.String(),cur->port,conn->addrstr.String(),conn->port);
 			conn->socket=cur->socket;
 			conn->open=cur->open;
 //			conn->result=cur->result;
@@ -436,9 +384,7 @@ connection* tcplayer::ConnectTo(connection *target) {
 		}
 		if (conn->hptr==NULL) {
 			//the name can't be found...
-#ifdef DEBUG
-			printf("\t*** THE HOST NAME CAN'T BE FOUND!!! ***\n");
-#endif
+//			printf("\t*** THE HOST NAME CAN'T BE FOUND!!! ***\n");
 			KillConnection(conn);
 			return NULL;
 		}
@@ -450,18 +396,12 @@ connection* tcplayer::ConnectTo(connection *target) {
 				sockaddr_in servaddr;
 				memcpy(&servaddr.sin_addr,*conn->pptr,sizeof(struct in_addr));
 				servaddr.sin_port=htons(conn->port);
-#ifdef DEBUG
-				printf("[QC] reconnecting. (%s:%ld)\n",conn->addrstr.String(),conn->port);
-#endif
+//				printf("[QC] reconnecting. (%s:%ld)\n",conn->addrstr.String(),conn->port);
 				conn->result=connect(conn->socket,(sockaddr *)&servaddr,sizeof(servaddr));
-#ifdef DEBUG
-				printf("[QC] connect result: %ld\n",conn->result);
-#endif
+//				printf("[QC] connect result: %ld\n",conn->result);
 				if (conn->result!=0) {
 					int32 err=errno;
-#ifdef DEBUG
-					printf("error: %ld - %s\n",errno,strerror(errno));
-#endif
+//					printf("error: %ld - %s\n",errno,strerror(errno));
 					if (err==-2147459072) {
 						conn->socket=socket(AF_INET,SOCK_STREAM,sockproto);
 						int option=1;
@@ -483,9 +423,7 @@ connection* tcplayer::ConnectTo(connection *target) {
 			conn->open=true;
 		else 
 			conn->open=false;
-#ifdef DEBUG
-		printf("[QC]Connected? %s\n",conn->open?"yes":"no");
-#endif
+//		printf("[QC]Connected? %s\n",conn->open?"yes":"no");
 	if (conn!=NULL) {
 //		conn->proto_id=protoid;
 //		conn->addrstr=host;
@@ -502,30 +440,20 @@ connection* tcplayer::ConnectTo(connection *target) {
 			int flags=fcntl(conn->socket,F_GETFL,0);
 			flags|=O_NONBLOCK;
 			fcntl(conn->socket,F_SETFL,flags);
-#ifdef DEBUG
-			printf("Uses SSL...\n");
-#endif
+//			printf("Uses SSL...\n");
 			conn->usessl=true;	
-#ifdef DEBUG
-			printf("Creating new context...");
-#endif
+//			printf("Creating new context...");
 			fflush(stdout);
-#ifdef DEBUG
-			printf("done.\n");
-			printf("Creating new ssl object...");
-#endif
+//			printf("done.\n");
+//			printf("Creating new ssl object...");
 			fflush(stdout);
 			conn->ssl = SSL_new (sslctx);
-#ifdef DEBUG
-			printf("done.\n");
-#endif
+//			printf("done.\n");
 			SSL_set_cipher_list(conn->ssl, SSL_TXT_ALL);
 			conn->sslbio=BIO_new_socket(conn->socket,BIO_NOCLOSE);
 			SSL_set_bio(conn->ssl,conn->sslbio,conn->sslbio);
 			SSL_set_connect_state(conn->ssl);
-#ifdef DEBUG
-			printf("SSL connecting...");
-#endif
+//			printf("SSL connecting...");
 			fflush(stdout);
 			TryConnectAgain2TheSequel:
 			conn->result = SSL_connect (conn->ssl);
@@ -536,27 +464,19 @@ connection* tcplayer::ConnectTo(connection *target) {
 			}
 			flags &= ~O_NONBLOCK;
 			fcntl(conn->socket,F_SETFL,flags);
-#ifdef DEBUG
-			printf("done.\n");
-#endif
+//			printf("done.\n");
 			if (conn->result==1) {
 				SSL_CIPHER *cipher=SSL_get_current_cipher (conn->ssl);
 				
-#ifdef DEBUG
-				printf ("SSL connection using %s\n", SSL_CIPHER_get_name(cipher));
-#endif
+//				printf ("SSL connection using %s\n", SSL_CIPHER_get_name(cipher));
 				int usedbits=0,cipherbits=0;
 				usedbits=SSL_CIPHER_get_bits(cipher,&cipherbits);
-#ifdef DEBUG
-				printf("SSL Cipher is %d bits, %d bits used.\n",cipherbits,usedbits);
-				printf("Getting SSL certificate...");
-#endif
+//				printf("SSL Cipher is %d bits, %d bits used.\n",cipherbits,usedbits);
+//				printf("Getting SSL certificate...");
 				fflush(stdout);
 				
 				conn->server_cert = SSL_get_peer_certificate (conn->ssl);
-#ifdef DEBUG
-				printf("done.\n");
-#endif
+//				printf("done.\n");
 				
 				const char *s;
 				SSL_CIPHER *c;
@@ -565,14 +485,10 @@ connection* tcplayer::ConnectTo(connection *target) {
 				c = SSL_get_current_cipher(conn->ssl);
 				
 				s = (char *) SSL_get_version(conn->ssl);
-#ifdef DEBUG
-				printf("SSL version: %s\n",s);
-#endif
+//				printf("SSL version: %s\n",s);
 				s = (char *) SSL_CIPHER_get_name(c);
 				
-#ifdef DEBUG
-				printf("SSL Cipher name: %s\n",s);
-#endif
+//				printf("SSL Cipher name: %s\n",s);
 				int ssl_keylength=0;
 				SSL_CIPHER_get_bits(c, &ssl_keylength);
 				
@@ -582,38 +498,26 @@ connection* tcplayer::ConnectTo(connection *target) {
 				*/
 				if(strncmp(s, "EXP-", 4) == 0)
 					ssl_keylength = 40;
-#ifdef DEBUG
-				printf("key length: %d\n",ssl_keylength);
-#endif
+//				printf("key length: %d\n",ssl_keylength);
 			} else {
 				conn->result=SSL_get_error(conn->ssl, conn->result);
-#ifdef DEBUG
-				printf("SSL Error: %ld\n",conn->result);
-#endif
+//				printf("SSL Error: %ld\n",conn->result);
 				char errormsg[2000];
 				memset(errormsg,0,2000);
 				ERR_error_string(conn->result,errormsg);
 				
-#ifdef DEBUG
-				printf("Error Message: %s\n",errormsg);
-#endif
+//				printf("Error Message: %s\n",errormsg);
 				SSL_CIPHER *cipher=SSL_get_current_cipher (conn->ssl);
 				
-#ifdef DEBUG
-				printf ("SSL connection using %s\n", SSL_CIPHER_get_name(cipher));
-#endif
+//				printf ("SSL connection using %s\n", SSL_CIPHER_get_name(cipher));
 				int usedbits=0,cipherbits=0;
 				usedbits=SSL_CIPHER_get_bits(cipher,&cipherbits);
-#ifdef DEBUG
-				printf("SSL Cipher is %d bits, %d bits used.\n",cipherbits,usedbits);
-				printf("Getting SSL certificate...");
-#endif
+//				printf("SSL Cipher is %d bits, %d bits used.\n",cipherbits,usedbits);
+//				printf("Getting SSL certificate...");
 				fflush(stdout);
 				
 				conn->server_cert = SSL_get_peer_certificate (conn->ssl);
-#ifdef DEBUG
-				printf("done.\n");
-#endif
+//				printf("done.\n");
 				
 				const char *s;
 				SSL_CIPHER *c;
@@ -622,14 +526,10 @@ connection* tcplayer::ConnectTo(connection *target) {
 				c = SSL_get_current_cipher(conn->ssl);
 				
 				s = (char *) SSL_get_version(conn->ssl);
-#ifdef DEBUG
-				printf("SSL version: %s\n",s);
-#endif
+//				printf("SSL version: %s\n",s);
 				s = (char *) SSL_CIPHER_get_name(c);
 				
-#ifdef DEBUG
-				printf("SSL Cipher name: %s\n",s);
-#endif
+//				printf("SSL Cipher name: %s\n",s);
 				int ssl_keylength=0;
 				SSL_CIPHER_get_bits(c, &ssl_keylength);
 				
@@ -639,41 +539,29 @@ connection* tcplayer::ConnectTo(connection *target) {
 				*/
 				if(strncmp(s, "EXP-", 4) == 0)
 					ssl_keylength = 40;
-#ifdef DEBUG
-				printf("key length: %d\n",ssl_keylength);
-#endif
+//				printf("key length: %d\n",ssl_keylength);
 				
 			}
 			if (conn->server_cert!=NULL) {
 				
 				char * str;
-#ifdef DEBUG
-				printf("certificate: %p\n",conn->server_cert);
-				printf("Getting SSL subject...");
-#endif
+//				printf("certificate: %p\n",conn->server_cert);
+//				printf("Getting SSL subject...");
 				fflush(stdout);
 				str = X509_NAME_oneline (X509_get_subject_name (conn->server_cert),0,0);
-#ifdef DEBUG
-				printf("done\n");
-				printf ("\t subject: %s\n", str);
-#endif
+//				printf("done\n");
+//				printf ("\t subject: %s\n", str);
 				free (str);
 				str = X509_NAME_oneline (X509_get_issuer_name  (conn->server_cert),0,0);
-#ifdef DEBUG
-				printf ("\t issuer: %s\n", str);
-#endif
+//				printf ("\t issuer: %s\n", str);
 				free (str);
 			} else {
-#ifdef DEBUG
-				printf("Unable to get server SSL certificate.\n");
-#endif
+//				printf("Unable to get server SSL certificate.\n");
 				
 			}
 			
 #else
-#ifdef DEBUG
-			printf("tcplayer.cpp: SSL support has not been included in this binary.\n");
-#endif
+//			printf("tcplayer.cpp: SSL support has not been included in this binary.\n");
 #endif
 		}
 	}
@@ -683,30 +571,20 @@ connection* tcplayer::ConnectTo(connection *target) {
 void tcplayer::SSLConnect(connection *conn)
 {
 #ifdef USEOPENSSL
-#ifdef DEBUG
-			printf("Uses SSL...\n");
-#endif
+//			printf("Uses SSL...\n");
 			conn->usessl=true;	
-#ifdef DEBUG
-			printf("Creating new context...");
-#endif
+//			printf("Creating new context...");
 			fflush(stdout);
-#ifdef DEBUG
-			printf("done.\n");
-			printf("Creating new ssl object...");
-#endif
+//			printf("done.\n");
+//			printf("Creating new ssl object...");
 			fflush(stdout);
 			conn->ssl = SSL_new (sslctx);
-#ifdef DEBUG
-			printf("done.\n");
-#endif
+//			printf("done.\n");
 			SSL_set_cipher_list(conn->ssl, SSL_TXT_ALL);
 			conn->sslbio=BIO_new_socket(conn->socket,BIO_NOCLOSE);
 			SSL_set_bio(conn->ssl,conn->sslbio,conn->sslbio);
 			SSL_set_connect_state(conn->ssl);
-#ifdef DEBUG
-			printf("SSL connecting...");
-#endif
+//			printf("SSL connecting...");
 			fflush(stdout);
 			TryConnectAgain2TheSequel:
 			conn->result = SSL_connect (conn->ssl);
@@ -715,27 +593,19 @@ void tcplayer::SSLConnect(connection *conn)
 				snooze(10000);
 				goto TryConnectAgain2TheSequel;
 			}
-#ifdef DEBUG
-			printf("done.\n");
-#endif
+//			printf("done.\n");
 			if (conn->result==1) {
 				SSL_CIPHER *cipher=SSL_get_current_cipher (conn->ssl);
 				
-#ifdef DEBUG
-				printf ("SSL connection using %s\n", SSL_CIPHER_get_name(cipher));
-#endif
+//				printf ("SSL connection using %s\n", SSL_CIPHER_get_name(cipher));
 				int usedbits=0,cipherbits=0;
 				usedbits=SSL_CIPHER_get_bits(cipher,&cipherbits);
-#ifdef DEBUG
-				printf("SSL Cipher is %d bits, %d bits used.\n",cipherbits,usedbits);
-				printf("Getting SSL certificate...");
-#endif
+//				printf("SSL Cipher is %d bits, %d bits used.\n",cipherbits,usedbits);
+//				printf("Getting SSL certificate...");
 				fflush(stdout);
 				
 				conn->server_cert = SSL_get_peer_certificate (conn->ssl);
-#ifdef DEBUG
-				printf("done.\n");
-#endif
+//				printf("done.\n");
 				
 				const char *s;
 				SSL_CIPHER *c;
@@ -744,14 +614,10 @@ void tcplayer::SSLConnect(connection *conn)
 				c = SSL_get_current_cipher(conn->ssl);
 				
 				s = (char *) SSL_get_version(conn->ssl);
-#ifdef DEBUG
-				printf("SSL version: %s\n",s);
-#endif
+//				printf("SSL version: %s\n",s);
 				s = (char *) SSL_CIPHER_get_name(c);
 				
-#ifdef DEBUG
-				printf("SSL Cipher name: %s\n",s);
-#endif
+//				printf("SSL Cipher name: %s\n",s);
 				int ssl_keylength=0;
 				SSL_CIPHER_get_bits(c, &ssl_keylength);
 				
@@ -761,38 +627,26 @@ void tcplayer::SSLConnect(connection *conn)
 				*/
 				if(strncmp(s, "EXP-", 4) == 0)
 					ssl_keylength = 40;
-#ifdef DEBUG
-				printf("key length: %d\n",ssl_keylength);
-#endif
+//				printf("key length: %d\n",ssl_keylength);
 			} else {
 				conn->result=SSL_get_error(conn->ssl, conn->result);
-#ifdef DEBUG
-				printf("SSL Error: %ld\n",conn->result);
-#endif
+//				printf("SSL Error: %ld\n",conn->result);
 				char errormsg[2000];
 				memset(errormsg,0,2000);
 				ERR_error_string(conn->result,errormsg);
 				
-#ifdef DEBUG
-				printf("Error Message: %s\n",errormsg);
-#endif
+//				printf("Error Message: %s\n",errormsg);
 				SSL_CIPHER *cipher=SSL_get_current_cipher (conn->ssl);
 				
-#ifdef DEBUG
-				printf ("SSL connection using %s\n", SSL_CIPHER_get_name(cipher));
-#endif
+//				printf ("SSL connection using %s\n", SSL_CIPHER_get_name(cipher));
 				int usedbits=0,cipherbits=0;
 				usedbits=SSL_CIPHER_get_bits(cipher,&cipherbits);
-#ifdef DEBUG
-				printf("SSL Cipher is %d bits, %d bits used.\n",cipherbits,usedbits);
-				printf("Getting SSL certificate...");
-#endif
+//				printf("SSL Cipher is %d bits, %d bits used.\n",cipherbits,usedbits);
+//				printf("Getting SSL certificate...");
 				fflush(stdout);
 				
 				conn->server_cert = SSL_get_peer_certificate (conn->ssl);
-#ifdef DEBUG
-				printf("done.\n");
-#endif
+//				printf("done.\n");
 				
 				const char *s;
 				SSL_CIPHER *c;
@@ -801,14 +655,10 @@ void tcplayer::SSLConnect(connection *conn)
 				c = SSL_get_current_cipher(conn->ssl);
 				
 				s = (char *) SSL_get_version(conn->ssl);
-#ifdef DEBUG
-				printf("SSL version: %s\n",s);
-#endif
+//				printf("SSL version: %s\n",s);
 				s = (char *) SSL_CIPHER_get_name(c);
 				
-#ifdef DEBUG
-				printf("SSL Cipher name: %s\n",s);
-#endif
+//				printf("SSL Cipher name: %s\n",s);
 				int ssl_keylength=0;
 				SSL_CIPHER_get_bits(c, &ssl_keylength);
 				
@@ -818,34 +668,24 @@ void tcplayer::SSLConnect(connection *conn)
 				*/
 				if(strncmp(s, "EXP-", 4) == 0)
 					ssl_keylength = 40;
-#ifdef DEBUG
-				printf("key length: %d\n",ssl_keylength);
-#endif
+//				printf("key length: %d\n",ssl_keylength);
 				
 			}
 			if (conn->server_cert!=NULL) {
 				
 				char * str;
-#ifdef DEBUG
-				printf("certificate: %p\n",conn->server_cert);
-				printf("Getting SSL subject...");
-#endif
+//				printf("certificate: %p\n",conn->server_cert);
+//				printf("Getting SSL subject...");
 				fflush(stdout);
 				str = X509_NAME_oneline (X509_get_subject_name (conn->server_cert),0,0);
-#ifdef DEBUG
-				printf("done\n");
-				printf ("\t subject: %s\n", str);
-#endif
+//				printf("done\n");
+//				printf ("\t subject: %s\n", str);
 				free (str);
 				str = X509_NAME_oneline (X509_get_issuer_name  (conn->server_cert),0,0);
-#ifdef DEBUG
-				printf ("\t issuer: %s\n", str);
-#endif
+//				printf ("\t issuer: %s\n", str);
 				free (str);
 			} else {
-#ifdef DEBUG
-				printf("Unable to get server SSL certificate.\n");
-#endif
+//				printf("Unable to get server SSL certificate.\n");
 				
 			}
 			
@@ -858,9 +698,7 @@ connection* tcplayer::ConnectTo(ProtocolPlugClass *Proto,int32 protoid,char *hos
 		return NULL;
 	if (strlen(host)<4)
 		return NULL;
-#ifdef DEBUG
-	printf("Requestor wants to connect to %s:%d\n",host,port);
-#endif
+//	printf("Requestor wants to connect to %s:%d\n",host,port);
 	connection *conn=NULL;
 	if (alock.IsLocked()) {
 	int32 sockproto=0;
@@ -868,13 +706,9 @@ connection* tcplayer::ConnectTo(ProtocolPlugClass *Proto,int32 protoid,char *hos
 	sockproto=IPPROTO_TCP;
 #endif
 	if (forcenew) {
-#ifdef DEBUG
-		printf("[forcenew]");
-#endif
+//		printf("[forcenew]");
 		NewConnectStruct:
-#ifdef DEBUG
-		printf("\tNew Connection\n");
-#endif
+//		printf("\tNew Connection\n");
 		connection *cur=conn_head;
 		conn=new connection;
 		conn->protocol_ptr=Proto;
@@ -894,9 +728,7 @@ connection* tcplayer::ConnectTo(ProtocolPlugClass *Proto,int32 protoid,char *hos
 		conn->hptr=gethostbyname(host);
 		if (conn->hptr==NULL) {
 			//the name can't be found...
-#ifdef DEBUG
-			printf("\t*** THE HOST NAME CAN'T BE FOUND!!! ***\n");
-#endif
+//			printf("\t*** THE HOST NAME CAN'T BE FOUND!!! ***\n");
 			KillConnection(conn);
 			return NULL;
 		}
@@ -908,44 +740,32 @@ connection* tcplayer::ConnectTo(ProtocolPlugClass *Proto,int32 protoid,char *hos
 		if ((errno==EINPROGRESS) || (conn->result==0)) 
 			conn->open=true;
 		else  {
-			printf("Connection error: %ld - %s\n",errno,strerror(errno));
+//			printf("Connection error: %ld - %s\n",errno,strerror(errno));
 			conn->open=false;
 		}
-#ifdef DEBUG
-		printf("Connected? %s\n",conn->open?"yes":"no");
-#endif
+//		printf("Connected? %s\n",conn->open?"yes":"no");
 	} else {
 		connection *cur=conn_head;
 		while (cur!=NULL) {
-#ifdef DEBUG
-			printf("desired host: %s\ncur->host: %s\n",host,cur->addrstr.String());
-#endif
+//			printf("desired host: %s\ncur->host: %s\n",host,cur->addrstr.String());
 			
 			if ((strcasecmp(host,cur->addrstr.String())==0) && (cur->port==port))
 				break;
 			cur=cur->next;
 		}
-#ifdef DEBUG
-		printf("cur: %p\n",cur);
-#endif
+//		printf("cur: %p\n",cur);
 		
 		if (cur==NULL)
 			goto NewConnectStruct;
 		if (cur->requests!=0) {
-#ifdef DEBUG
-			printf("found existing connection, but it's busy.\n");
-#endif
+//			printf("found existing connection, but it's busy.\n");
 			goto NewConnectStruct;
 		}
-#ifdef DEBUG
-		printf("found existing connection, it's available.\n");
-		printf("Connected? %s\n",cur->open?"yes":"no");
-#endif
+//		printf("found existing connection, it's available.\n");
+//		printf("Connected? %s\n",cur->open?"yes":"no");
 		
 		if (!Connected(cur,true)) {
-#ifdef DEBUG
-			printf("Connecting...\n");
-#endif
+//			printf("Connecting...\n");
 			if (cur->protocol_ptr!=Proto)
 				cur->protocol_ptr=Proto;
 			cur->socket=socket(AF_INET,SOCK_STREAM,sockproto);
@@ -959,9 +779,7 @@ connection* tcplayer::ConnectTo(ProtocolPlugClass *Proto,int32 protoid,char *hos
 				cur->open=true;
 			else
 				cur->open=false;
-#ifdef DEBUG
-			printf("Connected? %s\n",cur->open?"yes":"no");
-#endif
+//			printf("Connected? %s\n",cur->open?"yes":"no");
 		} 
 		conn=cur;
 		
@@ -976,187 +794,6 @@ connection* tcplayer::ConnectTo(ProtocolPlugClass *Proto,int32 protoid,char *hos
 		if (!conn->open) {
 			return conn;
 		}
-/*		
-		if (ssl) {
-#ifdef USEOPENSSL
-//			int flags=fcntl(conn->socket,F_GETFL,0);
-//			flags|=O_NONBLOCK;
-//			fcntl(conn->socket,F_SETFL,flags);
-#ifdef DEBUG
-			printf("Uses SSL...\n");
-#endif
-			conn->usessl=true;	
-#ifdef DEBUG
-			printf("Creating new context...");
-#endif
-			fflush(stdout);
-#ifdef DEBUG
-			printf("done.\n");
-			printf("Creating new ssl object...");
-#endif
-			fflush(stdout);
-			conn->ssl = SSL_new (sslctx);
-#ifdef DEBUG
-			printf("done.\n");
-#endif
-			SSL_set_cipher_list(conn->ssl, SSL_TXT_ALL);
-			conn->sslbio=BIO_new_socket(conn->socket,BIO_NOCLOSE);
-			SSL_set_bio(conn->ssl,conn->sslbio,conn->sslbio);
-			SSL_set_connect_state(conn->ssl);
-#ifdef DEBUG
-			printf("SSL connecting...");
-#endif
-			fflush(stdout);
-			TryConnectAgain2:
-			conn->result = SSL_connect (conn->ssl);
-//			int err = SSL_connect (conn->ssl);
-			if (SSL_get_error(conn->ssl,conn->result)==SSL_ERROR_WANT_READ) {
-				snooze(10000);
-				goto TryConnectAgain2;
-			}
-	//		flags &= ~O_NONBLOCK;
-	//		fcntl(conn->socket,F_SETFL,flags);
-#ifdef DEBUG
-			printf("done.\n");
-#endif
-			if (conn->result==1) {
-				SSL_CIPHER *cipher=SSL_get_current_cipher (conn->ssl);
-				
-#ifdef DEBUG
-				printf ("SSL connection using %s\n", SSL_CIPHER_get_name(cipher));
-#endif
-				int usedbits=0,cipherbits=0;
-				usedbits=SSL_CIPHER_get_bits(cipher,&cipherbits);
-#ifdef DEBUG
-				printf("SSL Cipher is %d bits, %d bits used.\n",cipherbits,usedbits);
-				printf("Getting SSL certificate...");
-#endif
-				fflush(stdout);
-				
-				conn->server_cert = SSL_get_peer_certificate (conn->ssl);
-#ifdef DEBUG
-				printf("done.\n");
-#endif
-				
-				const char *s;
-				SSL_CIPHER *c;
-				
-				
-				c = SSL_get_current_cipher(conn->ssl);
-				
-				s = (char *) SSL_get_version(conn->ssl);
-#ifdef DEBUG
-				printf("SSL version: %s\n",s);
-#endif
-				s = (char *) SSL_CIPHER_get_name(c);
-				
-#ifdef DEBUG
-				printf("SSL Cipher name: %s\n",s);
-#endif
-				int ssl_keylength=0;
-				SSL_CIPHER_get_bits(c, &ssl_keylength);
-				
-				
-//				 set to the secret key size for the export ciphers...
-//				 SSLeay returns the total key size
-				
-				if(strncmp(s, "EXP-", 4) == 0)
-					ssl_keylength = 40;
-#ifdef DEBUG
-				printf("key length: %d\n",ssl_keylength);
-#endif
-			} else {
-				conn->result=SSL_get_error(conn->ssl, conn->result);
-#ifdef DEBUG
-				printf("SSL Error: %ld\n",conn->result);
-#endif
-				char errormsg[2000];
-				memset(errormsg,0,2000);
-				ERR_error_string(conn->result,errormsg);
-				
-#ifdef DEBUG
-				printf("Error Message: %s\n",errormsg);
-#endif
-				SSL_CIPHER *cipher=SSL_get_current_cipher (conn->ssl);
-				
-#ifdef DEBUG
-				printf ("SSL connection using %s\n", SSL_CIPHER_get_name(cipher));
-#endif
-				int usedbits=0,cipherbits=0;
-				usedbits=SSL_CIPHER_get_bits(cipher,&cipherbits);
-#ifdef DEBUG
-				printf("SSL Cipher is %d bits, %d bits used.\n",cipherbits,usedbits);
-				printf("Getting SSL certificate...");
-#endif
-				fflush(stdout);
-				
-				conn->server_cert = SSL_get_peer_certificate (conn->ssl);
-#ifdef DEBUG
-				printf("done.\n");
-#endif
-				
-				const char *s;
-				SSL_CIPHER *c;
-				
-				
-				c = SSL_get_current_cipher(conn->ssl);
-				
-				s = (char *) SSL_get_version(conn->ssl);
-#ifdef DEBUG
-				printf("SSL version: %s\n",s);
-#endif
-				s = (char *) SSL_CIPHER_get_name(c);
-				
-#ifdef DEBUG
-				printf("SSL Cipher name: %s\n",s);
-#endif
-				int ssl_keylength=0;
-				SSL_CIPHER_get_bits(c, &ssl_keylength);
-				
-				
-//				 set to the secret key size for the export ciphers...
-//				 SSLeay returns the total key size
-				
-				if(strncmp(s, "EXP-", 4) == 0)
-					ssl_keylength = 40;
-#ifdef DEBUG
-				printf("key length: %d\n",ssl_keylength);
-#endif
-				
-			}
-			if (conn->server_cert!=NULL) {
-				
-				char * str;
-#ifdef DEBUG
-				printf("certificate: %p\n",conn->server_cert);
-				printf("Getting SSL subject...");
-#endif
-				fflush(stdout);
-				str = X509_NAME_oneline (X509_get_subject_name (conn->server_cert),0,0);
-#ifdef DEBUG
-				printf("done\n");
-				printf ("\t subject: %s\n", str);
-#endif
-				free (str);
-				str = X509_NAME_oneline (X509_get_issuer_name  (conn->server_cert),0,0);
-#ifdef DEBUG
-				printf ("\t issuer: %s\n", str);
-#endif
-				free (str);
-			} else {
-#ifdef DEBUG
-				printf("Unable to get server SSL certificate.\n");
-#endif
-				
-			}
-			
-#else
-#ifdef DEBUG
-			printf("tcplayer.cpp: SSL support has not been included in this binary.\n");
-#endif
-#endif
-		}
-*/
 	}
 }	
 	return conn;
@@ -1207,9 +844,6 @@ connection *tcplayer::NextConnection() {
 void tcplayer::CloseConnection(connection *target) {
 //	BAutolock alock(lock);
 //	if (alock.IsLocked()) {
-#ifdef DEBUG
-printf("tcplayer closeconnection\n");
-#endif
 if (target->open) {
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
@@ -1240,9 +874,6 @@ if (target->socket!=-1)
 		if (cur->protocol==target->proto_id) {
 			if ((target->closedcbdone==0) && (cur->connclosedcb!=NULL)){
 				atomic_add(&target->closedcbdone,1);
-#ifdef DEBUG
-printf("about to call connection closed callback %ld\n",target->closedcbdone);
-#endif
 				cur->connclosedcb(target);
 			}
 			break;
@@ -1258,9 +889,6 @@ void tcplayer::KillConnection(connection *target) {
 	if (target==NULL)
 		return;
 	
-#ifdef DEBUG
-	printf("Killing connection %p\n",target);
-#endif
 	
 		if (target->open) {
 		closesocket(target->socket);
@@ -1317,9 +945,6 @@ int32 tcplayer::Send(connection **conn,unsigned char *data, int32 size) {
 	 atomic_add(&(*conn)->requests,1);
 	
 	if (!Connected((*conn))) {
-#ifdef DEBUG
-		printf("Not connected (send)\n");
-#endif
 		
 			char host[250];
 			int16 port;
@@ -1336,9 +961,6 @@ int32 tcplayer::Send(connection **conn,unsigned char *data, int32 size) {
 		sent=SSL_write((*conn)->ssl,(const char*)data,size);
 		}
 		catch(...) {
-#ifdef DEBUG
-			printf("hmmm... it seems that the send (SSL_WRITE) triggered an exception; perhaps the connection closed before we could send...\n");
-#endif
 		
 		}
 		
@@ -1350,9 +972,6 @@ int32 tcplayer::Send(connection **conn,unsigned char *data, int32 size) {
 		sent=send((*conn)->socket,data,size,0);
 		}
 		catch(...) {
-#ifdef DEBUG
-			printf("hmmm... it seems that the send triggered an exception; perhaps the connection closed before we could send...\n");
-#endif
 			
 		}
 		
@@ -1443,7 +1062,7 @@ int32 tcplayer::Receive(connection **conn, unsigned char *data, int32 size) {
 		}
 */		
 		if ((got<0) && ((errno==ENOTCONN) || ( errno==ECONNRESET) || (errno==EINTR) /*|| (errno==EWOULDBLOCK) */)) {
-			printf("receive-close\n");
+//			printf("receive-close\n");
 			CloseConnection((*conn));
 		}
 #endif
@@ -1462,7 +1081,7 @@ void tcplayer::RequestDone(connection *conn,bool close) {
 					conn->requests=0;
 				if ((close) && (!conn->closedcbdone)) {
 					atomic_add(&conn->closedcbdone,1);
-					printf("request done close\n");
+//					printf("request done close\n");
 					CloseConnection(conn);
 				}
 				
@@ -1578,7 +1197,7 @@ bool tcplayer::Connected(connection *conn,bool skipvalid) {
 							//we've disconnected
 		//					Disconnect();
 							conn->open=false;
-							printf("Socket exception: %d - %s\n",errno,strerror(errno));
+//							printf("Socket exception: %d - %s\n",errno,strerror(errno));
 						}
 					}
 #ifndef USENETSERVER
@@ -1595,18 +1214,13 @@ bool tcplayer::Connected(connection *conn,bool skipvalid) {
 							int iError = errno;
 							if  ((iError==ENETUNREACH )||(iError==ECONNREFUSED)||(iError==ECONNRESET)||(iError==EBADF)||(iret==0)) {
 								conn->open = false; //Graceful disconnect from other side. 
-								printf("connected close\n");
+//								printf("connected close\n");
 								CloseConnection(conn);
 							}
 						}
 						else
 							conn->open=true; 
 					}
-#endif
-#ifdef DEBUG
-					if (oldstatus)
-						if (!conn->open)
-							printf("Connection %p on socket %ld closed\n",conn,conn->socket);
 #endif
 				} else {
 					if ( IsValid(conn))
@@ -1634,29 +1248,17 @@ bool tcplayer::Connected(connection *conn,bool skipvalid) {
 	return false;
 }
 status_t tcplayer::Quit() {
-#ifdef DEBUG
-	printf("tcp_layer stopping\n");
-#endif
 	status_t status=B_OK;
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
 		
 	atomic_add(&quit,1);
-#ifdef DEBUG
-	printf("tcplayer: releasing sem for shutdown...\n");
-#endif
 	
 	release_sem(tcp_mgr_sem);
-#ifdef DEBUG
-	printf("tcplayer: waiting for thread...\n");
-#endif
 	
 	wait_for_thread(thread,&status);
 	}
 	
-#ifdef DEBUG
-	printf("tcplayer: returning...\n");
-#endif
 	
 	return status;
 }
@@ -1692,9 +1294,6 @@ void tcplayer::SetConnectionClosedCB(int32 proto, void (*connclosedcb)(connectio
 }
 
 void tcplayer::SetDRCallback(int32 proto,void (*DataReceived)(connection *conn),int32 (*Lock)(int32 timeout),void(*Unlock)(void)) {
-#ifdef DEBUG
-	printf("SetDRCallback: %p\n",callback_head);
-#endif
 	if ((callback_head==NULL) || (firstcb==1)) {
 		callback_head=new DRCallback_st;
 		callback_head->protocol=proto;
