@@ -383,7 +383,7 @@ endif
 #			domtest
 #			domloadtest
 #			testplug
-all: framework addons
+all: framework libs addons
 	@echo "Themis application and add-ons built successfully."
 addons: httpaddon cacheaddon htmlpaddon renderer fileaddon
 	@echo "All add-ons built successfully."
@@ -493,8 +493,8 @@ $(COMMON_OBJECT_DIR)%.o: common/%.cpp $(COMMON_DEPENDS_DIR)%.d
 	
 
 #renderer
-renderer: $(BASE_ADDON_INSTALL_DIR)renderer.so
-$(BASE_ADDON_INSTALL_DIR)renderer.so: $(BASE_INSTALL_DIR)Themis domlib $(foreach file,$(RENDERERSOURCES),$(BASE_ADDONS_OBJECT_DIR)Renderer/$(notdir $(file:.cpp=.o)))
+renderer: $(BASE_ADDON_INSTALL_DIR)renderer.so domlib
+$(BASE_ADDON_INSTALL_DIR)renderer.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(RENDERERSOURCES),$(BASE_ADDONS_OBJECT_DIR)Renderer/$(notdir $(file:.cpp=.o)))
 	@echo "Linking renderer..."
 	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)renderer.so $(foreach file,$(notdir $(RENDERERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)/Renderer/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=renderer.so -L ./ -L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) $(STDLIBS) -ldom -lstdc++.r4 _APP_ 
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)renderer.so
@@ -643,8 +643,8 @@ $(BASE_ADDONS_OBJECT_DIR)imageh/%.o: $(BASE_ADDON_SOURCE_DIR)imageh/%.cpp $(BASE
 
 
 #html parser add-on
-htmlpaddon: $(BASE_ADDON_INSTALL_DIR)html_parser.so 
-$(BASE_ADDON_INSTALL_DIR)html_parser.so: domlib $(COMMONOBJ) $(foreach file,$(HTMLPARSERSOURCES),$(BASE_ADDONS_OBJECT_DIR)HTMLParser/$(notdir $(file:.cpp=.o))) #domlib htmlparserdepends htmlparserobjects
+htmlpaddon: $(BASE_ADDON_INSTALL_DIR)html_parser.so domlib
+$(BASE_ADDON_INSTALL_DIR)html_parser.so:  $(BASE_INSTALL_DIR)Themis $(COMMONOBJ) $(foreach file,$(HTMLPARSERSOURCES),$(BASE_ADDONS_OBJECT_DIR)HTMLParser/$(notdir $(file:.cpp=.o))) #domlib htmlparserdepends htmlparserobjects
 	@echo "Linking HTML Parser add-on $@" 
 	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)html_parser.so $(foreach file,$(notdir $(HTMLPARSERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)HTMLParser/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=html_parser.so -L ./ -L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR)  -lbe -lroot -ldom -lstdc++.r4 _APP_
 	@echo "HTML Parser add-on is now linked. Doing mimeset."
