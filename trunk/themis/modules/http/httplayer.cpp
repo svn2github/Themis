@@ -1559,12 +1559,14 @@ if (!lock->IsLocked()) {
 	
 }
 void httplayer::CloseRequest(http_request *request,bool quick) {
+	if (request==NULL)
+		return;
 	Lock();
 	
 //	acquire_sem(connhandle_sem);
 	//atomic_add(&request->done,1);
 	int result=0;
-//	if (request->conn!=NULL)
+	if (request->conn!=NULL)
 		result=request->conn->result;
 	
 	Done(request);
