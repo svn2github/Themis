@@ -906,7 +906,7 @@ void CookieManager::ProcessAttributes(const char *attributes,cookie_st *cookie, 
 			strncpy(item,atts[i],len);
 			if (isspace(item[0])) {
 				int j=0;
-				while ((atts[i][j]!=NULL) && (isspace(atts[i][j])))
+				while (((atts[i]+j)!=NULL) && (isspace(atts[i][j])))
 					j++;
 				atts[i]=atts[i]+j;
 //				int l2=strlen(item)-j;
