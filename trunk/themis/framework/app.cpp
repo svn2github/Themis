@@ -211,6 +211,12 @@ bool App::QuitRequested(){
 
 void App::MessageReceived(BMessage *msg){
 	switch(msg->what){
+		case ABOUTWIN_CLOSE :
+		{
+			printf( "APP ABOUTWIN_CLOSE\n" );
+			AWin = NULL;
+			break;
+		}
 		case B_QUIT_REQUESTED :
 		{
 			printf( "APP B_QUIT_REQUESTED\n" );
@@ -225,9 +231,15 @@ void App::MessageReceived(BMessage *msg){
 			delete chgmsg;
 			break;
 		}
-		case SHOW_PREFERENCES :
+		case PREFSWIN_CLOSE :
 		{
-			printf( "SHOW_PREFERENCES\n" );
+			printf( "APP PREFSWIN_CLOSE\n" );
+			PWin = NULL;
+			break;
+		}
+		case PREFSWIN_SHOW :
+		{
+			printf( "PREFSWIN_SHOW\n" );
 			if( PWin == NULL)
 			{
 				BPoint point;
@@ -247,6 +259,12 @@ void App::MessageReceived(BMessage *msg){
 			else
 				PWin->Activate(true);
 				
+			break;
+		}
+		case SAVE_APP_SETTINGS :
+		{
+			printf( "APP SAVE_APP_SETTINGS\n" );
+			SaveSettings();
 			break;
 		}
 		case WINDOW_CLOSE :
@@ -402,9 +420,7 @@ void App::MessageReceived(BMessage *msg){
 						break;
 					}
 				}
-				if( currenturl.Length() == 0 )
-					currenturl.SetTo( lastwin->navview->urlview->Text() );
-				
+								
 				printf( "current url: %s\n", currenturl.String() );
 				
 				printf( "successfully added new win; showing now\n" );
@@ -425,6 +441,7 @@ void App::MessageReceived(BMessage *msg){
 						AppSettings->FindString( "HomePage", &string );
 						homepage->AddString( "url_to_open", string.String() );
 						msgr.SendMessage( homepage );
+						delete homepage;
 						break;
 					}
 					case 2 : // current windows page
@@ -433,6 +450,7 @@ void App::MessageReceived(BMessage *msg){
 						BMessage* currentpage = new BMessage( URL_OPEN );
 						currentpage->AddString( "url_to_open", currenturl.String() );
 						msgr.SendMessage( currentpage );
+						delete currentpage;						
 						break;
 					}
 				}

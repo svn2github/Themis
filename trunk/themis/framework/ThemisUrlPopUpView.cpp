@@ -106,6 +106,8 @@ ThemisUrlPopUpViewMessageFilter::Filter( BMessage *msg, BHandler **target )
 			BMessenger msgr( (*target) );
 			msgr.SendMessage( selectmsg );
 			
+			delete selectmsg;
+			
 			result = B_DISPATCH_MESSAGE;
 			
 			break;

@@ -33,6 +33,26 @@ ThemisUrlPopUpWindow::ThemisUrlPopUpWindow( BWindow* parent, BRect frame )
 	AddChild( urlpopupview );
 }
 
+ThemisUrlPopUpWindow::~ThemisUrlPopUpWindow()
+{
+	BStringItem* item = NULL;
+	
+	for( int32 i = 0; i < url_list->CountItems(); i++ )
+	{
+		item = ( BStringItem* )url_list->RemoveItem( (int32)0 );
+		delete item;
+	}
+	
+	for(int32 i = 0; i < url_list->CountItems(); i++ )
+	{
+		item = ( BStringItem* )trunc_list->RemoveItem( (int32)0 );
+		delete item;
+	}
+	
+	delete url_list;
+	delete trunc_list;
+}
+
 void
 ThemisUrlPopUpWindow::MessageReceived( BMessage *msg )
 {
@@ -225,8 +245,8 @@ void
 ThemisUrlPopUpWindow::TruncateUrlStrings()
 {
 	int i = 0;
-	BStringItem* urlitem;
-	BStringItem* truncitem;
+	BStringItem* urlitem = NULL;
+	BStringItem* truncitem = NULL;
 	BString* string = new BString;
 	
 	while( url_list->ItemAt( i ) != NULL )
@@ -246,4 +266,5 @@ ThemisUrlPopUpWindow::TruncateUrlStrings()
 					
 		i++;
 	}
+	delete string;
 }

@@ -43,7 +43,7 @@ aboutwin::~aboutwin()
 
 bool aboutwin::QuitRequested() 
 {
-	((App*)be_app)->AWin=NULL;
+	be_app_messenger.SendMessage( ABOUTWIN_CLOSE );
 	return true;
 }
 

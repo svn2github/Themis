@@ -38,6 +38,12 @@ ThemisStatusView::ThemisStatusView(
 
 ThemisStatusView::~ThemisStatusView( void )
 {
+	delete fDocBmp;
+	delete fImgBmp;
+	delete fSecureBmp;
+	delete fInsecureBmp;
+	delete fCookieBmp;
+	delete fCookieDisabledBmp;
 }
 
 void

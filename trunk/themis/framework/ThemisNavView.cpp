@@ -151,9 +151,7 @@ ThemisNavView::CreateInterfaceButtons()
 	// 3-pic button
 	names[5] = "BUTTONRELOADPICBUTTON";
 	names[6] = "BUTTONGOPICBUTTON";
-	
-	
-	
+
 	for( int i = 0; i < 7; i++ )
 	{
 		// either 64x16 or 48x16 behaviour
@@ -186,6 +184,8 @@ ThemisNavView::CreateInterfaceButtons()
 			if( j == 1 ) overpic = tempview->EndPicture();
 			if( j == 2 ) activepic = tempview->EndPicture();
 			if( j == 3 ) offpic = tempview->EndPicture();
+			
+			delete smallbmp;
 		}
 		
 		BMessage* msg = NULL;

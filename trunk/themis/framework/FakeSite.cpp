@@ -60,6 +60,7 @@ FakeSite::FakeSite( BRect rect, const char* title, int16 uid, BWindow* win = NUL
 
 FakeSite::~FakeSite( void )
 {
+	delete site_fav_icon;
 }
 
 void
@@ -139,6 +140,8 @@ FakeSite::MouseDown( BPoint point )
 			newtabmsg->AddString( "url_to_open", "the.middle.click.url" );
 			
 			messagetarget.SendMessage( newtabmsg );
+			
+			delete newtabmsg;
 						
 			break;
 		}

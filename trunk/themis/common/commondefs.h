@@ -121,6 +121,7 @@ to allow interoperability in some parts of the application.
 #define SupportedMIMEType 'spmt'
 
 // Message Constants for the interface
+#define ABOUTWIN_CLOSE			'awcl'
 #define BUTTON_BACK				'bbac'
 #define BUTTON_FORWARD			'bfwd'
 #define BUTTON_STOP				'bstp'
@@ -130,8 +131,10 @@ to allow interoperability in some parts of the application.
 #define CLOSE_URLPOPUP			'clpu'
 #define DTD_CHANGED				'dtdc'
 #define DTD_CHANGED_PARSER		'dtdp'
+#define PREFSWIN_CLOSE			'pwcl'
+#define PREFSWIN_SHOW			'pwsh'
 #define RE_INIT_INTERFACE		'riif'
-#define SHOW_PREFERENCES		'shpr'
+#define SAVE_APP_SETTINGS		'savs'
 #define TAB_ADD					'tadd'
 #define TAB_CLOSE				'tclo'
 #define URL_TYPED				'urlt'

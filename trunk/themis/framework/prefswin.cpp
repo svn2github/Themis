@@ -130,7 +130,7 @@ prefswin::QuitRequested()
 	BPoint point( Frame().left, Frame().top );
 	AppSettings->ReplacePoint( "PrefsWindowPoint", point );
 	
-	( ( App* )be_app )->PWin = NULL;
+	be_app_messenger.SendMessage( PREFSWIN_CLOSE );
 	cout << "end of prefswin::QuitRequested()" << endl;
 	return true;
 }
@@ -146,7 +146,7 @@ void prefswin::MessageReceived( BMessage* msg )
 			// write settings to AppSettings
 			SaveSettings();
 			// as Themis crashes very often on quit, i call the real SaveSettings() here too
-			( ( App* )be_app)->SaveSettings();
+			be_app_messenger.SendMessage( SAVE_APP_SETTINGS );
 			
 			// tell all windows to redraw its contents
 			Win* win = ( ( App* )be_app )->FirstWindow();
@@ -164,6 +164,7 @@ void prefswin::MessageReceived( BMessage* msg )
 			while( win->NextWindow() != NULL )
 			{
 				win = win->NextWindow();
+				delete msgr;
 				msgr = new BMessenger( NULL, win, NULL );
 				msgr->SendMessage( RE_INIT_INTERFACE );
 			}
@@ -309,34 +310,35 @@ void prefswin::MessageReceived( BMessage* msg )
 					rect.top = rect.bottom + 20;
 					rect.right = box->Frame().right - 10;
 					rect.bottom = rect.top + 75;
-					
+	
 					BBox* newwinpagebox = new BBox( rect, "NEWWINPAGEBOX" );
 					newwinpagebox->SetLabel( "New Windows open with ..." );
-					rview->AddChild( newwinpagebox );
-					
-					rect.left += 5;
-					rect.top += 10;
+					box->AddChild( newwinpagebox );
+							
+					rect.left = 5;
+					rect.top = 10;
 					rect.bottom = rect.top + 20;
 					rect.right = 150;
+					
 					// blank page
 					BMessage* nwspmsg1 = new BMessage( NEW_WINDOW_START_PAGE );
 					nwspmsg1->AddInt8( "newpagemode", 0 );		
 					BRadioButton* rbtn1 = new BRadioButton( rect, "RBTN1", "Blank Page", nwspmsg1 );
-					box->AddChild( rbtn1 );
+					newwinpagebox->AddChild( rbtn1 );
 					// homepage
 					rect.top += 20;
 					rect.bottom = rect.top + 20;
 					BMessage* nwspmsg2 = new BMessage( NEW_WINDOW_START_PAGE );
 					nwspmsg2->AddInt8( "newpagemode", 1 );		
 					BRadioButton* rbtn2 = new BRadioButton( rect, "RBTN2", "Home Page", nwspmsg2 );
-					box->AddChild( rbtn2 );
+					newwinpagebox->AddChild( rbtn2 );
 					// current page
 					rect.top += 20;
 					rect.bottom = rect.top + 20;
 					BMessage* nwspmsg3 = new BMessage( NEW_WINDOW_START_PAGE );
 					nwspmsg3->AddInt8( "newpagemode", 2 );		
 					BRadioButton* rbtn3 = new BRadioButton( rect, "RBTN3", "Current Page", nwspmsg3 );
-					box->AddChild( rbtn3 );
+					newwinpagebox->AddChild( rbtn3 );
 					
 					// select the correct radiobutton
 					switch( fNewWindowStartPage )
@@ -345,6 +347,7 @@ void prefswin::MessageReceived( BMessage* msg )
 						case 1 : { rbtn2->SetValue( B_CONTROL_ON ); break; }
 						case 2 : { rbtn3->SetValue( B_CONTROL_ON ); break; }
 					}
+														
 					break;
 				}
 				case 1 :
@@ -603,7 +606,7 @@ void prefswin::MessageReceived( BMessage* msg )
 			// write settings to AppSettings
 			SaveSettings();
 			// as Themis crashes very often on quit, i call the real SaveSettings() here too
-			( ( App* )be_app)->SaveSettings();
+			be_app_messenger.SendMessage( SAVE_APP_SETTINGS );
 			
 			BMessenger msgr( this );
 			BMessage* qmsg = new BMessage( B_QUIT_REQUESTED );

@@ -17,6 +17,9 @@ class ThemisUrlPopUpWindow : public BWindow
 {
 	public:
 									ThemisUrlPopUpWindow( BWindow* parent, BRect frame );
+									
+									~ThemisUrlPopUpWindow();
+									
 		virtual void				MessageReceived( BMessage *msg );
 		
 		void						ListToDisplay( BList* list );

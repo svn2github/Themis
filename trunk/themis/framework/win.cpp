@@ -92,7 +92,7 @@ Win::Win(
 	filemenu->AddItem( newtabitem );
 	BMenuItem* aboutitem = new BMenuItem( "About Themis", new BMessage( B_ABOUT_REQUESTED ), 'A', B_SHIFT_KEY );
 	filemenu->AddItem( aboutitem );
-	BMenuItem* quitwentry = new BMenuItem( "Quit Window", new BMessage( B_QUIT_REQUESTED ), 'W' );
+	BMenuItem* quitwentry = new BMenuItem( "Close Window", new BMessage( B_QUIT_REQUESTED ), 'W' );
 	filemenu->AddItem( quitwentry );
 	BMenuItem* quitentry = new BMenuItem( "Quit Themis", new BMessage( B_QUIT_REQUESTED ), 'Q' );
 	filemenu->AddItem( quitentry );
@@ -100,7 +100,7 @@ Win::Win(
 	// optionsmenu
 	optionsmenu=new BMenu( "Options" );
 	menubar->AddItem(optionsmenu);
-	BMenuItem* prefsentry = new BMenuItem( "Preferences", new BMessage( SHOW_PREFERENCES ), 'P' );
+	BMenuItem* prefsentry = new BMenuItem( "Preferences", new BMessage( PREFSWIN_SHOW ), 'P' );
 	prefsentry->SetTarget( be_app );
 	optionsmenu->AddItem( prefsentry );
 	
@@ -148,7 +148,11 @@ Win::Win(
 	delete info;
 */
 }
-Win::~Win(){
+Win::~Win()
+{
+	for( int32 i = 0; i < 10; i++ )
+		delete bitmaps[i];
+	
 	MsgSysUnregister(this);
 }
 
@@ -159,6 +163,7 @@ bool Win::QuitRequested() {
 		BMessage* closemsg = new BMessage( WINDOW_CLOSE );
 		closemsg->AddPointer( "win_to_close", this );
 		be_app_messenger.SendMessage( closemsg );
+		delete closemsg;
 		printf( "returning false\n" );
 		return false;
 	}
@@ -326,8 +331,10 @@ void Win::MessageReceived(BMessage *msg) {
 				urlopenmsg->AddBool( "hidden", hidden );
 				
 				BMessenger* target = new BMessenger( this );
-				
 				target->SendMessage( urlopenmsg );
+				
+				delete urlopenmsg;
+				delete target;				
 			}				
 			break;
 		}
@@ -1049,6 +1056,7 @@ Win::CreateTabView()
 	// add the first tab
 	BMessenger* target = new BMessenger( this );
 	target->SendMessage( TAB_ADD );
+	delete target;
 }
 
 void
