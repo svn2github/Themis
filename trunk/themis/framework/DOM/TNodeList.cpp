@@ -4,20 +4,26 @@
 
 #include "TNodeList.h"
 #include "TNode.h"
+#include "TNodeListContainer.h"
 
-TNodeList	::	TNodeList( const void * aNodeList = NULL )	{
+TNodeList	::	TNodeList( const void * aNodeList = NULL, TNodeListContainer * aContainer = NULL )	{
 	
 	mNodeList = (BList *) aNodeList;
+	mContainer = aContainer;
 	
 }
 
 TNodeList	::	~TNodeList()	{
 
+	if ( mContainer )	{
+		mContainer->removeNodeList( this );
+	}
+
 }
 
 unsigned long TNodeList	::	getLength()	{
 	
-	if ( !mNodeList )	{
+	if ( mNodeList )	{
 		return mNodeList->CountItems();
 	}
 	
@@ -27,7 +33,7 @@ unsigned long TNodeList	::	getLength()	{
 
 TNode * TNodeList	::	item( unsigned long aIndex )	{
 	
-	if ( !mNodeList )	{
+	if ( mNodeList )	{
 		return (TNode *) mNodeList->ItemAt( aIndex );
 	}
 	

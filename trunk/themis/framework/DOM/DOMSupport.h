@@ -57,4 +57,10 @@ enum TreePosition	{
 // Is not UTF-16, so must be changed!
 typedef BString TDOMString;
 
+// Internally used codes
+enum NodeChange	{
+	NODE_ADDED = 1,
+	NODE_REMOVED,
+};
+
 #endif

@@ -13,6 +13,7 @@
 #include "DOMSupport.h"
 
 class TNode;
+class TNodeListContainer;
 
 class TNodeList	{
 	
@@ -22,8 +23,11 @@ class TNodeList	{
 		// unsigned long length;
 		// ---------------------------------------------------------------------------------
 		
+		// Suuport attribute
+		TNodeListContainer * mContainer;
+		
 	public:
-		TNodeList( const void * aNodeList );
+		TNodeList( const void * aNodeList = NULL, TNodeListContainer * aContainer = NULL );
 		~TNodeList();
 		unsigned long getLength();
 		TNode * item( unsigned long aIndex );

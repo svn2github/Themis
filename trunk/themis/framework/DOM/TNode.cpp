@@ -5,45 +5,44 @@
 #include "TNode.h"
 #include "TNamedNodeMap.h"
 #include "TNodeList.h"
+#include "TNodeListContainer.h"
 #include "TDOMException.h"
 
 TNode	::	TNode( const unsigned short aNodeType, const TDOMString aNodeName = "", const TDOMString aNodeValue = "" )	{
 	
 	mNodeType = aNodeType;
 
-	mNodeName = new TDOMString();
-	
 	mParentNode = NULL;
 	mNextSibling = NULL;
 	mPreviousSibling = NULL;
 	
 	mNodeList = new BList();
 	mChildNodes = new TNodeList( mNodeList );
+	mNodeListContainers = new BList();
 
 	switch ( mNodeType )	{
 		case ELEMENT_NODE:	{
-			mNodeName->SetTo( aNodeName );
+			mNodeName.SetTo( aNodeName );
 			mAttributeList = new BList();
 			mAttributes = new TNamedNodeMap( mAttributeList, this );
 			mNodeTypeString.SetTo( "ELEMENT_NODE" );
 			break;
 		}
 		case ATTRIBUTE_NODE:	{
-			mNodeName->SetTo( aNodeName );
-			mNodeValue = new TDOMString();
-			mNodeValue->SetTo( aNodeValue );
+			mNodeName.SetTo( aNodeName );
+			mNodeValue.SetTo( aNodeValue );
 			mNodeTypeString.SetTo( "ATTRIBUTE_NODE" );
 			break;
 		}
 		case TEXT_NODE:	{
-			mNodeName->SetTo( "#text" );
-			mNodeValue = new TDOMString();
+			mNodeName.SetTo( "#text" );
+			mNodeValue.SetTo( aNodeValue );
 			mNodeTypeString.SetTo( "TEXT_NODE" );
 			break;
 		}
 		case CDATA_SECTION_NODE:	{
-			mNodeName->SetTo( "cdata-section" );
-			mNodeValue = new TDOMString();
+			mNodeName.SetTo( "cdata-section" );
+			mNodeValue.SetTo( aNodeValue );
 			mNodeTypeString.SetTo( "CDATA_SECTION_NODE" );
 			break;
 		}
@@ -56,18 +55,18 @@ TNode	::	TNode( const unsigned short aNodeType, const TDOMString aNodeName = "",
 			break;
 		}
 		case PROCESSING_INSTRUCTION_NODE:	{
-			mNodeValue = new TDOMString();
+			mNodeName.SetTo( aNodeValue );
 			mNodeTypeString.SetTo( "PROCESSSING_INSTRUCTION_NODE" );
 			break;
 		}
 		case COMMENT_NODE:	{
-			mNodeName->SetTo( "#comment" );
-			mNodeValue = new TDOMString();
+			mNodeName.SetTo( "#comment" );
+			mNodeValue.SetTo( aNodeValue );
 			mNodeTypeString.SetTo( "COMMENT_NODE" );
 			break;
 		}
 		case DOCUMENT_NODE:	{
-			mNodeName->SetTo( "#document" );
+			mNodeName.SetTo( "#document" );
 			mNodeTypeString.SetTo( "DOCUMENT_NODE" );
 			break;
 		}
@@ -76,7 +75,7 @@ TNode	::	TNode( const unsigned short aNodeType, const TDOMString aNodeName = "",
 			break;
 		}
 		case DOCUMENT_FRAGMENT_NODE:	{
-			mNodeName->SetTo( "#document-fragment" );
+			mNodeName.SetTo( "#document-fragment" );
 			mNodeTypeString.SetTo( "DOCUMENT_FRAGMENT_NODE" );
 			break;
 		}
@@ -94,7 +93,7 @@ TNode	::	TNode( const unsigned short aNodeType, const TDOMString aNodeName = "",
 
 TNode	::	~TNode()	{
 
-	printf( "Destructor called\n" );
+	printf( "Destructor called of %s\n", mNodeName.String() );
 
 	if ( mParentNode != NULL )	{
 		// Still attached to the tree
@@ -117,6 +116,7 @@ TNode	::	~TNode()	{
 
 	delete mChildNodes;
 	delete mNodeList;
+	delete mNodeListContainers;
 
 }
 
@@ -126,13 +126,13 @@ unsigned short TNode	::	getNodeType() const	{
 	
 }
 
-const TDOMString * TNode	::	getNodeName() const	{
+const TDOMString TNode	::	getNodeName() const	{
 	
 	return mNodeName;
 	
 }
 
-const TDOMString * TNode	::	getNodeValue() const	{
+const TDOMString TNode	::	getNodeValue() const	{
 	
 	return mNodeValue;
 	
@@ -140,9 +140,16 @@ const TDOMString * TNode	::	getNodeValue() const	{
 
 void TNode	::	setNodeValue( const TDOMString aNodeValue )	{
 	
-	if ( mNodeValue )	{
-		// Node can have a value
-		mNodeValue->SetTo( aNodeValue );
+	switch ( mNodeType )	{
+		case ATTRIBUTE_NODE:
+		case CDATA_SECTION_NODE:
+		case COMMENT_NODE:
+		case PROCESSING_INSTRUCTION_NODE:
+		case TEXT_NODE:	{
+			// Node can have a value
+			mNodeValue.SetTo( aNodeValue );
+			break;
+		}
 	}
 	
 }
@@ -204,12 +211,8 @@ TNode * TNode	::	insertBefore( TNode * aNewChild, TNode * aRefChild )	{
 	}
 	
 	if ( !aRefChild )	{
-		// If aNewChild is in the tree already remove it there first.
-		if ( aNewChild->mParentNode != NULL )	{
-			aNewChild->mParentNode->removeChild( aNewChild );
-		}
-
-		mNodeList->AddItem( (void *) aNewChild );
+		// Just append it to the end of the list of children
+		appendChild( aRefChild );
 	}
 	else	{
 		if ( mNodeList->HasItem( (void *) aRefChild ) )	{
@@ -235,6 +238,7 @@ TNode * TNode	::	insertBefore( TNode * aNewChild, TNode * aRefChild )	{
 					}
 				}
 			}
+			aNewChild->notifyNodeChange( this, NODE_ADDED );
 		}
 		else	{
 			return NULL;
@@ -260,7 +264,8 @@ TNode * TNode	::	replaceChild( TNode * aNewChild, TNode * aOldChild)	{
 	}
 
 	if ( !aOldChild )	{
-		return NULL;
+		// NULL is technically not in the tree
+		throw TDOMException( NOT_FOUND_ERR );
 	}
 	else	{
 		if ( mNodeList->HasItem( (void *) aOldChild ) )	{
@@ -275,6 +280,9 @@ TNode * TNode	::	replaceChild( TNode * aNewChild, TNode * aOldChild)	{
 					// Remove aOldChild from list and add aNewChild in its place
 					mNodeList->RemoveItem( i );
 					mNodeList->AddItem( (void *) aNewChild, i );
+
+					// Notify parent that node is removed
+					aOldChild->notifyNodeChange( this, NODE_REMOVED );
 					
 					// Set aNewChild's parentNode, previous- and nextSibling to aOldChild's values
 					aNewChild->mParentNode = this;
@@ -295,6 +303,8 @@ TNode * TNode	::	replaceChild( TNode * aNewChild, TNode * aOldChild)	{
 					}
 				}
 			}
+			// Notify parent that node is added
+			aNewChild->notifyNodeChange( this, NODE_ADDED );
 		}
 		else	{
 			throw TDOMException( NOT_FOUND_ERR );
@@ -308,7 +318,8 @@ TNode * TNode	::	replaceChild( TNode * aNewChild, TNode * aOldChild)	{
 TNode * TNode	::	 removeChild( TNode * aOldChild )	{
 	
 	if ( !aOldChild )	{
-		return NULL;
+		// NULL is technically not in the tree
+		throw TDOMException( NOT_FOUND_ERR );
 	}
 	else	{
 		if ( mNodeList->RemoveItem( aOldChild ) )	{
@@ -319,6 +330,9 @@ TNode * TNode	::	 removeChild( TNode * aOldChild )	{
 			if ( aOldChild->mNextSibling != NULL )	{
 				aOldChild->mNextSibling->mPreviousSibling = aOldChild->mPreviousSibling;
 			}
+
+			// Notify parent that node is removed
+			aOldChild->notifyNodeChange( this, NODE_REMOVED );
 
 			// Remove references to position in tree
 			aOldChild->mParentNode = NULL;
@@ -337,6 +351,10 @@ TNode * TNode	::	 removeChild( TNode * aOldChild )	{
 }
 
 TNode * TNode	::	appendChild( TNode * aNodeChild )	{
+
+	if ( !aNodeChild )	{
+		return NULL;
+	}
 
 	if ( this == aNodeChild || isAncestor( aNodeChild ) )	{
 		throw TDOMException( HIERARCHY_REQUEST_ERR );
@@ -362,6 +380,9 @@ TNode * TNode	::	appendChild( TNode * aNodeChild )	{
 	aNodeChild->mNextSibling = NULL;
 	mNodeList->AddItem( aNodeChild );
 	
+	// Notify parent that node is added
+	aNodeChild->notifyNodeChange( this, NODE_ADDED );
+
 	return aNodeChild;
 	
 }
@@ -482,7 +503,63 @@ bool TNode	::	isChildAllowed( const TNode * aNewChild ) const	{
 
 void TNode	::	setNodeName( const TDOMString aValue )	{
 	
-	mNodeName->SetTo( aValue );
+	mNodeName.SetTo( aValue );
+	
+}
+
+void TNode	::	nodeChanged( TNode * aNode, NodeChange aChange )	{
+	
+	TNodeListContainer * current;
+	int itemsInList = mNodeListContainers->CountItems();
+	for ( int i = 0; i < itemsInList; i++ )	{
+		current = (TNodeListContainer *) mNodeListContainers->ItemAt( i );
+		if ( current->getNodeType() == aNode->getNodeType() )	{
+			if ( current->getQueryString() == aNode->getNodeName() || current->getQueryString() == "*" )	{
+				if ( aChange == NODE_ADDED )	{
+					current->addNode( aNode );
+				}
+				if ( aChange == NODE_REMOVED )	{
+					current->removeNode( aNode );
+				}
+			}
+		}
+	}
+
+	if ( mParentNode != NULL )	{
+		mParentNode->nodeChanged( aNode, NODE_ADDED );
+	}
+
+}
+
+void TNode	::	notifyNodeChange( TNode * aNotifyNode, NodeChange aChange )	{
+	
+	aNotifyNode->nodeChanged( this, aChange );
+	int itemsInList = mNodeList->CountItems();
+	TNode * current = NULL;
+	for ( int i = 0; i < itemsInList; i++ )	{
+		current = (TNode *) mNodeList->ItemAt( i );
+		current->notifyNodeChange( aNotifyNode, aChange );
+	}
+
+}
+
+BList * TNode	::	collectNodes( TDOMString aName, unsigned short aNodeType )	{
+	
+	BList * result = new BList();
+	int itemsInList = mNodeList->CountItems();
+	TNode * current;
+	for ( int i = 0; i < itemsInList; i++ )	{
+		current = (TNode *) mNodeList->ItemAt( i );
+		if ( current->getNodeType() == aNodeType && ( current->getNodeName() == aName || aName == "*" ) )	{
+			// This node must be added to the list.
+			result->AddItem( current );
+		}
+		BList * subResult =  current->collectNodes( aName, aNodeType );
+		result->AddList( subResult );
+		delete subResult;
+	}
+	
+	return result;
 	
 }
 

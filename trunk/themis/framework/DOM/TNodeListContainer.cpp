@@ -5,12 +5,14 @@
 #include "TNodeListContainer.h"
 #include <List.h>
 #include "TNode.h"
+#include "TNodeList.h"
 
-TNodeListContainer	::	TNodeListContainer( const TDOMString aQueryString )	{
+TNodeListContainer	::	TNodeListContainer( const TDOMString aQueryString, BList * aNodes, BList * aNodeLists, unsigned short aNodeType )	{
 
-	mNodes = new BList();
-	mNodeLists = new BList();
+	mNodes = aNodes;
+	mNodeLists = aNodeLists;
 	mQueryString = aQueryString;
+	mNodeType = aNodeType;
 	
 }
 
@@ -21,9 +23,15 @@ TNodeListContainer	::	~TNodeListContainer()	{
 
 }
 
-TDOMString TNodeListContainer	::	getQueryString()	{
+TDOMString TNodeListContainer	::	getQueryString() const	{
 	
 	return mQueryString;
+	
+}
+
+unsigned short TNodeListContainer	::	getNodeType() const	{
+	
+	return mNodeType;
 	
 }
 
@@ -37,28 +45,26 @@ void TNodeListContainer	::	addNode( TNode * aNode )	{
 
 TNode * TNodeListContainer	::	removeNode( TNode * aNode )	{
 	
-	if ( mNodes->RemoveItem( aNode ) )	{
-		return aNode;
-	}
+	mNodes->RemoveItem( aNode );
+	return aNode;
 
-	return NULL;
-	
 }
 
-void TNodeListContainer	::	addNodeList( TNodeList * aNodeList )	{
+TNodeList * TNodeListContainer	::	addNodeList()	{
 	
-	if ( !mNodeLists->HasItem( aNodeList ) )	{
-		mNodeLists->AddItem( aNodeList );
-	}
+	TNodeList * nodeList = new TNodeList( mNodes, this );
+	mNodeLists->AddItem( nodeList );
+	return nodeList;
 	
 }
 
 TNodeList * TNodeListContainer	::	removeNodeList( TNodeList * aNodeList )	{
 	
-	if ( mNodeLists->RemoveItem( aNodeList ) )	{
-		return aNodeList;
+	mNodeLists->RemoveItem( aNodeList );
+	if ( mNodeLists->IsEmpty() )	{
+		delete this;
 	}
-	
-	return NULL;
+
+	return aNodeList;
 	
 }	

@@ -22,8 +22,8 @@ class TNode	{
 	private:
 		unsigned short mNodeType;
 
-		TDOMString * mNodeName;
-		TDOMString * mNodeValue;
+		TDOMString mNodeName;
+		TDOMString mNodeValue;
 		
 		TNodeList * mChildNodes;
 		TNode * mParentNode;
@@ -51,16 +51,21 @@ class TNode	{
 		bool isAncestor( const TNode * aNode ) const;
 		
 	protected:
-		// Support function
+		// Support attribute
+		BList * mNodeListContainers;
+		// Support functions
 		bool isChildAllowed( const TNode * aNewChild ) const;
 		void setNodeName( const TDOMString aValue );
+		void nodeChanged( TNode * aNode, NodeChange aChange );
+		void notifyNodeChange( TNode * aNotifyNode, NodeChange aChange );
+		BList * collectNodes( TDOMString aName, unsigned short aNodeType );
 		
 	public:
 		TNode( const unsigned short aNodeType, const TDOMString aNodeName = "", const TDOMString aNodeValue = "" );
 		~TNode();
 		unsigned short getNodeType() const;
-		const TDOMString * getNodeName() const;
-		const TDOMString * getNodeValue() const;
+		const TDOMString getNodeName() const;
+		const TDOMString getNodeValue() const;
 		void setNodeValue( const TDOMString aNodeValue );
 		TNodeList * getChildNodes() const;
 		TNode * getParentNode() const;

@@ -20,14 +20,16 @@ class TNodeListContainer	{
 		BList * mNodes;
 		BList * mNodeLists;
 		TDOMString mQueryString;
+		unsigned short mNodeType;
 				
 	public:
-		TNodeListContainer( const TDOMString aQueryString);
+		TNodeListContainer( const TDOMString aQueryString, BList * aNodes, BList * aNodeLists, unsigned short aNodeType );
 		~TNodeListContainer();
-		TDOMString getQueryString();
+		TDOMString getQueryString() const;
+		unsigned short getNodeType() const;
 		void addNode( TNode * aNode );
 		TNode * removeNode( TNode * aNode );
-		void addNodeList( TNodeList * aNodeList );
+		TNodeList * addNodeList();
 		TNodeList * removeNodeList( TNodeList * aNodeList );
 };
 

@@ -5,6 +5,8 @@
 #include "TElement.h"
 #include "TNamedNodeMap.h"
 #include "TAttr.h"
+#include "TNodeListContainer.h"
+#include "TNodeList.h"
 
 TElement	::	TElement( const TDOMString aTagName )	:	TNode( ELEMENT_NODE, aTagName )	{
 	
@@ -30,7 +32,7 @@ TDOMString TElement	::	getAttribute( const TDOMString aName ) const	{
 		return TDOMString( "" );
 	}
 	
-	return *( attribute->getNodeValue() );
+	return attribute->getNodeValue();
 	
 }
 	
@@ -71,7 +73,7 @@ TAttr * TElement	::	setAttributeNode( TAttr * aNewAttr )	{
 
 TAttr * TElement	::	removeAttributeNode( TAttr * aOldAttr )	{
 	
-	getAttributes()->removeNamedItem( *( aOldAttr->getNodeName() ) );
+	getAttributes()->removeNamedItem( aOldAttr->getNodeName() );
 	TDOMString defaultValue = aOldAttr->getDefaultValue();
 	if ( defaultValue != "" )	{
 		TAttr * newAttribute = new TAttr( aOldAttr->getName(), aOldAttr->getSpecified(), aOldAttr->getValue(), aOldAttr->getOwnerElement() );
@@ -80,4 +82,41 @@ TAttr * TElement	::	removeAttributeNode( TAttr * aOldAttr )	{
 
 	return aOldAttr;
 
+}
+
+TNodeList * TElement	::	getElementsByTagName( const TDOMString aName )	{
+	
+	TNodeListContainer * current;
+	int itemsInList = mNodeListContainers->CountItems();
+	for ( int i = 0; i < itemsInList; i++ )	{
+		current = (TNodeListContainer *) mNodeListContainers->ItemAt( 0 );
+		if ( current->getNodeType() == ELEMENT_NODE )	{
+			if ( current->getQueryString() == aName )	{
+				// There already is a NodeList with this querystring
+				// Add this one to the NodeListContainer
+				return current->addNodeList();
+			}
+		}
+	}
+	
+	// Not one NodeList with query aName exists yet. Create it.
+	BList * resultList = collectNodes( aName, ELEMENT_NODE );
+	TNodeList * result = new TNodeList( resultList );
+	BList * resultNodeList = new BList();
+	resultNodeList->AddItem( result );
+	TNodeListContainer * container = new TNodeListContainer( aName, resultList, resultNodeList, ELEMENT_NODE );
+	mNodeListContainers->AddItem( container );
+	
+	return result;
+	
+}
+
+bool TElement	::	hasAttribute( const TDOMString aName ) const	{
+	
+	if ( getAttributes()->getNamedItem( aName ) )	{
+		return true;
+	}
+	
+	return false;
+	
 }

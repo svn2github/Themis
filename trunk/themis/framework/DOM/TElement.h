@@ -29,6 +29,8 @@ class TElement	:	public TNode	{
 		TAttr * getAttributeNode( const TDOMString aName ) const;
 		TAttr * setAttributeNode( TAttr * aNewAttr );
 		TAttr * removeAttributeNode( TAttr * aOldAttr );
+		TNodeList * getElementsByTagName( const TDOMString aName );
+		bool hasAttribute( const TDOMString aName ) const;
 		
 };
 

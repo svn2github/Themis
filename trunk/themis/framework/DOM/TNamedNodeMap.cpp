@@ -38,7 +38,7 @@ TNode * TNamedNodeMap	::	getNamedItem( const TDOMString aName )	{
 	else	{		
 		for ( int i = 0; i < length; i++ )	{
 			TNode * node = (TNode *) mNodeList->ItemAt( i );
-			if ( *( node->getNodeName() ) == aName )	{
+			if ( node->getNodeName() == aName )	{
 				return node;
 			}
 		}
@@ -67,12 +67,12 @@ TNode * TNamedNodeMap	::	setNamedItem( TNode * aArg )	{
 		}			
 	}
 
-	TNode * node = getNamedItem( *( aArg->getNodeName() ) );
+	TNode * node = getNamedItem( aArg->getNodeName() );
 	if ( !node )	{
 		mNodeList->AddItem( (void *) aArg );
 	}
 	else	{
-		removeNamedItem( *( aArg->getNodeName() ) );
+		removeNamedItem( aArg->getNodeName() );
 		setNamedItem( aArg );
 	}
 	

@@ -5,6 +5,8 @@
 #include "DOMTest.h"
 #include "TAttr.h"
 #include "TNamedNodeMap.h"
+#include "TElement.h"
+#include "TNodeList.h"
 
 DOMTest	::	DOMTest()	:	BApplication( "application/x-vnd.Themis-DOMTest" )	{
 	
@@ -40,7 +42,7 @@ DOMTest	::	DOMTest()	:	BApplication( "application/x-vnd.Themis-DOMTest" )	{
 	printf( "Attribute me has value: %s\n", element->getAttribute( "me" ).String() );
 
 	TAttr * attr = (TAttr *) element->getAttributes()->getNamedItem( "me" );
-	printf( "Attribute is attached to: %s\n", attr->getOwnerElement()->getNodeName()->String() );
+	printf( "Attribute is attached to: %s\n", attr->getOwnerElement()->getNodeName().String() );
 
 	printf( "Remove attribute me through NamedNodeMap\n" );
 	element->getAttributes()->removeNamedItem( "me" );
@@ -72,7 +74,7 @@ DOMTest	::	DOMTest()	:	BApplication( "application/x-vnd.Themis-DOMTest" )	{
 	}
 	
 	printf( "Get the name of the text node\n" );
-	printf( "Name: %s\n", textNode->getNodeName()->String() );
+	printf( "Name: %s\n", textNode->getNodeName().String() );
 
 	printf( "Get a node\n" );
 	const TNode * newNode = node->getFirstChild();
@@ -88,11 +90,46 @@ DOMTest	::	DOMTest()	:	BApplication( "application/x-vnd.Themis-DOMTest" )	{
 	printf( "Get type of node\n" );
 	printf( "Type of node is: %s\n", element->getNodeTypeString() );
 	
+	printf( "Creating some elements...\n" );
+	TElement * base = new TElement( "base" );
+	TElement * item1 = new TElement( "item1" );
+	TElement * item2 = new TElement( "item2" );
+	TElement * item3 = new TElement( "item3" );
+	TElement * item4 = new TElement( "item4" );
+	TElement * item5 = new TElement( "item1" );
+	printf( "Create a tree with the elements...\n" );
+	base->appendChild( item1 );
+	base->appendChild( item2 );
+	base->appendChild( item3 );
+	item3->appendChild( item5 );
+	item5->appendChild( item4 );
+	
+	TNodeList * result = base->getElementsByTagName( "item1" );
+	printf( "There are %i elements with tag name item1\n", (int) result->getLength() );
+
+	TNodeList * resultStar = base->getElementsByTagName( "*" );
+	printf( "There are %i elements in base\n", (int) resultStar->getLength() );
+
+	printf( "Removing an item with tag name item1...\n" );
+	base->removeChild( item1 );
+
+	printf( "There are %i elements with tag name item1\n", (int) result->getLength() );
+
+	printf( "Removing a small piece of a tree...\n" );
+	base->removeChild( item3 );
+	
+	resultStar = base->getElementsByTagName( "*" );
+	printf( "There are %i elements in base\n", (int) resultStar->getLength() );
+
+
 	printf( "Cleaning up...\n" );
 
 	// Clean up and exit
+	delete result;
+	delete resultStar;
 	delete node;
 	delete textNode;
+	delete base;
 	printf( "Exiting...\n" );
 	be_app->PostMessage( B_QUIT_REQUESTED );
 	
