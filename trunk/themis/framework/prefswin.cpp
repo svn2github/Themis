@@ -391,17 +391,10 @@ void prefswin::MessageReceived( BMessage* msg )
 					
 					rect.top += 25;
 					rect.bottom = rect.top + 15;
-					rect.right -= 15;
 					
-					BTextControl* tabhistdepth = new BTextControl( rect, "TABHISTDEPTH", "Tab History Depth:", "", NULL );
+					BTextControl* tabhistdepth = new BTextControl( rect, "TABHISTDEPTH", "Tab History Depth [1-127]:", "", NULL );
 					tabhistdepth->SetModificationMessage( new BMessage( TABHISTDEPTH_CHANGED ) );
-					tabhistdepth->SetDivider( be_plain_font->StringWidth( "Tab History Depth:" ) + 5.0 );
-					
-					for( uint32 i = 0; i < 256; i++ )
-					{
-						if( i < 48 && i > 57 )
-							tabhistdepth->TextView()->DisallowChar( i );
-					}
+					tabhistdepth->SetDivider( be_plain_font->StringWidth( "Tab History Depth [1-127]:" ) + 5.0 );
 					
 					char* string;
 					sprintf( string, "%d", fTabHistoryDepth );
@@ -720,34 +713,43 @@ void prefswin::MessageReceived( BMessage* msg )
 		}
 		case TABHISTDEPTH_CHANGED :
 		{
-			printf( "TABHISTDEPTH_CHANGED\n" );
+//			printf( "TABHISTDEPTH_CHANGED\n" );
 			BTextControl* ctrl;
 			msg->FindPointer( "source", ( void** )&ctrl );
 			BString string( ctrl->Text() );
-			printf( "  %s [length: %ld]\n", string.String(), string.Length() );
+//			printf( "  %s [length: %ld]\n", string.String(), string.Length() );
 			
 			if( string.Length() == 0 )
 				break;
 			
-			for( int32 i = 0; i < string.Length(); i++ )
-				printf( "  byte %3ld: %c\n", i, string.ByteAt( i ) );
+//			for( int32 i = 0; i < string.Length(); i++ )
+//				printf( "  byte %3ld: %c\n", i, string.ByteAt( i ) );
 			
-			printf( "  last byte: %c\n", string.ByteAt( string.Length() - 1 ) );
-						
+//			printf( "  last byte: %c\n", string.ByteAt( string.Length() - 1 ) );
+			
 			if( isdigit( string.ByteAt( string.Length() - 1 ) ) == 0 )
 			{
 				printf( "  last byte is no digit!\n" );
-				string.Remove( string.Length() - 1, 1 );
-				printf( "  %s [length: %ld]\n", string.String(), string.Length() );
+				if( string.Length() == 1 )
+					string.SetTo( "10" );
+				else
+					string.Remove( string.Length() - 1, 1 );
+				
 				ctrl->SetText( string.String() );
 				ctrl->TextView()->Select( string.Length(), string.Length() );
 			}
 			
 			fTabHistoryDepth = ( int8 )atoi( string.String() );
-			if( ( uint8 )fTabHistoryDepth > 127 ) 
+			if( ( uint8 )fTabHistoryDepth > 127 || fTabHistoryDepth == 0 ) 
+			{
 				fTabHistoryDepth = 10;
+				char* newstring;
+				sprintf( newstring, "%d", fTabHistoryDepth );
+				ctrl->SetText( newstring );
+				ctrl->TextView()->Select( strlen( newstring ), strlen( newstring ) );
+			}
 			
-			printf( "  new fTabHistoryDepth: %d\n", fTabHistoryDepth );
+//			printf( "  new fTabHistoryDepth: %d\n", fTabHistoryDepth );
 					
 			break;
 		}
