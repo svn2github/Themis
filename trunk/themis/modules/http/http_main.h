@@ -30,6 +30,7 @@ Project Start Date: October 18, 2000
 #define _http_main
 #include <SupportKit.h>
 #include <AppKit.h>
+#include <NetEndpoint.h>
 #include "protocol_plugin.h"
 //namespace Themis_Networking
 // {
@@ -59,6 +60,7 @@ class http_protocol:public ProtocolPlugClass
      void ParseResponse(unsigned char *resp,size_t size);
 //     void Config(BMessage *msg);
      unsigned char *GetDoc(BString &host,int &port,BString &uri);
+     BMessage *GetHead(BMessage *info,BNetEndpoint *use_ep=NULL);
      unsigned char *GetDoc(const char* url);
      unsigned char *GetURL(const char* url);
      BMessage *GetURL_(BMessage *info);

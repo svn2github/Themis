@@ -1,0 +1,18 @@
+Project Themis
+
+See any and all included source code for license info pertaining directly to Themis, but
+see individual licenses for any outside source code that might be included in this project.
+You know, the usual legal stuff applies, and all licenses must be followed as per their respective
+licenses otherwise the whole thing is pretty much null and void.
+
+
+This file is being included at the moment just to tell you to run the makelinks.sh script
+before attempting to build Themis. This creates one or more links that will make it possible
+to build plug-ins or other parts of the app. The second most important thing I can say right
+now is to run makelinks.sh from within your working Themis directory in a Terminal window.
+
+
+If you don't follow that little bit of advice, you're probably going to have lots of problems.
+
+-= Z3R0 One =-
+May 30, 2001
