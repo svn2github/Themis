@@ -127,6 +127,7 @@ to allow interoperability in some parts of the application.
 #define BUTTON_STOP				'bstp'
 #define BUTTON_RELOAD			'brel'
 #define BUTTON_HOME				'bhom'
+#define CLEAR_TG_HISTORY		'clgh'
 #define CLOSE_OTHER_TABS		'clot'
 #define CLOSE_URLPOPUP			'clpu'
 #define DTD_CHANGED				'dtdc'
