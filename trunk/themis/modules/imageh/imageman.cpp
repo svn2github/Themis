@@ -179,6 +179,18 @@ status_t ImageMan::ReceiveBroadcast(BMessage *msg) {
 		case COMMAND_INFO: {
 			switch(msg->what) {
 				case IH_LOAD_IMAGE: {
+					BBitmap *bmp=new BBitmap(BRect(0,0,44,44),B_RGB32);
+					memset(bmp->Bits(),0xff,bmp->BitsLength());
+					
+					BMessage reply(IH_IMAGE_LOADED);
+					reply.AddPointer("bbitmap",bmp);
+					void *element;
+					msg->FindPointer("element",&element);
+					reply.AddPointer("element",element);
+					reply.AddRect("bounds",bmp->Bounds());
+					Broadcast(MS_TARGET_RENDERER,&reply);
+					
+/*
 					const char *url;
 					msg->FindString("URL",&url);
 					image_info_st *current=image_list,*last;
@@ -235,7 +247,7 @@ status_t ImageMan::ReceiveBroadcast(BMessage *msg) {
 							last->cache_object_token=CacheSys->FindObject(cache_user_token,url);
 							if (last->cache_object_token>=0)
 							{//yes, we have it the cache!
-								last->bitmap=BTranslatorRoster::GetBitmap(CacheSys->ObjectIOPointer(cache_user_token,last->cache_object_token);
+								last->bitmap=BTranslatorRoster::GetBitmap(CacheSys->ObjectIOPointer(cache_user_token,last->cache_object_token));
 								//if it's an animated image, we'll need to more processing first...
 							} else {//request the image from the appropriate protocol
 								BMessage request(LoadingNewPage);
@@ -250,7 +262,7 @@ status_t ImageMan::ReceiveBroadcast(BMessage *msg) {
 						
 						
 					}
-					
+*/					
 				}break;
 				case PlugInLoaded: {
 					PlugClass *pobj=NULL;
