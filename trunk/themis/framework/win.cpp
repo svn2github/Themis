@@ -549,7 +549,7 @@ void Win::MessageReceived(BMessage *msg) {
 			// stop, if there is no url, or about:blank
 			if( url.Length() == 0 )
 				break;
-			if( strncmp( url.String(), "about:blank", 11 ) == 0 )
+			if( strcmp( url.String(), "about:blank" ) == 0 )
 				break;
 			
 			// create the fakesite ( later the renderview )
@@ -582,6 +582,15 @@ void Win::MessageReceived(BMessage *msg) {
 					( (ThemisTab* )tabview->TabAt( selection ) )->GetHistory()->AddEntry( url.String() );
 			}
 			
+			/* add url to global history
+			 * ( You ask, why I am also adding the url on RELOAD, and not only on URL_OPEN?
+			 *   Simple. Imagine a browser being open for longer then GlobalHistoryDepthInDays.
+			 *   The url would be deleted after this period of days. If the user would then reload
+			 *   the page, it would not be saved in the history. If he closes the browser, his url
+			 *   would be lost. Ok, this is somewhat unlikely, but could happen. ) 
+			*/
+			( ( App* )be_app )->GetGlobalHistory()->AddEntry( url.String() );
+			
 			if( msg->FindBool( "hidden" ) == true )
 				tabview->DrawTabs();
 			else
@@ -590,6 +599,9 @@ void Win::MessageReceived(BMessage *msg) {
 			if( CurrentFocus() != NULL )
 				CurrentFocus()->MakeFocus( false );
 			tabview->TabAt( selection )->View()->MakeFocus( true );
+			
+			// temporary break;
+//			break;
 			
 			char *usepass=NULL;
 			char *workurl=NULL;
@@ -1167,36 +1179,13 @@ Win::UniqueID()
 void
 Win::UrlTypedHandler( bool show_all )
 {
+	printf( "Win::UrlTypedHandler()\n" );
 	
-	/////////////////
-	// get the urls from somewhere .. i dunno from where :D
-	// ( i have set up a const char* array here for convenience )
-	////////////////
+	// get the stripped list from GlobalHistory
+	BList* slist = ( ( App* )be_app )->GetGlobalHistory()->GetStrippedList();
+	// create the matching urls list
+	BList* list = new BList( 0 );
 	
-	const char* urls[18];
-	urls[0] = "foo.foo.bar";
-	urls[1] = "http://foo.foo.bar";
-	urls[2] = "foo.foo.com";
-	urls[3] = "foo.foo.de";
-	urls[4] = "www.bebits.com";
-	urls[5] = "http://www.bebits.com";
-	urls[6] = "http://bebits.com";
-	urls[7] = "www.beosjournal.org";
-	urls[8] = "www.beunited.org";
-	urls[9] = "www.bewicked.tk";
-	urls[10] = "www.themisbrowser.org";
-	urls[11] = "www.yellowtab.com";
-	urls[12] = "www.xentronix.com";
-	urls[13] = "http://www.xentronix.com";
-	urls[14] = "ftp://ftp.be.com";
-	urls[15] = "bebits.com";
-	urls[16] = "beosjournal.org";
-	urls[17] = "bewicked.tk";
-			
-	// create the BList with the matching urls
-	BList* list = new BList();
-	
-	int i = 0;
 	BString typed_url;					// the typed url
 	BString cached_url;					// the cached url
 	BString cached_url_proto( "" );		// protocol of the cached url
@@ -1209,77 +1198,83 @@ Win::UrlTypedHandler( bool show_all )
 		typed_url.ToLower();
 	}
 	
-	//cout << "type_durl: " << typed_url.String() << " length: " << typed_url.Length() << endl;
-	
-	while( i < 18 )
-	{
-		cached_url.SetTo( urls[i] );
-		//cout << "-----------" << cached_url.String() << "--------" << endl;
+	printf( "  typed_url: %s length: %ld\n", typed_url.String(), typed_url.Length() );
 		
-		if( typed_url.Length() != 0 )
+	int32 count = slist->CountItems();
+	
+	for( int32 i = 0; i < count; i++ )
+	{
+		GlobalHistoryItem* item = ( GlobalHistoryItem* )slist->ItemAt( i );
+		if( item != NULL )
 		{
-			//cout << "compare strings: " << cached_url.String() << " <> " << typed_url.String() << endl;
-			// if the typed url matches beginning of cached url, add it
-			if( strncmp( cached_url.String(), typed_url.String(), typed_url.Length() ) == 0 )
+			cached_url.SetTo( item->Text() );
+//			printf( "  cached_url: %s\n", cached_url.String() );
+					
+			if( typed_url.Length() != 0 )
 			{
-				//cout << "both urls fit -> adding url to list" << endl;
-				list->AddItem( new BStringItem( cached_url.String() ) );
-			}
-			else
-			{
-				//cout << "urls don't fit" << endl;
-				// if the urls dont match, take away the protocol of the cached url
-				if( cached_url.FindFirst( "://" ) > 0 )
-				{
-					//cout << "removing proto of cached url" << endl;
-					cached_url.MoveInto( cached_url_proto, 0, cached_url.FindFirst( "://" ) + 3 );
-					//cout << "cached_url_proto: " << cached_url_proto.String() << endl;
-					//cout << "cached_url: " << cached_url.String() << endl;
-				}
-				
-				// if the urls fit now
+				// if the typed url matches beginning of cached url, add it
 				if( strncmp( cached_url.String(), typed_url.String(), typed_url.Length() ) == 0 )
 				{
-					//cout << "urls fit after removing protocol -> adding url to list" << endl;
-					// add the missing proto again
-					if( cached_url_proto.Length() != 0 )
-						cached_url.Prepend( cached_url_proto );
-						
 					list->AddItem( new BStringItem( cached_url.String() ) );
 				}
 				else
 				{
-					//cout << "urls don't fit after removing protocol" << endl;
-					// if they still don't fit, remove 'www.' from cached url
-					if( cached_url.FindFirst( "www." ) == 0 )
+					// if the urls dont match, take away the protocol of the cached url
+					if( cached_url.FindFirst( "://" ) > 0 )
 					{
-						//cout << "removing 'www.' from cached url" << endl;
-						cached_url.Remove( 0, 4 );
-						//cout << "cached_url: " << cached_url.String() << endl;
+						cached_url.MoveInto( cached_url_proto, 0, cached_url.FindFirst( "://" ) + 3 );
 					}
 					
-					// check if they finally fit
+					// if the urls fit now
 					if( strncmp( cached_url.String(), typed_url.String(), typed_url.Length() ) == 0 )
 					{
-						//cout << "urls finally match without proto and 'www.' -> adding to url to list" << endl;
-						// add missing 'www.' and proto
-						cached_url.Prepend( "www." );
-						
+						// add the missing proto again
 						if( cached_url_proto.Length() != 0 )
 							cached_url.Prepend( cached_url_proto );
-												
+							
 						list->AddItem( new BStringItem( cached_url.String() ) );
 					}
+					else
+					{
+						// if they still don't fit, remove 'www.' from cached url
+						if( cached_url.FindFirst( "www." ) == 0 )
+						{
+							cached_url.Remove( 0, 4 );
+						}
+						
+						// check if they finally fit
+						if( strncmp( cached_url.String(), typed_url.String(), typed_url.Length() ) == 0 )
+						{
+							// add missing 'www.' and proto
+							cached_url.Prepend( "www." );
+							
+							if( cached_url_proto.Length() != 0 )
+								cached_url.Prepend( cached_url_proto );
+													
+							list->AddItem( new BStringItem( cached_url.String() ) );
+						}
+					}
+					cached_url_proto.SetTo( "" );
 				}
-				cached_url_proto.SetTo( "" );
 			}
-		}
-		else
-		{
-			list->AddItem( new BStringItem( cached_url.String() ) );
-		}
-		i++;
+			else
+			{
+				list->AddItem( new BStringItem( cached_url.String() ) );
+			}
+		} // if( item != NULL )
 	}
+	
+	// delete slist ( not needed anymore )
+	for( int32 i = 0; i < count; i++ )
+	{
+		GlobalHistoryItem* item = ( GlobalHistoryItem* )slist->ItemAt( i );
+		if( item != NULL )
+		{
+			slist->RemoveItem( item );
+			delete item;
+		}
+	}
+	delete slist;
 	
 	// add the urlpopupwindow if needed
 	if( list->CountItems() > 0 )
@@ -1300,6 +1295,7 @@ Win::UrlTypedHandler( bool show_all )
 		}
 	}
 }
+
 status_t Win::ReceiveBroadcast(BMessage *message) 
 {
 	printf( "Win::ReceiveBroadcast()\n" );

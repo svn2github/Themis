@@ -32,6 +32,7 @@ Project Start Date: October 18, 2000
 #include <storage/FindDirectory.h>
 #include <String.h>
 #include "app.h"
+#include "ThemisTab.h"
 #ifndef NEWNET
 #include "tcplayer.h"
 tcplayer *TCP;
@@ -68,6 +69,21 @@ App::App(const char *appsig)
 	TCPMan=new TCPManager;
 	TCPMan->Start();
 #endif
+
+	// init the GlobalHistory, and fill it with the settings data (if available)
+	printf( "APP Getting GlobalHistoryData\n" );
+	int8 ghdepth;
+	AppSettings->FindInt8( "GlobalHistoryDepthInDays", &ghdepth );
+	fGlobalHistory = new GlobalHistory( ghdepth );
+	if( AppSettings->HasMessage( "GlobalHistoryData" ) )
+	{
+		BMessage* datamsg = new BMessage;
+		AppSettings->FindMessage( "GlobalHistoryData", datamsg );
+		if( datamsg != NULL )
+			fGlobalHistory->Init( datamsg );
+	}
+	
+	// init the first window
 	BRect r;
 	BScreen screen;
 	AppSettings->FindRect( "WindowRect", &r );
@@ -105,6 +121,8 @@ App::~App(){
 	MsgSysUnregister(this);
 	if (!qr_called)
 		QuitRequested();
+	// delete GlobalHistory before AppSettings gets deleted
+	delete fGlobalHistory;
 	SaveSettings();
 #ifdef NEWNET
 	delete TCPMan;
@@ -221,6 +239,33 @@ void App::MessageReceived(BMessage *msg){
 		case B_QUIT_REQUESTED :
 		{
 			printf( "APP B_QUIT_REQUESTED\n" );
+			break;
+		}
+		case CLEAR_TG_HISTORY :
+		{
+			printf( "APP CLEAR_TG_HISTORY\n" );
+			
+			fGlobalHistory->Clear();			
+			
+			// tell every tab of every window to clear
+			Win* win = FirstWindow();
+			
+			if( win == NULL )
+				break;
+			
+			do
+			{
+				win->Lock();
+				for( int32 i = 0; i < win->tabview->CountTabs(); i++ )
+					( ( ThemisTab* )win->tabview->TabAt( i ) )->GetHistory()->Clear();
+				win->tabview->SetNavButtonsByTabHistory();
+				
+				win->Unlock();
+				win = win->NextWindow();
+			}
+			while( win != NULL );
+			
+			
 			break;
 		}
 		case DTD_CHANGED :
@@ -551,6 +596,7 @@ void App::InitSettings(char *settings_path) {
 	AppSettings->AddInt32( "ShadowColor", convert.value );
 	
 	// privacy
+	AppSettings->AddInt8( "GlobalHistoryDepthInDays", 7 );
 	
 	// HTML Parser
 	// set the DTDToUsePath to "none", as we may not find a DTD below
@@ -602,6 +648,12 @@ void App::InitSettings(char *settings_path) {
 	// end: find a DTD
 	
 	AppSettings->PrintToStream();
+}
+
+GlobalHistory*
+App::GetGlobalHistory()
+{
+	return fGlobalHistory;
 }
 
 int32
@@ -764,6 +816,8 @@ status_t App::LoadSettings() {
 						AppSettings->AddInt32( "ShadowColor", convert.value );
 					}
 					// privacy
+					if( !AppSettings->HasInt8( "GlobalHistoryDepthInDays" ) )
+						AppSettings->AddInt8( "GlobalHistoryDepthInDays", 7 );
 					
 					// HTML Parser
 					// if we have no DTDToUsePath, or the DTDToUsePath is "none"

@@ -41,6 +41,7 @@ class TabHistory
 									
 		void						AddEntry(
 										const char* entry );
+		void						Clear();
 		int8						GetCurrentPosition();
 		int32						GetEntryCount();
 		int8						GetMaxDepth();

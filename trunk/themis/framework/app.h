@@ -33,6 +33,7 @@ Project Start Date: October 18, 2000
 #include "appdefines.h"
 #include "plugman.h"
 #include "aboutwin.h"
+#include "GlobalHistory.h"
 #include "prefswin.h"
 #include "msgsystem.h"
 #include "msgdaemon.h"
@@ -60,6 +61,8 @@ class App:public BApplication, public MessageSystem {
 		volatile int32 qr_called;
 		MessageDaemon *MDaemon;
 		
+		GlobalHistory*				fGlobalHistory;
+		
 		int16						fUniqueIDCounter;
 		
 	public:
@@ -83,6 +86,7 @@ class App:public BApplication, public MessageSystem {
 		void ReadyToRun();
 		void ArgvReceived(int32 argc, char **argv);
 		void Pulse();
+		GlobalHistory*				GetGlobalHistory();
 		int32						GetMainWindowCount();
 		int16						GetNewUniqueID();
 		Win*						FirstWindow();

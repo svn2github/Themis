@@ -52,6 +52,7 @@ class prefswin : public BWindow
 		rgb_color					fShadowColor;
 		
 		// privacy prefs
+		int8						fGlobalHistoryDepthInDays;
 		
 		// HTML Parser prefs
 		BString						fDTDToUsePath;

@@ -1,8 +1,10 @@
 /* prefswindow.cpp */
 
 #define APPLY_BUTTON			'apbt'
+#define CLEAR_HISTORY			'clhi'
 #define COLOR_CHANGED			'clch'
 #define DTD_SELECTED			'dtds'
+#define GLOBALHISTDEPTH_CHANGED	'ghdc'
 #define HOMEPAGE_CHANGED		'hpch'
 #define IM_CHECKBOX				'imcb'
 #define LIST_SELECTION_CHANGED	'lsch'
@@ -80,6 +82,7 @@ prefswin::prefswin(
 	AppSettings->FindInt32( "ShadowColor", &convert.value );
 	fShadowColor = convert.rgb;
 	// privacy prefs
+	AppSettings->FindInt8( "GlobalHistoryDepthInDays", &fGlobalHistoryDepthInDays );
 	// HTML Parser prefs
 	AppSettings->FindString( "DTDToUsePath", &fDTDToUsePath );
 	
@@ -153,6 +156,9 @@ void prefswin::MessageReceived( BMessage* msg )
 			// as Themis crashes very often on quit, i call the real SaveSettings() here too
 			be_app_messenger.SendMessage( SAVE_APP_SETTINGS );
 			
+			// tell GlobalHistory about its depth
+			( ( App* )be_app )->GetGlobalHistory()->SetDepth( fGlobalHistoryDepthInDays );
+			
 			// tell all windows to redraw its contents
 			Win* win = ( ( App* )be_app )->FirstWindow();
 			
@@ -174,6 +180,14 @@ void prefswin::MessageReceived( BMessage* msg )
 			}
 			
 			delete msgr;
+			break;
+		}
+		case CLEAR_HISTORY :
+		{
+			printf( "CLEAR_HISTORY\n" );
+			
+			be_app_messenger.SendMessage( CLEAR_TG_HISTORY );
+			
 			break;
 		}
 		case COLOR_CHANGED :
@@ -214,6 +228,33 @@ void prefswin::MessageReceived( BMessage* msg )
 			
 			// send a message to the app, which then sends a Broadcast to the HTMLParser
 			be_app_messenger.SendMessage( DTD_CHANGED );
+			break;
+		}
+		case GLOBALHISTDEPTH_CHANGED :
+		{
+			printf( "GLOBALHISTDEPTH_CHANGED\n" );
+
+			BTextControl* ctrl;
+			msg->FindPointer( "source", ( void** )&ctrl );
+			BString string( ctrl->Text() );
+			printf( "  %s [length: %ld]\n", string.String(), string.Length() );
+			
+			if( string.Length() == 0 )
+				break;
+			
+			int32 newdepth = atoi( string.String() );
+			if( newdepth > 127 || newdepth == 0 )
+			{
+				printf( "  Correction.\n" );
+				fGlobalHistoryDepthInDays = 10;
+				ctrl->SetText( "10" );
+				ctrl->TextView()->Select( 2, 2 );
+			}
+			else
+				fGlobalHistoryDepthInDays = ( int8 )newdepth;
+			
+			printf( "  new fGlobalHistoryDepthInDays: %d\n", fGlobalHistoryDepthInDays );
+					
 			break;
 		}
 		case HOMEPAGE_CHANGED :
@@ -494,14 +535,37 @@ void prefswin::MessageReceived( BMessage* msg )
 					box->SetLabel( "Privacy" );
 					rview->AddChild( box );
 					
-					rect.left += 10;
-					rect.top += 10;
+					rect.left = box->Frame().left + 5;
+					rect.top = 15;
+					rect.right = box->Frame().right - 15;
+					rect.bottom = rect.top + 40;
+	
+					BBox* historybox = new BBox( rect, "HISTORYBOX" );
+					historybox->SetLabel( "History" );
+					box->AddChild( historybox );										
+					
+					rect.top -= 2;
+					rect.right = rect.left + 210;
+										
+					BTextControl* ghistdepth = new BTextControl( rect, "GLOBALHISTDEPTH", "History Depth in Days [1-127]:", "", NULL );
+					ghistdepth->SetModificationMessage( new BMessage( GLOBALHISTDEPTH_CHANGED ) );
+					ghistdepth->SetDivider( be_plain_font->StringWidth( "History Depth in Days [1-127]:" ) + 5.0 );
+					
+					char* string;
+					sprintf( string, "%d", fGlobalHistoryDepthInDays );
+					ghistdepth->SetText( string );
+					ghistdepth->TextView()->AddFilter( new DigitOnlyMessageFilter() );
+					historybox->AddChild( ghistdepth );
+					
+					rect.top -= 3;
 					rect.bottom = rect.top + 20;
-					rect.right -= 10;
+					rect.right = historybox->Bounds().right - 10;
+					rect.left = rect.right - 85;
 										
-					BStringView* strview = new BStringView( rect, "STRVIEW", "Nothing here right now." );
-					box->AddChild( strview );
-										
+					BButton* ClearHistbtn = new BButton( rect, "CLEARHISTBUTTON", "Clear History", new BMessage( CLEAR_HISTORY ), B_FOLLOW_ALL, B_WILL_DRAW );
+					historybox->AddChild( ClearHistbtn );
+					
+															
 					break;
 				}
 				case 5 :
@@ -779,6 +843,7 @@ prefswin::SaveSettings()
 	AppSettings->ReplaceInt32( "ShadowColor", convert.value );
 
 	// privacy
+	AppSettings->ReplaceInt8( "GlobalHistoryDepthInDays", fGlobalHistoryDepthInDays );
 	// HTML Parser
 	AppSettings->ReplaceString( "DTDToUsePath", fDTDToUsePath );
 }

@@ -81,6 +81,22 @@ TabHistory::AddEntry(
 //	PrintHistory();
 }
 
+void
+TabHistory::Clear()
+{
+	printf( "TabHistory::Clear()\n" );
+	
+	while( fList->CountItems() > 0 )
+	{
+		BStringItem* item = ( BStringItem* )fList->ItemAt( 0 );
+		if( item != NULL )
+		{
+			fList->RemoveItem( item );
+			delete item;
+		}
+	}
+}
+
 int8
 TabHistory::GetCurrentPosition()
 {
