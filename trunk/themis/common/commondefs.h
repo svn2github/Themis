@@ -101,6 +101,7 @@ to allow interoperability in some parts of the application.
 #define UnexpectedDisconnect 'unds'
 #define ProtocolConnectionFailed '_pcf'
 #define ProtocolTransactionStatus '_pts'
+#define ProtocolStopTransaction 'pstn'
 
 //This is to update the displayed URL; usually done from the protocol.
 #define UpdateDisplayedURL 'udur'

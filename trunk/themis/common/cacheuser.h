@@ -34,6 +34,7 @@ Project Start Date: October 18, 2000
 #define _cache_user_class_
 
 #include <SupportDefs.h>
+#include <Locker.h>
 /*!
 	The CacheUser class is a support class which is never directly accessed by anything
 other than the cache system. It stores information about the application component and/or
@@ -54,6 +55,8 @@ class CacheUser {
 		CacheUser *next, //!< these are used as part of the linked list system
 		 *prev; //!< these are used as part of the linked list system
 		char *name; //!< optional name of the component using the cache
+		BLocker *lock;
+	
 	public:
 		CacheUser(uint32 broadcast_target,uint32 usertoken=0, const char *Name=NULL);
 		CacheUser(CacheUser *cu);

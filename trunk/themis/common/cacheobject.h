@@ -78,6 +78,8 @@ class CacheObject {
 		virtual ssize_t Read(uint32 usertoken, void *buffer, size_t size);
 		//! Write data to this cache item.
 		virtual ssize_t Write(uint32 usertoken, void *buffer, size_t size);
+		virtual ssize_t SetLength(uint32 usertoken, int32 objecttoken, size_t length);
+	
 		//! Get the size of this cache item.
 		virtual off_t Size()=0;
 		//! Get the next cache object from the linked list.

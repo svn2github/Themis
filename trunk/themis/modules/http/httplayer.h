@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2000 Z3R0 One. All Rights Reserved.
+Copyright (c) 2003 Z3R0 One. All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -23,13 +23,18 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
+Original Author & Project Manager: Z3R0 One (z3r0_one@bbnk.dhs.org)
 Project Start Date: October 18, 2000
 */
 
 #ifndef _http_layer
 #define _http_layer
+#ifndef NEWNET
 #include "tcplayer.h"
+#else
+#include "tcpmanager.h"
+#include "connection.h"
+#endif
 #include <File.h>
 #include <stdlib.h>
 #include <List.h>
@@ -135,12 +140,18 @@ struct http_request {
 	bool secure;
 	int16 http_v_major,http_v_minor;
 	BPositionIO *data;
+#ifdef NEWNET
+	_Themis_Networking_::Connection *conn;
+#else
 	connection *conn;
+#endif
 	header_st *headers;
 	volatile int32 headersdone;
 	volatile int32 datawaiting;
 	volatile int32 done;
 	volatile int32 conn_released;
+	volatile int32 connection_established;
+	
 	http_request *next;
 	bool chunked;
 	int32 bytesremaining;
@@ -153,12 +164,16 @@ struct http_request {
 	unsigned char *storage;
 	uint32 storagesize;
 	bool receivetilclosed;
+	char *requeststr;
+	
 	http_request() {
 		// added by emwe
 		window_uid = 0;
 		tab_uid = 0;
 		view_uid = 0;
 		// 
+		requeststr=NULL;
+		connection_established=0;
 		cache_object_token=B_ERROR;
 		a_realm=NULL;
 		awin=NULL;
@@ -191,6 +206,12 @@ struct http_request {
 	~http_request() {
 		printf("So many hopes and dreams, gone... lost forever... %s:%u%s\n",host,port,uri);
 		a_realm=NULL;//do not delete this; it's done else where. so just null it out
+#ifdef NEWNET
+		if (conn!=NULL) {
+			conn->OwnerRelease();
+//			delete conn;
+		}
+#endif
 		if (url)
 			delete url;
 		if (uri)
@@ -212,6 +233,11 @@ struct http_request {
 			memset(referrer,0,strlen(referrer)+1);
 			delete referrer;
 			referrer=NULL;
+		}
+		if (requeststr!=NULL) {
+			memset(requeststr,0,strlen(requeststr)+1);
+			delete requeststr;
+			requeststr=NULL;
 		}
 		
 		chunk=0;
@@ -269,7 +295,9 @@ class httplayer {
 		sem_id cache_sem;
 		uint32 CacheToken;
 		sem_id reqhandle_sem;
-		sem_id httplayer_sem;
+		static sem_id httplayer_sem;
+		static void httpalarm(int signum);
+	
 		char *BuildRequest(http_request *request);
 		void Done(http_request *request);
 		BTranslatorRoster *TRoster;
@@ -285,17 +313,32 @@ class httplayer {
 		int32 use_useragent;
 		char * UserAgent();
 		thread_id thread;
-		tcplayer *TCP;
 		void SendRequest(http_request *request, char *requeststr);
 		void KillRequest(http_request *request);
 		void ClearRequests();
 		void GetURL(BMessage *info);
-		void SetTCP(tcplayer *_TCP);
 		void CloseRequest(http_request *request,bool quick=false);
 		bool ResubmitRequest(http_request *request);
+#ifndef NEWNET
+		tcplayer *TCP;
+		void SetTCP(tcplayer *_TCP);
 		void ConnectionClosed(connection *conn);
+		void ConnectionEstablished(connection *conn);
 		void DReceived(connection *conn);
 		httplayer(tcplayer *_TCP,http_protocol *protoclass);
+#else
+		_Themis_Networking_::TCPManager *TCPMan;
+		void SetTCP(_Themis_Networking_::TCPManager *_TCP);
+		httplayer(_Themis_Networking_::TCPManager *_TCP,http_protocol *protoclass);
+		void ConnectionEstablished(_Themis_Networking_::Connection *connection);
+		void ConnectionAlreadyExists(_Themis_Networking_::Connection *connection);
+		void ConnectionTerminated(_Themis_Networking_::Connection *connection);
+		void DataIsWaiting(_Themis_Networking_::Connection *connection);
+		void ConnectionError(_Themis_Networking_::Connection *connection);
+		void ConnectionFailed(_Themis_Networking_::Connection *connection);
+		void DestroyingConnectionObject(_Themis_Networking_::Connection *connection);
+		http_request *FindRequest(_Themis_Networking_::Connection *connection);
+#endif
 		~httplayer();
 		void Start();
 		sem_id http_mgr_sem;
@@ -316,6 +359,7 @@ class httplayer {
 		friend class authwin;
 		friend class http_protocol;
 		http_protocol *Proto;
+	
 };
 
 #endif

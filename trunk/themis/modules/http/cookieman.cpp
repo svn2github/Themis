@@ -100,7 +100,7 @@ CookieManager::~CookieManager() {
 	delete CookieSettings;
 	printf("cookie mime: %s\n",ThemisCookieFile);
 	printf("shutting down at: %ld\n",time(NULL));
-	MsgSysUnregister(this);
+//	MsgSysUnregister(this);
 }
 void CookieManager::CheckMIME() {
 	BMimeType mime(ThemisCookieFile);//application/x-Themis-cookie

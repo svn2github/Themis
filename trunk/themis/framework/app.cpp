@@ -32,10 +32,15 @@ Project Start Date: October 18, 2000
 #include <storage/FindDirectory.h>
 #include <String.h>
 #include "app.h"
+#ifndef NEWNET
 #include "tcplayer.h"
+tcplayer *TCP;
+#else
+#include <Path.h>
+using namespace _Themis_Networking_;
+#endif
 
 plugman *PluginManager;
-tcplayer *TCP;
 BMessage *AppSettings;
 
 App::App(const char *appsig)
@@ -56,8 +61,13 @@ App::App(const char *appsig)
 	ent->GetRef(&appdirref);
 	delete ent;
 	PluginManager=new plugman(appdirref);
+#ifndef NEWNET
 	TCP=new tcplayer;
 	TCP->Start();
+#else
+	TCPMan=new TCPManager;
+	TCPMan->Start();
+#endif
 	BRect r;
 	BScreen screen;
 	AppSettings->FindRect( "WindowRect", &r );
@@ -74,7 +84,11 @@ App::App(const char *appsig)
 	PluginManager->Window=fFirstWindow;
 	BMessenger *msgr=new BMessenger(PluginManager,NULL,NULL);
 	BMessage *msg=new BMessage(AddInitInfo);
+#ifndef NEWNET
 	msg->AddPointer("tcp_layer_ptr",TCP);
+#else
+	msg->AddPointer("tcp_manager",TCPMan);
+#endif
 	msg->AddPointer("settings_message_ptr",&AppSettings);
 	{
 		BMessage reply;	
@@ -92,6 +106,10 @@ App::~App(){
 	if (!qr_called)
 		QuitRequested();
 	SaveSettings();
+#ifdef NEWNET
+	delete TCPMan;
+	TCPMan=NULL;
+#endif
 	if (AppSettings!=NULL) {
 		
 		delete AppSettings;
@@ -171,7 +189,7 @@ bool App::QuitRequested(){
 		printf("Done.\n");
 		PluginManager=NULL;
 	}
-	
+#ifndef NEWNET
 	if (TCP!=NULL) {
 		printf( "telling TCP to quit\n" );
 		TCP->lock->Lock();
@@ -180,9 +198,13 @@ bool App::QuitRequested(){
 		delete TCP;
 		TCP=NULL;
 	}
+#else
+	if (TCPMan!=NULL) {
+		printf("telling TCP Manager to quit\n");
+		TCPMan->Quit();
+	}
+#endif
 	
-	//  PluginManager->Lock();
-	//  PluginManager->Quit();
 	printf( "end of App::QuitRequested()\n" );
 	return true;
 }

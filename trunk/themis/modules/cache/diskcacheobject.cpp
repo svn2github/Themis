@@ -193,6 +193,32 @@ ssize_t DiskCacheObject::Write(uint32 usertoken, void *buffer, size_t size)
 	}
 	return bytes;
 }
+ssize_t DiskCacheObject::SetLength(uint32 usertoken, int32 objecttoken, size_t length) 
+{
+	ssize_t size=0;
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		if (writelockowner==NULL)
+			AcquireWriteLock(usertoken);
+		if (writelockowner!=NULL) {
+			if (writelockowner->Token()==usertoken) {
+				file->Lock();
+				file->Sync();
+				
+				if (file->SetSize(length)==B_OK)
+					size=length;
+				else
+					file->GetSize((off_t*)&size);
+				file->Unlock();
+				
+			}
+		}
+		
+	}
+	return size;
+	
+}
+
 BMessage *DiskCacheObject::GetInfo() 
 {
 //	printf("DiskCacheObject: Getting object info.\n");

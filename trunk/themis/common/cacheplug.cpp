@@ -119,6 +119,9 @@ ssize_t CachePlug::Write(uint32 usertoken, int32 objecttoken, void *data, size_t
 
 ssize_t CachePlug::Read(uint32 usertoken, int32 objecttoken, void *data, size_t size){
 }
+ssize_t CachePlug::SetLength(uint32 usertoken, int32 objecttoken, size_t length)
+{
+}
 
 void CachePlug::ClearCache(uint32 which){
 }

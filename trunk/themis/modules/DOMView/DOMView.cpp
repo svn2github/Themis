@@ -414,6 +414,7 @@ void DOMView	::	Heartbeat()	{
 status_t DOMView	::	ReceiveBroadcast( BMessage * message )	{
 	
 	printf( "DOMView is receiving broadcast:\n" );
+	message->PrintToStream();
 	
 	int32 command = 0;
 	message->FindInt32( "command", &command );
@@ -425,7 +426,7 @@ status_t DOMView	::	ReceiveBroadcast( BMessage * message )	{
 			BString type;
 			message->FindString( "type", &type );
 			if ( type != "dom" )	{
-				printf( "Message not recognized\n" );
+				printf( "DOMV: Message not recognized\n" );
 				break;
 			}
 			

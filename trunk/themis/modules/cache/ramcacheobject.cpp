@@ -124,6 +124,27 @@ ssize_t RAMCacheObject::Write(uint32 usertoken, void *buffer, size_t size)
 	printf("RAM Cache: URL: %s\tSize: %ld\n",url,Size());
 	return bytes;
 }
+ssize_t RAMCacheObject::SetLength(uint32 usertoken, int32 objecttoken, size_t length) 
+{
+	ssize_t size=0;
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		if (writelockowner==NULL)
+			AcquireWriteLock(usertoken);
+		if (writelockowner!=NULL) {
+			if (writelockowner->Token()==usertoken) {
+				if (databuffer->SetSize(length)==B_OK)
+					size=length;
+				else
+					size=databuffer->BufferLength();
+				
+			}
+		}
+		
+	}
+	return size;
+	
+}
 
 ssize_t RAMCacheObject::WriteAttr(uint32 usertoken, const char *attrname, type_code type,void *data,size_t size)
 {

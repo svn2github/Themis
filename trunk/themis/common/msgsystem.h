@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2001 Z3R0 One. All Rights Reserved.
+Copyright (c) 2003 Z3R0 One. All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -23,7 +23,7 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
+Original Author & Project Manager: Z3R0 One (z3r0_one@bbnk.dhs.org)
 Project Start Date: October 18, 2000
 */
 /*!

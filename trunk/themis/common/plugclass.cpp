@@ -187,7 +187,9 @@ void PlugClass::RemoveMenuItems() {
 
 void PlugClass::Heartbeat() {
 //This does something whenever called.
+#ifdef DEBUG
 	printf("\t[%s] Default Heartbeat action.\n",PlugName());
+#endif
 }
 
 bool PlugClass::RequiresHeartbeat() {

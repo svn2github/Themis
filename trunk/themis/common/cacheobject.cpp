@@ -156,6 +156,15 @@ ssize_t CacheObject::Write(uint32 usertoken, void *buffer, size_t size) {
 	}
 	return byteswritten;
 }
+ssize_t CacheObject::SetLength(uint32 usertoken, int32 objecttoken, size_t length)
+{
+	ssize_t size=0;
+	if (writelockowner!=NULL) {
+		if (writelockowner->Token()==usertoken) {
+		}
+	}
+	return size;
+}
 
 CacheObject *CacheObject::Next() 
 {

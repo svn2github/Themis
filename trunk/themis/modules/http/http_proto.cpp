@@ -36,19 +36,23 @@ http_protocol *HTTP_proto;
 #include <Message.h>
 #include <Locker.h>
 #include <Autolock.h>
+#include <signal.h>
+#ifndef NEWNET
 tcplayer *TCP;
+#endif
 //BMessage *AppSettings=NULL;
 //BMessage **AppSettings_p=NULL;
 //plugman *PlugMan;
 BMessage *HTTPSettings;
-BLocker *lock=NULL;
+//BLocker *lock=NULL;
 status_t Initialize(void *info)
  {
- 	lock=new BLocker(true);
- 	BAutolock alock(lock);
- 	if (alock.IsLocked()) {
+// 	lock=new BLocker(true);
+// 	BAutolock alock(lock);
+// 	if (alock.IsLocked()) {
+#ifndef NEWNET
   TCP=NULL;
-	 
+#endif	 
 	HTTPSettings=new BMessage();
 //	 PlugMan=NULL;
   if (info!=NULL) {
@@ -57,6 +61,7 @@ status_t Initialize(void *info)
 //	if (imsg!=NULL) {
 		imsg->PrintToStream();
 	  
+#ifndef NEWNET
 	  
 	 if (imsg->HasPointer("tcp_layer_ptr"))
 	 	imsg->FindPointer("tcp_layer_ptr",(void**)&TCP);
@@ -64,6 +69,7 @@ status_t Initialize(void *info)
 //	if (imsg->HasPointer("plug_manager"))
 //		imsg->FindPointer("plug_manager",(void**)&PlugMan);
 	printf("(http) TCP layer: %p\n",TCP);
+#endif
 	http_protocol *proto=NULL;
   proto=new http_protocol(imsg);
 	 if (proto!=HTTP_proto)
@@ -71,15 +77,15 @@ status_t Initialize(void *info)
 
   }else 
   	HTTP_proto=new http_protocol(NULL);
-  }
+//  }
   return B_OK;
  }
 status_t Shutdown(bool now)
  {
 	printf("1234 HTTP Being Shutdown\n");
 {
-			BAutolock alock(lock);
-	if (alock.IsLocked()) {
+//			BAutolock alock(lock);
+//	if (alock.IsLocked()) {
 	 
 //  if (now)
 	  if (HTTP_proto!=NULL)
@@ -95,13 +101,15 @@ status_t Shutdown(bool now)
 //			AppSettings->ReplaceMessage("http_settings_message",HTTPSettings);
 //	}
 	delete HTTPSettings;
+#ifndef NEWNET
 	 
 	TCP=NULL;
+#endif
 //	PlugMan=NULL;
-}
+//}
  }
  
-  delete lock;
+//  delete lock;
   return B_OK;
  }
 protocol_plugin* GetObject(void)
@@ -110,6 +118,13 @@ protocol_plugin* GetObject(void)
    HTTP_proto=new http_protocol();
   return HTTP_proto;
  }
+void quitalarm(int signum)
+{
+	printf("it went and hung on me, damn it! It's so dead now...\n");
+	kill_thread(HTTP_proto->HTTP->thread);
+	
+}
+
 int32 http_protocol::Type() 
 {
 	return HTTP_PROTOCOL;
@@ -184,9 +199,12 @@ status_t http_protocol::BroadcastReply(BMessage *msg){
 
 status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 {
+	
 	printf("http_protocol::ReceiveBroadcast()\n");
 	
 	status_t stat=B_ERROR;
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
 	int32 command=0;
 	if (msg->HasInt32("command"))
 		msg->FindInt32("command",&command);
@@ -250,8 +268,10 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 			rmsg=NULL;
 		}break;
 		case COMMAND_INFO: {
+			printf("HTTP Info what: %ld\n",msg->what);
 			switch(msg->what) {
 				case B_QUIT_REQUESTED: {
+					printf("HTTP has received B_QUIT_REQUESTED\n");
 //					HTTP->Lock();
 					 if (HTTP->CacheSys!=NULL)
 					 	HTTP->CacheSys->Unregister(HTTP->CacheToken);
@@ -322,7 +342,7 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 		default:
 			return PLUG_DOESNT_HANDLE;
 	}
-	
+	}
 	printf("http_protocol::ReceiveBroadcast() exiting\n");
 }
 bool http_protocol::IsPersistent(){
@@ -351,6 +371,8 @@ void http_protocol::Heartbeat() {
 http_protocol::http_protocol(BMessage *info)
               :protocol_plugin(info)
  {
+ 	lock=new BLocker(true);
+	 
  	HTTP_proto=this;
  	AppSettings=NULL;
  	AppSettings_p=NULL;
@@ -379,25 +401,41 @@ http_protocol::http_protocol(BMessage *info)
 	 strcpy(smthead->next->type,"text/html");
 	 
 	Go();
+#ifndef NEWNET
 	if (TCP==NULL) {
 	 if (info->HasPointer("tcp_layer_ptr"))
 	 	info->FindPointer("tcp_layer_ptr",(void**)&TCP);
 	}
-	
 		HTTP=new httplayer(TCP,this);
+#else
+	TCPMan=NULL;
+		if (info->HasPointer("tcp_manager"))
+			info->FindPointer("tcp_manager",(void**)&TCPMan);
+		
+	HTTP=new httplayer(TCPMan,this);
+	 
+#endif
+
 		HTTP->Proto=this;
 	HTTP->Start();
 	HOH=new http_opt_handler;
 	
  }
 http_protocol::~http_protocol() {
+	lock->Lock();
+	
 	printf("http_protocol destructor\n");
 	 printf("@@##\tAppSettings_p %p\t%AppSettings %p\n",AppSettings_p,AppSettings);
 //	Stop();
 	printf("Locking HTTP Layer.\n");
 //	HTTP->Lock();
 	printf("Stopping HTTP Layer.\n");
+	signal(SIGALRM,&quitalarm);
+	set_alarm(5000000,B_ONE_SHOT_RELATIVE_ALARM);
+	
  	HTTP->Quit();
+	set_alarm(B_INFINITE_TIMEOUT,B_PERIODIC_ALARM);
+	
 	delete HTTP;
 	printf("http: Window: %p\n",Window);
 	if (smthead!=NULL) {
@@ -409,6 +447,9 @@ http_protocol::~http_protocol() {
 		}
 	}
 	printf("~http_protocol end\n");
+	lock->Unlock();
+	delete lock;
+	
  }
 uint32 http_protocol::BroadcastTarget() {
 	printf("HTTP\n");
@@ -426,13 +467,13 @@ void http_protocol::Stop()
 		 
 	 	HTTP->CacheSys->Unregister(HTTP->CacheToken);
 	 }
+	printf("done unregistering.\n");
 	 if (((*AppSettings_p)!=NULL) && (*AppSettings_p==AppSettings)) {
 	 	if (AppSettings->HasMessage("cookie_settings"))
 	 		AppSettings->ReplaceMessage("cookie_settings",HTTP->CookieMonster->CookieSettings);
 	 	else
 	 		AppSettings->AddMessage("cookie_settings",HTTP->CookieMonster->CookieSettings);
 	 }
-	printf("done unregistering.\n");
  }
 void http_protocol::AddMenuItems(BMenu *menu) {
 	printf("http proto: Window %p\n",Window);
@@ -500,7 +541,7 @@ int32 http_protocol::GetURL(BMessage *info)
 //		HTTP->Lock();
 		printf("lock successful\n");
 	 
-	 printf("TCP %p\n HTTP::TCP %p\n",TCP,HTTP->TCP);
+//	 printf("TCP %p\n HTTP::TCP %p\n",TCP,HTTP->TCP);
 /*	
 	if (HTTP->TCP==NULL)
 		HTTP->SetTCP(TCP);
@@ -512,7 +553,7 @@ int32 http_protocol::GetURL(BMessage *info)
 */
 	 
 	  
-	printf("(http) TCP layer: %p\n",HTTP->TCP);
+//	printf("(http) TCP layer: %p\n",HTTP->TCP);
 	HTTP->AddRequest(info);
 //	 HTTP->Unlock();
 	 
@@ -610,3 +651,74 @@ printf("finding uri...\n");
   printf("Done.\n");
 	 
   }
+void http_protocol::ConnectionEstablished(connection *conn)
+{
+
+	printf("Connection established!!\n");
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+#ifndef NEWNET
+		HTTP->ConnectionEstablished(conn);
+#endif
+	}
+	
+}
+
+void http_protocol::ConnectionDisconnected(connection *conn,uint32 reason)
+{
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+#ifndef NEWNET
+		
+	HTTP->ConnectionClosed(conn);
+#endif
+	}
+	
+}
+
+void http_protocol::DataWaiting(connection *conn)
+{
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+#ifndef NEWNET
+		
+	HTTP->DReceived(conn);
+#endif
+	}
+	
+}
+#ifdef NEWNET
+#warning New Networking System Enabled
+using namespace _Themis_Networking_;
+
+void http_protocol::ConnectionEstablished(Connection *connection)
+{
+	HTTP->ConnectionEstablished(connection);
+	
+}
+void http_protocol::ConnectionAlreadyExists(Connection *connection)
+{
+	HTTP->ConnectionAlreadyExists(connection);
+}
+void http_protocol::ConnectionTerminated(Connection *connection)
+{
+	HTTP->ConnectionTerminated(connection);
+}
+void http_protocol::DataIsWaiting(Connection *connection)
+{
+	HTTP->DataIsWaiting(connection);
+}
+void http_protocol::ConnectionError(Connection *connection)
+{
+	HTTP->ConnectionError(connection);
+}
+void http_protocol::ConnectionFailed(Connection *connection)
+{
+	HTTP->ConnectionFailed(connection);
+}
+void http_protocol::DestroyingConnectionObject(Connection *connection)
+{
+	HTTP->DestroyingConnectionObject(connection);
+} 
+
+#endif

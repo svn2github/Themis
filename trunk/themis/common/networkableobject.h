@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2002 Raymond "Z3R0 One" Rodgers. All Rights Reserved.
+Copyright (c) 2003 Z3R0 One. All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -23,40 +23,25 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
+Original Author & Project Manager: Z3R0 One (z3r0_one@bbnk.dhs.org)
 Project Start Date: October 18, 2000
 */
+#ifndef _networkable_object_
+#define _networkable_object_
 
-#ifndef TESTPLUG_H
-#define TESTPLUG_H
-#include "plugclass.h"
-extern "C" __declspec(dllexport)status_t Initialize(void *info=NULL);
-extern "C" __declspec(dllexport)status_t Shutdown(bool now=false);
-extern "C" __declspec(dllexport)PlugClass *GetObject(void);
-#include <SupportDefs.h>
-#include <Window.h>
-#include <String.h>
-#include <View.h>
-#include <Bitmap.h>
-#include "cacheplug.h"
-#include "msgsystem.h" 
-
-class testplug: public PlugClass{
-	public:
-		uint32 cache_user_token;
-		CachePlug *CacheSys;
-		testplug(BMessage *info=NULL);
-		~testplug();
-		bool IsPersistent();
-		uint32 PlugID();
-		char *PlugName();
-		float PlugVersion();
-		void Heartbeat();
-		status_t ReceiveBroadcast(BMessage *msg);
-		status_t BroadcastReply(BMessage *msg);
-		uint32 BroadcastTarget();
-		int32 Type();
+namespace _Themis_Networking_ {
+	class Connection;
+	class NetworkableObject {
+		public:
+			virtual void ConnectionEstablished(Connection *connection);
+			virtual void ConnectionAlreadyExists(Connection *connection);
+			virtual void ConnectionTerminated(Connection *connection);
+			virtual void DataIsWaiting(Connection *connection);
+			virtual void ConnectionError(Connection *connection);
+			virtual void ConnectionFailed(Connection *connection);
+			virtual void DestroyingConnectionObject(Connection *connection);
+		
+	};
 };
 
 #endif
-

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2000 Z3R0 One. All Rights Reserved.
+Copyright (c) 2003 Z3R0 One. All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -23,7 +23,7 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
+Original Author & Project Manager: Z3R0 One (z3r0_one@bbnk.dhs.org)
 Project Start Date: October 18, 2000
 */
 
@@ -34,9 +34,14 @@ Project Start Date: October 18, 2000
 //#endif
 #include "protocol_plugin.h"
 #include "optionshandler.h"
+#ifdef NEWNET
+#include "tcpmanager.h"
+#include "connection.h"
+#endif
 #include "smt.h"
 #include <View.h>
 #include <Window.h>
+#include <Locker.h>
   extern "C" __declspec(dllexport)status_t Initialize(void *info=NULL);
   extern "C" __declspec(dllexport)status_t Shutdown(bool now=false);
   extern "C" __declspec(dllexport)protocol_plugin* GetObject(void);
@@ -44,6 +49,8 @@ class CookieManager;
 class http_protocol:public ProtocolPlugClass
    {
     private:
+	friend void quitalarm(int signum);
+	   
      port_id http_proto_port;
      size_t buflen,rawbuflen;
      bool chunked;
@@ -61,6 +68,8 @@ class http_protocol:public ProtocolPlugClass
 	 BWindow *win;
 	BMessage *AppSettings;
 	BMessage **AppSettings_p;
+		BLocker *lock;
+	   
     public:
 		void FindURI(const char *url,BString &host,uint16 *port,BString &uri,bool *secure);
      http_protocol(BMessage *info=NULL);
@@ -89,5 +98,18 @@ class http_protocol:public ProtocolPlugClass
 	 void Heartbeat();
 	 friend class CookieManager;
 	 uint32 BroadcastTarget();
+		void ConnectionEstablished(connection *conn);
+		void ConnectionDisconnected(connection *conn,uint32 reason);
+		void DataWaiting(connection *conn);
+#ifdef NEWNET
+	_Themis_Networking_::TCPManager *TCPMan;
+	void ConnectionEstablished(_Themis_Networking_::Connection *connection);
+	void ConnectionAlreadyExists(_Themis_Networking_::Connection *connection);
+	void ConnectionTerminated(_Themis_Networking_::Connection *connection);
+	void DataIsWaiting(_Themis_Networking_::Connection *connection);
+	void ConnectionError(_Themis_Networking_::Connection *connection);
+	void ConnectionFailed(_Themis_Networking_::Connection *connection);
+	void DestroyingConnectionObject(_Themis_Networking_::Connection *connection);
+#endif	
    };
 #endif

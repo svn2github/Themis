@@ -47,6 +47,7 @@ class DiskCacheObject: public CacheObject {
 		void SetRef(entry_ref aref);
 		ssize_t Read(uint32 usertoken, void *buffer, size_t size);
 		ssize_t Write(uint32 usertoken, void *buffer, size_t size);
+		ssize_t SetLength(uint32 usertoken, int32 objecttoken, size_t length);
 		ssize_t WriteAttr(uint32 usertoken, const char *attrname, type_code type,void *data,size_t size);
 		ssize_t ReadAttr(uint32 usertoken,  const char *attrname, type_code type, void *data, size_t size);
 		status_t RemoveAttr(uint32 usertoken, const char *attrname);

@@ -111,12 +111,14 @@ aboutview::aboutview(BRect frame, const char *name, uint32 resizem, uint32 flags
 	item->listitem=new BStringItem("Themis Framework");
 	printf("item 1: %p %s\n",item->listitem, item->listitem->Text());
 	items->AddItem(item);
+#ifndef NEWNET
 	item=new about_items_st;
 	item->pointer=TCP;
 	item->type=AboutThemisSSL;
 	item->listitem=new BStringItem("SSL");
 	printf("item 2: %p %s\n",item->listitem, item->listitem->Text());
 	items->AddItem(item);
+#endif
 	firstrun=true;
 }
 
@@ -199,12 +201,14 @@ void aboutview::MessageReceived(BMessage *msg)
 					case AboutThemisDOM: {
 					}break;
 					case AboutThemisSSL: {
+#ifndef NEWNET
 						BTextView *view;
 							view=new BTextView(r,"About SSL",r,B_FOLLOW_ALL,B_WILL_DRAW);
 							view->MakeEditable(false);
 							view->Insert(TCP->SSLAboutString());
 						innerbox->AddChild(view);
 						view=NULL;
+#endif
 					}break;
 				}
 			}

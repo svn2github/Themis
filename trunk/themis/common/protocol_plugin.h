@@ -31,11 +31,13 @@ Project Start Date: October 18, 2000
 
 #include <String.h>
 #include "plugclass.h"
-
+#include "networkableobject.h"
 /*!
 This is the base class for the protocol plug-ins.
 */
-class ProtocolPlugClass: public PlugClass {
+struct connection;
+
+class ProtocolPlugClass: public PlugClass, public _Themis_Networking_::NetworkableObject {
 	public:
 		ProtocolPlugClass(BMessage *info=NULL):PlugClass(info) {}
 		BString URL;
@@ -49,6 +51,10 @@ class ProtocolPlugClass: public PlugClass {
 		virtual unsigned char *GetDoc(const char* url) {return NULL;}
 		virtual int32 GetURL(BMessage *info) {return 0;}
 		int32 TypePrimary() {return ProtocolPlugin;}
+		virtual void ConnectionEstablished(connection *conn)=0;
+		virtual void ConnectionDisconnected(connection *conn,uint32 reason=0)=0;
+		virtual void DataWaiting(connection *conn)=0;
+		
 };
 
 typedef ProtocolPlugClass protocol_plugin;

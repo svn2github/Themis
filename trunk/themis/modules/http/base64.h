@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2002 Raymond "Z3R0 One" Rodgers. All Rights Reserved.
+Copyright (c) 2003 Z3R0 One. All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -23,36 +23,31 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
+Original Author & Project Manager: Z3R0 One (z3r0_one@bbnk.dhs.org)
 Project Start Date: October 18, 2000
 */
-#ifndef _ram_cache_object_
-#define _ram_cache_object_
+#ifndef _b64_
+#define _b64_
 
-#include "cacheobject.h"
-#include <DataIO.h>
-#include <Message.h>
-class RAMCacheObject: public CacheObject {
+#include <SupportDefs.h>
+
+class base64 
+{
+	
 	private:
-		BMallocIO *databuffer;
-		char *name, *host, *mimetype, *path, *etag, *lastmodified,*expires,*contentmd5;
-		off_t contentlength;
+		static const char *BASE64ARRAY;
+		static const char BASE64PADCHAR='=';
+		static uint8 findb64char(char which);
+		static void e2s(unsigned char *in,unsigned char *out);
+		static void s2e(unsigned char *in, unsigned char *out);
+		
 	public:
-		RAMCacheObject(int32 token,const char *URL);
-		~RAMCacheObject();
-		virtual BMessage *GetInfo();
-		ssize_t Read(uint32 usertoken, void *buffer, size_t size);
-		ssize_t Write(uint32 usertoken, void *buffer, size_t size);
-		ssize_t SetLength(uint32 usertoken, int32 objecttoken, size_t length);
-		virtual ssize_t WriteAttr(uint32 usertoken, const char *attrname, type_code type,void *data,size_t size);
-		virtual ssize_t ReadAttr(uint32 usertoken,  const char *attrname, type_code type, void *data, size_t size);
-		status_t RemoveAttr(uint32 usertoken, const char *attrname);
-		void ClearContent(uint32 usertoken);
-		virtual off_t Size();
-		void ClearFile();
-		uint32 Type();
+		static void encode(void *in, uint32 ilen,void *out,uint32 *olen);
+		static void decode(void *in, uint32 ilen, void *out, uint32 *olen);
+		static uint32 expectedencodedsize(uint32 in_size);
+		static uint32 expecteddecodedsize(uint32 in_size);
+	
 };
-
 
 
 #endif

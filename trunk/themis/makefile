@@ -67,7 +67,11 @@ FRAMEWORKSOURCES= \
 	framework/ThemisUrlPopUpWindow.cpp \
 	framework/ThemisUrlView.cpp \
 	framework/FakeSite.cpp \
-	framework/msgdaemon.cpp
+	framework/msgdaemon.cpp \
+	framework/networkableobject.cpp \
+	framework/connection.cpp \
+	framework/netbuffer.cpp \
+	framework/tcpmanager.cpp
 #	framework/winview.cpp
 COMMONSOURCES= \
 	common/plugclass.cpp \
@@ -244,7 +248,7 @@ NETWORKLIBS=-lsocket -lbind -lbnetapi -lopenssl
 NETWORKING=NONE
 # by default, debugging information will be included. to turn it off, remove or comment out (#) the -g
 # on the next line 
-COMPILE_FLAGS=-g -D_Themis_ -DDEBUG #-Wall
+COMPILE_FLAGS=-g -D_Themis_ -DDEBUG #-Wall -DNEWNET
 ifeq "$(shell if [ -f /system/lib/libsocket.so ] ; then echo 1 ; else echo 0 ; fi)" "1"
 	NETWORKLIBS=-lsocket -lbind -lbnetapi
 	NETWORKING=BONE
@@ -383,7 +387,7 @@ frameworkobjects: $(foreach file,$(FRAMEWORKSOURCES),$(FRAMEWORK_OBJECT_DIR)$(no
 
 $(FRAMEWORK_DEPENDS_DIR)%.d: framework/%.cpp
 	@echo "Framework: Updating dependency file $(notdir $@)"
-	@set -e;VAR1=$(shell echo "$(FRAMEWORK_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(FRAMEWORK_OBJECT_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/framework\/\1.o depends\/framework\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
+	@set -e;VAR1=$(shell echo "$(FRAMEWORK_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(FRAMEWORK_OBJECT_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $(COMPILE_FLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/framework\/\1.o depends\/framework\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
 
 $(FRAMEWORK_OBJECT_DIR)%.o: framework/%.cpp $(FRAMEWORK_DEPENDS_DIR)%.d
 	@echo "Framework: Updating object file $(notdir $@)"

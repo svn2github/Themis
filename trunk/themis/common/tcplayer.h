@@ -69,6 +69,7 @@ Include *both* plugclass.h *and* plugclass.cpp in your plugin!
 
 //#define CHK_ERR(err,s) if ((err)==-1) { ERR_print_errors_fp(stdout);  }
 //#define CHK_SSL(err) if ((err)==-1) { ERR_print_errors_fp(stdout);  }
+class ProtocolPlugClass;
 struct connection {
 	int32 proto_id;
 	uint16 port;
@@ -88,11 +89,17 @@ struct connection {
 #endif
 	volatile int32 result;
 	volatile int32 requests;
+	volatile int32 made_connection;
+	volatile int32 notified_connect;
+	volatile int32 connection_gone;
+	volatile int32 notified_disconnect;
+	ProtocolPlugClass *protocol_ptr;
 //	BNetAddress *address;
 	struct hostent *hptr;
 	in_addr **pptr;
 	BString addrstr;
 	connection() {
+		protocol_ptr=NULL;
 		usessl=false;
 #ifdef USEOPENSSL
 		sslbio=NULL;
@@ -102,6 +109,10 @@ struct connection {
 		next=NULL;
 		closedcbdone=0;
 		callbackdone=0;
+		made_connection=0;
+		connection_gone=0;
+		notified_connect=0;
+		notified_disconnect=0;
 		proto_id=0;
 		port=80;
 //		address=new BNetAddress;
@@ -188,6 +199,7 @@ class tcplayer {
 #endif
 		bool SSLSupported();
 		char *SSLAboutString();
+		void SSLConnect(connection *conn);
 		sem_id tcp_mgr_sem;
 		sem_id conn_sem;
 		sem_id cb_sem;
@@ -212,8 +224,8 @@ class tcplayer {
 		connection *conn_queue;
 		connection *prev_conn;
 		DRCallback_st *callback_head; //first callback pointer
-		connection* ConnectTo(int32 protoid, char *host, int16 port=80, bool ssl=false, bool forcenew=false);
-		connection* QueueConnect(int32 protoid, char *host, int16 port=80, bool ssl=false, bool forcenew=false);
+		connection* ConnectTo(ProtocolPlugClass *Proto,int32 protoid, char *host, int16 port=80, bool ssl=false, bool forcenew=false);
+		connection* QueueConnect(ProtocolPlugClass *Proto,int32 protoid, char *host, int16 port=80, bool ssl=false, bool forcenew=false);
 		connection* ConnectTo(connection *target);
 		uint32 Connections();
 		bool Connected(connection *conn,bool skipvaild=false);

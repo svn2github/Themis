@@ -94,7 +94,8 @@ that user token to access the cache system.
 		//These two functions write and read data in the specified cache object.
 		virtual ssize_t Write(uint32 usertoken, int32 objecttoken, void *data, size_t size);
 		virtual ssize_t Read(uint32 usertoken, int32 objecttoken, void *data, size_t size);
-
+		virtual ssize_t SetLength(uint32 usertoken, int32 objecttoken,size_t size);
+	
 		//! returns the current object size, not counting its attributes
 		virtual ssize_t GetObjectSize(uint32 usertoken, int32 objecttoken)=0;
 		

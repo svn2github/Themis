@@ -579,6 +579,26 @@ status_t cacheman::ReadAttr(uint32 usertoken, int32 objecttoken, const char *att
 	}
 	return B_ERROR;
 }
+ssize_t cacheman::SetLength(uint32 usertoken, int32 objecttoken, size_t length)
+{
+	ssize_t size=0;
+	
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		CacheObject *object=FindObject(objecttoken);
+		if (object!=NULL) {
+			if (!object->IsUsedBy(usertoken))
+				object->AddUser(FindUser(usertoken));
+			if (object->HasWriteLock(usertoken)) {
+				size=object->SetLength(usertoken,objecttoken,length);
+				
+			}
+				
+		}
+	}
+	return size;
+	
+}
 
 bool cacheman::HasAttr(uint32 usertoken, int32 objecttoken, const char *name, type_code *type, size_t *size)
 {

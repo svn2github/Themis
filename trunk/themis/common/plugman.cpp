@@ -266,6 +266,8 @@ bool plugman::QuitRequested() {
 	delete_sem(quit_sem);
 	printf("Unloading all plugins\n");
 	UnloadAllPlugins(true);
+	printf("Done unloading plugins\n");
+	Lock();
 	return true;
 }
 void plugman::BroadcastFinished() {

@@ -31,7 +31,9 @@ Project Start Date: October 18, 2000
 #include <string.h>
 #include <String.h>
 extern httplayer *meHTTP;
+#ifndef NEWNET
 extern tcplayer *__TCP;
+#endif
 authview::authview(BRect frame)
 	:BView(frame,"authview",B_FOLLOW_ALL,B_WILL_DRAW|B_NAVIGABLE_JUMP){
 		SetViewColor(216,216,216);
@@ -135,7 +137,9 @@ printf("authwin MessageReceived:\n");
 		case B_OK: {
 //			meHTTP->Lock();
 //			meHTTP->TCP->Lock();
+#ifndef NEWNET
 			meHTTP->TCP->RequestDone(request->conn);
+#endif
 //			meHTTP->TCP->Unlock();
 			meHTTP->Done(request);
 			atomic_add(&request->conn_released,1);

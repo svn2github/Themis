@@ -38,10 +38,16 @@ Project Start Date: October 18, 2000
 #include <stdexcept>
 #include <time.h>
 httplayer *meHTTP;
+#ifdef NEWNET
+using namespace _Themis_Networking_;
+#endif
+#ifndef NEWNET
 tcplayer *__TCP;
 void ConnectClosed(connection *conn)
 {
+#ifdef DEBUG
 	printf("ConnectClosed\n");
+#endif
 	meHTTP->ConnectionClosed(conn);
 }
 
@@ -51,6 +57,7 @@ void DataReceived(connection *conn)
 	meHTTP->DReceived(conn);
 //	printf("http: callback done.\n");
 }
+#endif
 /*
 int32 LockHTTP(int32 timeout)
 {
@@ -61,7 +68,13 @@ void UnlockHTTP(void)
 	meHTTP->Unlock();
 }
 */
+sem_id httplayer::httplayer_sem=0;
+
+#ifndef NEWNET
 httplayer::httplayer(tcplayer *_TCP,http_protocol *protoclass) 
+#else
+httplayer::httplayer(TCPManager *_TCP,http_protocol *protoclass)
+#endif
 {
 	Proto=protoclass;
 	CacheToken=0;
@@ -69,17 +82,28 @@ httplayer::httplayer(tcplayer *_TCP,http_protocol *protoclass)
 	if (CacheSys!=NULL) {
 		CacheToken=CacheSys->Register(Proto->Type(),"HTTP Protocol Add-on");
 	}
+#ifdef DEBUG
 	printf("CacheToken & object: %lu %p\n",CacheToken,CacheSys);
-	lock=new BLocker("http lock",true);
+#endif
+	lock=new BLocker(false);
 	lock->Lock();
+#ifdef DEBUG
 	printf("HTTP object at %p\nhttp tcp: %p\n",this,_TCP);
+#endif
 	TRoster=new BTranslatorRoster();
 	TRoster->AddTranslators(NULL);
 
+#ifndef NEWNET
 	TCP=NULL;
 	if (_TCP!=NULL)
 		SetTCP(_TCP);
 	__TCP==_TCP;
+#else
+	TCPMan=NULL;
+	if (_TCP!=NULL)
+		SetTCP(_TCP);
+	
+#endif
 	meHTTP=this;
 	Basic=NULL;
 	requests_head=NULL;
@@ -91,12 +115,12 @@ httplayer::httplayer(tcplayer *_TCP,http_protocol *protoclass)
 	httplayer_sem=create_sem(1,"httplayer_sem");
 	use_useragent=0;
 	PluginManager=NULL;
-	lock->Unlock();
 	CookieMonster=new CookieManager();
+	lock->Unlock();
 }
 httplayer::~httplayer() 
 {
-	delete CookieMonster;
+	lock->Lock();
 	http_request *req;
 	
 	while(requests_head!=NULL) {
@@ -106,6 +130,7 @@ httplayer::~httplayer()
 	}
 	req=NULL;
 	requests_head=NULL;
+
 	if (Basic!=NULL) {
 		auth_realm *realms=Basic->realms_head,*tr;
 		while (realms!=NULL) {
@@ -126,16 +151,20 @@ httplayer::~httplayer()
 	connhandle_sem=0;
 	delete_sem(reqhandle_sem);
 	delete_sem(httplayer_sem);
-	delete lock;
 	delete TRoster;
+	delete CookieMonster;
+	printf("Cookie Monster is dead!\n");
+	lock->Unlock();
+	delete lock;
+	
 }
-
+#ifndef NEWNET
 void httplayer::ConnectionClosed(connection *conn) 
 {
-//	BAutolock alock(lock);
+	BAutolock alock(lock);
 //	while (!alock.IsLocked())
 //		snooze(10000);
-//	if (alock.IsLocked()) {
+	if (alock.IsLocked()) {
 		http_request *cur=requests_head;
 		while (cur!=NULL) {
 			if (cur->conn==conn)
@@ -146,9 +175,10 @@ void httplayer::ConnectionClosed(connection *conn)
 			CloseRequest(cur);
 		}
 		cur=NULL;
-//	}
+	}
 }
-
+#endif
+#ifndef NEWNET
 void httplayer::SetTCP(tcplayer *_TCP) {
 //	BAutolock alock(lock);
 //	if (alock.IsLocked()) {
@@ -163,9 +193,12 @@ void httplayer::SetTCP(tcplayer *_TCP) {
 }
 void httplayer::DReceived(connection *conn) 
 {
-//	BAutolock alock(lock);
+	BAutolock alock(lock);
+	
+#ifdef DEBUG
 	printf("http: DReceived start.\n");
-//	if (alock.IsLocked()) {
+#endif
+	if (alock.IsLocked()) {
 		http_request *req=requests_head;
 		while (req!=NULL) {
 			if ((req->conn==conn) && (req->done==0)) 
@@ -175,11 +208,24 @@ void httplayer::DReceived(connection *conn)
 				break;
 		}
 		if (req!=NULL) {
+#ifdef DEBUG
 			printf("Data is for URL %s\n",req->url);
+#endif
 			atomic_add(&req->datawaiting,1);
 		}
-//	}
+	}
 }
+#else
+void httplayer::SetTCP(TCPManager *_TCP) {
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		TCPMan=_TCP;
+		
+	}
+	
+}
+
+#endif
 
 
 //the following three functions probably can be rewritten to be much more
@@ -246,7 +292,9 @@ long httplayer::b64encode(void *unencoded,long in_size,char *encoded,long maxsiz
 		if (quit)
 		break;
 	} while(i<(in_size*8));
+#ifdef DEBUG
 	printf("encoded auth: %s\n",(char*)encoded);
+#endif
 	delete []buff;
 	return realsize;	
 }
@@ -333,10 +381,14 @@ auth_realm *httplayer::FindAuthRealm(http_request *request) {
 		if (Basic!=NULL) {
 			auth_realm *cur=Basic->realms_head;
 			while (cur!=NULL) {
+#ifdef DEBUG
 				printf("FAR: target host: %s\tcurrent: %s\n",request->host,cur->host);
+#endif
 				
 				if (strcasecmp(request->host,cur->host)==0) {
+#ifdef DEBUG
 					printf("FAR: target uri: %s\tcurrent: %s\n",request->uri,cur->baseuri);
+#endif
 					
 					char *uriloc=NULL;
 					if (strncasecmp(cur->baseuri,request->uri,strlen(cur->baseuri))==0) {
@@ -392,7 +444,9 @@ auth_realm *httplayer::AddAuthRealm(http_request *request,char *realm, char *use
 		rlm->baseuri[0]='/';
 		rlm->baseuri[1]=0;
 //	}
+#ifdef DEBUG
 	printf("base authentication path: %s\n",rlm->baseuri);
+#endif
 	
 	size=strlen(realm);
 	rlm->realm=new char[size+1];
@@ -431,7 +485,9 @@ void httplayer::ClearRequests() {
 	release_sem(reqhandle_sem);
 	//The sem is released so that other processes may continue quicker.
 	while(curreq!=NULL) {
+#ifdef DEBUG
 		printf("clearing request at %p\n",curreq);
+#endif
 		next=curreq->next;
 		delete curreq;
 		curreq=next;
@@ -441,7 +497,9 @@ void httplayer::ClearRequests() {
 void httplayer::KillRequest(http_request *request) {
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
+#ifdef DEBUG
 	printf("killing request %p\n",request);
+#endif
 //	acquire_sem(reqhandle_sem);
 	http_request *curreq=requests_head;
 	if (request==curreq) {
@@ -476,12 +534,16 @@ void httplayer::KillRequest(http_request *request) {
 }
 
 http_request *httplayer::AddRequest(BMessage *info) {
+#ifdef DEBUG
 	printf("AddRequest\n");
+#endif
 	info->PrintToStream();
-	BAutolock alock(lock);
+//	BAutolock alock(lock);
 	http_request *request=NULL;
-	if (alock.IsLocked()) {
+//	if (alock.IsLocked()) {
+#ifdef DEBUG
 	printf("AddRequest: alock is locked\n");
+#endif
 	int32 what=0;
 	if (info!=NULL) {
 		if (info->HasInt32("action")) {
@@ -489,24 +551,18 @@ http_request *httplayer::AddRequest(BMessage *info) {
 			switch(what) {
 				case LoadingNewPage: {
 					if (requests_head!=NULL) {
+#ifdef DEBUG
 						printf("Cleaning up older requests...\n");
-						ClearRequests();
-						/*
-						http_request *req=requests_head;
-						while (requests_head!=NULL) {
-							req=requests_head->next;
-							CloseRequest(requests_head);
-							delete requests_head;
-							requests_head=req;
-						}
-						requests_head=NULL;
-						*/
+#endif
+						//ClearRequests(); //clear other requests only if the window and tab id match the current request.
 					}
 				}break;
 				case ReloadData: {
 				}break;
 				default: {
+#ifdef DEBUG
 					printf("\t\t*** Unknown protocol action requested! %ld (%c%c%c%c)\n",what,what>>24,what>>16,what>>8,what);
+#endif
 				}
 			}
 		}
@@ -519,7 +575,9 @@ http_request *httplayer::AddRequest(BMessage *info) {
 		info->FindInt16( "window_uid", &request->window_uid );
 		info->FindInt16( "tab_uid", &request->tab_uid );
 		info->FindInt16( "view_uid", &request->view_uid );
+#ifdef DEBUG
 		printf( "UIDS: %d,%d,%d\n", request->window_uid, request->tab_uid, request->view_uid );
+#endif
 		//
 		if (info->HasInt32("browser_string"))
 			info->FindInt32("browser_string",&use_useragent);
@@ -542,10 +600,14 @@ http_request *httplayer::AddRequest(BMessage *info) {
 		memset(request->url,0,url.Length()+1);
 		strcpy(request->url,url.String());
 		FindURI(&request->url,&request->host,&request->port,&request->uri,&request->secure);
+#ifdef DEBUG
 		printf("[http->addrequest] Host: %s\n",request->host);
+#endif
 		
 		if (what==LoadingNewPage) {
+#ifdef DEBUG
 			printf( "what==LoadingNewPage\n" );
+#endif
 			BHandler *target;
 			info->FindPointer("top_view",(void**)&target);
 			BMessenger *msgr=new BMessenger(target,NULL,NULL);
@@ -558,7 +620,9 @@ http_request *httplayer::AddRequest(BMessage *info) {
 		if (request->secure) {
 #ifndef USEOPENSSL
 // We don't have OpenSSL.
+#ifdef DEBUG
 		printf("OpenSSL not supported in this build.");
+#endif
 		(new BAlert("SSL Not Supported","I'm afraid that this version of Themis\nwas built without OpenSSL support.\nUnfortunately, it means that you can't\nvisit HTTPS sites.","Damn."))->Go();
 		delete info;
 		delete request;
@@ -566,25 +630,51 @@ http_request *httplayer::AddRequest(BMessage *info) {
 		return request;
 #else
 // We have and want to be able to use OpenSSL in Themis.
+#ifdef DEBUG
 		printf("Request is to: %s:%u\nURI: %s\n",request->host,request->port,request->uri);
+#endif
 		delete info;
+#ifdef DEBUG
 		printf("End AddRequest\n");
 #endif
+#endif
 		} else {
+#ifdef DEBUG
 			printf("Request is to: %s:%u\nURI: %s\n",request->host,request->port,request->uri);
+#endif
 			delete info;
+#ifdef DEBUG
 			printf("End AddRequest\n");
+#endif
 		}
-		char *requeststr=BuildRequest(request);
-		SendRequest(request,requeststr);
-		printf("Request sent. About to delete requeststr\n");
-		delete requeststr;
-		printf("requeststr deleted. returning request %p (EOF AddRequest)\n",request);
-		requeststr=NULL;
+		request->requeststr=BuildRequest(request);
+#ifdef DEBUG
+printf("http:SendRequest trying to lock TCP\n");
+#endif
+	
+//					TCP->Lock();
+//					printf("tcp is locked\n");
+//			TryConnecting:
+#ifdef DEBUG
+			printf("trying to connect\n");
+#endif
+#ifndef NEWNET
+			request->conn=TCP->ConnectTo(Proto,'http',request->host,request->port,request->secure);
+#else
+			request->conn=TCPMan->CreateConnection(Proto,request->host,request->port,request->secure);
+#endif
+#ifdef DEBUG
+			printf("[http] Connection struct: %p\n",request->conn);
+#endif
+//		delete requeststr;
+//#ifdef DEBUG
+//		printf("requeststr deleted. returning request %p (EOF AddRequest)\n",request);
+//#endif
+//		requeststr=NULL;
 		return request;
 	} else
 		return NULL;
-	}
+//	}
 	return request;
 }
 char *httplayer::FindEndOfHeader(char *buffer, char **eohc) {
@@ -635,6 +725,9 @@ header_st *httplayer::AddHeader(http_request *request, char *attribute, char* va
 		cur->name=new char[len+1];
 		memset(cur->name,0,len+1);
 		len=strlen(value);
+		if (len==0)
+			len=1;
+		
 		cur->value=new char[len+1];
 		memset(cur->value,0,len+1);
 		strcpy(cur->name,attribute);
@@ -645,6 +738,8 @@ header_st *httplayer::AddHeader(http_request *request, char *attribute, char* va
 		cur->name=new char[len+1];
 		memset(cur->name,0,len+1);
 		len=strlen(value);
+		if (len==0)
+			len=1;
 		cur->value=new char[len+1];
 		memset(cur->value,0,len+1);
 		strcpy(cur->name,attribute);
@@ -661,7 +756,9 @@ char *httplayer::FindHeader(http_request *request,char *attribute, int32 which) 
 	if (cur!=NULL) {
 		while (cur!=NULL) {
 			if (strcasecmp(attribute,cur->name)==0) {
+#ifdef DEBUG
 				printf("%ld (%ld) - attribute: %s\n",count,which,attribute);
+#endif
 				if (count>=which)
 					break;
 				count++;
@@ -736,11 +833,15 @@ void httplayer::ProcessHeaders(http_request *request,void *buffer,int size) {
 //				memset(header,0,len+1);
 //				strncpy(header,buf,len);
 			}
+#ifdef DEBUG
 		printf("buf==request->storage\n");
+#endif
 		
 	}
 	
+#ifdef DEBUG
 	printf("ProcessHeaders getting started:\n%s\n",buf);
+#endif
 	
 	char *tmp=new char[5];
 	memset(tmp,0,5);
@@ -889,8 +990,10 @@ void httplayer::ProcessHeaders(http_request *request,void *buffer,int size) {
 			delete v2;
 			a=v2=NULL;
 		}
+#ifdef DEBUG
 		if (request->headers!=NULL)
 			printf("Headers added to request struct\n");
+#endif
 		
 		int status=request->status/100;
 		switch(status) {
@@ -945,7 +1048,9 @@ void httplayer::ProcessHeaders(http_request *request,void *buffer,int size) {
 						strcpy(request->url,destination);
 						FindURI(&request->url,&request->host,&request->port,&request->uri,&request->secure);
 //						ClearHeaders(request);
+#ifdef DEBUG
 						printf("Being redirected to %s\n",request->url);
+#endif
 //*** added 23-Feb-03
 						DoneWithHeaders(request,true);
 						ResubmitRequest(request);
@@ -991,7 +1096,9 @@ void httplayer::ProcessHeaders(http_request *request,void *buffer,int size) {
 									
 								} else
 									url<<'/'<<destination;
+#ifdef DEBUG
 							printf("%d redirect to: %s\n",request->status,url.String());
+#endif
 						}
 						
 						
@@ -1006,7 +1113,9 @@ void httplayer::ProcessHeaders(http_request *request,void *buffer,int size) {
 //*** added 23-Feb-03
 							DoneWithHeaders(request,true);
 							ClearHeaders(request);
+#ifdef DEBUG
 							printf("Being redirected to %s\n",request->url);
+#endif
 							if (request->cacheinfo!=NULL) {
 								delete request->cacheinfo;
 								request->cacheinfo=NULL;
@@ -1057,14 +1166,18 @@ void httplayer::ProcessHeaders(http_request *request,void *buffer,int size) {
 
 void httplayer::DoneWithHeaders(http_request *request,bool nocaching) {
 	//BAutolock alock(lock);
+#ifdef DEBUG
 	printf("DoneWithHeaders\n");
+#endif
 	atomic_add(&request->headersdone,1);
 	char *result;
 	result=FindHeader(request,"transfer-encoding");
 	if (result!=NULL) {//transfer encoding
 		if (strcasecmp(result,"chunked")==0)
 			request->chunked=true;
+#ifdef DEBUG
 		printf("chunked: %d\n",request->chunked);
+#endif
 	}//transfer encoding
 	result=FindHeader(request,"content-length");
 	if ((!request->chunked) && (result!=NULL)) {//content length
@@ -1086,7 +1199,9 @@ void httplayer::DoneWithHeaders(http_request *request,bool nocaching) {
 		BString header;
 		for (int32 i=0; i<count; i++) {
 			result=FindHeader(request,"set-cookie",i);
+#ifdef DEBUG
 			printf("Result of cookie search: %s\n",result);
+#endif
 			header="Set-Cookie: ";
 			header<<result;
 			CookieMonster->SetCookie(header.String(),request->host, request->uri);
@@ -1121,11 +1236,15 @@ void httplayer::DoneWithHeaders(http_request *request,bool nocaching) {
 							char *rlmc=new char[size+1];
 							memset(rlmc,0,size+1);
 							strncpy(rlmc,q1+1,size);
+#ifdef DEBUG
 							printf("auth realm: %s\n",rlmc);
+#endif
 						if (Basic!=NULL) {
 							auth_realm *realm=FindAuthRealm(rlmc,request->host);
 							if (realm!=NULL) {
+#ifdef DEBUG
 								printf("auth realm found: %p\n",realm);
+#endif
 								if (realm==request->a_realm) {
 									if (request->awin==NULL)
 										request->awin=new authwin("Password required!",request,rlmc,true);
@@ -1133,10 +1252,14 @@ void httplayer::DoneWithHeaders(http_request *request,bool nocaching) {
 										request->awin->Activate(true);
 								} else
 									request->awin=new authwin("Password required!",request,rlmc);
+#ifdef DEBUG
 								printf("done with auth header.\n");
+#endif
 								
 							} else {
+#ifdef DEBUG
 								printf("auth realm must be added\n");
+#endif
 								if (request->awin==NULL)
 									request->awin=new authwin("Password required!",request,rlmc);
 								else
@@ -1144,7 +1267,9 @@ void httplayer::DoneWithHeaders(http_request *request,bool nocaching) {
 								
 							}
 						} else {
+#ifdef DEBUG
 							printf("auth realm must be added\n");
+#endif
 								if (request->awin==NULL)
 									request->awin=new authwin("Password required!",request,rlmc);
 								else
@@ -1158,7 +1283,9 @@ void httplayer::DoneWithHeaders(http_request *request,bool nocaching) {
 	result=NULL;
 	if (request->status==401)
 		request->cache=DoesNotUseCache;
+#ifdef DEBUG
 	printf("cacheinfo: %p\t cache object token: %ld\thttp status: %ld\n",request->cacheinfo,request->cache_object_token,request->status);
+#endif
 	if (nocaching==false) {
 	switch(request->cache) {
 		case UsesCache: {
@@ -1178,7 +1305,9 @@ void httplayer::DoneWithHeaders(http_request *request,bool nocaching) {
 					}
 					creator.AddInt32("ReplyTo",Proto->PlugID());
 					creator.AddPointer("ReplyToPointer",Proto);
+#ifdef DEBUG
 					printf("12345 about to create cache item 54321\n");
+#endif
 /*
 Even though the CacheObject is created in the next step, the actual disk file isn't created
 until/unless data is written to the object; including by writing attributes out.
@@ -1191,7 +1320,9 @@ until/unless data is written to the object; including by writing attributes out.
 				}
 				
 			} else {
+#ifdef DEBUG
 				printf("checkpoint!\n");
+#endif
 				if ((request->cacheinfo!=NULL) && (request->cache_object_token!=B_ERROR) && (request->status==200)) {
 					BMessage updater(CreateCacheObject);
 					updater.AddString("url",request->url);
@@ -1230,7 +1361,9 @@ until/unless data is written to the object; including by writing attributes out.
 					}
 					creator.AddInt32("ReplyTo",Proto->PlugID());
 					creator.AddPointer("ReplyToPointer",Proto);
+#ifdef DEBUG
 					printf("12345 about to create cache item 54321\n");
+#endif
 					request->cache_object_token=CacheSys->CreateObject(CacheToken,request->url,TYPE_RAM);
 					CacheSys->SetObjectAttr(CacheToken,request->cache_object_token,&creator);
 					request->cacheinfo=CacheSys->GetInfo(CacheToken,request->cache_object_token);
@@ -1239,7 +1372,9 @@ until/unless data is written to the object; including by writing attributes out.
 				}
 				
 			} else {
+#ifdef DEBUG
 				printf("checkpoint!\n");
+#endif
 				if ((request->cacheinfo!=NULL) && (request->cache_object_token!=B_ERROR) && (request->status==200)) {
 					BMessage updater(CreateCacheObject);
 					updater.AddString("url",request->url);
@@ -1258,8 +1393,12 @@ until/unless data is written to the object; including by writing attributes out.
 				
 			}
 		}break;
-		default:
+		default: {
+#ifdef DEBUG
 			printf("Unknown cache setting for file.\n");
+#endif
+		}
+		
 	}
 	}
 /*
@@ -1403,7 +1542,9 @@ until/unless data is written to the object; including by writing attributes out.
 		char *result=NULL;
 		BString mime;
 		if (!nocaching) {
+#ifdef DEBUG
 			printf("Need to read file from cache\n");
+#endif
 			request->cacheinfo->PrintToStream();
 			request->cacheinfo->FindString("mime-type",&mime);
 		}
@@ -1419,7 +1560,9 @@ until/unless data is written to the object; including by writing attributes out.
 		if (!nocaching)
 				request->bytesreceived=CacheSys->GetObjectSize(CacheToken,request->cache_object_token);
 		
+#ifdef DEBUG
 		printf("request->bytesreceived: %ld\n",request->bytesreceived);
+#endif
 		
 //		request->contentlen=request->bytesreceived;
 		
@@ -1461,19 +1604,18 @@ until/unless data is written to the object; including by writing attributes out.
 		container.AddMessage("message",msg);
 		Proto->Broadcast(target,msg);
 		delete msg;
+#ifdef DEBUG
 		printf("Sending broadcast to handlers and parsers.\n");
+#endif
 		
 	}
 	
 }
 
 void httplayer::ProcessChunkedData(http_request *request,void *buffer, int size) {
-	//BAutolock alock(lock);
-//	printf("\tProcessChunkedData()\n");
 	if (size==0)
 		return;
 	int32 oldchunk=0;
-//	printf("buffer size: %ld chunk size: %ld chunk: %ld\n",size,request->chunkbytesremaining,request->chunk);
 	
 	if (size>request->chunkbytesremaining) {
 		//size is greater than chunkbytesremaining
@@ -1593,40 +1735,44 @@ void httplayer::ProcessChunkedData(http_request *request,void *buffer, int size)
 }
 
 void httplayer::ProcessData(http_request *request, void *buffer, int size) {
-	//BAutolock alock(lock);
-//	printf("\tProcessData()\n");
-	BAutolock alock(lock);
-	if (alock.IsLocked()) {
-//volatile int32 ilocked=0;
-//if (!lock->IsLocked()) {
-//	ilocked=1;
-//	lock->Lock();
-//	
-//}
+//	BAutolock alock(lock);
+//	if (alock.IsLocked()) {
 	int64 current_size=request->bytesreceived;
 		
 	if (request->chunked) {
 		ProcessChunkedData(request,buffer,size);
 	} else {
-//		request->data->Write((unsigned char*)buffer,size);
 				CacheSys->Write(CacheToken,request->cache_object_token,(unsigned char*)buffer,size);
 		request->bytesremaining-=size;
 		request->bytesreceived+=size;
 		if (request->bytesremaining<=0) {
 			if (request->receivetilclosed) {
+				printf("*** Receive Til Closed ***\n");
+				
+#ifndef NEWNET
 				if (TCP->Connected(request->conn,true)) {
 					request->bytesremaining=0;
 					return;
 				}
+#else
+				if (request->conn->IsConnected()) {
+					request->bytesremaining=0;
+					return;
+				}
 				
-				CloseRequest(request);
+#endif	
+//				CloseRequest(request);
 			}
+			if (request->bytesreceived>request->contentlen)
+				CacheSys->SetLength(CacheToken,request->cache_object_token,request->contentlen);
 			
 			CloseRequest(request);
 		}
 		
 	}
+#ifdef DEBUG
 	printf("ProcessData done. Bytes Received: %ld\n",request->bytesreceived);
+#endif
 	BMessage *msg=new BMessage(ReturnedData);
 	// added by emwe
 	msg->AddInt16( "window_uid", request->window_uid );
@@ -1637,7 +1783,8 @@ void httplayer::ProcessData(http_request *request, void *buffer, int size) {
 	msg->AddInt32("command",COMMAND_INFO);
 	msg->AddInt32("cache_object_token",request->cache_object_token);
 //	msg->AddPointer("data_pointer",request->data);
-	msg->AddString("url",request->url);
+	if (request->url!=NULL)
+		msg->AddString("url",request->url);
 	if (request->done)
 		msg->AddBool("request_done",true);
 	else
@@ -1678,41 +1825,67 @@ void httplayer::ProcessData(http_request *request, void *buffer, int size) {
 	msg->AddInt64("bytes-received",request->bytesreceived);
 	msg->AddInt64("size-delta",request->bytesreceived-current_size);
 		
-	BMessage container;
-	container.AddMessage("message",msg);
+#ifdef DEBUG
+	printf("Sending broadcast to handlers and parsers. target: %ld\n",target);
+#endif
 	Proto->Broadcast(target,msg);
 	delete msg;
-	printf("Sending broadcast to handlers and parsers. target: %ld\n",target);
 	
-	}
-//	if (ilocked)
-//		lock->Unlock();
+//	}
 	
 }
 void httplayer::CloseRequest(http_request *request,bool quick) {
 //	BAutolock alock(lock);
 //	if (alock.IsLocked()) {
+#ifdef DEBUG
 	printf("CloseRequest\n");
+#endif
 	if (request==NULL)
 		return;
 	int result=0;
 	if (request->conn!=NULL)
+#ifndef NEWNET
 		result=request->conn->result;
+#else
+		result=request->conn->ConnectionResult();
+#endif
+#ifdef DEBUG
 	printf("Calling Done()\n");
+#endif
 	Done(request);
+#ifdef DEBUG
 	printf("Back in CloseRequest.\n");
+#endif
 	if (request->conn!=NULL) {
+#ifdef DEBUG
 		printf("Locating header...\n");
+#endif
 		char *result=FindHeader(request,"Connection");
+#ifdef DEBUG
 		printf("Found header\n");
+#endif
 		if ((result!=NULL) && (strcasecmp("close",result)==0)) {
+#ifdef DEBUG
 			printf("Calling RequestDone #1\n");
+#endif
+#ifndef NEWNET
 			TCP->RequestDone(request->conn,true);
+#else
+			TCPMan->Disconnect(request->conn);
+#endif
 		}else{
+#ifdef DEBUG
 			printf("Calling RequestDone #2\n");
+#endif
+#ifndef NEWNET
 			TCP->RequestDone(request->conn);
+#else
+			TCPMan->DoneWithSession(request->conn);
+#endif
 		}
+#ifdef DEBUG
 		printf("Done with RequestDone\n");
+#endif
 		result=NULL;
 		atomic_add(&request->conn_released,1);
 		request->conn=NULL;
@@ -1725,11 +1898,12 @@ void httplayer::CloseRequest(http_request *request,bool quick) {
 	
 	BMessage *msg=new BMessage(ProtocolConnectionClosed);
 	msg->AddInt32("command",COMMAND_INFO);
-	printf("747\n");
 	
 	if (request->bytesreceived>0){
 		
+#ifdef DEBUG
 		printf("CloseRequest bytes received: %Ld\n",request->bytesreceived);
+#endif
 	
 		msg->AddInt64("bytes-received",request->bytesreceived);
 	}
@@ -1742,8 +1916,8 @@ void httplayer::CloseRequest(http_request *request,bool quick) {
 				request->bytesreceived=csize;
 			msg->AddInt64("bytes-received",request->bytesreceived);
 	}
-	
-	msg->AddString("url",request->url);
+	if (request->url!=NULL)
+		msg->AddString("url",request->url);
 	msg->AddInt32("From",Proto->PlugID());
 	msg->AddPointer("FromPointer",Proto);
 	msg->AddInt32("cache_object_token",request->cache_object_token);
@@ -1751,14 +1925,28 @@ void httplayer::CloseRequest(http_request *request,bool quick) {
 	char *resultstr=NULL;
 	resultstr=FindHeader(request,"content-type");
 	int32 target=0;
+	if (resultstr!=NULL)
+		msg->AddString("mimetype",resultstr);
+	
+/*	//this section is now commented out because it depended on the retrieved data being
+	//readily available in a BPositionIO container. As the newest cache system encapsulates
+	//the data and doesn't make it directly accessible like that, this functionality is
+	//currently broken... A solution might be to copy the data back into a temporary
+	//BPositionIO class like BMallocIO, but I think that's something of a hack. The
+	//above two lines should suffice for now, though we're taking the server's word for
+	//the content type.
 	if (resultstr!=NULL) {
 		translator_info *outinfo=NULL;
 		BMessage extinfo;
 		int32 count=0;
 		TRoster->GetTranslators(request->data,&extinfo,&outinfo,&count);
+#ifdef DEBUG
 		printf("supporting translators: %ld\n",count);
+#endif
 		if (count>0) {
+#ifdef DEBUG
 			printf("suspected mimetype: %s\n",outinfo[0].MIME);
+#endif
 			bool found=false;
 			for (int32 i=0; i<count; i++) {
 				if (strcasecmp(outinfo[i].MIME,resultstr)==0)
@@ -1777,9 +1965,13 @@ void httplayer::CloseRequest(http_request *request,bool quick) {
 		BMessage extinfo;
 		int32 count=0;
 		TRoster->GetTranslators(request->data,&extinfo,&outinfo,&count);
+#ifdef DEBUG
 		printf("supporting translators: %ld\n",count);
+#endif
 		if (count>0) {
+#ifdef DEBUG
 			printf("suspected mimetype: %s\n",outinfo[0].MIME);
+#endif
 			msg->AddString("mimetype",outinfo[0].MIME);
 			//really should send an update to the cache here...
 			delete []outinfo;
@@ -1787,16 +1979,12 @@ void httplayer::CloseRequest(http_request *request,bool quick) {
 			msg->AddString("mimetype","application/octet-stream");
 		//if we don't know the file type for some reason, assume it's app data rather than text.
 	}
-	
+*/	
 	resultstr=NULL;
-	if ((request->contentlen!=0) && (request->bytesreceived==request->contentlen))
+	if (request->chunked)
+		msg->AddBool("chunked",true);
+	
 		msg->AddBool("request_done",true);
-	else {
-		if ((request->contentlen==0) && (request->chunked) && (result<=0))
-			msg->AddBool("request_done",true);
-		else {
-			
-			msg->AddBool("request_done",true);
 			if (request->chunked) {
 				if (request->chunkbytesremaining!=0)
 					msg->AddInt32("status",UnexpectedDisconnect);
@@ -1805,14 +1993,14 @@ void httplayer::CloseRequest(http_request *request,bool quick) {
 					msg->AddInt32("status",UnexpectedDisconnect);
 			}
 			
-		}
-	}
 	
 	if (request->contentlen>0)
 		msg->AddInt64("content-length",request->contentlen);
 	BMessage container;
 	container.AddMessage("message",msg);
+#ifdef DEBUG
 	printf("http_layer::CloseRequest()\n");
+#endif
 	container.PrintToStream();
 	msg->PrintToStream();
 	Proto->Broadcast(MS_TARGET_ALL,msg);
@@ -1823,14 +2011,7 @@ void httplayer::CloseRequest(http_request *request,bool quick) {
 }
 void httplayer::SendRequest(http_request *request, char *requeststr){
 //	BAutolock alock(lock);
-printf("http:SendRequest trying to lock TCP\n");
-	
-//					TCP->Lock();
-					printf("tcp is locked\n");
-			TryConnecting:
-			printf("trying to connect\n");
-			request->conn=TCP->QueueConnect('http',request->host,request->port,request->secure);
-			printf("[http] Connection struct: %p\n",request->conn);
+/*
 			try {
 				time_t start=time(NULL);
 				while (request->conn->result==-2) {
@@ -1842,25 +2023,36 @@ printf("http:SendRequest trying to lock TCP\n");
 				}
 			}
 			catch(...) {
+#ifdef DEBUG
 				printf("[Alpha]The connection failed.\n");
+#endif
 				return;
 			}
-			if (request->conn!=NULL)
-				if (request->conn->result>=0) {
+*/
+			if (request->conn!=NULL) {
+			//	if (request->conn->result>=0) {
 					int32 bytes=0;
 //					TCP->Lock();
+#ifndef NEWNET
 					bytes=TCP->Send(&request->conn,(unsigned char *)requeststr,strlen(requeststr));
+#else
+					bytes=request->conn->Send(requeststr,strlen(requeststr));
+#endif
 //					TCP->Unlock();
+#ifdef DEBUG
 					printf("%ld bytes sent on connection: %p\n",bytes,request->conn);
-				} else {
+#endif
+				}/* else {
 					BString title;
 					BString mesg;
 					title<<"Connection failed: - "<<request->host;
 					mesg<<"Your attempt to connect to the server at "<<request->host<<" has failed.";
 					(new BAlert( title.String(),mesg.String(),"D'oh"))->Go();
 					
+#ifdef DEBUG
 					printf("[Bravo]The connection failed.\n");
-				}
+#endif
+				}*/
 				
 //			TCP->Unlock();
 	
@@ -1883,7 +2075,9 @@ char *httplayer::BuildRequest(http_request *request){
 					current2=current2->next;
 				current2->next=request;
 			}
+#ifdef DEBUG
 			printf("current2 is %p\n",current2);
+#endif
 	
 			char *temp=NULL;
 			reqstr << "GET " << request->uri <<" HTTP/1.1\r\nHost: " << request->host;
@@ -1905,10 +2099,14 @@ char *httplayer::BuildRequest(http_request *request){
 			//check authentication zones vs domain being connected to.
 			reqstr << "Connection: keep-alive\r\n";
 			auth_realm *realm=FindAuthRealm(request);
+#ifdef DEBUG
 			printf("Authentication realm: %p",realm);
+#endif
 			fflush(stdout);
 			if (realm!=NULL) {
+#ifdef DEBUG
 				printf("\trealm: \"%s\"\tdata: %s",realm->realm,realm->auth);
+#endif
 				fflush(stdout);
 			}
 			printf("\n");
@@ -1919,7 +2117,9 @@ char *httplayer::BuildRequest(http_request *request){
 			if (realm!=NULL) {
 				reqstr<<"Authorization: Basic "<<realm->auth<<"\r\n";
 			}
+#ifdef DEBUG
 			printf("Checking cache status.\n");
+#endif
 	
 			/*BMessage *cachestatus=*/CheckCacheStatus(request);
 			if (request->cacheinfo!=NULL) {
@@ -1937,10 +2137,14 @@ char *httplayer::BuildRequest(http_request *request){
 					}
 			//	}
 			}
+#ifdef DEBUG
 			printf("(cache status) done.\n");
+#endif
 	
 			reqstr << "\r\n";
+#ifdef DEBUG
 			printf("Request string:\n---------\n%s\n---------\n",reqstr.String());
+#endif
 	requeststr=new char[reqstr.Length()+1];
 	memset(requeststr,0,reqstr.Length()+1);
 	strcpy(requeststr,reqstr.String());
@@ -1995,7 +2199,9 @@ void httplayer::Unlock()
 */
 void httplayer::FindURI(char **url,char **host,uint16 *port,char **uri,bool *secure) {
 //	BAutolock alock(lock);
+#ifdef DEBUG
 	printf("finding uri...\n");
+#endif
 	int32 nuuril=7;
 	char *nuuri=NULL;
 	BString master(*url),servant;
@@ -2017,7 +2223,9 @@ void httplayer::FindURI(char **url,char **host,uint16 *port,char **uri,bool *sec
 		master.CopyInto(servant,urltype+3,master.Length()-urltype+3);
 		BString urlkind;
 		master.CopyInto(urlkind,0,urltype);
+#ifdef DEBUG
 		printf("urlkind: %s\n",urlkind.String());
+#endif
 		if (urlkind.ICompare("https")==0)
 			*secure=true;
 		master=servant;
@@ -2031,7 +2239,9 @@ void httplayer::FindURI(char **url,char **host,uint16 *port,char **uri,bool *sec
 			auth=true;
 			master.CopyInto(user,0,colon);
 			master.CopyInto(pass,colon+1,at-colon-1);
+#ifdef DEBUG
 			printf("username: %s\npassword: %s\n",user.String(),pass.String());
+#endif
 			master.Remove(0,at+1);
 			slash=master.IFindFirst("/");
 		}
@@ -2071,7 +2281,9 @@ void httplayer::FindURI(char **url,char **host,uint16 *port,char **uri,bool *sec
 		pcopy/=10.0;
 		width++;
 	}
+#ifdef DEBUG
 	printf("%d is %ld characters wide.\n",*port,width);
+#endif
 	nuuril+=width+1;
 	nuuri=new char[nuuril+1];
 	memset(nuuri,0,nuuril+1);
@@ -2086,7 +2298,9 @@ void httplayer::FindURI(char **url,char **host,uint16 *port,char **uri,bool *sec
 		else
 			sprintf(nuuri,"http://%s%s",*host,*uri);
 	}
+#ifdef DEBUG
 	printf("new composite url: %s\n",nuuri);
+#endif
 	if (strcasecmp(*uri,nuuri)!=0) {
 		delete (*url);
 		*url=nuuri;
@@ -2096,38 +2310,68 @@ void httplayer::FindURI(char **url,char **host,uint16 *port,char **uri,bool *sec
 void httplayer::Done(http_request *request) {
 	//BAutolock alock(lock);
 //	if (alock.IsLocked()) {
+#ifdef DEBUG
 		printf("Marking request as done.\n\tchunked:%s\n\tbytes remaining: %ld\n",request->chunked?"yes":"no",request->chunked?request->chunkbytesremaining:request->bytesremaining);
+#endif
 		CacheSys->ReleaseWriteLock(CacheToken,request->cache_object_token);	
 		atomic_add(&request->done,1);
+#ifdef DEBUG
 		printf("Done with Done()\n");
+#endif
 //	}
+}
+void httplayer::httpalarm(int signum) 
+{
+	release_sem(httplayer_sem);
 }
 
 int32 httplayer::LayerManager() {
 	http_request *request=NULL,*current=NULL, *current2=NULL;
 	status_t stat;
-	unsigned char *buffer=new unsigned char[10240];
+	int32 size=102400;
+	
+	unsigned char *buffer=new unsigned char[size];
 	int32 bytes=0;
 	volatile int32 c=0;
+	signal(SIGALRM,&httpalarm);
+	set_alarm(10000,B_PERIODIC_ALARM);
 	while (!quit) {
-//		stat=Lock(20000);
-//		
-//		if (stat!=B_OK) {
-//			snooze(10000);
-//			continue;
-//		}
-//		if (c==99) {
-//			printf("http layermanager\n");
-//			c=0;
-//		} else
-//			c++;
-
-//		if (current==NULL) {
-//			current=requests_head;
-//		} //else
-		// 	current=current->next;
+	//new way
+		if (acquire_sem(httplayer_sem)==B_OK) {
+			lock->Lock();
+			current=requests_head;
+			while (current!=NULL) {
+				if (quit)
+					break;
+				if (!current->done) {
+					if (current->datawaiting) {
+						memset(buffer,0,size);
+						bytes=0;
+#ifndef NEWNET
+						bytes=TCP->Receive(&current->conn,buffer,10240);
+#else
+						bytes=current->conn->Receive(buffer,10240);
+#endif
+						if (bytes>0) {
+							if (!current->headersdone) {
+								ProcessHeaders(current,buffer,bytes);
+							} else {
+								ProcessData(current,buffer,bytes);
+							}
+						}
+						
+					}
+					
+				}
+				
+				current=current->next;
+			}
+			
+			lock->Unlock();
+		}
+		
+/* //old way
 		if (current==NULL) {
-//			Unlock();
 			snooze(40000);
 			current=requests_head;
 			continue;
@@ -2136,41 +2380,40 @@ int32 httplayer::LayerManager() {
 		if (current->done==0) {
 				lock->Unlock();
 			if (current->datawaiting>=1) {
-				/*
-					If we timeout while waiting for TCP->Lock() then it's possible
-					that TCP is waiting for a lock on this protocol. A deadlock
-					would occur if we didn't timeout. So, we can simply pick up
-					the data on the next pass.
-				*/
-//				if (TCP->Lock(100000)==B_OK) {
 					memset(buffer,0,10240);
 					bytes=0;
+#ifndef NEWNET
 					bytes=TCP->Receive(&current->conn,buffer,10240);
-//					printf("http: data received: %ld bytes\n",bytes);
-//					TCP->Unlock();
+#else
+					lock->Lock();
+					bytes=current->conn->Receive(buffer,10240);
+					lock->Unlock();
+#endif
+					if (current->datawaiting)
+						current->datawaiting=0;
 					if (bytes>0) {
-						BAutolock alock(lock);
-						if (alock.IsLocked()) {
 							if (current->headersdone!=1) {
 								ProcessHeaders(current,buffer,bytes);
 							} else {
+#ifdef DEBUG
 								printf("http layermanager: about to process data for url %s\n",current->url);
+#endif
 								ProcessData(current,buffer,bytes);
+#ifdef DEBUG
 								printf("http layermanager: post processdata, %s\n",current->url);
+#endif
 								
 							}
-						}
 					}
-//				}
 			}
 		}else
 			lock->Unlock();
-//		Unlock();
 		if (current!=NULL)
 			current=current->next;
-//		snooze(20000);
-		
+*/		
 	}
+	set_alarm(B_INFINITE_TIMEOUT,B_PERIODIC_ALARM);
+	
 	memset(buffer,0,10240);
 	delete buffer;
 	buffer=NULL;
@@ -2180,7 +2423,9 @@ int32 httplayer::LayerManager() {
 
 BMessage *httplayer::CheckCacheStatus(http_request *request) {
 //	BAutolock alock(lock);
+#ifdef DEBUG
 	printf("httplayer::CheckCacheStatus\n");
+#endif
 	if (request!=NULL) {
 		
 		BMessage *msg=new BMessage(FindCachedObject);
@@ -2197,9 +2442,13 @@ BMessage *httplayer::CheckCacheStatus(http_request *request) {
 		container->AddMessage("message",msg);
 		
 		bool nocache=false;
+#ifdef DEBUG
 		printf("Trying to broadcast\n");
+#endif
 		Proto->Broadcast(MS_TARGET_CACHE_SYSTEM,msg);
+#ifdef DEBUG
 		printf("one\n");
+#endif
 		if (Proto->broadcast_status_code!=B_OK)
 			nocache=true;
 		delete msg;
@@ -2211,9 +2460,13 @@ BMessage *httplayer::CheckCacheStatus(http_request *request) {
 */
 		if (nocache)
 			release_sem(cache_sem);
+#ifdef DEBUG
 		printf("HTTP MIGHT HANG HERE\n");
+#endif
 		acquire_sem(cache_sem);
+#ifdef DEBUG
 		printf("DONE AT POSSIBLE CHOKE POINT\n");
+#endif
 		reply=Proto->cache_reply;
 		Proto->cache_reply=NULL;
 		if (reply==NULL) {
@@ -2226,12 +2479,16 @@ BMessage *httplayer::CheckCacheStatus(http_request *request) {
 			delete reply;
 			return NULL;
 		} else {
+#ifdef DEBUG
 			printf("cacheinfo: %p\n");
+#endif
 			if (request->cacheinfo!=NULL)
 				delete request->cacheinfo;
 			request->cache_object_token=reply->FindInt32("cache_object_token");
 			request->cacheinfo=CacheSys->GetInfo(CacheToken,request->cache_object_token);
+#ifdef DEBUG
 			printf("56789 cache info\n");
+#endif
 			request->cacheinfo->PrintToStream();
 		}
 		delete reply;
@@ -2243,20 +2500,26 @@ void httplayer::Start() {
 	if (acquire_sem_etc(http_mgr_sem,1,B_ABSOLUTE_TIMEOUT,100000)==B_OK) {
 		thread=spawn_thread(StartLayer,"http_layer_manager",B_LOW_PRIORITY,this);
 		resume_thread(thread);
+#ifdef DEBUG
 		printf("http layer manager thread: %ld\n",thread);
+#endif
 //		helperthread=spawn_thread(StartHelper,"http_helper_thread",B_LOW_PRIORITY,this);
 //		resume_thread(helperthread);
 	}
 	else
 	{
+#ifdef DEBUG
 		fprintf(stderr,"http_layer_manager already running.\n");
+#endif
 		
 	}
 	
 }
 
 int32 httplayer::StartLayer(void *arg) {
+#ifdef DEBUG
 	printf("http layer starting\n");
+#endif
 	httplayer *obj=(httplayer*)arg;
 	return obj->LayerManager();
 }
@@ -2273,23 +2536,37 @@ int32 httplayer::Helper(void *arg) {
 }
 */
 status_t httplayer::Quit() {
+#ifdef DEBUG
 	printf("http layer stopping\n");
+#endif
 	
 	atomic_add(&quit,1);
+#ifdef DEBUG
 	printf("\"Quit\" is set\n");
+#endif
+	lock->Unlock();
+	
 	status_t stat=B_OK;
+#ifdef DEBUG
 	printf("releasing semaphore\n");
+#endif
 	release_sem(http_mgr_sem);
+#ifdef DEBUG
 	printf("Waiting for thread death\n");
+#endif
 	wait_for_thread(thread,&stat);
-	wait_for_thread(helperthread,&stat);
+//	wait_for_thread(helperthread,&stat);
+#ifdef DEBUG
 	printf("quitting\n");
+#endif
 	return stat;
 }
 //*
 char *httplayer::GetSupportedTypes() {
 	//BAutolock alock(lock);
+#ifdef DEBUG
 	printf("httplayer::GetSupportedTypes()\n");
+#endif
 	BString output("Accept: ");
 	//insert code here to get content types from other plug-ins via the plug-in manager
 	smt_st *cur=Proto->smthead;
@@ -2335,3 +2612,129 @@ char *httplayer::UserAgent() {
 	return str;
 }
 //*/
+#ifndef NEWNET
+void httplayer::ConnectionEstablished(connection *conn)
+{
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		http_request *req=requests_head;
+		while (req!=NULL) {
+			if ((req->conn==conn) && (req->done==0)) {
+				printf("http layer: Connection Established!!!!!!\n");
+				atomic_add(&req->connection_established,1);
+				SendRequest(req,req->requeststr);
+				break;
+			}
+			req=req->next;
+			if (quit)
+				break;
+		}
+				
+	}
+}
+#endif
+
+#ifdef NEWNET
+void httplayer::ConnectionEstablished(Connection *connection)
+{
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		http_request *req=requests_head;
+		while (req!=NULL) {
+			if ((req->conn==connection) && (req->done==0)) {
+				printf("http layer: Connection Established!!!!!!\n");
+				atomic_add(&req->connection_established,1);
+				SendRequest(req,req->requeststr);
+				break;
+			}
+			req=req->next;
+			if (quit)
+				break;
+		}
+				
+	}
+}
+void httplayer::ConnectionAlreadyExists(Connection *connection)
+{
+	printf("ConnectionAlreadyExists\n");
+}
+void httplayer::ConnectionTerminated(Connection *connection)
+{
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		http_request *req=requests_head;
+		while (req!=NULL) {
+			if (req->conn==connection) {
+				printf("Connection to server has terminated.\n");
+				CloseRequest(req);
+				break;
+				
+			}
+			req=req->next;
+		}
+		
+	}
+	
+}
+void httplayer::DataIsWaiting(Connection *connection)
+{
+//	printf("DataIsWaiting\n");
+//	BAutolock alock(lock);
+//	if (alock.IsLocked()) {
+//		printf("(http)DataIsWaiting about to search\n");
+		http_request *req=FindRequest(connection);
+		if (req!=NULL) {
+			atomic_add(&req->datawaiting,1);
+		}
+//	}
+}
+http_request *httplayer::FindRequest(Connection *connection) {
+	http_request *req=requests_head;
+	while (req!=NULL) {
+		if (req->conn==connection) {
+			break;
+		}
+		req=req->next;
+	}
+	return req;
+}
+void httplayer::ConnectionError(Connection *connection)
+{
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		printf("ConnectionError: %s\n",connection->ErrorString(connection->Error()));
+		switch(connection->Error()) {
+			case Connection::ERROR_CONNECTION_RESET: {//this means we should wrap things up...
+				http_request *req=FindRequest(connection);
+				if (req!=NULL)
+					CloseRequest(req);
+			}break;
+			default:
+				;
+		}
+		connection->ClearError();
+	}
+}
+void httplayer::ConnectionFailed(Connection *connection)
+{
+	printf("ConnectionFailed\n");
+
+}
+void httplayer::DestroyingConnectionObject(Connection *connection)
+{
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		http_request *current=requests_head;
+		while (current!=NULL) {
+			if (current->conn==connection) {
+				printf("DestroyingConnectionObject, so I must clean up the request for it.\n");
+				delete current;
+				break;
+			}
+			current=current->next;
+		}
+	}
+} 
+#endif
+
+

@@ -28,6 +28,7 @@ Project Start Date: October 18, 2000
 */
 #include "cacheuser.h"
 #include <string.h>
+#include <Autolock.h>
 #include <stdio.h>
 CacheUser::CacheUser(uint32 broadcast_target,uint32 usertoken,const char *Name) {
 	broadcast_id=broadcast_target;
@@ -41,6 +42,8 @@ CacheUser::CacheUser(uint32 broadcast_target,uint32 usertoken,const char *Name) 
 //	printf("\tCacheUser: %ld %p - %s\n",id,name,name);
 	next=prev=NULL;
 	readpos=writepos=0L;
+	lock=new BLocker(true);
+	
 }
 CacheUser::CacheUser(CacheUser *cu) {
 		next=prev=NULL;
@@ -60,6 +63,7 @@ CacheUser::CacheUser(CacheUser *cu) {
 		name=NULL;
 	}
 //	printf("\tCacheUser (copied): %ld %p - %s\n",id,name,name);
+	lock=new BLocker(true);
 }
 
 CacheUser::~CacheUser() {
@@ -71,6 +75,8 @@ CacheUser::~CacheUser() {
 		delete name;
 		name=NULL;
 	}
+	delete lock;
+	
 }
 uint32 CacheUser::BroadcastID() {
 	return broadcast_id;
@@ -80,24 +86,37 @@ CacheUser* CacheUser::Next() {
 	return next;
 }
 void CacheUser::Remove(CacheUser *target) {
-	if (next==NULL)
-		return;
-	if (next==target) {
-		next=next->Next();
-	} else 
-		next->Remove(target);
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+			
+		if (next==NULL)
+			return;
+		if (next==target) {
+			next=next->Next();
+			if (next!=NULL)
+				next->SetPrevious(this);
+			
+		} else 
+			next->Remove(target);
+	}
 	
 }
 
 CacheUser* CacheUser::SetNext(CacheUser *nextuser) {
-	if (next==NULL) {
-		next=nextuser;
-		if (next!=NULL)
-			next->prev=this;
-	} else {
-		next->SetNext(nextuser);
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		if (nextuser==NULL)
+			return NULL;
+		if (next==NULL) {
+			next=nextuser;
+			if (next!=NULL)
+				next->prev=this;
+		} else {
+			next->SetNext(nextuser);
+		}
+		return nextuser;
 	}
-	return nextuser;
+	
 }
 
 CacheUser* CacheUser::Previous() {
@@ -105,10 +124,14 @@ CacheUser* CacheUser::Previous() {
 }
 
 CacheUser* CacheUser::SetPrevious(CacheUser *prevuser) {
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
 		prev=prevuser;
 		if (prev!=NULL)
 			prev->next=this;
 		return prev;
+	}
+	
 }
 
 uint32 CacheUser::Token() {

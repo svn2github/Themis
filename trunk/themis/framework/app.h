@@ -36,7 +36,9 @@ Project Start Date: October 18, 2000
 #include "prefswin.h"
 #include "msgsystem.h"
 #include "msgdaemon.h"
-
+#ifdef NEWNET
+#include "tcpmanager.h"
+#endif
 //! The application framework version number. 
 #define THEMIS_FRAMEWORK_APP_VERSION 0.40
 
@@ -61,6 +63,9 @@ class App:public BApplication, public MessageSystem {
 		int16						fUniqueIDCounter;
 		
 	public:
+#ifdef NEWNET
+		_Themis_Networking_::TCPManager *TCPMan;
+#endif
 		//! The About window.
 		aboutwin *AWin;
 		//! The Preferences window.

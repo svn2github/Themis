@@ -7,6 +7,7 @@
 #include <String.h>
 #include <View.h>
 #include <Window.h>
+#include <ColorControl.h>
 
 class leftview;
 class ColorBox;
