@@ -37,9 +37,6 @@ UIElement::~UIElement()
 
 void UIElement::EAddChild(UIElement *element)
 {	
-	if (!nextLayer)
-		nextLayer = new BList();
-	
 	//automatically forward some needed data
 	element->parentView = parentView;
 	element->parentElement = this;

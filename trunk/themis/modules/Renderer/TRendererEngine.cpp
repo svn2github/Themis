@@ -93,10 +93,13 @@ void Renderer::Process( TNodePtr node, UIElement *element)
 	 
 	if ((length = children->getLength()) != 0){
 		UIBox	above_element_frame;
-		element->nextLayer = new BList(length);
+		if (element->nextLayer == NULL)
+			element->nextLayer = new BList(length);
+		printf("LENGTH = %d\n",length);
+		printf("CREATING BList %d, attached to element %d\n",element->nextLayer,element); 
 		for ( int i = length - 1; i >= 0; i--){
 			TNodePtr child = children->item(i);
-			
+			printf("I = %d\n",i);
 			//a switch of around a trillion line. That's all. ;-]
 			switch(child->getNodeType()){
 				case ELEMENT_NODE:{
@@ -150,7 +153,7 @@ void Renderer::Process( TNodePtr node, UIElement *element)
 					//Is it possible to have children here ?
 					if (uiChild){
 						element->EAddChild(uiChild);			
-						printf("RENDERER: Text Element Added to tree\n");
+						printf("RENDERER: Text Element Added to tree %d\n",element->nextLayer);
 						Process(child,uiChild);
 					}
 					else //THIS MIGHT ONLY BE TEMPORARY
