@@ -427,11 +427,18 @@ SiteHandler::ReceiveBroadcast(
 						/* Now set up the UH_PARSE_DOC_START message. */
 						printf( "SiteHandler: sending SH_PARSE_DOC_START\n" );
 						
+						/*
+						 * As the file protocol returns a file system url, we grab the url from the
+						 * loading progress message, and attach it to the broadcast.
+						 */
+						const char* url = NULL;
+						msg->FindString( "url", &url );
+						
 						BMessage* parse = new BMessage( SH_PARSE_DOC_START );
 						parse->AddInt32( "command", COMMAND_INFO );
 						parse->AddInt32( "site_id", site_id );
 						parse->AddInt32( "url_id", url_id );
-						parse->AddString( "url", url_entry->GetUrl() );
+						parse->AddString( "url", url );
 						Broadcast( MS_TARGET_HTML_PARSER, parse );
 						delete parse;
 					}
@@ -443,6 +450,62 @@ SiteHandler::ReceiveBroadcast(
 					Broadcast( MS_TARGET_WINDOW, notify );
 					delete notify;
 					
+					break;
+				}
+				case SH_PARSE_DOC_FINISHED :
+				{
+					printf( "SiteHandler: SH_PARSE_DOC_FINISHED\n" );
+					
+					/* The following is still the workaround way, as we have no multi-framed rendering stuff. */
+					
+					/*
+					 * The document parser delivers us with the pointer to the DOM tree data AND with the
+					 * site/url_id combination of the parsed url, when it is finished with parsing the document data.
+					 * When everything is fine, I will Broadcast a message to the renderer with
+					 * 'SH_RENDER_START' including the DOM tree and the view id.
+					 * Additionally the UrlEntrys state is set to html_parsed. (To be implemented.)
+					 *
+					 * Broadcast message to be sent is the following:
+					 * 		- uint32	"what" = UH_RENDER_START
+					 *		- int32		"command" = COMMAND_INFO
+					 * 		- pointer	"dom_tree_pointer"
+					 *		- int32		"site_id"
+					 * 		- int32		"url_id"
+					 */
+					
+					if( msg->HasString( "type" ) )
+					{
+						BString str;
+						msg->FindString( "type", &str );
+						if( strncmp( "dom", str.String(), 3 ) == 0 )
+						{
+							void* dom_ptr = NULL;
+							msg->FindPointer( "dom_tree_pointer", &dom_ptr );
+							if( dom_ptr == NULL )
+							{
+								printf( "SiteHandler: dom_tree_pointer invalid!!\n" );
+								break;
+							}
+							
+							int32 site_id = 0;
+							int32 url_id = 0;
+							msg->FindInt32( "site_id", &site_id );
+							msg->FindInt32( "url_id", &url_id );
+							
+							BMessage* render = new BMessage( SH_RENDER_START );
+							render->AddInt32( "command", COMMAND_INFO );
+							render->AddPointer( "dom_tree_pointer", dom_ptr );
+							render->AddInt32( "site_id", site_id );
+							render->AddInt32( "url_id", url_id );
+							
+							printf( "SiteHandler: sending UH_RENDER_START\n" );
+							
+							Broadcast( MS_TARGET_RENDERER, render );
+							
+							delete render;							
+						}
+					}
+						
 					break;
 				}
 //				case UH_DOC_CLOSED :

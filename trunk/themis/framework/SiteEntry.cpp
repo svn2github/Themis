@@ -125,7 +125,7 @@ SiteEntry::GetLoadingProgress()
 	
 	progress = ( uint32 )( progress / fEntryList.size() );
 
-	fLoadingProgress = ( uint8 )progress;
+	SetLoadingProgress( ( uint8 )progress );
 	
 	printf( "SITEENTRY: fLoadingProgress: %d\n", fLoadingProgress );
 	

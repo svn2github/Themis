@@ -162,8 +162,12 @@ status_t FileProtocol	::	ReceiveBroadcast( BMessage * message )	{
 			{
 				case SH_RETRIEVE_START :
 				{
-					const char * url;
+					const char * url = NULL;
 					message->FindString( "url", &url );
+					
+					if( url == NULL )
+						break;
+					
 					printf( "FILE_PROTO: Requesting url: %s\n", url );
 					string urlString( url );
 					string protocolString( urlString.substr( 0, 7 ) );
@@ -182,9 +186,13 @@ status_t FileProtocol	::	ReceiveBroadcast( BMessage * message )	{
 							cache->CreateObject( userToken, fileLocation.c_str(), TYPE_DISK_FILE );
 						
 						BMessage * fileMessage = new BMessage( SH_LOADING_PROGRESS );
-						int32 id=0;
-						message->FindInt32("view_id",&id);
-						fileMessage->AddInt32("view_id",id);
+						int32 site_id = 0;
+						int32 url_id = 0;
+						message->FindInt32( "site_id", &site_id );
+						message->FindInt32( "url_id", &url_id );
+						
+						fileMessage->AddInt32( "site_id", site_id );
+						fileMessage->AddInt32( "url_id", url_id );
 						fileMessage->AddInt32( "command", COMMAND_INFO );
 						fileMessage->AddBool( "request_done", true );
 						fileMessage->AddString( "url", fileLocation.c_str() );
