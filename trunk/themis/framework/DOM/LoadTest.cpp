@@ -70,6 +70,440 @@ void HTMLParser	::	showDocument()	{
 
 }
 
+void HTMLParser	::	setContent( string aContent )	{
+	
+	mContent = aContent;
+	
+}
+
+bool HTMLParser	::	isStartTag()	{
+	
+	return !mCloseTag;
+
+}
+
+bool HTMLParser	::	isDocTypeTag()	{
+	
+	if ( !mTag.compare( "!doctype" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isHtmlTag()	{
+	
+	if ( !mTag.compare( "html" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isHeadTag()	{
+	
+	if ( !mTag.compare( "head" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isBodyTag()	{
+	
+	if ( !mTag.compare( "body" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isTitleTag()	{
+	
+	if ( !mTag.compare( "title" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isStyleTag()	{
+	
+	if ( !mTag.compare( "style" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isScriptTag()	{
+	
+	if ( !mTag.compare( "script" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isIsIndexTag()	{
+	
+	if ( !mTag.compare( "isindex" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isBaseTag()	{
+	
+	if ( !mTag.compare( "base" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isMetaTag()	{
+	
+	if ( !mTag.compare( "meta" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isLinkTag()	{
+	
+	if ( !mTag.compare( "link" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isBlockLevelTag()	{
+
+	if ( isPTag() ||
+		 isListTag() ||
+		 isPreTag() ||
+		 isBodyStyleTag() ||
+		 isFormTag() ||
+		 isEmptyBlockTag() ||
+		 isTableTag() )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isTextLevelTag()	{
+
+	if ( isFontStyleTag() ||
+		 isPhraseTag() ||
+		 isFormFieldTag() ||
+		 isAnchorTag() ||
+		 isEmptyTextTag() ||
+		 isAppletTag() ||
+		 isFontTag() ||
+		 isMapTag() )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isHeadingTag()	{
+	
+	if ( !mTag.compare( "h1" ) ||
+		 !mTag.compare( "h2" ) ||
+		 !mTag.compare( "h3" ) ||
+		 !mTag.compare( "h4" ) ||
+		 !mTag.compare( "h5" ) ||
+		 !mTag.compare( "h6" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}	 
+
+bool HTMLParser	::	isAdressTag()	{
+	
+	if ( !mTag.compare( "adress" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isPTag()	{
+	
+	if ( !mTag.compare( "p" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isListTag()	{
+	
+	if ( isULTag() ||
+		 isOLTag() ||
+		 isDLTag() )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isULTag()	{
+	
+	if ( !mTag.compare( "ul" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isOLTag()	{
+	
+	if ( !mTag.compare( "ol" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isDLTag()	{
+	
+	if ( !mTag.compare( "dl" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isLITag()	{
+	
+	if ( !mTag.compare( "li" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isDDTag()	{
+	
+	if ( !mTag.compare( "dd" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isDTTag()	{
+	
+	if ( !mTag.compare( "dt" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isPreTag()	{
+	
+	if ( !mTag.compare( "pre" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isBodyStyleTag()	{
+
+	if ( !mTag.compare( "div" ) ||
+		 !mTag.compare( "center" ) ||
+		 !mTag.compare( "blockquote" ) )	{
+		return true;
+	}
+	
+	return false;
+
+}	
+
+bool HTMLParser	::	isFormTag()	{
+	
+	if ( !mTag.compare( "form" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isEmptyBlockTag()	{
+
+	if ( !mTag.compare( "isindex" ) ||
+		 !mTag.compare( "hr" ) )	{
+		return true;
+	}
+	
+	return false;
+
+}
+
+bool HTMLParser	::	isTableTag()	{
+	
+	if ( !mTag.compare( "table" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isFontStyleTag()	{
+	
+	if ( isFontStylePreTag() ||
+		 !mTag.compare( "i" ) ||
+		 !mTag.compare( "big" ) ||
+		 !mTag.compare( "small" ) ||
+		 !mTag.compare( "sub" ) ||
+		 !mTag.compare( "sup" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isFontStylePreTag()	{
+	
+	if ( !mTag.compare( "tt" ) ||
+		 !mTag.compare( "b" ) ||
+		 !mTag.compare( "u" ) ||
+		 !mTag.compare( "strike" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isPhraseTag()	{
+
+	if ( !mTag.compare( "em" ) ||
+		 !mTag.compare( "strong" ) ||
+		 !mTag.compare( "dfn" ) ||
+		 !mTag.compare( "code" ) ||
+		 !mTag.compare( "samp" ) ||
+		 !mTag.compare( "kbd" ) ||
+		 !mTag.compare( "var" ) ||
+		 !mTag.compare( "cite" ) )	{
+		return true;
+	}
+	
+	return false;
+
+}	
+
+bool HTMLParser	::	isFormFieldTag()	{
+	
+	if ( !mTag.compare( "input" ) ||
+		 !mTag.compare( "select" ) ||
+		 !mTag.compare( "textarea" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}	 
+
+bool HTMLParser	::	isAnchorTag()	{
+	
+	if ( !mTag.compare( "a" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isEmptyTextTag()	{
+
+	if ( !mTag.compare( "img" ) ||
+		 isEmptyTextPreTag() )	{
+		return true;
+	}
+	
+	return false;
+
+}	
+
+bool HTMLParser	::	isEmptyTextPreTag()	{
+
+	if ( !mTag.compare( "basefont" ) ||
+		 !mTag.compare( "br" ) )	{
+		return true;
+	}
+	
+	return false;
+
+}	
+
+bool HTMLParser	::	isAppletTag()	{
+	
+	if ( !mTag.compare( "applet" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isFontTag()	{
+	
+	if ( !mTag.compare( "font" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isMapTag()	{
+	
+	if ( !mTag.compare( "map" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
 string HTMLParser	::	getTag()	{
 	
 	mOldPos = mPos;
@@ -105,107 +539,7 @@ string HTMLParser	::	getTag()	{
 	
 }
 
-void HTMLParser	::	skipTag()	{
-	
-	while ( mPos != mContent.size() && mContent[mPos] != '>' )	{
-		// Not the end of this tag yet
-		if ( mContent[mPos] == '"' )	{
-			// Might be a > in the quote, not sure if it is legal
-			mPos++;
-			while ( mPos != mContent.size() && mContent[mPos] != '"' )	{
-				mPos++;
-			}
-		}
-		mPos++;
-	}
-	
-}
-void HTMLParser	::	setContent( string aContent )	{
-	
-	mContent = aContent;
-	
-}
-
-bool HTMLParser	::	isStartTag()	{
-	
-	return !mCloseTag;
-
-}
-
-bool HTMLParser	::	isHeadingTag()	{
-	
-	if ( !mTag.compare( "h1" ) ||
-		 !mTag.compare( "h2" ) ||
-		 !mTag.compare( "h3" ) ||
-		 !mTag.compare( "h4" ) ||
-		 !mTag.compare( "h5" ) ||
-		 !mTag.compare( "h6" ) )	{
-		return true;
-	}
-	
-	return false;
-	
-}	 
-
-bool HTMLParser	::	isFontStyleTag()	{
-	
-	if ( !mTag.compare( "tt" ) ||
-		 !mTag.compare( "i" ) ||
-		 !mTag.compare( "b" ) ||
-		 !mTag.compare( "u" ) ||
-		 !mTag.compare( "strike" ) ||
-		 !mTag.compare( "big" ) ||
-		 !mTag.compare( "small" ) ||
-		 !mTag.compare( "sub" ) ||
-		 !mTag.compare( "sup" ) )	{
-		return true;
-	}
-	
-	return false;
-	
-}
-
-bool HTMLParser	::	isPhraseTag()	{
-
-	if ( !mTag.compare( "em" ) ||
-		 !mTag.compare( "strong" ) ||
-		 !mTag.compare( "dfn" ) ||
-		 !mTag.compare( "code" ) ||
-		 !mTag.compare( "samp" ) ||
-		 !mTag.compare( "kbd" ) ||
-		 !mTag.compare( "var" ) ||
-		 !mTag.compare( "cite" ) )	{
-		return true;
-	}
-	
-	return false;
-
-}	
-
-bool HTMLParser	::	isEmptyElementTag()	{
-
-	if ( !mTag.compare( "img" ) ||
-		 !mTag.compare( "br" ) )	{
-		return true;
-	}
-	
-	return false;
-
-}	
-
-bool HTMLParser	::	isBodyStyleTag()	{
-
-	if ( !mTag.compare( "div" ) ||
-		 !mTag.compare( "center" ) ||
-		 !mTag.compare( "blockquote" ) )	{
-		return true;
-	}
-	
-	return false;
-
-}	
-
-string HTMLParser	::	getText( bool aConserveSpaces = true )	{
+string HTMLParser	::	getText( bool aConserveSpaces = false )	{
 	
 	mOldPos = mPos;
 	
@@ -307,7 +641,7 @@ string HTMLParser	::	getAttribute()	{
 	
 }
 
-string HTMLParser	::	getString()	{
+string HTMLParser	::	getString( bool aConserveSpaces )	{
 
 	cout << "Getting string...\n";
 
@@ -317,7 +651,7 @@ string HTMLParser	::	getString()	{
 		switch ( mContent[mPos] )	{
 			case '>' :	{
 				cout << "Getting text...\n";
-				result = getText( false );
+				result = getText( aConserveSpaces );
 				mStringType = TEXT;
 				break;
 			}
@@ -345,6 +679,22 @@ string HTMLParser	::	getString()	{
 	
 }
 
+void HTMLParser	::	skipTag()	{
+	
+	while ( mPos != mContent.size() && mContent[mPos] != '>' )	{
+		// Not the end of this tag yet
+		if ( mContent[mPos] == '"' )	{
+			// Might be a > in the quote, not sure if it is legal
+			mPos++;
+			while ( mPos != mContent.size() && mContent[mPos] != '"' )	{
+				mPos++;
+			}
+		}
+		mPos++;
+	}
+	
+}
+
 void HTMLParser	::	backPedal()	{
 	
 	mPos = mOldPos;
@@ -360,12 +710,12 @@ void HTMLParser	::	startParsing( TDocumentShared aDocument )	{
 	while ( insideDoc )	{
 		getTag();
 
-		if ( !mTag.compare( "!doctype" ) )	{
+		if ( isDocTypeTag() )	{
 			doctypeTag();
 			continue;
 		}
 
-		if ( !mTag.compare( "html" ) )	{
+		if ( isHtmlTag() )	{
 			htmlTag();
 			// Last tag, quit the loop
 			insideDoc = false;
@@ -373,6 +723,7 @@ void HTMLParser	::	startParsing( TDocumentShared aDocument )	{
 		}
 		
 		cout << "Unknown tag found. Skipping...\n";
+		skipTag();
 		
 	}
 
@@ -399,12 +750,12 @@ void HTMLParser	::	htmlTag()	{
 		getTag();
 
 		if ( isStartTag() )	{
-			if ( !mTag.compare( "head" ) )	{
+			if ( isHeadTag() )	{
 				headTag( element );
 				continue;
 			}
 
-			if ( !mTag.compare( "body" ) )	{
+			if ( isBodyTag() )	{
 				bodyStyleTag( element );
 				continue;
 			}
@@ -442,43 +793,27 @@ void HTMLParser	::	headTag( TElementShared aParent )	{
 		getTag();
 
 		if ( isStartTag() )	{
-			if ( !mTag.compare( "title" ) )	{
-				titleTag( element );
+			if ( isTitleTag() ||
+				 isStyleTag() ||
+				 isScriptTag() )	{
+				normalHeadTag( element );
 				continue;
 			}
-/*
-			if ( !mTag.compare( "style" ) )	{
-				styleTag( element );
+			if ( isIsIndexTag() ||
+				 isBaseTag() ||
+				 isMetaTag() ||
+				 isLinkTag() )	{
+				emptyElementTag( element );
 				continue;
 			}
-			if ( !mTag.compare( "script" ) )	{
-				scriptTag( element );
-				continue;
-			}
-			if ( !mTag.compare( "isindex" ) )	{
-				isindexTag( element );
-				continue;
-			}
-			if ( !mTag.compare( "base" ) )	{
-				baseTag( element );
-				continue;
-			}
-			if ( !mTag.compare( "meta" ) )	{
-				metaTag( element );
-				continue;
-			}
-			if ( !mTag.compare( "link" ) )	{
-				linkTag( element );
-				continue;
-			}
-*/			
+			
 			// Not a known tag
 			cout << "Unknown tag found. Skipping...\n";
 			skipTag();
 
 		}
 		else	{			
-			if ( !mTag.compare( "head" ) )	{
+			if ( isHeadTag() )	{
 				cout << "head closing tag found\n";
 
 				// End the while loop
@@ -492,28 +827,31 @@ void HTMLParser	::	headTag( TElementShared aParent )	{
 	
 }
 
-void HTMLParser	::	titleTag( TElementShared aParent )	{
+void HTMLParser	::	normalHeadTag( TElementShared aParent )	{
 
-	cout << "title tag found\n";
+	cout << mTag << " tag found\n";
+
+	// Save the tag name
+	string tag = mTag;
 
 	// Add to parent
-	TElementShared element = mDocument->createElement( "title" );
+	TElementShared element = mDocument->createElement( tag );
 	aParent->appendChild( element );
 
-	bool insideTitle = true;
+	bool insideHeadLevel = true;
 	
-	string title;
+	string data;
 	
-	while ( insideTitle )	{
+	while ( insideHeadLevel )	{
 		
-		title += getText();
+		data += getText();
 		
 		getTag();
 
 		if ( !isStartTag() )	{
-			if ( !mTag.compare( "title" ) )	{
-				cout << "title closing tag found\n";
-				insideTitle = false;
+			if ( !mTag.compare( tag ) )	{
+				cout << mTag << " closing tag found\n";
+				insideHeadLevel = false;
 			}
 			else	{
 				cout << "Unknown closing tag found. Skipping...\n";
@@ -525,10 +863,10 @@ void HTMLParser	::	titleTag( TElementShared aParent )	{
 		}
 	}
 
-	TTextShared text = mDocument->createText( title );
+	TTextShared text = mDocument->createText( data );
 	element->appendChild( text );
 
-	cout << "Title is: " << title << endl;
+	cout << "Text is: " << data << endl;
 	
 }
 
@@ -548,20 +886,20 @@ void HTMLParser	::	bodyStyleTag( TElementShared aParent )	{
 	
 	while ( insideBodyStyle )	{
 		// Warning: more possible than a tag only
-		string text = getString();
+		string data = getString();
 
-		cout << "Received string " << text.size() << ": " << text << endl;
+		cout << "Received string " << data.size() << ": " << data << endl;
 
 		switch ( mStringType )	{
 			case ATTR :	{
-				attribute = text;
+				attribute = data;
 				break;
 			}
 			case ATTRVALUE :	{
 				if ( attribute.compare( "" ) )	{
 					// Attribute has a name
 					// I'll declare it legal
-					element->setAttribute( attribute, text );
+					element->setAttribute( attribute, data );
 					attribute = "";
 				}
 				break;
@@ -569,43 +907,19 @@ void HTMLParser	::	bodyStyleTag( TElementShared aParent )	{
 			case TAG :	{
 				if ( isStartTag() )	{
 					if ( isHeadingTag() )	{
-						headingTag( element );
+						normalTextTag( element );
 						continue;
 					}
-					if ( !mTag.compare( "p" ) )	{
-						pTag( element );
+					if ( isAdressTag() )	{
+						adressTag( element );
 						continue;
 					}
-					if ( !mTag.compare( "pre" ) )	{
-						preTag( element );
+					if ( isBlockLevelTag() )	{
+						blockLevelTag( element );
 						continue;
 					}
-					if ( !mTag.compare( "hr" ) )	{
-						hrTag( element );
-						continue;
-					}
-/*
-					if ( !mTag.compare( "blockquote" ) )	{
-						blockquoteTag( element );
-						continue;
-					}
-*/
-					if ( isFontStyleTag() || isPhraseTag() )	{
-						backPedal();
-						pTag( element );
-					}
-					if ( !mTag.compare( "font" ) )	{
-						backPedal();
-						pTag( element );
-						continue;
-					}
-					if ( isEmptyElementTag() )	{
-						backPedal();
-						pTag( element );
-						continue;
-					}
-					if ( isBodyStyleTag() )	{
-						bodyStyleTag( element );
+					if ( isTextLevelTag() )	{
+						textLevelTag( element );
 						continue;
 					}
 		
@@ -628,16 +942,172 @@ void HTMLParser	::	bodyStyleTag( TElementShared aParent )	{
 				break;
 			}
 			case TEXT :	{
-				if ( text.compare( " " ) && text.compare( "" ) )	{
-					cout << "Text is:" << endl << text << endl;
-					TTextShared data = mDocument->createText( text );
-					element->appendChild( data );
+				if ( data.compare( " " ) && data.compare( "" ) )	{
+					cout << "Text is:" << endl << data << endl;
+					TTextShared text = mDocument->createText( data );
+					element->appendChild( text );
 				}
 				break;
 			}
 		}
 	}
 	
+}
+
+void HTMLParser	::	adressTag( TElementShared aParent )	{
+
+	cout << " adress tag found\n";
+
+	// Add to parent
+	TElementShared element = mDocument->createElement( "adress" );
+	aParent->appendChild( element );
+
+	bool insideAdress = true;
+	string attribute;
+	
+	while ( insideAdress )	{
+
+		string data = getString();
+
+		cout << "Received string " << data.size() << ": " << data << endl;
+
+		switch ( mStringType )	{
+			case ATTR :	{
+				attribute = data;
+				break;
+			}
+			case ATTRVALUE :	{
+				if ( attribute.compare( "" ) )	{
+					// Attribute has a name
+					// I'll declare it legal
+					element->setAttribute( attribute, data );
+					attribute = "";
+				}
+				break;
+			}
+			case TAG :	{
+				if ( isStartTag() )	{
+					if ( isPTag() )	{
+						pTag( element );
+						continue;
+					}
+					if ( isTextLevelTag() )	{
+						textLevelTag( element );
+						continue;
+					}
+		
+					// Not a known tag
+					cout << "Unknown tag found. Skipping...\n";
+					skipTag();
+					
+				}
+				else	{			
+					if ( !mTag.compare( "adress" ) )	{
+						cout << mTag << " closing tag found\n";
+		
+						// End the while loop
+						insideAdress = false;
+					}
+					else	{
+						cout << "Unknown closing tag found. Skipping...\n";
+					}
+				}
+				break;
+			}
+			case TEXT :	{
+				if ( data.compare( " " ) && data.compare( "" ) )	{
+					cout << "Text is:" << endl << data << endl;
+					TTextShared text = mDocument->createText( data );
+					element->appendChild( text );
+				}
+				break;
+			}
+		}
+	}
+
+}
+
+void HTMLParser	::	blockLevelTag( TElementShared aParent )	{
+
+	if ( isPTag() )	{
+		pTag( aParent );
+		return;
+	}
+	if ( isListTag() )	{
+		listTag( aParent );
+		skipTag();
+		return;
+	}
+	if ( isPreTag() )	{
+		preTag( aParent );
+		return;
+	}
+	if ( isBodyStyleTag() )	{
+		bodyStyleTag( aParent );
+		return;
+	}
+	if ( isFormTag() )	{
+		//formTag( aParent );
+		skipTag();
+		return;
+	}
+	if ( isEmptyBlockTag() )	{
+		emptyElementTag( aParent );
+		return;
+	}
+	if ( isTableTag() )	{
+		//tableTag( aParent );
+		skipTag();
+		return;
+	}
+
+}
+
+void HTMLParser	::	textLevelTag( TElementShared aParent )	{
+	
+	if ( isFontStyleTag() ||
+		 isPhraseTag() ||
+		 isFontTag() )	{
+		normalTextTag( aParent );
+		return;
+	}
+	if ( isFormFieldTag() )	{
+		//formFieldTag( aParent );
+		skipTag();
+		return;
+	}
+	if ( isAnchorTag() )	{
+		aTag( aParent );
+		return;
+	}
+	if ( isEmptyTextTag() )	{
+		emptyElementTag( aParent );
+		return;
+	}
+	if ( isAppletTag() )	{
+		//appletTag( aParent );
+		skipTag();
+		return;
+	}
+	if ( isMapTag() )	{
+		//mapTag( aParent );
+		skipTag();
+		return;
+	}
+	
+}
+
+void HTMLParser	::	flowLevelTag( TElementShared aParent )	{
+	
+	if ( isBlockLevelTag() )	{
+		blockLevelTag( aParent );
+		return;
+	}
+	if ( isTextLevelTag() )	{
+		textLevelTag( aParent );
+		return;
+	}
+
 }
 
 void HTMLParser	::	pTag( TElementShared aParent )	{
@@ -649,7 +1119,6 @@ void HTMLParser	::	pTag( TElementShared aParent )	{
 	aParent->appendChild( element );
 	
 	bool insideP = true;
-	string text;
 	string attribute;
 	
 	while ( insideP )	{
@@ -674,12 +1143,14 @@ void HTMLParser	::	pTag( TElementShared aParent )	{
 			}
 			case TAG :	{
 				if ( !isStartTag() )	{
-					if ( !mTag.compare( "p" ) )	{
+					if ( isPTag() )	{
 						cout << "p closing tag found\n";
 						insideP = false;
 						continue;
 					}
-					if ( !mTag.compare( "body" ) )	{
+					if ( isAdressTag() ||
+						 isBodyStyleTag() ||
+						 isFormTag() )	{
 						cout << "p closed implicitly\n";
 						insideP = false;
 						backPedal();
@@ -690,26 +1161,14 @@ void HTMLParser	::	pTag( TElementShared aParent )	{
 		
 				}
 				else	{
-					if ( !mTag.compare( "p" ) )	{
+					if ( isBlockLevelTag() )	{
 						cout << "p closed implicitly\n";
 						insideP = false;
 						backPedal();
 						continue;
 					}
-					if ( isFontStyleTag() || isPhraseTag() )	{
+					if ( isTextLevelTag() )	{
 						textLevelTag( element );
-						continue;
-					}
-					if ( !mTag.compare( "a" ) )	{
-						aTag( element );
-						continue;
-					}
-					if ( !mTag.compare( "font" ) )	{
-						textLevelTag( element );
-						continue;
-					}
-					if ( isEmptyElementTag() )	{
-						emptyElementTag( element );
 						continue;
 					}
 
@@ -733,111 +1192,29 @@ void HTMLParser	::	pTag( TElementShared aParent )	{
 
 }
 
-void HTMLParser	::	headingTag( TElementShared aParent )	{
-
+void HTMLParser	::	listTag( TElementShared aParent )	{
+	
 	cout << mTag << " tag found\n";
+
+	// Save the tag name
+	string tag = mTag;
+
+	// To check if this list can have list items or not
+	bool listItem = false;
+
+	if ( isULTag() || isOLTag() )	{
+		listItem = true;
+	}
 
 	// Add to parent
 	TElementShared element = mDocument->createElement( mTag );
 	aParent->appendChild( element );
-	
-	bool insideHeading = true;
-	
-	string heading;
-	
-	while ( insideHeading )	{
-		
-		heading += getText( false );
-		
-		getTag();
-		if ( !isStartTag() )	{
-			if ( isHeadingTag() )	{
-				cout << mTag << " closing tag found\n";
-				insideHeading = false;
-			}
-			else	{
-				cout << "Unknown closing tag found. Skipping...\n";
-			}
-		}
-		else	{
-			// Not a known tag
-			cout << "Unknown tag found. Skipping...\n";
-			skipTag();
-		}
-	}
 
-	TTextShared content = mDocument->createText( heading );
-	element->appendChild( content );
-
-	cout << "Text is:" << endl << heading << endl;
-	
-}
-
-void HTMLParser	::	preTag( TElementShared aParent )	{
-
-	cout << "pre tag found\n";
-
-	// Add to parent
-	TElementShared element = mDocument->createElement( "pre" );
-	aParent->appendChild( element );
-	
-	bool insidePre = true;
-	
-	string text;
-	
-	while ( insidePre )	{
-		
-		text += getText();
-		
-		getTag();
-		if ( !isStartTag() )	{
-			if ( !mTag.compare( "pre" ) )	{
-				cout << "pre closing tag found\n";
-				insidePre = false;
-			}
-			else	{
-				cout << "Unknown closing tag found. Skipping...\n";
-			}
-		}
-		else	{
-			// Not a known tag
-			cout << "Unknown tag found. Skipping...\n";
-			skipTag();
-		}
-	}
-
-	TTextShared content = mDocument->createText( text );
-	element->appendChild( content );
-
-	cout << "Text is:" << endl << text << endl;
-	
-}
-
-void HTMLParser	::	hrTag( TElementShared aParent )	{
-
-	cout << "hr tag found\n";
-
-	// Add to parent
-	TElementShared element = mDocument->createElement( "hr" );
-	aParent->appendChild( element );
-	
-}
-
-/*
-void HTMLParser	::	blockquoteTag( TElementShared aParent )	{
-
-	cout << "blockquote tag found\n";
-
-	// Add to parent
-	TElementShared element = mDocument->createElement( "blockquote" );
-	aParent->appendChild( element );
-	
-	bool insideBlockquote = true;
-	
+	bool insideList = true;
 	string attribute;
 	
-	while ( insideBlockquote )	{
-		
+	while ( insideList )	{
+		// Warning: more possible than a tag only
 		string data = getString();
 
 		cout << "Received string " << data.size() << ": " << data << endl;
@@ -857,10 +1234,80 @@ void HTMLParser	::	blockquoteTag( TElementShared aParent )	{
 				break;
 			}
 			case TAG :	{
+				if ( isStartTag() )	{
+					if ( ( isLITag() && listItem ) ||
+						 ( isDDTag() && !listItem ) )	{
+						flowLevelTag( element );
+						continue;
+					}
+					if ( isDTTag() && !listItem )	{
+						textLevelTag( element );
+						continue;
+					}
+		
+					// Not a known tag
+					cout << "Unknown tag found. Skipping...\n";
+					skipTag();
+					
+				}
+				else	{			
+					if ( !mTag.compare( tag ) )	{
+						cout << mTag << " closing tag found\n";
+		
+						// End the while loop
+						insideList = false;
+					}
+					else	{
+						cout << "Unknown closing tag found. Skipping...\n";
+					}
+				}
+				break;
+			}
+			case TEXT :	{
+				cout << "Text found in illegal place. Skipping...\n";
+				break;
+			}
+		}
+	}
+	
+}
+
+void HTMLParser	::	preTag( TElementShared aParent )	{
+
+	cout << "pre tag found\n";
+
+	// Add to parent
+	TElementShared element = mDocument->createElement( "pre" );
+	aParent->appendChild( element );
+	
+	bool insidePre = true;
+	string attribute;
+	
+	while ( insidePre )	{
+		
+		string data = getString( true );
+
+		cout << "Received string " << data.size() << ": " << data << endl;
+
+		switch ( mStringType )	{
+			case ATTR :	{
+				attribute = data;
+				break;
+			}
+			case ATTRVALUE :	{
+				if ( attribute.compare( "" ) )	{
+					// Attribute has a name
+					// I'll declare it legal
+					element->setAttribute( attribute, data );
+					attribute = "";
+				}
+				break;
+			}
+			case TAG :	{
 				if ( !isStartTag() )	{
-					if ( !mTag.compare( "blockquote" ) )	{
-						cout << " blockquote closing tag found\n";
-						insideBlockquote = false;
+					if ( isPreTag() )	{
+						cout << "pre closing tag found\n";
+						insidePre = false;
 						continue;
 					}
 		
@@ -868,23 +1315,37 @@ void HTMLParser	::	blockquoteTag( TElementShared aParent )	{
 		
 				}
 				else	{
-					if ( !mTag.compare( "a" ) )	{
-						aTag( element );
+					if ( isFontStylePreTag() ||
+						 isPhraseTag() )	{
+						normalTextTag( element, true );
 						continue;
 					}
-					if ( isFontStyleTag() || isPhraseTag() )	{
-						textLevelTag( element );
+/*
+					if ( isFormFieldTag() )	{
+						formFielTag( element, true );
 						continue;
 					}
-					if ( !mTag.compare( "font" ) )	{
-						textLevelTag( element );
+*/
+					if ( isAnchorTag() )	{
+						aTag( element, true );
 						continue;
 					}
-					if ( isEmptyElementTag() )	{
+/*
+					if ( isAppletTag() )	{
+						appletTag( element, true );
+						continue;
+					}
+*/	
+					if ( isEmptyTextPreTag() )	{
 						emptyElementTag( element );
 						continue;
 					}
-
+/*
+					if ( isMap() )	{
+						mapTag( element );
+						continue;
+					}
+*/						
 					// Not a known tag
 					cout << "Unknown tag found. Skipping...\n";
 					skipTag();
@@ -904,9 +1365,8 @@ void HTMLParser	::	blockquoteTag( TElementShared aParent )	{
 	}
 	
 }
-*/
 
-void HTMLParser	::	aTag( TElementShared aParent )	{
+void HTMLParser	::	aTag( TElementShared aParent, bool aConserveSpaces )	{
 
 	cout << "a tag found\n";
 
@@ -920,7 +1380,7 @@ void HTMLParser	::	aTag( TElementShared aParent )	{
 	
 	while ( insideA )	{
 		
-		string data = getString();
+		string data = getString( aConserveSpaces );
 
 		cout << "Received string " << data.size() << ": " << data << endl;
 
@@ -958,7 +1418,7 @@ void HTMLParser	::	aTag( TElementShared aParent )	{
 						textLevelTag( element );
 						continue;
 					}
-					if ( isEmptyElementTag() )	{
+					if ( isEmptyTextTag() )	{
 						emptyElementTag( element );
 						continue;
 					}
@@ -971,7 +1431,7 @@ void HTMLParser	::	aTag( TElementShared aParent )	{
 				break;
 			}
 			case TEXT :	{
-				if ( data.compare( " " ) && data.compare( "" ) )	{
+				if ( ( data.compare( " " ) && data.compare( "" ) ) || ( aConserveSpaces && data.compare( "" ) ) )	{
 					cout << "Text is:" << endl << data << endl;
 					TTextShared text = mDocument->createText( data );
 					element->appendChild( text );
@@ -1027,11 +1487,12 @@ void HTMLParser	::	emptyElementTag( TElementShared aParent )	{
 	
 }
 
-void HTMLParser	::	textLevelTag( TElementShared aParent )	{
+void HTMLParser	::	normalTextTag( TElementShared aParent, bool aConserveSpaces )	{
 
 	cout << mTag << " tag found\n";
 
-	string tag = mTag; // To save the current tag info
+	// Save the tag name
+	string tag = mTag;
 
 	// Add to parent
 	TElementShared element = mDocument->createElement( mTag );
@@ -1043,7 +1504,7 @@ void HTMLParser	::	textLevelTag( TElementShared aParent )	{
 	
 	while ( insideTextLevel )	{
 		
-		string data = getString();
+		string data = getString( aConserveSpaces );
 
 		cout << "Received string " << data.size() << ": " << data << endl;
 
@@ -1090,7 +1551,7 @@ void HTMLParser	::	textLevelTag( TElementShared aParent )	{
 				break;
 			}
 			case TEXT :	{
-				if ( data.compare( " " ) && data.compare( "" ) )	{
+				if ( ( data.compare( " " ) && data.compare( "" ) ) || ( aConserveSpaces && data.compare( "" ) ) )	{
 					cout << "Text is:" << endl << data << endl;
 					TTextShared text = mDocument->createText( data );
 					element->appendChild( text );

@@ -32,34 +32,72 @@ class HTMLParser	{
 		StringType mStringType; // Type of the text last retrieved
 		bool mCloseTag; // Indicates if the current tag is a closing tag
 		TDocumentShared mDocument; // Stores the document to be build
-		string getTag();
-		void skipTag();
+		// Functions for examining tags
 		bool isStartTag()	;
+		bool isDocTypeTag();
+		bool isHtmlTag();
+		bool isHeadTag();
+		bool isBodyTag();
+		bool isTitleTag();
+		bool isStyleTag();
+		bool isScriptTag();
+		bool isIsIndexTag();
+		bool isBaseTag();
+		bool isMetaTag();
+		bool isLinkTag();
+		bool isBlockLevelTag();
+		bool isTextLevelTag();
 		bool isHeadingTag();
-		bool isFontStyleTag();
-		bool isPhraseTag();
-		bool isEmptyElementTag();
+		bool isAdressTag();
+		bool isPTag();
+		bool isListTag();
+		bool isULTag();
+		bool isOLTag();
+		bool isDLTag();
+		bool isLITag();
+		bool isDDTag();
+		bool isDTTag();
+		bool isPreTag();
 		bool isBodyStyleTag();
-		string getText( bool aConserveSpaces = true );
+		bool isFormTag();
+		bool isEmptyBlockTag();
+		bool isTableTag();
+		bool isFontStyleTag();
+		bool isFontStylePreTag();
+		bool isPhraseTag();
+		bool isFormFieldTag();
+		bool isAnchorTag();
+		bool isEmptyTextTag();
+		bool isEmptyTextPreTag();
+		bool isAppletTag();
+		bool isFontTag();
+		bool isMapTag();
+		// Functions for getting a part of the input
+		string getTag();
+		string getText( bool aConserveSpaces = false );
 		string getAttrValue();
 		string getAttribute();		
-		string getString();
+		string getString( bool aConserveSpaces = false );
+		// Functions for moving around in the input
+		void skipTag(); // Skip the whole tag
 		void backPedal(); // Go back to to mOldPos
 		
 		// Tag recognition functions
 		void doctypeTag();
 		void htmlTag();
 		void headTag( TElementShared aParent );
-		void titleTag( TElementShared aParent );
+		void normalHeadTag( TElementShared aParent );
 		void bodyStyleTag( TElementShared aParent );
-		void pTag( TElementShared aParent );
-		void headingTag( TElementShared aParent );
-		void preTag( TElementShared aParent );
-		void hrTag( TElementShared aParent );
-		//void blockquoteTag( TElementShared aParent );
-		void aTag( TElementShared aParent );
-		void emptyElementTag( TElementShared aParent );
+		void adressTag( TElementShared aParent );
+		void blockLevelTag( TElementShared aParent );
 		void textLevelTag( TElementShared aParent );
+		void flowLevelTag( TElementShared aParent );
+		void pTag( TElementShared aParent );
+		void listTag( TElementShared aParent );
+		void preTag( TElementShared aParent );
+		void aTag( TElementShared aParent, bool aConserveSpaces = false );
+		void emptyElementTag( TElementShared aParent );
+		void normalTextTag( TElementShared aParent, bool aConserveSpaces = false );
 	
 	public:
 		HTMLParser();
