@@ -15,18 +15,30 @@
 
 using namespace std;
 
+enum StringType	{
+	TEXT,
+	TAG,
+	ATTRVALUE,
+	ATTR
+};
+
 class HTMLParser	{
 	
 	private:
 		unsigned int mPos;
+		unsigned int mOldPos; // Position in string before last read.
 		string mTag;	// Current tag
 		string mContent; // Content of the to be parsed file
+		StringType mStringType; // Type of the text last retrieved
 		bool mCloseTag; // Indicates if the current tag is a closing tag
 		TDocumentShared mDocument; // Stores the document to be build
 		string getTag();
 		bool isStartTag()	;
-		string getText( bool conserveSpaces = true );		
+		string getText( bool conserveSpaces = true );
+		string getAttrValue();
+		string getAttribute();		
 		string getString();
+		void backPedal(); // Go back to to mOldPos
 		
 		// Tag recognition functions
 		void doctypeTag();

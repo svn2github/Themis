@@ -71,6 +71,8 @@ void HTMLParser	::	showDocument()	{
 
 string HTMLParser	::	getTag()	{
 	
+	mOldPos = mPos;
+	
 	// Reset the tag and tag information
 	mTag = "";
 	mCloseTag = false;
@@ -116,6 +118,8 @@ bool HTMLParser	::	isStartTag()	{
 
 string HTMLParser	::	getText( bool conserveSpaces = true )	{
 	
+	mOldPos = mPos;
+	
 	while ( mPos != mContent.size() && mContent[mPos] != '>' )	{
 		mPos++;
 	}
@@ -155,35 +159,104 @@ string HTMLParser	::	getText( bool conserveSpaces = true )	{
 	
 }
 
+string HTMLParser	::	getAttrValue()	{
+	
+	mOldPos = mPos;
+	
+	string result;
+	
+	mPos++;
+	
+	while ( mPos != mContent.size() && mContent[mPos] == ' ' )	{
+		mPos++;
+	}
+	
+	if ( mPos == mContent.size() )	{
+		return result;
+	}
+	
+	if ( mContent[mPos] == '"' )	{
+		mPos++;
+		while ( mPos != mContent.size() && mContent[mPos] != '"' )	{
+			result += mContent[mPos];
+			mPos++;
+		}
+	}
+	else	{
+		while ( mPos != mContent.size() && mContent[mPos] != '>' && mContent[mPos] != ' ' )	{
+			result += mContent[mPos];
+			mPos++;
+		}
+	}
+	
+	return result;
+	
+}
+
+string HTMLParser	::	getAttribute()	{
+
+	mOldPos = mPos;
+
+	string result;
+
+	while ( mPos != mContent.size() && mContent[mPos] == ' ' )	{
+		mPos++;
+	}
+	
+	if ( mPos == mContent.size() || mContent[mPos] == '>' )	{
+		return result;
+	}
+	
+	while ( mPos != mContent.size() && mContent[mPos] != '=' && mContent[mPos] != ' ' && mContent[mPos] != '>' )	{
+		result+= mContent[mPos];
+		mPos++;
+	}
+	
+	return result;
+	
+}
+
 string HTMLParser	::	getString()	{
+
+	cout << "Getting string...\n";
 
 	string result;
 
 	if ( mPos != mContent.size() )	{
 		switch ( mContent[mPos] )	{
 			case '>' :	{
+				cout << "Getting text...\n";
 				result = getText( false );
-				//mStringType = TEXT;
+				mStringType = TEXT;
 				break;
 			}
 			case '<' :	{
+				cout << "Getting tag...\n";
 				result = getTag();
-				//mStringType = TAG;
+				mStringType = TAG;
 				break;
 			}
 			case '=' :	{
-				//result = getAttrValue();
-				//mStringType = ATTRVALUE;
+				cout << "Getting attribute value...\n";
+				result = getAttrValue();
+				mStringType = ATTRVALUE;
 				break;
 			}
 			default :	{
-				//result = getAttribute();
-				//mStringType = ATTR;
+				cout << "Getting attribute...\n";
+				result = getAttribute();
+				mStringType = ATTR;
 			}
 		}
 	}
 
 	return result;
+	
+}
+
+void HTMLParser	::	backPedal()	{
+	
+	mPos = mOldPos;
 	
 }
 
@@ -370,54 +443,81 @@ void HTMLParser	::	bodyTag( TElementShared parent )	{
 	TElementShared element = mDocument->createElement( "body" );
 	parent->appendChild( element );
 
-	// Ignoring the attributes for now
-	
 	bool insideBody = true;
+	string attribute;
 	
 	while ( insideBody )	{
 		// Warning: more possible than a tag only
-		getTag();
+		string text = getString();
 
-		if ( isStartTag() )	{
-			if ( !mTag.compare( "p" ) )	{
-				pTag( element );
-				continue;
-			}
-			if ( !mTag.compare( "h1" ) ||
-				 !mTag.compare( "h2" ) ||
-				 !mTag.compare( "h3" ) ||
-				 !mTag.compare( "h4" ) ||
-				 !mTag.compare( "h5" ) ||
-				 !mTag.compare( "h6" ) )	{
-				 	headingTag( element );
-				 	continue;
-			}
-			if ( !mTag.compare( "pre" ) )	{
-				preTag( element );
-				continue;
-			}
-			if ( !mTag.compare( "hr" ) )	{
-				hrTag( element );
-				continue;
-			}
-			if ( !mTag.compare( "blockquote" ) )	{
-				blockquoteTag( element );
-				continue;
-			}
+		cout << "Received string " << text.size() << ": " << text << endl;
 
-			// Not a known tag
-			cout << "Unknown tag found. Skipping...\n";
-			
-		}
-		else	{			
-			if ( !mTag.compare( "body" ) )	{
-				cout << "body closing tag found\n";
-
-				// End the while loop
-				insideBody = false;
+		switch ( mStringType )	{
+			case ATTR :	{
+				attribute = text;
+				break;
 			}
-			else	{
-				cout << "Unknown closing tag found. Skipping...\n";
+			case ATTRVALUE :	{
+				if ( attribute.compare( "" ) )	{
+					// Attribute has a name
+					// I'll declare it legal
+					element->setAttribute( attribute, text );
+					attribute = "";
+				}
+				break;
+			}
+			case TAG :	{
+				if ( isStartTag() )	{
+					if ( !mTag.compare( "p" ) )	{
+						pTag( element );
+						continue;
+					}
+					if ( !mTag.compare( "h1" ) ||
+						 !mTag.compare( "h2" ) ||
+						 !mTag.compare( "h3" ) ||
+						 !mTag.compare( "h4" ) ||
+						 !mTag.compare( "h5" ) ||
+						 !mTag.compare( "h6" ) )	{
+						 	headingTag( element );
+						 	continue;
+					}
+					if ( !mTag.compare( "pre" ) )	{
+						preTag( element );
+						continue;
+					}
+					if ( !mTag.compare( "hr" ) )	{
+						hrTag( element );
+						continue;
+					}
+					if ( !mTag.compare( "blockquote" ) )	{
+						blockquoteTag( element );
+						continue;
+					}
+		
+					// Not a known tag
+					cout << "Unknown tag found. Skipping...\n";
+					
+				}
+				else	{			
+					if ( !mTag.compare( "body" ) )	{
+						cout << "body closing tag found\n";
+		
+						// End the while loop
+						insideBody = false;
+					}
+					else	{
+						cout << "Unknown closing tag found. Skipping...\n";
+					}
+				}
+				break;
+			}
+			case TEXT :	{
+				// Let's see this as a paragraph
+				if ( text.compare( " " ) && text.compare( "" ) )	{
+					backPedal();
+					pTag( element );
+				}
+				break;
 			}
 		}
 	}
@@ -433,7 +533,6 @@ void HTMLParser	::	pTag( TElementShared parent )	{
 	parent->appendChild( element );
 	
 	bool insideP = true;
-	
 	string text;
 	
 	while ( insideP )	{
@@ -446,9 +545,23 @@ void HTMLParser	::	pTag( TElementShared parent )	{
 			if ( !mTag.compare( "p" ) )	{
 				cout << "p closing tag found\n";
 				insideP = false;
+				continue;
 			}
-			else	{
-				cout << "Unknown closing tag found. Skipping...\n";
+			if ( !mTag.compare( "body" ) )	{
+				cout << "p closed implicitly\n";
+				insideP = false;
+				backPedal();
+				continue;
+			}
+
+			cout << "Unknown closing tag found. Skipping...\n";
+
+		}
+		else	{
+			if ( !mTag.compare( "p" ) )	{
+				cout << "p closed implicitly\n";
+				insideP = false;
+				backPedal();
 			}
 		}
 	}
