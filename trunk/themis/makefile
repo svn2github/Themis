@@ -90,6 +90,8 @@ TESTPLUGSOURCES= \
 	testplug/testplug.cpp
 HTMLPARSERSOURCES= \
 	HTMLParser/HTMLParser.cpp
+DOMVIEWSOURCES= \
+	DOMView/DOMView.cpp
 	
 #make install directories as necessary
 ifeq "$(shell if [ -d $(BASE_ADDON_INSTALL_DIR) ] ; then echo 1 ; else mkdir -p $(BASE_ADDON_INSTALL_DIR) ; echo 0 ; fi)" "0"
@@ -124,6 +126,9 @@ endif
 #HTML Parser object directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)HTMLParser/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)HTMLParser/ ; echo 0 ; fi)" "0"
 endif
+#DOM View object directory
+ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)DOMView/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)DOMView/ ; echo 0 ; fi)" "0"
+endif
 
 #testplug add-on object directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)testplug/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)testplug/ ; echo 0 ; fi)" "0"
@@ -154,6 +159,9 @@ ifeq "$(shell if [ -d $(DOMLIBRARY_DEPENDS_DIR) ] ; then echo 1 ; else mkdir -p 
 endif
 #HTML Parser depends directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)HTMLParser/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)HTMLParser/ ; echo 0 ; fi)" "0"
+endif
+#DOM View depends directory
+ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)DOMView/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)DOMView/ ; echo 0 ; fi)" "0"
 endif
 #testplug add-on depends directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)testplug/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)testplug/ ; echo 0 ; fi)" "0"
@@ -342,9 +350,9 @@ $(BASE_ADDONS_OBJECT_DIR)testplug/%.o: $(BASE_ADDON_SOURCE_DIR)testplug/%.cpp $(
 	@echo "testplug: Updating object file $(notdir $@)"
 	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
 
-#testplug add-on
+#html parser add-on
 htmlpaddon: domlib htmlparserdepends htmlparserobjects
-	@echo "Linking testplug" 
+	@echo "Linking HTML Parser add-on" 
 	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)html_parser.so $(foreach file,$(notdir $(HTMLPARSERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)HTMLParser/$(file)) $(COMMON_OBJECT_DIR)plugclass.o $(COMMON_OBJECT_DIR)plugman.o -nostart -Xlinker $(LDFLAGS) -soname=html_parser.so -L ./ -L $(BELIBRARIES) -L$(BASE_APP_LIB_INSTALL_DIR)  -lbe -lroot -ldom -lstdc++.r4
 	@echo "HTML Parser add-on is now linked. Doing mimeset."
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)html_parser.so
@@ -364,6 +372,30 @@ $(BASE_ADDONS_DEPENDS_DIR)HTMLParser/%.d:  $(BASE_ADDON_SOURCE_DIR)HTMLParser/%.
 
 $(BASE_ADDONS_OBJECT_DIR)HTMLParser/%.o: $(BASE_ADDON_SOURCE_DIR)HTMLParser/%.cpp $(BASE_ADDONS_DEPENDS_DIR)HTMLParser/%.d
 	@echo "HTML Parser: Updating object file $(notdir $@)"
+	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -Iframework/DOM -I./ -c $< -o $@
+
+#domview add-on
+domvaddon: domvdepends domvobjects
+	@echo "Linking DOM View add-on" 
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)DOMView.so $(foreach file,$(notdir $(DOMVIEWSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)DOMView/$(file)) $(COMMON_OBJECT_DIR)plugclass.o $(COMMON_OBJECT_DIR)plugman.o -nostart -Xlinker $(LDFLAGS) -soname=DOMView.so -L ./ -L $(BELIBRARIES) -L$(BASE_APP_LIB_INSTALL_DIR)  -lbe -lroot -ldom -lstdc++.r4
+	@echo "DOM View add-on is now linked. Doing mimeset."
+	@mimeset -F $(BASE_ADDON_INSTALL_DIR)DOMView.so
+	@echo "DOM View plug-in compiled and linked successfully."
+	
+domvdepends: $(foreach file,$(DOMVIEWSOURCES),$(BASE_ADDON_SOURCE_DIR)$(file)) common/plugman.cpp common/plugclass.cpp $(COMMON_DEPENDS_DIR)plugman.d $(COMMON_DEPENDS_DIR)plugclass.d\
+					$(foreach file,$(BASE_ADDON_SOURCE_DIR)$(DOMVIEWSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)DOMView/$(notdir $(file)))
+	@echo "DOMView depends are done."
+	
+domvobjects: $(COMMON_OBJECT_DIR)plugman.o $(COMMON_OBJECT_DIR)plugclass.o\
+					$(foreach file,$(BASE_ADDON_SOURCE_DIR)$(DOMVIEWSOURCES),$(BASE_ADDONS_OBJECT_DIR)DOMView/$(notdir $(file:.cpp=.o)))
+	@echo "DOM View objects are done."
+	
+$(BASE_ADDONS_DEPENDS_DIR)DOMView/%.d:  $(BASE_ADDON_SOURCE_DIR)DOMView/%.cpp $(BASE_ADDON_SOURCE_DIR)DOMView/%.h
+	@echo "DOM View: Updating dependency file $(notdir $@)"
+	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)DOMView/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)DOMView/"|sed 's/\//\\\//g'); $(CC) -Icommon -Iframework/DOM -I./ -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
+
+$(BASE_ADDONS_OBJECT_DIR)DOMView/%.o: $(BASE_ADDON_SOURCE_DIR)DOMView/%.cpp $(BASE_ADDONS_DEPENDS_DIR)DOMView/%.d
+	@echo "DOM View: Updating object file $(notdir $@)"
 	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -Iframework/DOM -I./ -c $< -o $@
 
 #http add-on
