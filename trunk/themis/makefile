@@ -411,6 +411,7 @@ $(BASE_INSTALL_DIR)Themis: $(foreach file,$(notdir $(FRAMEWORKSOURCES:.cpp=.o)),
 		-L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) $(NETWORKLIBS) $(STDLIBS) -lstdc++.r4 -ltranslation # -ldom
 	@echo "Done linking, adding resource file."
 	@xres -o $(BASE_INSTALL_DIR)Themis framework/themis.rsrc
+	@mimeset -F $(BASE_INSTALL_DIR)Themis
 	@echo "Done adding resources. Themis framework app is ready to run."
 	@$(shell if [ ! -f _APP_ ] ; then ln -s Themis/Themis _APP_ ; fi)
 frameworkdepends: $(FRAMEWORKSOURCES) $(foreach file,$(FRAMEWORKSOURCES:.cpp=.d),$(FRAMEWORK_DEPENDS_DIR)$(notdir $(file)))
@@ -451,6 +452,7 @@ $(COMMON_DEPENDS_DIR)%.d: common/%.cpp
 $(COMMON_OBJECT_DIR)%.o: common/%.cpp $(COMMON_DEPENDS_DIR)%.d
 	@echo "Common: Updating object file $(notdir $@)"
 	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
+	
 
 #renderer
 renderer: $(BASE_ADDON_INSTALL_DIR)renderer.so
