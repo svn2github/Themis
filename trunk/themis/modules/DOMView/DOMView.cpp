@@ -168,6 +168,11 @@ DOMWindow	::	DOMWindow( TDocumentShared document )	:
 }
 
 DOMWindow	::	~DOMWindow()	{
+
+	int32 items = tree->CountItems();
+	for ( int32 i = 0; i < items; i++ )	{
+		delete tree->RemoveItem( (int32) 0 );
+	}
 	
 }
 

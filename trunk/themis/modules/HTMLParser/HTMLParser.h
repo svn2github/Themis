@@ -37,7 +37,13 @@ class HTMLParser	:	public BHandler, public PlugClass	{
 		unsigned int mOldPos; // Position in string before last read.
 		unsigned int mLineNr;
 		unsigned int mCharNr;
+		unsigned int mOldTagLineNr;
+		unsigned int mOldTagCharNr;
+		unsigned int mTagLineNr;
+		unsigned int mTagCharNr;
+		
 		bool mAttrNoValue; // Indicates if an tag attribute has a value
+		string mOldTag; // Previous tag
 		string mTag;	// Current tag
 		string mContent; // Content of the to be parsed file
 		StringType mStringType; // Type of the text last retrieved
