@@ -41,15 +41,15 @@ class ElementParser	:	public BaseParser	{
 		TDocumentPtr getDocument() const;
 		void processElementContent( const TElementPtr & aElementDecl,
 												   TNodePtr aParent );
-		void processUnknownTags();
-		void processUnknownStartTag();
+		void processUnknownTags( TNodePtr aParent );
+		void processUnknownStartTag( TNodePtr aParent );
 		void processUnknownEndTag();
 		void processElement( const TElementPtr & aElementDecl, TNodePtr aParent );
-		void processStartTag( const TElementPtr & elementDecl );
+		TElementPtr processStartTag( const TElementPtr & elementDecl, TNodePtr aParent );
 		void processEndTag( const TElementPtr & elementDecl );
 		string processGenIdSpec();
-		void processAttrSpecList();
-		void processAttrSpec();
+		void processAttrSpecList( TNodePtr aParent );
+		void processAttrSpec( TNodePtr aParent );
 		void processContent( const TElementPtr & aContent,
 										const TElementPtr & aExceptions,
 										TNodePtr aParent );

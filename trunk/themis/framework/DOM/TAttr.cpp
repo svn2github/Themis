@@ -92,7 +92,7 @@ void TAttr	::	setValue( const TDOMString aValue )	{
 	// Add a text node as a child to the attr node. Still to implement.
 	
 	mValue = aValue;
-	setNodeName( aValue );
+	setNodeValue( aValue );
 	mSpecified = true;
 	
 }

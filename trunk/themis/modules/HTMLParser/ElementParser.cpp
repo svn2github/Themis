@@ -17,6 +17,8 @@
 #include "TElement.h"
 #include "TNodeList.h"
 #include "TNamedNodeMap.h"
+#include "TText.h"
+#include "TAttr.h"
 
 ElementParser	::	ElementParser( SGMLTextPtr aDocText,
 												  TDocumentPtr aDTD )
@@ -130,7 +132,7 @@ void ElementParser	::	processElementContent( const TElementPtr & aElementDecl,
 																		
 }
 
-void ElementParser	::	processUnknownTags()	{
+void ElementParser	::	processUnknownTags( TNodePtr aParent )	{
 
 	bool contentFound = true;
 	while ( contentFound )	{
@@ -149,7 +151,7 @@ void ElementParser	::	processUnknownTags()	{
 					throw r;
 				}
 				try	{
-					processUnknownStartTag();
+					processUnknownStartTag( aParent );
 				}
 				catch( ReadException r )	{
 					if ( r.isFatal() )	{
@@ -173,7 +175,7 @@ void ElementParser	::	processUnknownTags()	{
 	
 }
 
-void ElementParser	::	processUnknownStartTag()	{
+void ElementParser	::	processUnknownStartTag( TNodePtr aParent )	{
 
 	State save = mDocText->saveState();
 
@@ -211,7 +213,7 @@ void ElementParser	::	processUnknownStartTag()	{
 		printf( " Check the HTML source or make sure this is the right DTD for this file\n" );
 		try	{
 			printf( "Processing AttrSpecList\n" );
-			processAttrSpecList();
+			processAttrSpecList( aParent );
 		}
 		catch( ReadException r )	{
 			r.setFatal();
@@ -314,12 +316,9 @@ void ElementParser	::	processElement( const TElementPtr & aElementDecl,
 	TNodePtr tag;
 	State save = mDocText->saveState();
 	try	{
-		processStartTag( aElementDecl );
-		// Add element to tree
-		TElementPtr element =
-			mDocument->createElement( aElementDecl->getNodeName() );
+		TElementPtr element = processStartTag( aElementDecl, aParent );
+		// Cast it to a node
 		tag = shared_static_cast<TNode>( element );
-		aParent->appendChild( element );
 	}
 	catch( ReadException r )	{
 		printf( "Didn't find: %s\n", aElementDecl->getNodeName().c_str() );
@@ -333,7 +332,7 @@ void ElementParser	::	processElement( const TElementPtr & aElementDecl,
 	}
 	
 	// Take out any unknown tags
-	processUnknownTags();
+	processUnknownTags( aParent );
 
 	if ( child->hasChildNodes() )	{
 		TNodePtr node = child->getFirstChild();
@@ -342,7 +341,7 @@ void ElementParser	::	processElement( const TElementPtr & aElementDecl,
 	}
 
 	// Take out any unknown tags
-	processUnknownTags();
+	processUnknownTags( aParent );
 
 	printf( "Done with content. Trying to close up %s\n", aElementDecl->getNodeName().c_str() );
 	
@@ -362,11 +361,11 @@ void ElementParser	::	processElement( const TElementPtr & aElementDecl,
 	}
 
 	// Take out any unknown tags
-	processUnknownTags();
+	processUnknownTags( aParent );
 	
 }
 
-void ElementParser	::	processStartTag( const TElementPtr & elementDecl )	{
+TElementPtr ElementParser	::	processStartTag( const TElementPtr & elementDecl, TNodePtr aParent )	{
 	
 	try	{
 		process( mStago );
@@ -377,6 +376,8 @@ void ElementParser	::	processStartTag( const TElementPtr & elementDecl )	{
 	}
 	
 	// Skipping the document type specification for now
+
+	TElementPtr element;
 	
 	string name = "";
 	try	{
@@ -387,6 +388,8 @@ void ElementParser	::	processStartTag( const TElementPtr & elementDecl )	{
 	}
 	if ( name == elementDecl->getNodeName() )	{
 		printf( "Correct element start tag found: %s\n", name.c_str() );
+		element = mDocument->createElement( name );
+		aParent->appendChild( element );
 	}
 	else	{
 		string error = "Expected start tag ";
@@ -400,7 +403,7 @@ void ElementParser	::	processStartTag( const TElementPtr & elementDecl )	{
 	// Skipping some stuff for now
 	try	{
 		printf( "Processing AttrSpecList\n" );
-		processAttrSpecList();
+		processAttrSpecList( element );
 	}
 	catch( ReadException r )	{
 		r.setFatal();
@@ -416,6 +419,8 @@ void ElementParser	::	processStartTag( const TElementPtr & elementDecl )	{
 		r.setFatal();
 		throw r;
 	}
+	
+	return element;
 	
 }
 
@@ -465,12 +470,12 @@ string ElementParser	::	processGenIdSpec()	{
 	
 }
 
-void ElementParser	::	processAttrSpecList()	{
+void ElementParser	::	processAttrSpecList( TNodePtr aParent )	{
 
 	bool attrSpecFound = true;
 	while ( attrSpecFound )	{
 		try	{
-			processAttrSpec();
+			processAttrSpec( aParent );
 		}
 		catch( ReadException r )	{
 			if ( r.isFatal() )	{
@@ -484,9 +489,11 @@ void ElementParser	::	processAttrSpecList()	{
 	
 }
 
-void ElementParser	::	processAttrSpec()	{
+void ElementParser	::	processAttrSpec( TNodePtr aParent )	{
 
 	processSStar();
+	
+	TAttrPtr attr;
 	
 	State save = mDocText->saveState();
 	try	{
@@ -494,6 +501,9 @@ void ElementParser	::	processAttrSpec()	{
 		processSStar();
 		process( mVi );
 		processSStar();
+		attr = mDocument->createAttribute( name );
+		TNamedNodeMapPtr map = aParent->getAttributes();
+		map->setNamedItem( attr );
 		printf( "Found attr spec name: %s\n", name.c_str() );
 	}
 	catch( ReadException r )	{
@@ -503,6 +513,9 @@ void ElementParser	::	processAttrSpec()	{
 	
 	// Not entirely correct. Check later
 	string value = processAttrValueSpec();
+	if ( attr.get() != NULL )	{
+		attr->setValue( value );
+	}
 
 	printf( "Found AttrValueSpec: %s\n", value.c_str() );
 	
@@ -556,6 +569,9 @@ void ElementParser	::	processContent( const TElementPtr & aContent,
 			if ( contentName == "CDATA" )	{
 				printf( "At cdata\n" );
 				string cdata = processCharData( mEtago, false );
+				TTextPtr text =
+					mDocument->createText( cdata );
+				aParent->appendChild( text );
 				printf( "CDATA: %s\n", cdata.c_str() );
 				break;
 			}
@@ -779,13 +795,13 @@ void ElementParser	::	processDataText( const TElementPtr & aContent,
 														   TNodePtr aParent )	{
 
 	printf( "At data text\n" );
-	string text = "";
+	string dataText = "";
 	bool stFound = false;
 	while ( ! stFound )	{
 		if ( mDocText->getChar() != '<' )	{
 			// Not yet found. Process replacable character data
 			try	{
-				text += processRepCharData();
+				dataText += processRepCharData();
 			}
 			catch( ReadException r )	{
 				r.setFatal();
@@ -796,11 +812,13 @@ void ElementParser	::	processDataText( const TElementPtr & aContent,
 			stFound = true;
 		}
 	}
-	if ( text == "" )	{
+	if ( dataText == "" )	{
 		throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(),
 										"PCDATA expected" );
 	}
-	printf( "Finished data text: %s\n", text.c_str() );
+	TTextPtr text = mDocument->createText( dataText );
+	aParent->appendChild( text );
+	printf( "Finished data text: %s\n", dataText.c_str() );
 
 }
 
