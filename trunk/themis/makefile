@@ -249,8 +249,8 @@ NETWORKING=NONE
 # by default, debugging information will be included. to turn it off, remove or comment out (#) the -g
 # on the next line 
 COMPILE_FLAGS=-g -D_Themis_ -DDEBUG #-Wall -DNEWNET
-ifeq "$(shell if [ -f /system/lib/libsocket.so ] ; then echo 1 ; else echo 0 ; fi)" "1"
-	NETWORKLIBS=-lsocket -lbind -lbnetapi
+ifeq "$(shell if [ -f /boot/develop/headers/be/bone/sys/socket.h ] ; then echo 1 ; else echo 0 ; fi)" "1"
+	NETWORKLIBS=-lsocket -lbind -lbnetapi -I/boot/develop/headers/be/bone/
 	NETWORKING=BONE
 	COMPILE_FLAGS+= -DUSEBONE
 else

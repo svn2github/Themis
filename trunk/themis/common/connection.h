@@ -34,7 +34,7 @@ Project Start Date: October 18, 2000
 #include <List.h>
 #include "netbuffer.h"
 #include "networkableobject.h"
-#if  B_BEOS_VERSION > 0x0500
+#ifdef  USEBONE
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
