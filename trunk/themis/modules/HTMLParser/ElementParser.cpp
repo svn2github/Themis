@@ -73,8 +73,12 @@ void ElementParser	::	parse( const string & aName )	{
 	TElementShared elementDecl = getElementDecl( aName, mElements );
 	processElementContent( elementDecl, mDocument );
 	
-	showTree( mDocument, 0 );
+}
 
+TDocumentShared ElementParser	::	getDocument() const	{
+	
+	return mDocument;
+	
 }
 
 void ElementParser	::	processElementContent( const TElementShared & aElementDecl,
@@ -112,23 +116,9 @@ void ElementParser	::	processElement( const TElementShared & aElementDecl,
 		
 	printf( "Trying to find: %s\n", aElementDecl->getNodeName().c_str() );
 	// Minimization
+	bool start = true;
 	bool end = true;
 
-	State save = mDocText->saveState();
-	try	{
-		processStartTag( aElementDecl );
-	}
-	catch( ReadException r )	{
-		printf( "Didn't find: %s\n", aElementDecl->getNodeName().c_str() );
-		mDocText->restoreState( save );
-		throw r;
-	}
-	
-	// Add element to tree
-	TElementShared element =
-		mDocument->createElement( aElementDecl->getNodeName() );
-	aParent->appendChild( element );
-	
 	// See if this element declaration is part of a name group
 	TNodeShared parent = make_shared( aElementDecl->getParentNode() );
 	TElementShared child = aElementDecl;
@@ -138,7 +128,10 @@ void ElementParser	::	processElement( const TElementShared & aElementDecl,
 		TNodeShared firstChild = make_shared( parent->getFirstChild() );
 		child = shared_static_cast<TElement>( firstChild );
 	}
-	
+	// Get the start tag minimization
+	if ( child->getAttribute( "start" ) == "false" )	{
+		start = false;
+	}
 	// Get the end tag minimization
 	if ( child->getAttribute( "end" ) == "false" )	{
 		end = false;
@@ -151,11 +144,31 @@ void ElementParser	::	processElement( const TElementShared & aElementDecl,
 			exceptions = shared_static_cast<TElement>( item );
 		}
 	}
+
+	TNodeShared tag;
+	State save = mDocText->saveState();
+	try	{
+		processStartTag( aElementDecl );
+		// Add element to tree
+		TElementShared element =
+			mDocument->createElement( aElementDecl->getNodeName() );
+		tag = shared_static_cast<TNode>( element );
+		aParent->appendChild( element );
+	}
+	catch( ReadException r )	{
+		printf( "Didn't find: %s\n", aElementDecl->getNodeName().c_str() );
+		mDocText->restoreState( save );
+		if ( start )	{
+			throw r;
+		}
+		// Should actually still add the element to the tree. Bit too complicated atm.
+		tag = shared_static_cast<TNode>( aParent );
+	}
 	
 	if ( child->hasChildNodes() )	{
 		TNodeShared node = make_shared( child->getFirstChild() );
 		TElementShared content	= shared_static_cast<TElement>( node );
-		processContent( content, exceptions, element );
+		processContent( content, exceptions, tag );
 	}
 
 	save = mDocText->saveState();
@@ -716,33 +729,4 @@ void ElementParser	::	processComment()	{
 		throw r;
 	}
 	
-}
-
-void ElementParser	::	showTree( const TNodeShared aNode, int aSpacing )	{
-	
-	TNodeListShared children = aNode->getChildNodes();
-	int length = children->getLength();
-	if ( length != 0 )	{
-		for ( int i = 0; i < length; i++ )	{
-			TNodeShared child = make_shared( children->item( i ) );
-			for ( int j = 0; j < aSpacing; j++ )	{
-				cout << "  ";
-			}
-			cout << "Child name: " << child->getNodeName().c_str() << endl;
-			if ( child->getNodeType() == ELEMENT_NODE )	{
-				// Check for attributes
-				TNamedNodeMapShared attributes = child->getAttributes();
-				for ( unsigned int j = 0; j < attributes->getLength(); j++ )	{
-					TNodeWeak attr = attributes->item( j );
-					TNodeShared tempAttr = make_shared( attr );
-					for ( int j = 0; j < aSpacing + 1; j++ )	{
-						cout << "  ";
-					}
-					cout << "Attribute " << tempAttr->getNodeName();
-					cout << " with value " << tempAttr->getNodeValue() << endl;
-				}
-			}
-			showTree( child, aSpacing + 1 );
-		}
-	}	
 }

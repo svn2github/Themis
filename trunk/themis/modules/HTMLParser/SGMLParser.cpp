@@ -24,6 +24,7 @@
 #include "TNode.h"
 #include "TElement.h"
 #include "TNodeList.h"
+#include "TNamedNodeMap.h"
 
 SGMLParser	::	SGMLParser( const char * aDtd, const char * aDocument )
 					:	BaseParser()	{
@@ -218,10 +219,41 @@ TDocumentShared SGMLParser	::	parse()	{
 		}
 	}
 
+	mDocument = mElementParser->getDocument();
+	showTree( mDocument, 0 );
+
 	return mDocument;
 	
 }
 
+void SGMLParser	::	showTree( const TNodeShared aNode, int aSpacing )	{
+	
+	TNodeListShared children = aNode->getChildNodes();
+	int length = children->getLength();
+	if ( length != 0 )	{
+		for ( int i = 0; i < length; i++ )	{
+			TNodeShared child = make_shared( children->item( i ) );
+			for ( int j = 0; j < aSpacing; j++ )	{
+				cout << "  ";
+			}
+			cout << "Child name: " << child->getNodeName().c_str() << endl;
+			if ( child->getNodeType() == ELEMENT_NODE )	{
+				// Check for attributes
+				TNamedNodeMapShared attributes = child->getAttributes();
+				for ( unsigned int j = 0; j < attributes->getLength(); j++ )	{
+					TNodeWeak attr = attributes->item( j );
+					TNodeShared tempAttr = make_shared( attr );
+					for ( int j = 0; j < aSpacing + 1; j++ )	{
+						cout << "  ";
+					}
+					cout << "Attribute " << tempAttr->getNodeName();
+					cout << " with value " << tempAttr->getNodeValue() << endl;
+				}
+			}
+			showTree( child, aSpacing + 1 );
+		}
+	}	
+}
 
 int main( int argc, char * argv[] )	{
 	

@@ -37,6 +37,7 @@ class ElementParser	:	public BaseParser	{
 		virtual ~ElementParser();
 		void parse( const map<string, Position> & aEntityTexts, const string & aName );
 		void parse( const string & aName );	// If you don't need entities
+		TDocumentShared getDocument() const;
 		void processElementContent( const TElementShared & aElementDecl,
 												   TNodeShared aParent );
 		void processElement( const TElementShared & aElementDecl, TNodeShared aParent );
@@ -79,9 +80,6 @@ class ElementParser	:	public BaseParser	{
 		TElementShared getElementDecl( const string & aName,
 														TElementShared declarations ) const;
 
-		// Test function
-		void showTree( TNodeShared aNode, int aSpacing );
-	
 };
 
 #endif

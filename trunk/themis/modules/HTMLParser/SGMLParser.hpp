@@ -33,6 +33,10 @@ using namespace std;
 
 class SGMLParser	:	public BaseParser	{
 	
+	private:
+		// Test function
+		void showTree( TNodeShared aNode, int aSpacing );
+
 	protected:
 		// Declaration parsers
 		CommentDeclParser * mCommentDecl;
