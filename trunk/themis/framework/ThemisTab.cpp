@@ -205,13 +205,13 @@ ThemisTab::DrawLabel( ThemisTabView* owner, BRect frame )
 				NULL );
 		}
 		
-		// draw the icon
-		owner->SetDrawingMode( B_OP_ALPHA );
-		BBitmap* temp_fav_icon = new BBitmap( BRect( 0,0,15,15 ), B_RGB32 );
-		memcpy( temp_fav_icon->Bits(), ( ( Win* )owner->Window() )->bitmaps[9]->Bits(), 1024 );
-		owner->DrawBitmap( temp_fav_icon, iconframe );
-		delete temp_fav_icon;
-		owner->SetDrawingMode( B_OP_COPY );
+//		// draw the icon
+//		owner->SetDrawingMode( B_OP_ALPHA );
+//		BBitmap* temp_fav_icon = new BBitmap( BRect( 0,0,15,15 ), B_RGB32 );
+//		memcpy( temp_fav_icon->Bits(), ( ( Win* )owner->Window() )->bitmaps[9]->Bits(), 1024 );
+//		owner->DrawBitmap( temp_fav_icon, iconframe );
+//		delete temp_fav_icon;
+//		owner->SetDrawingMode( B_OP_COPY );
 	}
 	else
 	{
@@ -229,10 +229,10 @@ ThemisTab::DrawLabel( ThemisTabView* owner, BRect frame )
 				NULL );
 		}
 		
-		// draw the icon
-		owner->SetDrawingMode( B_OP_ALPHA );
-		owner->DrawBitmap( tempview->site_fav_icon, iconframe );
-		owner->SetDrawingMode( B_OP_COPY );
+//		// draw the icon
+//		owner->SetDrawingMode( B_OP_ALPHA );
+//		owner->DrawBitmap( tempview->site_fav_icon, iconframe );
+//		owner->SetDrawingMode( B_OP_COPY );
 	}
 	delete label;
 	tempview = NULL;

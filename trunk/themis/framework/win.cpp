@@ -44,6 +44,10 @@ Project Start Date: October 18, 2000
 #include "ThemisTab.h"
 #include "win.h"
 
+// renderer stuff..
+#include "../modules/Renderer/TRenderView.h"
+#include "../modules/Renderer/Globals.h"
+
 extern plugman *PluginManager;
 extern BMessage *AppSettings;
 
@@ -351,6 +355,14 @@ void Win::MessageReceived(BMessage *msg) {
 		{
 			//cout << "RE_INIT_INTERFACE" << endl;
 			ReInitInterface();
+			break;
+		}
+		case SITE_TITLE :
+		{
+			printf( "  SITE_TITLE received\n" );
+			
+			// TODO: set the site title
+			
 			break;
 		}
 		case TAB_ADD :
@@ -1334,11 +1346,54 @@ status_t Win::ReceiveBroadcast(BMessage *message)
 					
 					break;
 				}
+				case RENDERVIEW_POINTER :
+				{
+					printf( "  RENDERVIEW_POINTER\n" );
+					
+					message->PrintToStream();
+					
+					TRenderView* renderview = NULL;
+					message->FindPointer( "data_pointer", ( void** )&renderview );
+					
+					// attach the view to the current tab
+					// this is a temporary solution only....
+					Lock();
+					tabview->TabAt( tabview->Selection() )->SetView( renderview );
+					Unlock();
+					
+					/////////////
+					
+					/* send the renderer the welcome message */
+					BMessage* welcomemsg = new BMessage( R_WELCOME );
+					// add the view-rectangle
+					BView* view = ( tabview->TabAt( tabview->Selection() ) )->View();
+					welcomemsg->AddRect( "rect", view->Bounds() );
+					// add the messenger
+					BMessenger* mymsgr = new BMessenger( this );
+					welcomemsg->AddPointer( "messenger", mymsgr );
+					// add the view_number and document_number again
+					welcomemsg->AddInt32( "view_number", message->FindInt32( "view_number" ) );
+					welcomemsg->AddInt32( "document_number", message->FindInt32( "document_number" ) );
+					
+					// broadcast the message to the renderer
+					welcomemsg->AddInt32( "command", COMMAND_INFO );
+					
+					printf( "  R_WELCOME message follows\n" );
+					welcomemsg->PrintToStream();
+					fflush( stdout );
+					
+					Broadcast( MS_TARGET_RENDERER, welcomemsg );
+										
+					break;
+				}
 				case ReturnedData :
 				{
 					printf( "ReturnedData\n" );
 					
 					message->PrintToStream();
+					
+					// temporaryliy disable this...
+					break;
 					
 					if( win_uid == UniqueID() )
 					{

@@ -396,26 +396,29 @@ ThemisTabView::Select( int32 tabindex )
 		
 		if( tempview != NULL )
 		{
+		
+			/* some temporary removals */
+		
 			// set urlview-text
-			((Win*)Window())->navview->urlview->SetText( tempview->site_title.String() );
+//			((Win*)Window())->navview->urlview->SetText( tempview->site_title.String() );
 			
 			// set the urlview-icon
-			((Win*)Window())->navview->urlview->SetFavIcon( tempview->site_fav_icon );
+//			((Win*)Window())->navview->urlview->SetFavIcon( tempview->site_fav_icon );
 			
 			// set window-title-text
-			window_title << " - " << tempview->site_title.String();
+//			window_title << " - " << tempview->site_title.String();
 			
 			Window()->SetTitle( window_title.String() );
 			
 			// set up the statusview
-			( ( Win* )Window() )->statusview->SetValues(
-				tempview->GetDocBarProgress(),
-				tempview->GetDocBarText(),
-				tempview->GetImgBarProgress(),
-				tempview->GetImgBarText(),
-				tempview->GetStatusText(),
-				tempview->GetSecureState(),
-				tempview->GetCookieState() );
+//			( ( Win* )Window() )->statusview->SetValues(
+//				tempview->GetDocBarProgress(),
+//				tempview->GetDocBarText(),
+//				tempview->GetImgBarProgress(),
+//				tempview->GetImgBarText(),
+//				tempview->GetStatusText(),
+//				tempview->GetSecureState(),
+//				tempview->GetCookieState() );
 		}
 		else
 		{
