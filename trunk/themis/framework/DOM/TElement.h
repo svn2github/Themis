@@ -17,9 +17,11 @@ class TElement	:	public TNode	{
 		TDOMString mTagName;
 		
 	public:
-		TElement();
+		TElement( const TDOMString aTagName );
 		~TElement();
 		TDOMString getTagName() const;
+		
+		TDOMString getAttribute( const TDOMString aName ) const;
 		
 };
 

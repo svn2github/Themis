@@ -42,6 +42,9 @@ TDOMString TAttr	::	getValue() const	{
 
 void TAttr	::	setValue( const TDOMString aValue )	{
 	
+	// Partly vague stuff in the DOM spec. Got this part from the mailing list.
+	// Add a text node as a child to the attr node. Still to implement.
+	
 	mValue = aValue;
 	mSpecified = true;
 	

@@ -194,16 +194,6 @@ TNode * TNode	::	insertBefore( TNode * aNewChild, TNode * aRefChild )	{
 		throw TDOMException( HIERARCHY_REQUEST_ERR );
 	}
 	
-	if ( isReadOnly() )	{
-		throw TDOMException( NO_MODIFICATION_ALLOWED_ERR );
-	}
-
-	if ( aNewChild->mParentNode != NULL )	{
-		if ( aNewChild->isReadOnly() )	{
-			throw TDOMException( NO_MODIFICATION_ALLOWED_ERR );
-		}
-	}
-
 	if ( !aRefChild )	{
 		// If aNewChild is in the tree already remove it there first.
 		if ( aNewChild->mParentNode != NULL )	{
@@ -260,16 +250,6 @@ TNode * TNode	::	replaceChild( TNode * aNewChild, TNode * aOldChild)	{
 		throw TDOMException( HIERARCHY_REQUEST_ERR );
 	}
 
-	if ( isReadOnly() )	{
-		throw TDOMException( NO_MODIFICATION_ALLOWED_ERR );
-	}
-
-	if ( aNewChild->mParentNode != NULL )	{
-		if ( aNewChild->isReadOnly() )	{
-			throw TDOMException( NO_MODIFICATION_ALLOWED_ERR );
-		}
-	}
-
 	if ( !aOldChild )	{
 		return NULL;
 	}
@@ -318,10 +298,6 @@ TNode * TNode	::	replaceChild( TNode * aNewChild, TNode * aOldChild)	{
 
 TNode * TNode	::	 removeChild( TNode * aOldChild )	{
 	
-	if ( isReadOnly() )	{
-		throw TDOMException( NO_MODIFICATION_ALLOWED_ERR );
-	}
-
 	if ( !aOldChild )	{
 		return NULL;
 	}
@@ -359,16 +335,6 @@ TNode * TNode	::	appendChild( TNode * aNodeChild )	{
 
 	if ( !isChildAllowed( aNodeChild ) )	{
 		throw TDOMException( HIERARCHY_REQUEST_ERR );
-	}
-
-	if ( isReadOnly() )	{
-		throw TDOMException( NO_MODIFICATION_ALLOWED_ERR );
-	}
-
-	if ( aNodeChild->mParentNode != NULL )	{
-		if ( aNodeChild->isReadOnly() )	{
-			throw TDOMException( NO_MODIFICATION_ALLOWED_ERR );
-		}
 	}
 
 	// If aNodeChild is in the tree already remove it there first.
@@ -438,24 +404,6 @@ bool TNode	::	isAncestor( const TNode * aNode ) const	{
 	return false;
 	
 }	
-
-bool TNode	::	isReadOnly() const	{
-	
-	switch ( mNodeType )	{
-		case TEXT_NODE:
-		case CDATA_SECTION_NODE:
-		case PROCESSING_INSTRUCTION_NODE:
-		case COMMENT_NODE:
-		case DOCUMENT_TYPE_NODE:
-		case NOTATION_NODE:	{
-			return true;
-			break;
-		}
-	}
-
-	return false;
-	
-}
 
 bool TNode	::	isChildAllowed( const TNode * aNewChild ) const	{
 	

@@ -55,7 +55,6 @@ class TNode	{
 		
 	protected:
 		// Support function
-		bool isReadOnly() const;
 		bool isChildAllowed( const TNode * aNewChild ) const;
 		
 	public:

@@ -4,9 +4,9 @@
 
 #include "TElement.h"
 
-TElement	::	TElement()	:	TNode( ELEMENT_NODE )	{
+TElement	::	TElement( const TDOMString aTagName )	:	TNode( ELEMENT_NODE )	{
 	
-	mTagName.SetTo( "" );
+	mTagName.SetTo( aTagName );
 	
 }
 
@@ -19,3 +19,12 @@ TDOMString TElement	::	getTagName() const	{
 	return mTagName;
 	
 }
+
+TDOMString TElement	::	getAttribute( const TDOMString aName ) const	{
+	
+	TNode * attribute = getAttributes()->getNamedItem( aName );
+
+	return *attribute->getNodeValue();
+	
+}
+	
