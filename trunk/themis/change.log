@@ -1,4 +1,21 @@
 ========
+26 July 2002
+========
+common/stripwhite.h
+Added a new simple function for trimming white space off the start and end of a string.It returns a new'ed char * if successful,null if not.
+
+common/tcplayer.*
+Many ugly little changes to make the new http layer work correctly. Many new changes will need to be added and done before this is really ideal. Considering moving this to a shared library.
+
+framework/app.cpp
+Added a little bit of locking of the TCP layer.
+
+modules/http/*
+Massive changes. New locking system for both the HTTP layer and TCP layer protocols; most functions completely rewritten in the HTTP layer, including several brand new functions; code clarity is improved overall; chunked transfer encoding defeated once again. The HTTP protocol may now be considered reliable. It still has issues, but is much better overall.
+
+General notes:
+While the HTTP protocol has been greatly improved, it is not bug free. There is a definitely locking/deadlock issue that was introduced with these changes, however it's considered relatively minor. In addition, there is a new issue that apparently triggers extra connection structures to come into existance in  the TCP protocol layer. These sometimes crash the application on shutdown. Bugs will be filed for both of these known issues on the SourceForge project page (https://sourceforge.net/tracker/?group_id=13124&atid=113124 ) .
+========
 21 February 2002
 ========
 Lots of little changes, and one big one that occurred a few days ago:

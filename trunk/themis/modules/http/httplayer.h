@@ -41,6 +41,8 @@ Project Start Date: October 18, 2000
 #include "plugclass.h"
 #include "plugman.h"
 #include "commondefs.h"
+int32 LockHTTP(int32 timeout=-1);
+
 struct auth_realm {
 	char *auth;
 	char *host;
@@ -115,6 +117,7 @@ struct http_request {
 	char *url;
 	char *uri;
 	char *host;
+	char *referrer;
 	uint16 status;
 	uint16 port;
 	bool secure;
@@ -131,7 +134,11 @@ struct http_request {
 	int32 bytesremaining;
 	int32 chunkbytesremaining;
 	int32 cache;
+	int32 chunk;
 	BMessage *cacheinfo;
+	unsigned char *storage;
+	uint32 storagesize;
+	bool receivetilclosed;
 	http_request() {
 		a_realm=NULL;
 		url=uri=host=NULL;
@@ -139,7 +146,7 @@ struct http_request {
 		status=0;
 		cache=UsesCache;
 		cacheinfo=NULL;
-		bytesremaining=0;
+		bytesremaining=-1;
 		conn=NULL;
 		headers=NULL;
 		next=NULL;
@@ -152,6 +159,11 @@ struct http_request {
 		conn_released=0;
 		chunkbytesremaining=0;
 		headersdone=false;
+		storage=NULL;
+		storagesize=0;
+		chunk=0;
+		referrer=NULL;
+		receivetilclosed=false;
 	}
 	~http_request() {
 		printf("So many hopes and dreams, gone... lost forever... %s:%u%s\n",host,port,uri);
@@ -166,6 +178,18 @@ struct http_request {
 			delete cacheinfo;
 			cacheinfo=NULL;
 		}
+		if (storage!=NULL) {
+			free(storage);
+			storage=NULL;
+			storagesize=0;
+		}
+		if (referrer!=NULL) {
+			memset(referrer,0,strlen(referrer)+1);
+			delete referrer;
+			referrer=NULL;
+		}
+		
+		chunk=0;
 		url=uri=host=NULL;
 		/*
 		Important safety note:
@@ -196,6 +220,7 @@ struct http_request {
 	}
 };
 
+class authwin;
 
 class httplayer {
 	private:
@@ -210,12 +235,26 @@ class httplayer {
 		auth_realm *FindAuthRealm(char *realm, char *host);
 		auth_realm *FindAuthRealm(http_request *request);
 		void UpdateAuthRealm(auth_realm *realm,char *user,char *pass);
+		char *FindEndOfHeader(char *buffer, char **eohc=NULL);
+		char *FindHeader(http_request *request,char *attribute);
+		header_st *AddHeader(http_request *request, char *attribute, char* value);
+		void ClearHeaders(http_request *request);	
+		sem_id connhandle_sem;
+		sem_id reqhandle_sem;
+		sem_id httplayer_sem;
+		char *BuildRequest(http_request *request);
+		void Done(http_request *request);
 	public:
+		int32 Lock(int32 timeout=-1);
+		BLocker *lock;
+		void Unlock();
 		auth_realm *AddAuthRealm(http_request *request,char *realm, char *user, char *password);
 		int32 use_useragent;
 		char * UserAgent();
 		thread_id thread;
 		tcplayer *TCP;
+		void SendRequest(http_request *request, char *requeststr);
+		void KillRequest(http_request *request);
 		void ClearRequests();
 		void GetURL(BMessage *info);
 		void SetTCP(tcplayer *_TCP);
@@ -240,7 +279,7 @@ class httplayer {
 		int32 b64encode(void *unencoded,int32 in_size,char *encoded,int32 maxsize);
 		int32 b64decode(char *encoded,unsigned char **decoded,int32 *size);
 		void FindURI(char **url,char **host,uint16 *port,char **uri,bool *secure);
-		
+		friend class authwin;
 };
 
 #endif

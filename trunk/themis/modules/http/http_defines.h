@@ -34,7 +34,7 @@ Project Start Date: October 18, 2000
 
 #define PlugNamedef "Network (http)"
 
-#define PlugVersdef .45
+#define PlugVersdef .60
 
 //#define ThreadActive 0x100
 //#define ThreadDone 0x200

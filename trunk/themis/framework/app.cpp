@@ -53,7 +53,9 @@ App::~App(){
 bool App::QuitRequested(){
 	printf("app destructor\n");
 	status_t stat;
+	TCP->lock->Lock();
 	stat=TCP->Quit();
+	TCP->lock->Unlock();
 	delete TCP;
 	BWindow *w=NULL;
 	BMessenger *msgr=NULL;

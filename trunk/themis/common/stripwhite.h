@@ -35,4 +35,25 @@ void stripendwhite(const char *orig,char *result) {
 		pos--;
 	strncpy(result,orig,pos);
 }
+char *trim(char *target) 
+{
+	char *result=NULL;
+	char *f=target,*t=target+(strlen(target)-1);
+	while (isspace(*f))
+		f++;
+	while (isspace(*t)) {
+		t--;
+	}
+	t++;
+	int size=t-f;
+	if (size>0) {
+		result=new char[size+1];
+		memset(result,0,size+1);
+		strncpy(result,f,size);
+		return result;
+	}
+	
+	return NULL;
+}
+
 #endif

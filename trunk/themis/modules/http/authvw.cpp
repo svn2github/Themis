@@ -31,7 +31,7 @@ Project Start Date: October 18, 2000
 #include <string.h>
 #include <String.h>
 extern httplayer *meHTTP;
-
+extern tcplayer *__TCP;
 authview::authview(BRect frame)
 	:BView(frame,"authview",B_FOLLOW_ALL,B_WILL_DRAW|B_NAVIGABLE_JUMP){
 		SetViewColor(216,216,216);
@@ -99,7 +99,16 @@ authwin::~authwin() {
 void authwin::MessageReceived(BMessage *msg) {
 	switch(msg->what) {
 		case B_OK: {
+			meHTTP->Lock();
+			meHTTP->TCP->Lock();
+			meHTTP->TCP->RequestDone(request->conn);
+			meHTTP->TCP->Unlock();
+			meHTTP->Done(request);
+			atomic_add(&request->conn_released,1);
+			request->conn=NULL;
+			request->conn_released=0;
 			meHTTP->AddAuthRealm(request,(char*)realm.String(),(char*)view->user->Text(),(char*)view->pass->Text());
+			meHTTP->Unlock();
 			Quit();
 //			PostMessage(B_QUIT_REQUESTED);
 		}break;
