@@ -75,6 +75,11 @@ void winview::AttachedToWindow() {
 }
 void winview::MessageReceived(BMessage *msg) {
 	switch(msg->what) {
+		case UpdateDisplayedURL: {
+			BString url;
+			msg->FindString("url",&url);
+			locline->SetText(url.String());
+		}break;
 		case B_CANCEL: {
 			printf("Ordering protocol to stop\n");
 			protocol_plugin *pobj=(protocol_plugin*)PluginManager->FindPlugin(protocol);
@@ -125,8 +130,16 @@ void winview::MessageReceived(BMessage *msg) {
 				info->AddPointer("file_menu",filemenu);
 				info->AddPointer("options_menu",optionsmenu);
 				info->AddString("target_url",url.String());
+				info->AddInt32("action",LoadingNewPage);
 				printf("info: %p\n",info);
 				info->PrintToStream();
+				PlugClass *cache=(PlugClass*)PluginManager->FindPlugin(CachePlugin);
+				if (cache!=NULL) {
+					printf("telling cache that a new page is being loaded.\n");
+					BMessenger *msgr=new BMessenger(cache->Handler(),NULL,NULL);
+					msgr->SendMessage(LoadingNewPage);
+					delete msgr;
+				}
 				pobj->GetURL(info);
 			}
 		}break;

@@ -43,6 +43,7 @@ class cacheman:public BHandler, public PlugClass
  {
   private:
    BPath cachepath;
+   BDirectory *trashdir;
   public:
    cacheman(BMessage *info=NULL);
    ~cacheman();

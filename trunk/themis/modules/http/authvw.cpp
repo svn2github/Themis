@@ -100,10 +100,12 @@ void authwin::MessageReceived(BMessage *msg) {
 	switch(msg->what) {
 		case B_OK: {
 			meHTTP->AddAuthRealm(request,(char*)realm.String(),(char*)view->user->Text(),(char*)view->pass->Text());
-			PostMessage(B_QUIT_REQUESTED);
+			Quit();
+//			PostMessage(B_QUIT_REQUESTED);
 		}break;
 		case B_CANCEL: {
-			PostMessage(B_QUIT_REQUESTED);
+			Quit();
+//			PostMessage(B_QUIT_REQUESTED);
 		}break;
 		default:
 			BWindow::MessageReceived(msg);

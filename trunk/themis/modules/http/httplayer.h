@@ -38,6 +38,9 @@ Project Start Date: October 18, 2000
 #include <be/kernel/OS.h>
 #include <stdio.h>
 #include <String.h>
+#include "plugclass.h"
+#include "plugman.h"
+#include "commondefs.h"
 struct auth_realm {
 	char *auth;
 	char *host;
@@ -116,7 +119,7 @@ struct http_request {
 	uint16 port;
 	bool secure;
 	int16 http_v_major,http_v_minor;
-	BMallocIO *data;
+	BPositionIO *data;
 	connection *conn;
 	header_st *headers;
 	bool headersdone;
@@ -127,18 +130,20 @@ struct http_request {
 	bool chunked;
 	int32 bytesremaining;
 	int32 chunkbytesremaining;
+	int32 cache;
+	BMessage *cacheinfo;
 	http_request() {
 		a_realm=NULL;
 		url=uri=host=NULL;
 		port=80;
 		status=0;
+		cache=UsesCache;
+		cacheinfo=NULL;
 		bytesremaining=0;
 		conn=NULL;
 		headers=NULL;
 		next=NULL;
-		data=new BMallocIO;
-		data->SetBlockSize(1);
-		data->SetSize(1);//take minimum space
+		data=NULL;
 		secure=false;
 		datawaiting=0;
 		done=0;
@@ -157,6 +162,10 @@ struct http_request {
 			delete uri;
 		if (host)
 			delete host;
+		if (cacheinfo!=NULL) {
+			delete cacheinfo;
+			cacheinfo=NULL;
+		}
 		url=uri=host=NULL;
 		/*
 		Important safety note:
@@ -191,6 +200,8 @@ struct http_request {
 class httplayer {
 	private:
 		auth_req *Basic;
+		PlugClass *CachePlug;
+		plugman *PluginManager;
 		http_request *requests_head;
 		BFile *file;
 		BList *UnprocessedReqs;//unprocessed requests
@@ -220,14 +231,15 @@ class httplayer {
 		status_t Quit();
 		char * GetSupportedTypes();
 		http_request *AddRequest(BMessage *info);
+		void DoneWithHeaders(http_request *request);
 		void ProcessHeaders(http_request *request,void *buffer,int size);
 		void ProcessData(http_request *request,void *buffer, int size);
 		void ProcessChunkedData(http_request *request, void *buffer, int size);
-	
+		BMessage *CheckCacheStatus(http_request *request);
 		int find_lcd(int fact1,int fact2,int start);
 		int32 b64encode(void *unencoded,int32 in_size,char *encoded,int32 maxsize);
 		int32 b64decode(char *encoded,unsigned char **decoded,int32 *size);
-		void FindURI(const char *url,char **host,uint16 *port,char **uri,bool *secure);
+		void FindURI(char **url,char **host,uint16 *port,char **uri,bool *secure);
 		
 };
 

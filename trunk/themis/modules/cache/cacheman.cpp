@@ -52,6 +52,12 @@ cacheman::cacheman(BMessage *info)
   printf("cache path: %s\n",cachepath.Path());
   CheckIndices();
   CheckMIME();
+  BPath trashpath;
+  if (find_directory(B_TRASH_DIRECTORY,&trashpath)==B_OK) {
+  	trashdir=new BDirectory(trashpath.Path());
+  } else {
+  	trashdir=new BDirectory("/boot/home/Desktop/Trash");
+  }
  }
 bool cacheman::IsHandler()
  {
@@ -63,12 +69,50 @@ BHandler *cacheman::Handler()
  }
 cacheman::~cacheman()
  {
+ 	if (trashdir!=NULL)
+ 		delete trashdir;
  }
 void cacheman::MessageReceived(BMessage *mmsg)
  {
 // 	mmsg->PrintToStream();
   switch(mmsg->what)
    {
+   	case LoadingNewPage: {
+   		//this clears the files marked true in Themis:clearonnew
+   	printf("cache::MessageReceived Loading New Page\n");
+      BEntry ent(cachepath.Path(),true);
+      uint32 count=0;
+      struct stat devstat;
+      ent.GetStat(&devstat);
+      BVolume vol(devstat.st_dev);
+      BQuery query;
+      query.SetVolume(&vol);
+      query.PushAttr("BEOS:TYPE");
+      query.PushString(ThemisCacheMIME);
+      query.PushOp(B_EQ);
+      query.PushAttr("Themis:clearonnew");
+      query.PushInt32(1);
+      query.PushOp(B_EQ);
+      query.PushOp(B_AND);
+      int32 plen=query.PredicateLength();
+      char *pc=new char [plen+1];
+      memset(pc,0,plen+1);
+      query.GetPredicate(pc,plen);
+      printf("predicate: %s\n",pc);
+      delete pc;
+      query.Fetch();
+      ent.Unset();
+      char fname[255];
+      while (query.GetNextEntry(&ent,false)!=B_ENTRY_NOT_FOUND) {
+      	count++;
+      	printf("count %lu\t",count);
+      	ent.GetName(fname);
+      	printf("name: %s\n",fname);
+//      	ent.Remove();
+      	ent.Unset();
+      }
+      printf("\n%lu cached file(s) removed due to new URL entered by user.\n",count);
+   	}break;
     case FindCachedObject:
      {
       BEntry ent(cachepath.Path(),true);
@@ -86,14 +130,23 @@ void cacheman::MessageReceived(BMessage *mmsg)
       ent.Unset();
       entry_ref ref;
       BNode node;
-      BMessage reply(B_ERROR);
+      BMessage reply(CacheObjectNotFound);
       struct attr_info ai;
       char attname[B_ATTR_NAME_LENGTH+1];
         memset(attname,0,B_ATTR_NAME_LENGTH+1);
       unsigned char *data=NULL;
+      bool found=false;
+      bool set=false;
       BString fname;//field name
       while (query.GetNextEntry(&ent,false)!=B_ENTRY_NOT_FOUND)
        {
+       	if (trashdir->Contains(&ent))
+       		continue;
+       	if (!set) {
+       		set=true;
+       		found=true;
+       		reply.what=CachedObject;
+       	}
         ent.GetRef(&ref);
         reply.AddRef("ref",&ref);
         ent.Unset();
@@ -323,6 +376,139 @@ void cacheman::MessageReceived(BMessage *mmsg)
      }break;
     case UpdateCachedObject:
      {
+      type_code type;
+      int32 count=0,index=0;
+     	BMessage *msg=new BMessage(*mmsg);
+     	entry_ref ref;
+     	msg->FindRef("ref",&ref);
+     	BFile *file=new BFile(&ref,B_READ_WRITE);
+     	file->SetSize(0);
+     	delete file;
+        BNode *node=new BNode(&ref);
+        node->Lock();
+        BNodeInfo *ni=new BNodeInfo(node);
+        ni->SetType(ThemisCacheMIME);
+        delete ni;
+        char *name;
+        BMessage reply(*msg);
+        printf("cache: About to loop...\n");
+ //       msg->PrintToStream();
+ 		memset(name,0,B_OS_NAME_LENGTH);
+ 		BString fname;
+#if (B_BEOS_VERSION > 0x0504)
+        for (index=0;msg->GetInfo(B_ANY_TYPE,index,(const char**)&name,&type,&count)==B_OK; index++)
+#else
+        for (index=0;msg->GetInfo(B_ANY_TYPE,index,&name,&type,&count)==B_OK; index++)
+#endif
+         {
+          printf("cache - message: %s %ld %ld\n",name,type,count);
+          for (int i=0;i<count;i++)
+           switch(type)
+            {
+			 case B_INT64_TYPE:
+			  {
+               if (strcasecmp(name,"content-length")==0)
+                {
+				 off_t clen;
+                 msg->FindInt64(name,&clen);
+                 printf("writing %s: %Ld\n",name,clen);
+                 node->RemoveAttr("Themis:content-length");
+                 node->WriteAttr("Themis:content-length",B_INT64_TYPE,0,&clen,sizeof(clen));
+                 continue;
+                }
+				  
+			  }break;
+             case B_INT32_TYPE:
+              {
+               if (strcasecmp(name,"what")==0)
+                continue;
+               if (strcasecmp(name,"when")==0)
+                continue;
+              }break;
+             case B_STRING_TYPE:
+              {
+               if (strcasecmp(name,"url")==0)
+                {
+                 msg->FindString(name,&fname);//let's reuse stuff! 
+                 printf("writing %s: %s\n",name,fname.String());
+                 node->RemoveAttr("Themis:URL");
+                 node->WriteAttr("Themis:URL",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
+                 continue;
+                }
+               if (strcasecmp(name,"name")==0)
+                {
+                 msg->FindString(name,&fname);
+                 printf("writing %s: %s\n",name,fname.String());
+                 node->RemoveAttr("Themis:Name");
+                 node->WriteAttr("Themis:name",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
+                 continue;
+                }
+               if (strcasecmp(name,"host")==0)
+                {
+                 msg->FindString(name,&fname);
+                 printf("writing %s: %s\n",name,fname.String());
+                 node->RemoveAttr("Themis:host");
+                 node->WriteAttr("Themis:host",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
+                 continue;
+                }
+               if (strcasecmp(name,"content-type")==0)
+                {
+                 msg->FindString(name,&fname);
+                 printf("writing %s: %s\n",name,fname.String());
+                 node->RemoveAttr("Themis:mime_type");
+                 node->WriteAttr("Themis:mime_type",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
+                 continue;
+                }
+               if (strcasecmp(name,"path")==0)
+                {
+                 msg->FindString(name,&fname);
+                 printf("writing %s: %s\n",name,fname.String());
+                 node->RemoveAttr("Themis:path");
+                 node->WriteAttr("Themis:path",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
+                 continue;
+                }
+               if (strcasecmp(name,"etag")==0)
+                {
+                 msg->FindString(name,&fname);
+                 printf("writing %s: %s\n",name,fname.String());
+                 node->RemoveAttr("Themis:etag");
+                 node->WriteAttr("Themis:etag",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
+                 continue;
+                }
+               if (strcasecmp(name,"last-modified")==0)
+                {
+                 msg->FindString(name,&fname);
+                 printf("writing %s: %s\n",name,fname.String());
+                 node->RemoveAttr("Themis:last-modified");
+                 node->WriteAttr("Themis:last-modified",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
+                 continue;
+                }
+               if (strcasecmp(name,"expires")==0)
+                {
+                 msg->FindString(name,&fname);
+                 printf("writing %s: %s\n",name,fname.String());
+                 node->RemoveAttr("Themis:expires");
+                 node->WriteAttr("Themis:expires",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
+                 continue;
+                }
+               if (strcasecmp(name,"content-md5")==0)
+                {
+                 msg->FindString(name,&fname);
+                 printf("writing %s: %s\n",name,fname.String());
+                 node->RemoveAttr("Themis:content-md5");
+                 node->WriteAttr("Themis:content-md5",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
+                 continue;
+                }
+              }break;
+            }
+          // memset(name,0,B_OS_NAME_LENGTH); 
+         }
+        node->Unlock();
+        node->Sync();
+        delete node;
+        reply.what=B_OK;
+      delete msg;
+      mmsg->SendReply(&reply);
      }break;
     case ClearCache:
      {
@@ -659,7 +845,35 @@ status_t cacheman::CheckMIME()
    }
   else
    found=false;
+  
   //Make Themis:content-md5 a visible attribute; done
+  //Make Themis:clearonnew a visible attribute
+  for (int32 i=0;i<attrcount;i++)
+   {
+    BString item;
+    attrinf.FindString("attr:name",i,&item);
+    if (item=="Themis:clearonnew")
+     {
+      found=true;
+      break;
+     }
+   }
+  if ((!found) || (installall))
+   {
+    attrinf.AddString("attr:name","Themis:clearonnew");
+    attrinf.AddString("attr:public_name","Clear On New Page");
+    attrinf.AddInt32("attr:type",B_INT32_TYPE);
+    attrinf.AddInt32("attr:width",20);
+    attrinf.AddInt32("attr:alignment",B_ALIGN_CENTER);
+    attrinf.AddBool("attr:public",false);
+    attrinf.AddBool("attr:editable",false);
+    attrinf.AddBool("attr:viewable",true);
+    attrinf.AddBool("attr:extra",false);
+   }
+  else
+   found=false;
+  
+  //Make Themis:clearonnew a visible attribute; done
   mime.SetAttrInfo(&attrinf);
   return B_OK;
  }
@@ -919,6 +1133,27 @@ status_t cacheman::CheckIndices()
        {
         printf("created it.\n");
         fs_create_index(vol.Device(),"Themis:content-md5",B_STRING_TYPE,0);
+       }
+      fs_rewind_index_dir(d);
+      found=false;
+      //end block
+      //begin block
+      //Themis:clearonnew is the file's real mime_type.
+      printf("\t\tlooking for \"Themis:clearonnew\" index...");
+      fflush(stdout);
+      while((ent=fs_read_index_dir(d)))
+       {
+        if (strcasecmp(ent->d_name,"Themis:clearonnew")==0)
+         {
+          printf("found it.\n");
+          found=true;
+          break;
+         }
+       }
+      if (!found)
+       {
+        printf("created it.\n");
+        fs_create_index(vol.Device(),"Themis:clearonnew",B_INT32_TYPE,0);
        }
       fs_rewind_index_dir(d);
       found=false;

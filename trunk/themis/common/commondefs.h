@@ -44,6 +44,24 @@ Project Start Date: October 18, 2000
 #define CacheObjectNotFound 'conf'
 #define UpdateCachedObject 'ucob'
 #define ClearCache 'clca'
+#define CachedObject 'cobj'
+
+//There are different methods of caching data according to the http rfc.
+//Define them here.
+
+//Cache control identifiers
+#define UsesCache 1
+#define DoesNotUseCache 0
+#define EncryptCache 2
+//clear out this item on Themis exit or cache add-on unload
+#define CacheClearOnExit 4
+//clear out this item on Themis exit, cache add-on unload, or when a new URL is entered
+#define CacheClearOnNewPage 8
+//clear out this item after a specific time limit
+#define CacheClearOnTimeLimit 16
+
+//general notification
+#define LoadingNewPage 'ldnp'
 
 //protocol items
 #define FetchItem 'fitm'
@@ -52,6 +70,10 @@ Project Start Date: October 18, 2000
 #define SendData 'send'
 #define ThreadDone 'done'
 #define ProtocolResponse 'prsp'
+#define ReloadData 'rldt'
+
+//This is to update the displayed URL; usually done from the protocol.
+#define UpdateDisplayedURL 'udur'
 
 //plug in management
 #define PlugInLoaded 'pild'

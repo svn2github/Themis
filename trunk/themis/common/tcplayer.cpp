@@ -696,6 +696,7 @@ int32 tcplayer::Receive(connection **conn, unsigned char *data, int32 size) {
 #endif
 			//mtx->lock();
 			got=recv((*conn)->socket,data,size,0);
+			printf("%ld bytes received\n",got);
 			//mtx->unlock();
 #ifdef USEOPENSSL
 		}	
