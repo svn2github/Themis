@@ -288,7 +288,7 @@ status_t MessageSystem::ReceiveBroadcast(BMessage *msg)
 			
 //			printf("%p has received this message:\n",this);
 			msg->PrintToStream();
-			delete msg;
+//			delete msg;
 			
 //		}
 	
