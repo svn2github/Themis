@@ -31,6 +31,7 @@ Project Start Date: October 18, 2000
 #define _http_layer
 #include "tcplayer.h"
 #include <File.h>
+#include <stdlib.h>
 #include <List.h>
 #include <DataIO.h>
 #include <Message.h>

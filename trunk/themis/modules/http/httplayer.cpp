@@ -918,6 +918,9 @@ void httplayer::FindURI(const char *url,char **host,uint16 *port,char **uri,bool
   }
 int32 httplayer::LayerManager() {
 	http_request *request=NULL,*current=NULL, *current2=NULL;
+	unsigned char *altbuffer=new unsigned char[100000];
+	uint32 altbytes=0;
+	memset(altbuffer,0,100000);
 	while (!quit) {
 		if (quit) {
 			
@@ -1011,21 +1014,39 @@ int32 httplayer::LayerManager() {
 				int32 bytes=0;
 				do {
 					bytes=TCP->Receive(&current->conn,buff,10000);
-					
-				printf("%ld bytes received\n",bytes);
-				
-				if (bytes>0) {
-					if ((current->headers==NULL) || (!current->headersdone)) {
-						printf("About to process headers\n");
-						ProcessHeaders(current,buff,bytes);
-					} else {
-						printf("Adding data to buffer\n");
-						ProcessData(current,buff,bytes);
-						
-						//current->data->WriteAt(current->data->BufferLength(),buff,bytes);
+					if (current->headers==NULL) {
+						char *dat=(char*)buff;
+						char *eoh=NULL;
+						eoh=strstr(dat,"\r\n\r\n");
+						if (eoh==NULL) {
+							memmove(altbuffer+altbytes,buff,bytes);
+							altbytes+=bytes;
+							memset(buff,0,10001);
+							if (quit)
+								break;//just to make sure...
+							continue;
+						}
 					}
-					
-				}	
+				printf("%ld bytes received\n",bytes);
+				if (altbytes==0) {
+					if (bytes>0) {
+						if ((current->headers==NULL) || (!current->headersdone)) {
+							printf("About to process headers\n");
+							ProcessHeaders(current,buff,bytes);
+						} else {
+							printf("Adding data to buffer\n");
+							ProcessData(current,buff,bytes);
+							
+							//current->data->WriteAt(current->data->BufferLength(),buff,bytes);
+						}
+						
+					}
+				} else {
+					printf("About to process headers [alt]\n");
+					ProcessHeaders(current,altbuffer,bytes);
+					memset(altbuffer,0,100000);
+					altbytes=0;
+				}
 				memset(buff,0,10001);
 				if (request->done>0)
 					break;
@@ -1063,6 +1084,7 @@ int32 httplayer::LayerManager() {
 			continue;
 		snooze(50000);//give other processes some time
 	}
+	delete altbuffer;
 	printf("LayerManager Exiting: %s\n",quit==1?"quit issued":"something else");
 	exit_thread(0);
 	return B_OK;
