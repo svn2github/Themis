@@ -71,12 +71,12 @@ status_t Initialize(void *info)
 	printf("(http) TCP layer: %p\n",TCP);
 #endif
 	http_protocol *proto=NULL;
-  proto=new http_protocol(imsg);
+  proto=new http_protocol(imsg,"HTTP Protocol");
 	 if (proto!=HTTP_proto)
 		 proto=HTTP_proto;
 
   }else 
-  	HTTP_proto=new http_protocol(NULL);
+  	HTTP_proto=new http_protocol(NULL,"HTTP Protocol");
 //  }
   return B_OK;
  }
@@ -201,6 +201,7 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 {
 	
 	printf("http_protocol::ReceiveBroadcast()\n");
+	msg->PrintToStream();
 	
 	status_t stat=B_ERROR;
 	BAutolock alock(lock);

@@ -71,8 +71,10 @@ MessageSystem::~MessageSystem()
 int32 MessageSystem::MS_Start_Thread(void *arg) 
 {
 	MessageSystem *obj=(MessageSystem*)arg;
-	int32 retval=obj->_ProcessMessage_(obj);
-	printf("thread returned: %ld\n",retval);
+	int32 retval=0;
+	obj->_ProcessMessage_(obj);
+	wait_for_thread(obj->_msg_receiver_thread_,(status_t *)&retval);
+//	printf("thread returned: %ld\n",retval);
 	
 	return retval;
 	
@@ -125,7 +127,8 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 						continue;
 					}
 					current_target=cur->ptr->BroadcastTarget();
-//					printf("targets: %lu\tcurrent: %lu\tcomparison: %lu\n",targets,current_target,current_target&targets);
+//					if (targets==MS_TARGET_PROTOCOL)
+//						printf("targets: 0x%-2x\tcurrent: 0x%-2x\tcomparison: 0x%-2x\n",targets,current_target,current_target&targets);
 					switch(targets) {
 						case MS_TARGET_UNKNOWN: {
 							found=true;
@@ -139,6 +142,8 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 								cur->ptr->_message_queue_.AddMessage(new BMessage(*msg));
 								cur->ptr->_message_queue_.Unlock();
 								if (cur->ptr->_msg_receiver_running_==0) {
+							//		status_t status;
+							//		wait_for_thread(cur->ptr->_msg_receiver_thread_,&status);
 //									release_sem(cur->ptr->_msg_receiver_sem_);
 									cur->ptr->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,cur->ptr->MS_Name,B_LOW_PRIORITY,cur->ptr);
 									resume_thread(cur->ptr->_msg_receiver_thread_);
@@ -147,14 +152,30 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 							broadcaster->broadcast_successful_receives++;
 						}break;
 
-/*
+
 						case MS_TARGET_PROTOCOL: {
-							if (current_target&MS_TARGET_PROTOCOL==MS_TARGET_PROTOCOL) {
-								cur->ptr->ReceiveBroadcast(msg);
-								_message_targets_++;
-							}
+							if ((current_target&MS_TARGET_PROTOCOL)!=0) {
+	//							printf("A protocol has been found. %s (0x%-2x;0x%-2x)\n",cur->ptr->MsgSysObjectName(),current_target,current_target&0x40);
+								
+								found=true;
+								broadcaster->broadcast_successful_receives++;
+								cur->ptr->_message_queue_.Lock();
+								cur->ptr->_message_queue_.AddMessage(new BMessage(*msg));
+								cur->ptr->_message_queue_.Unlock();
+								if (cur->ptr->_msg_receiver_running_==0) {
+							//		status_t status;
+							//		wait_for_thread(cur->ptr->_msg_receiver_thread_,&status);
+//									release_sem(cur->ptr->_msg_receiver_sem_);
+									cur->ptr->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,cur->ptr->MS_Name,B_LOW_PRIORITY,cur->ptr);
+									resume_thread(cur->ptr->_msg_receiver_thread_);
+
+								}
+							}// else {
+	//							printf("%s does not seem to be a protocol; bypassing...\n",cur->ptr->MsgSysObjectName());						
+	//						}
+							
 						}break;
-*/
+
 
 						case MS_TARGET_SELF: {
 							if (current_target==sender_target_id) {
@@ -164,6 +185,8 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 								cur->ptr->_message_queue_.AddMessage(new BMessage(*msg));
 								cur->ptr->_message_queue_.Unlock();
 								if (cur->ptr->_msg_receiver_running_==0) {
+							//		status_t status;
+							//		wait_for_thread(cur->ptr->_msg_receiver_thread_,&status);
 //									release_sem(cur->ptr->_msg_receiver_sem_);
 									cur->ptr->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,cur->ptr->MS_Name,B_LOW_PRIORITY,cur->ptr);
 									resume_thread(cur->ptr->_msg_receiver_thread_);
@@ -185,6 +208,8 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 								cur->ptr->_message_queue_.AddMessage(new BMessage(*msg));
 								cur->ptr->_message_queue_.Unlock();
 								if (cur->ptr->_msg_receiver_running_==0) {
+							//		status_t status;
+							//		wait_for_thread(cur->ptr->_msg_receiver_thread_,&status);
 //									release_sem(cur->ptr->_msg_receiver_sem_);
 									cur->ptr->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,cur->ptr->MS_Name,B_LOW_PRIORITY,cur->ptr);
 									resume_thread(cur->ptr->_msg_receiver_thread_);
@@ -264,34 +289,36 @@ can be sent to the sender of the current message. Useful information.
 }
 int32 MessageSystem::_ProcessMessage_(void *arg) 
 {
-	BAutolock alock(&_processmessage_lock_);
 	MessageSystem *me=(MessageSystem*)arg;
-	if (alock.IsLocked()) {
-		me->_processmessage_lock_.Lock();
+//	BAutolock alock(&me->_processmessage_lock_);
+	
+//	if (alock.IsLocked()) {
 		volatile int32 count=0;
-		me->_processmessage_lock_.Unlock();
 		BMessage *msg;
 		me->_ms_receiver_quit_=0;
-		while (!me->_ms_receiver_quit_) {
-			//	printf("me: %p\t%s\n",me,MsgSysObjectName());
-			if (me->_ms_receiver_quit_)
-				break;
+	//	me->_processmessage_lock_.Lock();
 			if (me->_msg_receiver_running_==0)
 				atomic_add(&me->_msg_receiver_running_,1);
-			//printf("count messages\n");
+	//	me->_processmessage_lock_.Unlock();
+		while (!me->_ms_receiver_quit_) {
+//				printf("me: %p\t%s\n",me,MsgSysObjectName());
+			if (me->_ms_receiver_quit_)
+				break;
+//			printf("count messages\n");
 			me->_message_queue_.Lock();
 			if (!me->_message_queue_.IsEmpty()) {
 				count=me->_message_queue_.CountMessages();
-				//printf("count: %ld\n",count);
+//				printf("count: %ld\n",count);
 			}
 			me->_message_queue_.Unlock();
 			if (count>0) {
-				//printf("processing messages\n");
+//				printf("processing messages\n");
 				while (count>0) {
 					if (me->_ms_receiver_quit_)
 						break;
+	//	me->_processmessage_lock_.Lock();
 					me->_message_queue_.Lock();
-					//				printf("Retrieving message\n");
+//									printf("Retrieving message\n");
 					msg=me->_message_queue_.NextMessage();
 					count=me->_message_queue_.CountMessages();
 					me->_message_queue_.Unlock();
@@ -300,22 +327,28 @@ int32 MessageSystem::_ProcessMessage_(void *arg)
 						delete msg;
 						msg=NULL;
 					}
+	//	me->_processmessage_lock_.Unlock();
+
 				}
 			}
 			if (me->_message_queue_.IsEmpty()){
-				//		printf("no more messages\n");
+//						printf("MessageSystem: No more messages\n");
 				break;
 			}
 		}
-	}
-	//printf("exiting thread\n");
-	me->_processmessage_lock_.Lock();
+//	me->_processmessage_lock_.Lock();
 	//	printf("setting to not running\n");
-	atomic_add(&me->_msg_receiver_running_,-1);
-	if (me->_msg_receiver_running_!=0)
+//	me->_processmessage_lock_.Unlock();
+//	atomic_add(&me->_msg_receiver_running_,-1);
+//	if (me->_msg_receiver_running_!=0)
+	//	me->_processmessage_lock_.Lock();
+
 		me->_msg_receiver_running_=0;
-	me->_processmessage_lock_.Unlock();
-	me->_msg_receiver_thread_=0;
+	//			me->_processmessage_lock_.Unlock();
+
+	//me->_msg_receiver_thread_=0;
+//	}
+//	printf("exiting thread\n");
 	exit_thread(0L);
 	return 0L;
 }

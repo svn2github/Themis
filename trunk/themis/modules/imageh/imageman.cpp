@@ -178,7 +178,7 @@ status_t ImageMan::ReceiveBroadcast(BMessage *msg) {
 		case COMMAND_INFO: {
 			switch(msg->what) {
 				case IH_LOAD_IMAGE: {
-				
+					
 				}break;
 				case PlugInLoaded: {
 					PlugClass *pobj=NULL;

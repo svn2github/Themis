@@ -51,7 +51,7 @@ void showbits(int32 val)
 }
 
 plugman::plugman(entry_ref &appdirref)
-	:BLooper("plug-in manager",B_LOW_PRIORITY) {
+	:BLooper("plug-in manager",B_LOW_PRIORITY),MessageSystem("Plug-in Manager") {
 	Lock();
 	MsgSysRegister(this);
 	Locker=new BLocker(true);
@@ -1073,10 +1073,12 @@ void plugman::BuildRoster(bool clean) {
 status_t plugman::ReceiveBroadcast(BMessage *msg)
 {
 	//does nothing.
+	return 0;
 }
 status_t plugman::BroadcastReply(BMessage *msg)
 {
 	//does nothing
+	return 0;
 }
 uint32 plugman::BroadcastTarget()
 {

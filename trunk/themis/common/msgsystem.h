@@ -86,6 +86,7 @@ enum MsgSysTargets
 	MS_TARGET_PROTO_FILE=0x806,//!< Send message to the FILE Protocol object.
 	MS_TARGET_PROTO_FTP=0x808,//!< Send message to the FTP Protocol object.
 	MS_TARGET_HTTP_PROTOCOL=(MS_TARGET_PROTO_HTTP|MS_TARGET_PROTOCOL),//!< More correct way to target the HTTP protocol in a message.
+	MS_TARGET_FILE_PROTOCOL=(MS_TARGET_PROTO_FILE|MS_TARGET_PROTOCOL),//!< More correct way to target the File protocol in a message.
 	
 	MS_TARGET_CACHE_SYSTEM=0x1004,//!< More correct way to target the cache system object.
 	MS_TARGET_HTML_PARSER=(0x1006|MS_TARGET_PARSER),//!< Send a message to the HTML parser object.
@@ -98,10 +99,10 @@ enum MsgSysTargets
 	MS_TARGET_TAB_SYSTEM_TOP=0x1016, //!< Send a message to the tabbed view system.
 	MS_TARGET_TAB_SYSTEM_TAB=0x1018,//!< Send a message to a specific tab in the tabbed view system.
 	MS_TARGET_WINDOW=0x101a,//!< Send a message to a specific window.
-	MS_TARGET_MEMORY_CACHE=MS_TARGET_CACHE|MS_TARGET_TYPE_RAM, //!< Send a message to the cache system for a RAM cache object.
-	MS_TARGET_DISK_CACHE=MS_TARGET_CACHE|MS_TARGET_TYPE_DISK, //!< Send a message to the cache system for a disk cache object.
-	MS_TARGET_PLUG_IN_MANAGER='plgm', //!< Send a message to the plug-in manager.
-	MS_TARGET_DEBUG='dbug' //!< Send a message to the debug window.
+	MS_TARGET_MEMORY_CACHE=(MS_TARGET_CACHE|MS_TARGET_TYPE_RAM), //!< Send a message to the cache system for a RAM cache object.
+	MS_TARGET_DISK_CACHE=(MS_TARGET_CACHE|MS_TARGET_TYPE_DISK), //!< Send a message to the cache system for a disk cache object.
+	MS_TARGET_PLUG_IN_MANAGER=('plgm'^0xffff), //!< Send a message to the plug-in manager.
+	MS_TARGET_DEBUG=('dbug'^0xffff) //!< Send a message to the debug window.
 };
 class MessageDaemon;
 /*!

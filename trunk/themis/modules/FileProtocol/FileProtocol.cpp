@@ -211,13 +211,13 @@ status_t FileProtocol	::	BroadcastReply( BMessage * message )	{
 
 uint32 FileProtocol	::	BroadcastTarget()	{
 	
-	return MS_TARGET_PROTOCOL;
+	return MS_TARGET_FILE_PROTOCOL;
 	
 }
 
 int32 FileProtocol	::	Type()	{
 	
-	return TARGET_PROTOCOL;
+	return MS_TARGET_FILE_PROTOCOL;
 	
 }
 
