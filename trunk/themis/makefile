@@ -4,17 +4,20 @@
 #Remember to include the '/' at the end.
 BASE_INSTALL_DIR=Themis/
 BASE_ADDON_INSTALL_DIR=$(BASE_INSTALL_DIR)add-ons/
-BASE_APP_LIB_INSTALL_DIR=$(BASE_INSTALL)lib/
+BASE_APP_LIB_INSTALL_DIR=$(BASE_INSTALL_DIR)lib/
 BASE_ADDON_SOURCE_DIR=modules/
 BASE_DEPENDS_DIR=depends/
+BASE_LIBRARY_DEPENDS_DIR=$(BASE_DEPENDS_DIR)lib/
 FRAMEWORK_DEPENDS_DIR=$(BASE_DEPENDS_DIR)framework/
 BASE_ADDONS_DEPENDS_DIR=$(BASE_DEPENDS_DIR)add-ons/
 COMMON_DEPENDS_DIR=$(BASE_DEPENDS_DIR)comon/
+DOMLIBRARY_DEPENDS_DIR=$(BASE_LIBRARY_DEPENDS_DIR)DOM/
 BASE_OBJECT_DIR=objects/
+BASE_LIBRARY_OBJECT_DIR=$(BASE_OBJECT_DIR)lib/
 FRAMEWORK_OBJECT_DIR=$(BASE_OBJECT_DIR)framework/
 COMMON_OBJECT_DIR=$(BASE_OBJECT_DIR)common/
 BASE_ADDONS_OBJECT_DIR=$(BASE_OBJECT_DIR)add-ons/
-
+DOMLIBRARY_OBJECT_DIR=$(BASE_LIBRARY_OBJECT_DIR)DOM/
 #source files
 FRAMEWORKSOURCES= \
 	framework/main.cpp \
@@ -37,13 +40,21 @@ HTTPADDONSOURCES= \
 CACHEADDONSOURCES= \
 	cache/cache_main.cpp \
 	cache/cacheman.cpp
+DOMLIBRARYSOURCES= \
+	framework/DOM/TNode.cpp \
+	framework/DOM/TDOMException.cpp \
+	framework/DOM/TNamedNodeMap.cpp \
+	framework/DOM/TNodeList.cpp \
+	framework/DOM/TElement.cpp \
+	framework/DOM/TAttr.cpp \
+	framework/DOM/TCharacterData.cpp 
 
 #make install directories as necessary
 ifeq "$(shell if [ -d $(BASE_ADDON_INSTALL_DIR) ] ; then echo 1 ; else mkdir -p $(BASE_ADDON_INSTALL_DIR) ; echo 0 ; fi)" "0"
 endif
 #library directory creation is commented out until Themis *has* a library, such as DOM
-#ifeq "$(shell if [ -d $(BASE_APP_LIB_INSTALL_DIR) ] ; then echo 1 ; else mkdir -p $(BASE_APP_LIB_INSTALL_DIR) ; echo 0 ; fi)" "0"
-#endif
+ifeq "$(shell if [ -d $(BASE_APP_LIB_INSTALL_DIR) ] ; then echo 1 ; else mkdir -p $(BASE_APP_LIB_INSTALL_DIR) ; echo 0 ; fi)" "0"
+endif
 
 #Make object directories as necessary
 ifeq "$(shell if [ -d $(FRAMEWORK_OBJECT_DIR) ] ; then echo 1 ; else mkdir -p $(FRAMEWORK_OBJECT_DIR) ; echo 0 ; fi)" "0"
@@ -59,6 +70,9 @@ endif
 #cache add-on depends directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)cache/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)cache/ ; echo 0 ; fi)" "0"
 endif
+#DOM Library depends directory
+ifeq "$(shell if [ -d $(DOMLIBRARY_OBJECT_DIR) ] ; then echo 1 ; else mkdir -p $(DOMLIBRARY_OBJECT_DIR) ; echo 0 ; fi)" "0"
+endif
 
 #Make depends directories as necessary
 ifeq "$(shell if [ -d $(FRAMEWORK_DEPENDS_DIR) ] ; then echo 1 ; else mkdir -p $(FRAMEWORK_DEPENDS_DIR) ; echo 0 ; fi)" "0"
@@ -73,6 +87,9 @@ ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)http/ ] ; then echo 1 ; else mkd
 endif
 #cache add-on depends directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)cache/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)cache/ ; echo 0 ; fi)" "0"
+endif
+#DOM Library depends directory
+ifeq "$(shell if [ -d $(DOMLIBRARY_DEPENDS_DIR) ] ; then echo 1 ; else mkdir -p $(DOMLIBRARY_DEPENDS_DIR) ; echo 0 ; fi)" "0"
 endif
 
 #Detect whether net_server or BONE is installed, and set the appropriate flags
@@ -115,6 +132,8 @@ endif
 #			httpaddon
 #			help
 #			dist
+#			domlib
+#			libs
 all: framework httpaddon cacheaddon
 	@echo "Themis application and add-ons built successfully."
 addons: httpaddon cacheaddon
@@ -131,14 +150,18 @@ help:
 	@echo "	httpaddon	Just the HTTP addon"
 	@echo "	help		This message"
 	@echo "	dist		Distribution ready zip file"
+	@echo "	domlib		DOM library"
+	@echo "	libs		Just the ibraries"
+libs: domlib
 zip: all
 	@zip -ry9D Themis.zip Themis/
 	@echo "Themis.zip has been created."
 
 #framework application
-framework: frameworkdepends commondepends frameworkobjects commonobjects
+framework: domlib frameworkdepends commondepends frameworkobjects commonobjects 
 	@echo "Linking Themis."
-	@$(CC) -o$(BASE_INSTALL_DIR)Themis $(foreach file,$(notdir $(FRAMEWORKSOURCES:.cpp=.o)),$(FRAMEWORK_OBJECT_DIR)$(file)) $(foreach file,$(notdir $(COMMONSOURCES:.cpp=.o)),$(COMMON_OBJECT_DIR)$(file)) -Xlinker $(LDFLAGS) -L ./ -L $(BELIBRARIES)  $(NETWORKLIBS) -lbe -ltextencoding -lroot
+	@$(CC) -o$(BASE_INSTALL_DIR)Themis $(foreach file,$(notdir $(FRAMEWORKSOURCES:.cpp=.o)),$(FRAMEWORK_OBJECT_DIR)$(file)) $(foreach file,$(notdir $(COMMONSOURCES:.cpp=.o)),$(COMMON_OBJECT_DIR)$(file)) -Xlinker $(LDFLAGS) -L ./ \
+		-L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) $(NETWORKLIBS) -ldom -lbe -ltextencoding -lroot
 	@echo "Done linking, adding resource file."
 	@xres -o $(BASE_INSTALL_DIR)Themis framework/themis.rsrc
 	@echo "Done adding resources. Themis framework app is ready to run."
@@ -223,4 +246,26 @@ $(BASE_ADDONS_DEPENDS_DIR)http/%.d: $(foreach file,$(HTTPADDONSOURCES),$(BASE_AD
 $(BASE_ADDONS_OBJECT_DIR)http/%.o: $(BASE_ADDON_SOURCE_DIR)http/%.cpp $(BASE_ADDONS_DEPENDS_DIR)http/%.d
 	@echo "Updating object file $@"
 	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
+
+#DOM Library
+domlib: domlibdepends domlibobjects
+	@echo "Linking DOM Library"
+	@$(CC) -o $(BASE_APP_LIB_INSTALL_DIR)libdom.so $(foreach file,$(notdir $(DOMLIBRARYSOURCES:.cpp=.o)),$(DOMLIBRARY_OBJECT_DIR)$(file)) -nostart -Xlinker $(LDFLAGS) -shared -Xlinker -soname=libdom.so -L ./ -L $(BELIBRARIES) -L $(DOMLIBRARY_OBJECT_DIR) -lbe
+	@echo "DOM Library is now linked. Doing mimeset."
+	mimeset -F $(BASE_APP_LIB_INSTALL_DIR)libdom.so
+	@echo "DOM Library compiled and linked successfully."
+	
+domlibdepends: $(DOMLIBRARYSOURCES) $(foreach file,$(DOMLIBRARYSOURCES:.cpp=.d),$(DOMLIBRARY_DEPENDS_DIR)$(notdir $(file)))
+	@echo "DOM Library depends are done."
+	
+domlibobjects: $(foreach file,$(DOMLIBRARYSOURCES),$(DOMLIBRARY_OBJECT_DIR)$(notdir $(file:.cpp=.o)))
+	@echo "DOM Library objects are done."
+	
+$(DOMLIBRARY_DEPENDS_DIR)%.d: $(DOMLIBRARYSOURCES)
+	@echo "Cache: Updating dependency file $@"
+	@set -e;VAR1=$(shell echo "$(DOMLIBRARY_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(DOMLIBRARY_OBJECT_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
+
+$(DOMLIBRARY_OBJECT_DIR)%.o: framework/DOM/%.cpp $(DOMLIBRARY_DEPENDS_DIR)%.d
+	@echo "Updating object file $@"
+	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@ -Wall -Wno-multichar -Wno-ctor-dtor-privacy -Woverloaded-virtual -O3
 
