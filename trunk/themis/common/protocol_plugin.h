@@ -26,32 +26,27 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
-#ifndef _plugman
-#define _plugman
-#define DEBUG 1
-//Plug-in Manager
-#include <AppKit.h>
-#include <KernelKit.h>
-#include <StorageKit.h>
-#include <SupportKit.h>
-#include "../common/plugstruct.h"
-#include "../common/protocol_plugin.h"
+#ifndef _pluginabstractclass
+#define _pluginabstractclass
 
-class plugman: public BLooper
+enum PlugType{ProtocolPlugin=0,ContentPlugin=1};
+class protocol_plugin
  {
-  private:
-   plugst *head,*tail;
-   void AddPlug(plugst *plug);
   public:
-   BDirectory *addondir;
-   plugman();
-   ~plugman();
-   status_t UnloadAllPlugins();
-   status_t UnloadPlugin(int32 which);
-   status_t LoadPlugin(int32 which);
-   status_t LoadPluginFor(const char *mimetype);
-   status_t ReloadPlugin(int32 which);
-   status_t BuildRoster();
+   protocol_plugin(){}
+   virtual ~protocol_plugin(){};
+   virtual char *GetPluginName(void)=0;
+   virtual int32 GetPluginID(void)=0;
+   virtual float GetPluginVers(void)=0;
+   virtual PlugType PluginType(void)=0;
+   virtual status_t Go(void)=0;
+   virtual bool IsPersistant(void)=0;
+   virtual BMessage *SupportedTypes(void)=0;
+   virtual void FindURI(const char *url,BString &host,int &port,BString &uri)=0;
+   virtual void ParseResponse(unsigned char *resp,size_t size)=0;
+   virtual unsigned char *GetDoc(BString &host,int &port,BString &uri)=0;
+   virtual unsigned char *GetDoc(const char* url)=0;
+   virtual unsigned char *GetURL(const char* url)=0;
  };
 
 #endif
