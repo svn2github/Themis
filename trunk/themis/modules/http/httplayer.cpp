@@ -1083,10 +1083,57 @@ void httplayer::DoneWithHeaders(http_request *request) {
 				ci->AddString(curhead->name,curhead->value);
 				curhead=curhead->next;
 			}
+			ci->AddInt32("ReplyTo",Proto->PlugID());
+			ci->AddPointer("ReplyToPointer",Proto);
 			request->cacheinfo=new BMessage;
-			BMessenger *msgr=new BMessenger(CachePlug->Handler(),NULL,NULL);
-			msgr->SendMessage(ci,request->cacheinfo);
-			delete ci;
+			ci->AddInt32("command",COMMAND_STORE);
+			BMessage *container=new BMessage();
+			container->AddMessage("message",ci);
+			bool nocache=false;
+			printf("trying to create cache object.\n");
+		acquire_sem(cache_sem);//this keeps the http layer from proceeding before a BroadcastReply is called if there is a cache add-on loaded
+		printf("sem acquired, sending broadcast\n");
+		if (PluginManager->Broadcast(Proto->PlugID(),TARGET_CACHE,container)!=B_OK)
+			nocache=true;
+		delete container;
+		printf("broadcast called, cache received? %s\n",nocache?"no":"yes");
+/*
+	Yes, it looks weird that we're acquiring the cache_sem again, but this makes sure
+	that we get a response back from the cache before we continue. We only want to release
+	the sem in this function before reacquiring it if there are no cache plug-ins.
+*/
+		if (nocache)
+			release_sem(cache_sem);
+		printf("if cache received, I should block here until a response has been received\n");
+		acquire_sem(cache_sem);//this keeps the http layer from proceeding before a BroadcastReply is called if there is a cache add-on loaded
+			BMessage *reply=NULL;
+			if (nocache==false) {
+				printf("response received\n");
+				reply=Proto->cache_reply;
+				Proto->cache_reply=NULL;
+			} else
+				printf("no cache plug-in responded\n");
+			
+			release_sem(cache_sem);
+			if (reply==NULL) {
+				request->data=new BMallocIO;
+			} else {
+				if (reply->HasRef("ref")) {
+					entry_ref ref;
+					reply->FindRef("ref",&ref);
+					request->cacheinfo->AddRef("ref",&ref);
+				}
+				if (reply->HasPointer("data")) {
+					void *pointer;
+					reply->FindPointer("data",&pointer);
+					request->data=(BPositionIO*)pointer;
+				}
+				
+			}
+			
+//			BMessenger *msgr=new BMessenger(CachePlug->Handler(),NULL,NULL);
+//			msgr->SendMessage(ci,request->cacheinfo);
+//			delete ci;
 //			request->cacheinfo->PrintToStream();
 			if (request->data==NULL) {
 				entry_ref ref;
@@ -1114,14 +1161,19 @@ void httplayer::DoneWithHeaders(http_request *request) {
 				curhead=curhead->next;
 			}
 			BMessenger *msgr=new BMessenger(CachePlug->Handler(),NULL,NULL);
-			msgr->SendMessage(ui,reply);
+			msgr->SendMessage(ui/*,reply*/);
 //			reply->PrintToStream();
-			delete request->cacheinfo;
-			request->cacheinfo=reply;
+//			delete request->cacheinfo;
+//			request->cacheinfo=reply;
 			delete ui;
 			if (request->data==NULL) {
 				printf("Creating/opening cache file.\n");
 				request->data=new BFile(&ref,B_READ_WRITE);
+				request->data->Seek(0,SEEK_END);
+				request->contentlen=request->bytesreceived=0;
+				request->contentlen=request->bytesreceived=request->data->Position();
+				printf("(http cache) br: %ld\n",request->bytesreceived);
+				request->data->Seek(0,SEEK_SET);
 			}
 			
 		}
@@ -1144,7 +1196,7 @@ void httplayer::DoneWithHeaders(http_request *request) {
 		msg->AddBool("request_done",true);
 		char *result=NULL;
 		BString mime;
-		printf("Need to read file from cache 2348\n");
+		printf("Need to read file from cache\n");
 		request->cacheinfo->PrintToStream();
 		request->cacheinfo->FindString("mime_type",&mime);
 		msg->AddString("mimetype",mime);
@@ -1158,7 +1210,7 @@ void httplayer::DoneWithHeaders(http_request *request) {
 */		
 		request->data->Seek(0,SEEK_END);
 		request->bytesreceived=request->data->Position();
-		printf("request->bytesreceived: %lu\n",request->bytesreceived);
+		printf("request->bytesreceived: %ld\n",request->bytesreceived);
 		
 		request->contentlen=request->bytesreceived;
 		request->data->Seek(0,SEEK_SET);
@@ -1383,7 +1435,7 @@ if (!lock->IsLocked()) {
 	BMessage container;
 	container.AddMessage("message",msg);
 	delete msg;
-	printf("Sending broadcast to handlers and parsers.\n");
+	printf("Sending broadcast to handlers and parsers. target: %ld\n",target);
 	
 	Proto->PlugMan->Broadcast(Proto->PlugID(),target,&container);
 	if (ilocked)
@@ -1770,6 +1822,7 @@ int32 httplayer::LayerManager() {
 
 
 BMessage *httplayer::CheckCacheStatus(http_request *request) {
+	printf("httplayer::CheckCacheStatus\n");
 	if (request!=NULL) {
 		
 		if (CachePlug==NULL)
@@ -1842,7 +1895,7 @@ int32 httplayer::StartLayer(void *arg) {
 }
 
 status_t httplayer::Quit() {
-	Lock();
+//	Lock();
 	printf("http layer stopping\n");
 	
 	atomic_add(&quit,1);

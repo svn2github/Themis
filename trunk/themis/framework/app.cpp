@@ -39,7 +39,7 @@ App::App(const char *appsig)
 	AppSettings=new BMessage;
 	LoadSettings();
 	app_info ai;
-	qr_called=false;
+	qr_called=0;
 	AWin=NULL;
 	GetAppInfo(&ai);
 	entry_ref appdirref;
@@ -75,9 +75,12 @@ App::~App(){
 	if (!qr_called)
 		QuitRequested();
 	SaveSettings();
-	if (AppSettings!=NULL)
+	if (AppSettings!=NULL) {
+		
 		delete AppSettings;
-	AppSettings=NULL;
+		AppSettings=NULL;
+	}
+	printf("~app end\n");
 }
 void App::AboutRequested() {
 	if (AWin==NULL) {
@@ -89,7 +92,7 @@ void App::AboutRequested() {
 }
 
 bool App::QuitRequested(){
-	qr_called=true;
+	atomic_add(&qr_called,1);
 	status_t stat;
 	BWindow *w=NULL;
 	BMessenger *msgr=NULL;
@@ -106,19 +109,25 @@ bool App::QuitRequested(){
 			delete msgr;
 		}
 	}
-	msgr=new BMessenger(NULL,PluginManager,NULL);
-	th=PluginManager->Thread();
-	printf("App: Sending quit message to Plug-in Manager.\n");
+	if (PluginManager!=NULL) {
+		msgr=new BMessenger(NULL,PluginManager,NULL);
+		th=PluginManager->Thread();
+		printf("App: Sending quit message to Plug-in Manager.\n");
+		msgr->SendMessage(B_QUIT_REQUESTED);
+		delete msgr;
+		printf("App: Waiting for Plug-in manager to quit.\n");
+		wait_for_thread(th,&stat);
+		printf("Done.\n");
+		PluginManager=NULL;
+	}
 	
-	msgr->SendMessage(B_QUIT_REQUESTED);
-	delete msgr;
-	printf("App: Waiting for Plug-in manager to quit.\n");
-	wait_for_thread(th,&stat);
-	printf("Done.\n");
-	TCP->lock->Lock();
-	stat=TCP->Quit();
-	TCP->lock->Unlock();
-	delete TCP;
+	if (TCP!=NULL) {
+		TCP->lock->Lock();
+		stat=TCP->Quit();
+		TCP->lock->Unlock();
+		delete TCP;
+		TCP=NULL;
+	}
 	
 	//  PluginManager->Lock();
 	//  PluginManager->Quit();

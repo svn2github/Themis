@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2002 Raymond "Z3R0 One" Rodgers. All Rights Reserved. 
+Copyright (c) 2002 Raymond "Z3R0 One" Rodgers. All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -26,34 +26,46 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
-#ifndef _appclass
-#define _appclass
-#include <AppKit.h>
-#include "win.h"
-#include "appdefines.h"
-#include "plugman.h"
-#include "aboutwin.h"
+#ifndef _image_handler_
+#define _image_handler_
 
-#define THEMIS_FRAMEWORK_APP_VERSION 0.40
+#include <TranslationKit.h>
+#include <Message.h>
+#include <View.h>
+#include "plugclass.h"
+#include "smt.h"
+#include "image.h"
+
+extern "C" __declspec(dllexport)status_t Initialize(void *info=NULL);
+extern "C" __declspec(dllexport)status_t Shutdown(bool now=false);
+extern "C" __declspec(dllexport)PlugClass *GetObject(void);
 
 
-class App:public BApplication {
+class ImageMan: public PlugClass {
 	private:
-		Win *win;
-		void InitSettings(char *settings_path=NULL);
-		volatile int32 qr_called;
+		BTranslatorRoster *TRoster;
+		translator_id *translators;
+		int32 transcount;
+		translator_info *imagetrans;
+		int32 imagetranscount;
+		const char *TranslatorName(translator_id id);
+		bool TypeSupported(char *type);
+		smt_st *AddMIMEType(char *type);
+		smt_st *mimes;
+		Image *imagelist;
 	public:
-		aboutwin *AWin;
-		status_t LoadSettings();
-		status_t SaveSettings();
-		void AboutRequested();
-		App(const char *appsig);
-		~App();
-		bool QuitRequested();
-		void MessageReceived(BMessage *msg);
-		void RefsReceived(BMessage *refs);
-		void ReadyToRun();
-		void ArgvReceived(int32 argc, char **argv);
+		ImageMan(BMessage *info=NULL);
+		~ImageMan();
+		bool IsPersistent();
+		uint32 PlugID();
+		char *PlugName();
+		float PlugVersion();
+		status_t ReceiveBroadcast(BMessage *msg);
+		status_t BroadcastReply(BMessage *msg);
+		int32 Type();
+		char *SettingsViewLabel();
+		BView *SettingsView();
 };
 
 #endif
+

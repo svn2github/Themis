@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2002 Raymond "Z3R0 One" Rodgers. All Rights Reserved. 
+Copyright (c) 2002 Raymond "Z3R0 One" Rodgers. All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -26,34 +26,30 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
-#ifndef _appclass
-#define _appclass
-#include <AppKit.h>
-#include "win.h"
-#include "appdefines.h"
-#include "plugman.h"
-#include "aboutwin.h"
+#ifndef _image_class_
+#define _image_class_
 
-#define THEMIS_FRAMEWORK_APP_VERSION 0.40
+#include <Bitmap.h>
+#include <string.h>
 
-
-class App:public BApplication {
+class Image {
 	private:
-		Win *win;
-		void InitSettings(char *settings_path=NULL);
-		volatile int32 qr_called;
+		BBitmap *imagebmp;
+		char *url;
+		Image *next,*prev;
 	public:
-		aboutwin *AWin;
-		status_t LoadSettings();
-		status_t SaveSettings();
-		void AboutRequested();
-		App(const char *appsig);
-		~App();
-		bool QuitRequested();
-		void MessageReceived(BMessage *msg);
-		void RefsReceived(BMessage *refs);
-		void ReadyToRun();
-		void ArgvReceived(int32 argc, char **argv);
+		Image(Image *otherimage, bool truecopy=false);
+		Image(BBitmap *bmp=NULL, char *URL=NULL);
+		~Image();
+		BBitmap *Bitmap();
+		void SetBitmap(BBitmap *bmp);
+		void GetSize(BRect *size);
+		Image *Next();
+		Image *Previous();
+		Image *SetNext(Image *nextimage);
+		Image *SetPrevious(Image *previmage);
+		char *SetURL(char *URL);
+		char *URL();
 };
 
 #endif

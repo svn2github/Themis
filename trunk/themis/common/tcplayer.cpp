@@ -103,14 +103,17 @@ tcplayer::tcplayer() {
 tcplayer::~tcplayer() {
 	printf("tcp_layer destructor, %ld connections\n",Connections());
 	if (conn_head!=NULL) {
-		connection *cur=conn_head, *tmp;
-		while (cur!=NULL) {
-			tmp=cur->next;
-			delete cur;
-			cur=tmp;
+		connection *cur=conn_head;
+		printf("tcplayer: deleting connections:\n");
+		while (conn_head!=NULL) {
+			printf("tcplayer: deleting connection %p\n",cur);
+			cur=conn_head->next;
+			delete conn_head;
+			conn_head=cur;
 		}
 	}
 //	acquire_sem(cb_sem);
+printf("clearing out callbacks.\n");
 	if (callback_head!=NULL) {
 		DRCallback_st *cur=callback_head;
 		while (callback_head!=NULL) {
@@ -120,6 +123,7 @@ tcplayer::~tcplayer() {
 		}
 		
 	}
+printf("done clearing callbacks.\n");
 #ifdef USEOPENSSL
 	if (sslctx!=NULL)
 		SSL_CTX_free (sslctx);
@@ -133,6 +137,7 @@ tcplayer::~tcplayer() {
 	delete_sem(tcplayer_sem);
 	lock->Unlock();
 	delete lock;
+	printf("~tcplayer end\n");
 }
 int32 tcplayer::Lock(int32 timeout) 
 {
@@ -626,6 +631,7 @@ void tcplayer::KillConnection(connection *target) {
 		if (target->open) {
 //mtx->lock();
 		closesocket(target->socket);
+		target->socket=-1;
 //mtx->unlock();
 		target->open=false;
 #ifdef USEOPENSSL

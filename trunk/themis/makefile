@@ -20,6 +20,7 @@ COMMON_DEPENDS_DIR=$(BASE_DEPENDS_DIR)comon/
 DOMLIBRARY_DEPENDS_DIR=$(BASE_LIBRARY_DEPENDS_DIR)DOM/
 TESTPLUG_DEPENDS_DIR=$(BASE_DEPENDS_DIR)testplug/
 HTMLPARSER_DEPENDS_DIR=$(BASE_DEPENDS_DIR)HTMLParser/
+IMAGEH_DEPENDS_DIR=$(BASE_ADDONS_DEPENDS_DIR)imageh/
 
 #object directories
 BASE_OBJECT_DIR=objects/
@@ -30,7 +31,7 @@ BASE_ADDONS_OBJECT_DIR=$(BASE_OBJECT_DIR)add-ons/
 DOMLIBRARY_OBJECT_DIR=$(BASE_LIBRARY_OBJECT_DIR)DOM/
 TESTPLUG_OBJECT_DIR=$(BASE_OBJECT_DIR)testplug/
 HTMLPARSER_OBJECT_DIR=$(BASE_OBJECT_DIR)HTMLParser/
-
+IMAGEH_OBJECT_DIR=$(BASE_ADDONS_OBJECT_DIR)imageh/
 #source files
 FRAMEWORKSOURCES= \
 	framework/main.cpp \
@@ -92,6 +93,9 @@ HTMLPARSERSOURCES= \
 	HTMLParser/HTMLParser.cpp
 DOMVIEWSOURCES= \
 	DOMView/DOMView.cpp
+IMAGEHSOURCES= \
+	imageh/imageman.cpp \
+	imageh/image.cpp
 	
 #make install directories as necessary
 ifeq "$(shell if [ -d $(BASE_ADDON_INSTALL_DIR) ] ; then echo 1 ; else mkdir -p $(BASE_ADDON_INSTALL_DIR) ; echo 0 ; fi)" "0"
@@ -134,6 +138,11 @@ endif
 ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)testplug/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)testplug/ ; echo 0 ; fi)" "0"
 endif
 
+#imageh add-on object directory
+ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)imageh/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)imageh/ ; echo 0 ; fi)" "0"
+endif
+
+
 #Make depends directories as necessary
 ifeq "$(shell if [ -d $(FRAMEWORK_DEPENDS_DIR) ] ; then echo 1 ; else mkdir -p $(FRAMEWORK_DEPENDS_DIR) ; echo 0 ; fi)" "0"
 endif
@@ -166,6 +175,9 @@ endif
 #testplug add-on depends directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)testplug/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)testplug/ ; echo 0 ; fi)" "0"
 endif
+#imageh add-on depends directory
+ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)imageh/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)imageh/ ; echo 0 ; fi)" "0"
+endif
 
 #Detect whether net_server or BONE is installed, and set the appropriate flags
 #to compile in/out appropriate sections. Also do the same for OpenSSL.
@@ -181,7 +193,7 @@ NETWORKLIBS=-lsocket -lbind -lbnetapi -lopenssl
 NETWORKING=NONE
 # by default, debugging information will be included. to turn it off, remove or comment out (#) the -g
 # on the next line 
-COMPILE_FLAGS=-g -D_Themis_
+COMPILE_FLAGS=-g -D_Themis_ #-Wall
 ifeq "$(shell if [ -f /system/lib/libsocket.so ] ; then echo 1 ; else echo 0 ; fi)" "1"
 	NETWORKLIBS=-lsocket -lbind -lbnetapi
 	NETWORKING=BONE
@@ -266,6 +278,7 @@ help:
 	@echo "	core2		Framework, HTTP, cache, testplug, HTMLParser and DOMView add-ons"
 	@echo "	domloadtest	DOM LoadTest application"
 	@echo "	testplug	A sample/test plug-in"
+	@echo "	imagehaddon	The official image handling add-on"
 	@echo "*** NOTE ***"
 	@echo "You will get errors if you use any of the \"clean\" targets in combination with any of the build targets."
 libs: domlib
@@ -358,6 +371,32 @@ $(BASE_ADDONS_DEPENDS_DIR)testplug/%.d:  $(BASE_ADDON_SOURCE_DIR)testplug/%.cpp 
 $(BASE_ADDONS_OBJECT_DIR)testplug/%.o: $(BASE_ADDON_SOURCE_DIR)testplug/%.cpp $(BASE_ADDONS_DEPENDS_DIR)testplug/%.d
 	@echo "testplug: Updating object file $(notdir $@)"
 	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
+
+#imageh add-on
+imagehaddon: imagehdepends imagehobjects
+	@echo "Linking image handler" 
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)image_handler.so $(foreach file,$(notdir $(IMAGEHSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)imageh/$(file)) $(COMMON_OBJECT_DIR)plugclass.o $(COMMON_OBJECT_DIR)plugman.o -nostart -Xlinker $(LDFLAGS) -soname=image_handler.so -L ./ -L $(BELIBRARIES)  -lbe -lroot -ltranslation
+	@echo "image handler add-on is now linked. Doing mimeset."
+	@mimeset -F $(BASE_ADDON_INSTALL_DIR)cache.so
+	@echo "Image Handler plug-in compiled and linked successfully."
+	
+imagehdepends: $(foreach file,$(IMAGEHSOURCES),$(BASE_ADDON_SOURCE_DIR)$(file)) common/plugman.cpp common/plugclass.cpp $(COMMON_DEPENDS_DIR)plugman.d $(COMMON_DEPENDS_DIR)plugclass.d\
+					$(foreach file,$(BASE_ADDON_SOURCE_DIR)$(IMAGEHSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)imageh/$(notdir $(file)))
+	@echo "image handler depends are done."
+	
+imagehobjects: $(COMMON_OBJECT_DIR)plugman.o $(COMMON_OBJECT_DIR)plugclass.o\
+					$(foreach file,$(BASE_ADDON_SOURCE_DIR)$(IMAGEHSOURCES),$(BASE_ADDONS_OBJECT_DIR)imageh/$(notdir $(file:.cpp=.o)))
+	@echo "image handler objects are done."
+	
+$(BASE_ADDONS_DEPENDS_DIR)imageh/%.d:  $(BASE_ADDON_SOURCE_DIR)imageh/%.cpp $(BASE_ADDON_SOURCE_DIR)imageh/%.h
+	@echo "ImageH: Updating dependency file $(notdir $@)"
+	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)imageh/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)imageh/"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
+
+$(BASE_ADDONS_OBJECT_DIR)imageh/%.o: $(BASE_ADDON_SOURCE_DIR)imageh/%.cpp $(BASE_ADDONS_DEPENDS_DIR)imageh/%.d
+	@echo "ImageH: Updating object file $(notdir $@)"
+	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
+
+
 
 #html parser add-on
 htmlpaddon: domlib htmlparserdepends htmlparserobjects

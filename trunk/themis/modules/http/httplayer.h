@@ -134,8 +134,8 @@ struct http_request {
 	http_request *next;
 	bool chunked;
 	int32 bytesremaining;
-	uint64 contentlen;
-	uint64 bytesreceived;
+	int64 contentlen;
+	int64 bytesreceived;
 	int32 chunkbytesremaining;
 	int32 cache;
 	int32 chunk;

@@ -233,8 +233,9 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 			HTTP->Lock();
 			HTTP->AddRequest(rmsg);
 			HTTP->Unlock();
-			delete rmsg;
-			
+			//we're already deleting rmsg (as info) int he HTTP->AddRequest() call.
+//			delete rmsg;
+			rmsg=NULL;
 		}break;
 		case COMMAND_INFO: {
 			switch(msg->what) {
@@ -327,6 +328,9 @@ http_protocol::http_protocol(BMessage *info)
 http_protocol::~http_protocol() {
 	printf("http_protocol destructor\n");
 	Stop();
+	printf("Locking HTTP Layer.\n");
+	HTTP->Lock();
+	printf("Stopping HTTP Layer.\n");
  	HTTP->Quit();
 	delete HTTP;
 	printf("http: Window: %p\n",Window);
@@ -338,7 +342,7 @@ http_protocol::~http_protocol() {
 			smthead=cur;
 		}
 	}
-	
+	printf("~http_protocol end\n");
  }
 int32 http_protocol::SpawnThread(BMessage *info)
  {

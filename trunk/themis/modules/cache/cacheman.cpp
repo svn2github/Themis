@@ -79,6 +79,7 @@ int32 cacheman::Type()
 }
 status_t cacheman::ReceiveBroadcast(BMessage *msg)
 {
+	printf("cache has received a broadcast\n");
 	MessageReceived(msg);
 	return PLUG_HANDLE_GOOD;
 	
@@ -396,8 +397,19 @@ void cacheman::MessageReceived(BMessage *mmsg)
         node->Sync();
         delete node;
         delete file;
-        reply.what=B_OK;
-        reply.AddRef("ref",&ref);
+		PlugClass *plug=NULL;
+			printf("cache CreateCacheObject about to return.\n");
+			        reply.what=CachedObject;
+				if (msg->HasPointer("ReplyToPointer")) {
+					reply.AddInt32("command",COMMAND_INFO);
+					printf("Replying to a plugin.\n");
+					msg->FindPointer("ReplyToPointer",(void**)&plug);
+					if (plug!=NULL)
+						plug->BroadcastReply(&reply);
+				} else {	
+					printf("Replying via BMessage.\n");
+			        reply.AddRef("ref",&ref);
+				}
        }
       delete msg;
       mmsg->SendReply(&reply);
@@ -535,6 +547,7 @@ void cacheman::MessageReceived(BMessage *mmsg)
         delete node;
         reply.what=B_OK;
       delete msg;
+	  printf("cache (update) done; sending reply.\n");
       mmsg->SendReply(&reply);
      }break;
     case ClearCache:
