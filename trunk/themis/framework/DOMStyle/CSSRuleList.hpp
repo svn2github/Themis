@@ -51,6 +51,10 @@
 
 class CSSRuleList	{
 	
+	private:
+		/// List of the css rules.
+		const vector<CSSRulePtr> * mCSSRuleList;
+	
 	public:
 		/// Constructor of the CSSRuleList class.
 		/**
@@ -59,7 +63,7 @@ class CSSRuleList	{
 			
 			@param	aCSSRuleList	The list of css rules to store.
 		*/
-		CSSRuleList( const vector<StyleSheetPtr> * aCSSRuleList );
+		CSSRuleList( const vector<CSSRulePtr> * aCSSRuleList );
 		
 		/// Destructor of the CSSRuleList class.
 		/**
@@ -69,7 +73,7 @@ class CSSRuleList	{
 		~CSSRuleList();
 		
 		/// A function to get the number of css rules in the list.
-		unsigned long getLength();
+		unsigned long getLength() const;
 		
 		/// A function to get an item.
 		/**

@@ -32,6 +32,19 @@
 #define CSSSTYLERULE_HPP
 
 // DOM Style headers
+#include "DOMStyleSupport.hpp"
+
+// Declarations used
+class CSSStyleDeclaration;
+class CSSStyleSheet;
+class CSSStyleRule;
+
+// Typedefs used
+typedef boost::shared_ptr<CSSStyleDeclaration> CSSStyleDeclarationPtr;
+typedef boost::shared_ptr<CSSStyleSheet> CSSStyleSheetPtr;
+typedef boost::shared_ptr<CSSStyleRule> CSSStyleRulePtr;
+
+// DOM Style headers
 #include "CSSRule.hpp"
 
 /// CSSStyleRule implementation of the DOM CSS.
@@ -43,6 +56,10 @@
 */
 
 class CSSStyleRule	:	public CSSRule	{
+
+	private:
+		/// The declaration block of this style.
+		CSSStyleDeclarationPtr mStyle;
 
 	public:
 		/// Constructor of the CSSStyleRule class.
@@ -57,7 +74,7 @@ class CSSStyleRule	:	public CSSRule	{
 			@param	aStyle					The declaration block of this rule set.
 		*/
 		CSSStyleRule( CSSStyleSheetPtr aParentStyleSheet, CSSRulePtr aParentRule,
-							 TDOMString aSelectorText, CSSStyleDeclarationPtr aStyle );
+							 const TDOMString aSelectorText, CSSStyleDeclarationPtr aStyle );
 		
 		/// Destructor of the CSSStyleRule class.
 		/**
@@ -87,7 +104,7 @@ class CSSStyleRule	:	public CSSRule	{
 		void setSelectorText( const TDOMString aSelectorText );
 		
 		/// A function to get the declaration block of the rule.
-		CSSStyleDeclarationPtr getStyle();
+		CSSStyleDeclarationPtr getStyle() const;
 
 };
 
