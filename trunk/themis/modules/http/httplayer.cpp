@@ -431,6 +431,9 @@ void httplayer::KillRequest(http_request *request) {
 }
 
 http_request *httplayer::AddRequest(BMessage *info) {
+
+	printf( "ADDREQUEST!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n" );
+
 #ifdef DEBUG
 	Proto->Debug("AddRequest");
 #endif
@@ -1723,6 +1726,9 @@ void httplayer::ProcessData(http_request *request, void *buffer, int size) {
 #endif
 	BMessage *msg=new BMessage(ReturnedData);
 	// added by emwe
+#ifdef DEBUG
+	printf( "returned UID: %ld\n", request->view_id );
+#endif
 	msg->AddInt32( "view_id", request->view_id );
 	msg->AddBool( "secure", request->secure );
 	//
@@ -2103,11 +2109,16 @@ char *httplayer::BuildRequest(http_request *request){
 		
 
 bool httplayer::ResubmitRequest(http_request *request) {
+//	printf( "httplayer::ResubmitRequest()\n" );
+	
 	//BAutolock alock(lock);
 	if (request->done==0)
 		CloseRequest(request,true);
 	BMessage *info=new BMessage;
 	info->AddInt32("command",COMMAND_RETRIEVE);
+	
+	/* added by enwe */
+	info->AddInt32( "view_id", request->view_id );
 	
 	info->AddString("target_url",request->url);
 	if (request->referrer!=NULL) {
