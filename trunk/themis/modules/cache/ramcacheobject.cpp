@@ -105,6 +105,7 @@ ssize_t RAMCacheObject::Read(uint32 usertoken, void *buffer, size_t size)
 	if (user!=NULL) {
 		if (databuffer!=NULL) {
 //			buffer->Seek(user->ReadPosition(),SEEK_SET);
+			UpdateAccessTime();
 			dsize=databuffer->ReadAt(user->ReadPosition(),buffer,size);
 			user->SetReadPosition(dsize+user->ReadPosition());
 		}
@@ -122,6 +123,7 @@ ssize_t RAMCacheObject::Write(uint32 usertoken, void *buffer, size_t size)
 		AcquireWriteLock(usertoken);
 	if (writelockowner!=NULL) {
 		if (writelockowner->Token()==usertoken) {
+			UpdateAccessTime();
 			bytes=databuffer->WriteAt(writelockowner->WritePosition(),buffer,size);
 			writelockowner->SetWritePosition(writelockowner->WritePosition()+bytes);
 		}
@@ -138,6 +140,7 @@ ssize_t RAMCacheObject::SetLength(uint32 usertoken, int32 objecttoken, size_t le
 			AcquireWriteLock(usertoken);
 		if (writelockowner!=NULL) {
 			if (writelockowner->Token()==usertoken) {
+				UpdateAccessTime();
 				if (databuffer->SetSize(length)==B_OK)
 					size=length;
 				else
@@ -155,6 +158,7 @@ ssize_t RAMCacheObject::WriteAttr(uint32 usertoken, const char *attrname, type_c
 {
 	if (writelockowner!=NULL) {
 		if (writelockowner->Token()==usertoken) {
+				UpdateAccessTime();
 				if (strcasecmp(attrname,"Themis:URL")==0) {
 					//do nothing... we already know the URL.
 				}
@@ -251,6 +255,7 @@ ssize_t RAMCacheObject::WriteAttr(uint32 usertoken, const char *attrname, type_c
 ssize_t RAMCacheObject::ReadAttr(uint32 usertoken,  const char *attrname, type_code type, void *data, size_t size)
 {
 	ssize_t actualsize=0;
+	UpdateAccessTime();
 	if (strcasecmp(attrname,"Themis:URL")==0) {
 		actualsize=strlen(url);
 		if (actualsize>size)
@@ -349,6 +354,7 @@ status_t RAMCacheObject::RemoveAttr(uint32 usertoken, const char *attrname)
 	status_t status=B_ERROR;
 	if (writelockowner!=NULL) {
 		if (writelockowner->Token()==usertoken){
+			UpdateAccessTime();
 			if (strcasecmp(attrname,"Themis:URL")==0) {
 				//do nothing
 			}
@@ -431,12 +437,14 @@ off_t RAMCacheObject::Size()
 void RAMCacheObject::ClearFile() 
 {
 	if (databuffer!=NULL) {
+		UpdateAccessTime();
 		databuffer->SetSize(0);
 	} 	
 }
 BMessage *RAMCacheObject::GetInfo()
 {
 	BMessage *attributes=new BMessage;
+	UpdateAccessTime();
 	attributes->AddInt64("file_size",Size());
 	if (name!=NULL)
 		attributes->AddString("name",name);
@@ -462,8 +470,11 @@ BMessage *RAMCacheObject::GetInfo()
 void RAMCacheObject::ClearContent(uint32 usertoken) 
 {
 	if (writelockowner!=NULL) {
-		if (writelockowner->Token()==usertoken)	
+		if (writelockowner->Token()==usertoken)	{
+			UpdateAccessTime();
 			databuffer->SetSize(0);
+		}
+		
 	}
 	
 }

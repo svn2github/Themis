@@ -34,6 +34,7 @@ Project Start Date: October 18, 2000
 #include "cacheuser.h"
 #include <Locker.h>
 #include <DataIO.h>
+#include <kernel/OS.h>
 /*!
 \brief Object Oriented linked list representation of cached data.
 	The CacheObject class represents the actual cached file, whether it is on disk
@@ -55,7 +56,11 @@ class CacheObject {
 		CacheObject *next,*prev;
 		//! Finds the user object of a particular id if that user is accessing this object.
 		CacheUser *FindUser(uint32 usertoken);
-		BLocker *lock;
+		BLocker lock;
+		time_t creation_time;
+		time_t last_access_time;
+		virtual void UpdateAccessTime();
+	
 	public:
 		//! The constructor.
 		CacheObject(int32 token,const char *URL);
@@ -125,6 +130,9 @@ class CacheObject {
 		virtual ssize_t WriteAttr(uint32 usertoken, const char *attrname, type_code type,void *data,size_t size)=0;
 		//! Read data from an attribute.
 		virtual ssize_t ReadAttr(uint32 usertoken,  const char *attrname, type_code type, void *data, size_t size)=0;
+		virtual time_t LastAccessTime();
+		virtual time_t CreationTime();
+	
 };
 
 #endif

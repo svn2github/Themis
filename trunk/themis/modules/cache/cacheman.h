@@ -35,6 +35,7 @@ Project Start Date: October 18, 2000
 #include "plugclass.h"
 #include "cache_defines.h"
 #include <Locker.h>
+#include <stdlib.h>
 #include "cacheplug.h"
 #include "diskcacheobject.h"
 class cacheman: public CachePlug {
@@ -57,6 +58,10 @@ class cacheman: public CachePlug {
 	public:
 		cacheman(BMessage *info=NULL);
 		~cacheman();
+		bool RequiresHeartbeat();
+		void Heartbeat();
+		int32 CountCacheItems(uint32 which=TYPE_ALL);
+	
 //		void MessageReceived(BMessage *msg);
 		uint32 PlugID(){return PlugIDdef;};
 		char *PlugName(){return PlugNamedef;};

@@ -29,6 +29,7 @@ Project Start Date: October 18, 2000
 #include "cacheman.h"
 #include "dfcacheobject.h"
 #include "commondefs.h"
+#include "cachesorts.h"
 #include "plugman.h"
 #include "ramcacheobject.h"
 #include <kernel/fs_index.h>
@@ -50,7 +51,16 @@ Project Start Date: October 18, 2000
 //this is to define an object that will be removed from memory almost immediately.
 #define TemporaryObjectID -2
 
-
+#define ONE_SECOND 1
+#define ONE_MINUTE (ONE_SECOND*60)
+#define ONE_BYTE 1
+#define ONE_KILOBYTE (1024*ONE_BYTE)
+#define ONE_MEGABYTE (1024*ONE_KILOBYTE)
+#define MAX_RAM_CACHE_UNUSED_TIME (ONE_MINUTE*30.0)
+#define MAX_DISK_CACHE_UNUSED_TIME (ONE_MINUTE*10.0)
+#define MAX_DISK_FILE_CACHE_UNUSED_TIME (ONE_MINUTE*2.0)
+#define MAX_RAM_CACHE_SIZE (15*ONE_MEGABYTE)
+#define MAX_DISK_CACHE_SIZE (50*ONE_MEGABYTE)
 cacheman::cacheman(BMessage *info)
 	:CachePlug(info) {
 	lock=new BLocker(true);
@@ -145,6 +155,188 @@ uint32 cacheman::BroadcastTarget(){
 	printf("Cache\n");
 	return MS_TARGET_CACHE_SYSTEM;
 }
+bool cacheman::RequiresHeartbeat()
+{
+	return true;
+}
+void cacheman::Heartbeat()
+{
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		CacheObject *cur=objlist,*prev=NULL;
+		time_t current_time=real_time_clock();
+		if (current_time%10==0)
+			printf("Total items in cache memory:\t%ld\n\tDisk:\t%ld\n\tRAM:\t%ld\n\tFile:\t%ld\n",CountCacheItems(),CountCacheItems(TYPE_DISK),CountCacheItems(TYPE_RAM),CountCacheItems(TYPE_DISK_FILE));
+		double time_diff;
+		/*
+			Cache Usage Aging.
+		
+			This function attempts to minimize memory usage by removing cache items from memory
+			after a specified length of time. In the case of items cached to disk, or disk files
+			loaded into the cache system, only the in memory reference to the item is removed after
+			it hasn't be utilized for the specified period of time. In the case of items cached
+			to RAM, the memory reference and the data itself are removed from RAM; if the data is
+			needed again after removal, it will need to be downloaded again! Optionally, this data
+			may be saved to disk in a temporary file, and tracked with a smaller in memory structure.
+			This latter option may be implemented later if it is determined that it is the better
+			solution.
+		*/
+		while (cur!=NULL) {
+			time_diff=difftime(current_time,cur->LastAccessTime());
+			switch(cur->Type()) {
+				case TYPE_RAM: {
+					if (time_diff>=(MAX_RAM_CACHE_UNUSED_TIME)) {
+						if (prev==NULL) {
+							objlist=cur->Next();
+							cur->Remove(cur);
+							delete cur;
+							cur=objlist;
+						} else {
+							cur->Remove(cur);
+							delete cur;
+							cur=prev->Next();
+						}
+						continue;
+					}// else
+					//	printf("Item has %2.2f seconds remaining in memory.\n",MAX_RAM_CACHE_UNUSED_TIME-time_diff);
+				}break;
+				case TYPE_DISK: {
+					if (time_diff>=(MAX_DISK_CACHE_UNUSED_TIME)) {
+						if (prev==NULL) {
+							objlist=cur->Next();
+							cur->Remove(cur);
+							delete cur;
+							cur=objlist;
+						} else {
+							cur->Remove(cur);
+							delete cur;
+							cur=prev->Next();
+						}
+						continue;
+					}// else
+					//	printf("Item has %2.2f seconds remaining in memory.\n",MAX_DISK_CACHE_UNUSED_TIME-time_diff);
+				}break;
+				case TYPE_DISK_FILE: {
+					if (time_diff>=(MAX_DISK_FILE_CACHE_UNUSED_TIME)) {
+						if (prev==NULL) {
+							objlist=cur->Next();
+							cur->Remove(cur);
+							delete cur;
+							cur=objlist;
+						} else {
+							cur->Remove(cur);
+							delete cur;
+							cur=prev->Next();
+						}
+						continue;
+					} //else
+					//	printf("Item has %2.2f seconds remaining in memory.\n",MAX_DISK_FILE_CACHE_UNUSED_TIME-time_diff);
+				}break;
+			}
+			prev=cur;
+			cur=cur->Next();
+		}
+		/*
+			Cache Capacity Cull
+		
+			This code should remove files from the cache based on the set cache limits and current
+			usage. If the RAM or Disk cache is over its specified limit, then trim the files
+			first by age, then by capacity: older files should be removed first, then large newer
+			files. This will remove items from disk and/or RAM.
+		*/
+		ssize_t ram_size=GetCacheSize(TYPE_RAM), disk_size=GetCacheSize(TYPE_DISK);
+		CacheObject **objects=NULL;
+		cur=objlist;
+		int32 items=0;
+		
+		if (ram_size>=MAX_RAM_CACHE_SIZE) {
+			items=CountCacheItems(TYPE_RAM);
+			
+			if (items>1) {//if a single file is taking up the entire limit, then leave it.
+				objects=new CacheObject*[items];//create an array of the CacheObject pointers.
+				int32 count=0;
+				while (count<items) {
+					if (cur->Type()==TYPE_RAM)
+						objects[count++]=cur;//populate the array with pointers to RAMCacheObjects
+					cur=cur->Next();
+				}
+				qsort(objects,items,sizeof(CacheObject*),sort_by_size);
+				
+				delete []objects;
+				
+			}
+			
+		}
+		if (disk_size>=MAX_DISK_CACHE_SIZE) {
+//			printf("counting disk cache items\n");
+		
+			items=CountCacheItems(TYPE_DISK);
+			
+			if (items>1) {//if a single file is taking up the entire limit, then leave it.
+//				printf("creating cache array\n");
+				
+				objects=new CacheObject*[items];//create an array of the CacheObject pointers.
+				int32 count=0;
+//				printf("populating cache array\n");
+				
+				while (count<items) {
+					if (cur->Type()==TYPE_DISK)
+						objects[count++]=cur;//populate the array with pointers to RAMCacheObjects
+					cur=cur->Next();
+				}
+//				for (int32 i=0; i<items; i++)
+//					printf("\t%ld\t%s\n",i,objects[i]->URL());
+				
+//				printf("sorting array\n");
+				
+				qsort(objects,items,sizeof(CacheObject*),sort_by_size);
+//				for (int32 i=0; i<items; i++)
+//					printf("\t%ld\t%s\n",i,objects[i]->URL());
+
+//				printf("clearing array\n");
+				
+				delete []objects;
+				
+			}
+		}
+		
+	}
+	
+}
+int32 cacheman::CountCacheItems(uint32 which) 
+{
+	int32 count=0;
+	
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		CacheObject *cur=objlist;
+		while (cur!=NULL) {
+			switch(which) {
+				case TYPE_RAM:
+					if (cur->Type()==TYPE_RAM)
+						count++;
+					break;
+				case TYPE_DISK:
+					if (cur->Type()==TYPE_DISK)
+						count++;
+					break;
+				case TYPE_DISK_FILE:
+					if (cur->Type()==TYPE_DISK_FILE)
+						count++;
+					break;
+				
+				default:
+					count++;
+				
+			}
+			
+			cur=cur->Next();
+		}
+			
+	}
+	return count;
+}
+
 status_t cacheman::BroadcastReply(BMessage *msg) 
 {
 }

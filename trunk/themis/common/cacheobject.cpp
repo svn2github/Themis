@@ -28,9 +28,12 @@ Project Start Date: October 18, 2000
 */
 #include "cacheobject.h"
 #include <string.h>
+#include <Autolock.h>
 CacheObject::CacheObject(int32 token,const char *URL) {
-	lock=new BLocker(true);
+//	lock=new BLocker(true);
 	id=token;
+	creation_time=last_access_time=real_time_clock();
+	
 	if (URL!=NULL) {
 	userlist=NULL;
 	writelockowner=NULL;
@@ -57,92 +60,142 @@ CacheObject::~CacheObject() {
 			userlist=cur;
 		}
 	}
+	creation_time=last_access_time=0;
 	next=prev=NULL;
-	delete lock;
-	lock=NULL;
+//	delete lock;
+//	lock=NULL;
 }
 bool CacheObject::IsUsedBy(uint32 usertoken) {
+	BAutolock alock(lock);
 	bool found=false;
-	CacheUser *cur=userlist;
-	while (cur!=NULL) {
-		if (cur->Token()==usertoken) {
-			found=true;
-			break;
-		}
-		cur=cur->Next();
-	}
-	return found;
-}
-void CacheObject::RemoveUser(uint32 usertoken) {
-	CacheUser *cur=userlist;
-	while (cur!=NULL) {
-		if (cur->Token()==usertoken) {
-			if (cur->Previous()!=NULL) {
-				cur->Previous()->SetNext(cur->Next());
-				if (writelockowner==cur) {
-					writelockowner=NULL;
-				}
-				
-				delete cur;
-			} else {
-				userlist=cur->Next();
-				if (userlist!=NULL)
-					userlist->SetPrevious(NULL);
-				if (writelockowner==cur) {
-					writelockowner=NULL;
-				}
-				delete cur;
-			}
-			break;
-		}
-		cur=cur->Next();
-	}
-}
-void CacheObject::AddUser(uint32 usertoken) {
-	if (userlist==NULL) {
-		userlist=new CacheUser(usertoken);
-	} else {
-		if (!IsUsedBy(usertoken))
-			userlist->SetNext((new CacheUser(usertoken)));
-	}
-}
-void CacheObject::AddUser(CacheUser *user) 
-{
-	if (userlist==NULL) {
-		userlist=new CacheUser(user);
-	} else {
-		if (!IsUsedBy(user->Token()))
-			userlist->SetNext((new CacheUser(user)));
-	}
-	
-	
-}
-
-bool CacheObject::AcquireWriteLock(uint32 usertoken) {
-	bool successful=false;
-	if (writelockowner==NULL) {
+	if (alock.IsLocked()) {
 		CacheUser *cur=userlist;
 		while (cur!=NULL) {
 			if (cur->Token()==usertoken) {
-				successful=true;
-				writelockowner=cur;
+				found=true;
 				break;
 			}
 			cur=cur->Next();
 		}
-	} else {
-		if (writelockowner->Token()==usertoken)
-			successful=true;
+	}
+	
+	return found;
+}
+void CacheObject::RemoveUser(uint32 usertoken) {
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		
+		CacheUser *cur=userlist;
+		while (cur!=NULL) {
+			if (cur->Token()==usertoken) {
+				if (cur->Previous()!=NULL) {
+					cur->Previous()->SetNext(cur->Next());
+					UpdateAccessTime();
+					
+					if (writelockowner==cur) {
+						writelockowner=NULL;
+					}
+					
+					delete cur;
+				} else {
+					UpdateAccessTime();
+					
+					userlist=cur->Next();
+					if (userlist!=NULL)
+						userlist->SetPrevious(NULL);
+					if (writelockowner==cur) {
+						writelockowner=NULL;
+					}
+					delete cur;
+				}
+				break;
+			}
+			cur=cur->Next();
+		}
+	}
+	
+}
+void CacheObject::AddUser(uint32 usertoken) {
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		if (userlist==NULL) {
+			userlist=new CacheUser(usertoken);
+			UpdateAccessTime();
+			
+		} else {
+			if (!IsUsedBy(usertoken)) {
+				
+				userlist->SetNext((new CacheUser(usertoken)));
+				UpdateAccessTime();
+				
+			}
+			
+		}
+	}
+	
+}
+void CacheObject::AddUser(CacheUser *user) 
+{
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		if (userlist==NULL) {
+			userlist=new CacheUser(user);
+			UpdateAccessTime();
+			
+		} else {
+			if (!IsUsedBy(user->Token())) {
+				
+				userlist->SetNext((new CacheUser(user)));
+				UpdateAccessTime();
+				
+			}
+			
+		}
+	
+
+	}
+		
+}
+
+bool CacheObject::AcquireWriteLock(uint32 usertoken) {
+	bool successful=false;
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		if (writelockowner==NULL) {
+			CacheUser *cur=userlist;
+			while (cur!=NULL) {
+				if (cur->Token()==usertoken) {
+					successful=true;
+					writelockowner=cur;
+					UpdateAccessTime();
+					
+					break;
+				}
+				cur=cur->Next();
+			}
+		} else {
+			if (writelockowner->Token()==usertoken) {
+				
+				successful=true;
+				UpdateAccessTime();
+				
+			}
+			
+		}
 	}
 	
 	return successful;	
 }
 void CacheObject::ReleaseWriteLock(uint32 usertoken) {
-	if (writelockowner!=NULL) {
-		if (writelockowner->Token()==usertoken) {
-			writelockowner=NULL;
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		if (writelockowner!=NULL) {
+			if (writelockowner->Token()==usertoken) {
+				writelockowner=NULL;
+			}
 		}
 	}
+	
 }
 ssize_t CacheObject::Read(uint32 usertoken, void *buffer, size_t size) {
 	ssize_t bytesread=0;
@@ -172,12 +225,15 @@ CacheObject *CacheObject::Next()
 }
 void CacheObject::SetNext(CacheObject *nobject) 
 {
-	if (next==NULL) {
-		next=nobject;
-		if (next!=NULL)
-			next->SetPrevious(this);
-	} else {
-		next->SetNext(nobject);
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		if (next==NULL) {
+			next=nobject;
+			if (next!=NULL)
+				next->SetPrevious(this);
+		} else {
+			next->SetNext(nobject);
+		}
 	}
 	
 	
@@ -203,33 +259,44 @@ int32 CacheObject::SetToken(int32 objecttoken)
 int32 CacheObject::CountUsers() 
 {
 	int32 count=0;
-	CacheUser *cur=userlist;
-	while (cur!=NULL) {
-		count++;
-		cur=cur->Next();
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		CacheUser *cur=userlist;
+		while (cur!=NULL) {
+			count++;
+			cur=cur->Next();
+		}
 	}
+	
 	return count;
 }
 CacheUser *CacheObject::GetUser(int32 which) 
 {
-	if (which>=CountUsers())
-		return NULL;
-	CacheUser *user=userlist;
-	for (int32 i=0; i<which; i++)
-		user=user->Next();
-	return user;
-	
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		if (which>=CountUsers())
+			return NULL;
+		CacheUser *user=userlist;
+		for (int32 i=0; i<which; i++)
+			user=user->Next();
+		return user;
+	}
+	return NULL;
 }
 
 CacheUser *CacheObject::FindUser(uint32 usertoken) 
 {
 	CacheUser *cur=userlist;
-	while (cur!=NULL) {
-		if (cur->Token()==usertoken) {
-			break;
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		while (cur!=NULL) {
+			if (cur->Token()==usertoken) {
+				break;
+			}
+			cur=cur->Next();
 		}
-		cur=cur->Next();
 	}
+	
 	return cur;
 }
 const char *CacheObject::URL() 
@@ -238,31 +305,46 @@ const char *CacheObject::URL()
 }
 void CacheObject::SetURL(const char *URL) 
 {
-	if (URL==NULL) {
-		if (url!=NULL) {
-			memset(url,0,strlen(url)+1);
-			delete url;
-			url=NULL;
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		if (URL==NULL) {
+			if (url!=NULL) {
+				memset(url,0,strlen(url)+1);
+				delete url;
+				url=NULL;
+			}
+		}else {
+			if (url!=NULL) {
+				memset(url,0,strlen(url)+1);
+				delete url;
+				url=NULL;
+			}
+			url=new char[strlen(URL)+1];
+			memset(url,0,strlen(URL)+1);
+			strcpy(url,URL);
 		}
-	}else {
-		if (url!=NULL) {
-			memset(url,0,strlen(url)+1);
-			delete url;
-			url=NULL;
-		}
-		url=new char[strlen(URL)+1];
-		memset(url,0,strlen(URL)+1);
-		strcpy(url,URL);
 	}
+	
 }
 void CacheObject::Remove(CacheObject *target) 
 {
-	if (next==NULL)
-		return;
-	if (next==target) {
-		next=next->Next();
-	} else 
-		next->Remove(target);
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		UpdateAccessTime();
+		if (next==NULL)
+			return;
+		if (target==this) {
+			if (next!=NULL)
+				next->SetPrevious(NULL);
+			return;
+			
+		}
+		
+		if (next==target) {
+			next=next->Next();
+		} else 
+			next->Remove(target);
+	}
 	
 }
 bool CacheObject::HasWriteLock(uint32 usertoken) 
@@ -273,5 +355,21 @@ bool CacheObject::HasWriteLock(uint32 usertoken)
 	}
 	return false;
 }
+void CacheObject::UpdateAccessTime()
+{
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		last_access_time=real_time_clock();
+	}	
+}
 
+time_t CacheObject::LastAccessTime()
+{
+	return last_access_time;
+}
+time_t CacheObject::CreationTime()
+{
+	return creation_time;
+	
+}
 

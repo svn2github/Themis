@@ -165,6 +165,7 @@ ssize_t DiskCacheObject::Read(uint32 usertoken, void *buffer, size_t size)
 				OpenFile();
 			}
 			if (file!=NULL) {
+				UpdateAccessTime();
 				file->Lock();
 				file->Seek(user->ReadPosition(),SEEK_SET);
 				dsize=file->Read(buffer,size);
@@ -193,6 +194,7 @@ ssize_t DiskCacheObject::Write(uint32 usertoken, void *buffer, size_t size)
 				if (file==NULL) {
 					OpenFile();
 				}
+				UpdateAccessTime();
 				file->Lock();
 				bytes=file->WriteAt(writelockowner->WritePosition(),buffer,size);
 				writelockowner->SetWritePosition(writelockowner->WritePosition()+bytes);
@@ -212,6 +214,7 @@ ssize_t DiskCacheObject::SetLength(uint32 usertoken, int32 objecttoken, size_t l
 			AcquireWriteLock(usertoken);
 		if (writelockowner!=NULL) {
 			if (writelockowner->Token()==usertoken) {
+				UpdateAccessTime();
 				file->Lock();
 				file->Sync();
 				
@@ -235,6 +238,7 @@ BMessage *DiskCacheObject::GetInfo()
 	BMessage *attributes=new BMessage;
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
+		UpdateAccessTime();
 		attributes->AddInt64("file_size",Size());
 		struct attr_info ai;
 		char attname[B_ATTR_NAME_LENGTH+1];
@@ -314,6 +318,7 @@ ssize_t DiskCacheObject::WriteAttr(uint32 usertoken, const char *attrname, type_
 	if (alock.IsLocked()) {
 		if (writelockowner!=NULL) {
 			if (writelockowner->Token()==usertoken){
+				UpdateAccessTime();
 				if (file==NULL)
 					OpenFile();
 				BNode node(&ref);
@@ -328,6 +333,7 @@ ssize_t DiskCacheObject::WriteAttr(uint32 usertoken, const char *attrname, type_
 
 ssize_t DiskCacheObject::ReadAttr(uint32 usertoken,  const char *attrname, type_code type, void *data, size_t size)
 {
+	UpdateAccessTime();
 	ssize_t bytes=0;
 	BNode node(&ref);
 	node.Lock();
@@ -340,6 +346,7 @@ status_t DiskCacheObject::RemoveAttr(uint32 usertoken, const char *attrname)
 	status_t status=B_ERROR;
 	if (writelockowner!=NULL) {
 		if (writelockowner->Token()==usertoken){
+			UpdateAccessTime();
 			BNode node(&ref);
 			node.Lock();
 			status=node.RemoveAttr(attrname);
@@ -355,6 +362,7 @@ off_t DiskCacheObject::Size()
 	off_t size=0;
 //	printf("DiskCacheObject::Size. File pointer %p\n",file);
 	if (file==NULL) {
+		UpdateAccessTime();
 //		printf("Opening file\n");
 		OpenFile();
 //		printf("Getting size\n");

@@ -75,7 +75,7 @@ ssize_t DFCacheObject::Read(uint32 usertoken, void *buffer, size_t size) {
 			}
 			if (file!=NULL) {
 			printf("file init check: %ld\n",file->InitCheck());
-				
+				UpdateAccessTime();
 				file->Lock();
 				file->Seek(user->ReadPosition(),SEEK_SET);
 				dsize=file->Read((unsigned char*)buffer,size);
@@ -102,6 +102,7 @@ ssize_t DFCacheObject::Write(uint32 usertoken, void *buffer, size_t size) {
 			AcquireWriteLock(usertoken);
 		if (writelockowner!=NULL) {
 			if (writelockowner->Token()==usertoken) {
+				UpdateAccessTime();
 				if (file==NULL) {
 					file=new BFile(url,B_READ_WRITE|B_CREATE_FILE);
 				}
@@ -143,6 +144,7 @@ BMessage *DFCacheObject::GetInfo()
 	BMessage *attributes=new BMessage;
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
+		UpdateAccessTime();
 		attributes->AddInt64("file_size",Size());
 		struct attr_info ai;
 		char attname[B_ATTR_NAME_LENGTH+1];
@@ -200,7 +202,9 @@ BMessage *DFCacheObject::GetInfo()
 }
 ssize_t DFCacheObject::WriteAttr(uint32 usertoken, const char *attrname, type_code type,void *data,size_t size)
 {
+	UpdateAccessTime();
 }
 ssize_t DFCacheObject::ReadAttr(uint32 usertoken,  const char *attrname, type_code type, void *data, size_t size)
 {
+	UpdateAccessTime();
 }
