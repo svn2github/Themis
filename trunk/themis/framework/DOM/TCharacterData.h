@@ -20,7 +20,9 @@ class TCharacterData	:	public TNode	{
 		// ---------------------------------------------------------------------------
 		
 	public:
-		TCharacterData( const unsigned short aNodeType, const TDOMString aData = "" );
+		TCharacterData( const unsigned short aNodeType,
+								 const TDocumentWeak aOwnerDocument,
+								 const TDOMString aData = "" );
 		~TCharacterData();
 		TDOMString getData() const;
 		void setData( const TDOMString aData );

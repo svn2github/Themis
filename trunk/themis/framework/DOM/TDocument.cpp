@@ -8,7 +8,7 @@
 #include "TAttr.h"
 #include "TComment.h"
 
-TDocument	::	TDocument()	:	TNode( DOCUMENT_NODE )	{
+TDocument	::	TDocument()	:	TNode( DOCUMENT_NODE, TDocumentWeak() )	{
 	
 }
 
@@ -18,7 +18,8 @@ TDocument	::	~TDocument()	{
 
 TElementShared TDocument	::	createElement( const TDOMString aTagName )	{
 	
-	TElementShared result( new TElement( aTagName ) );
+	TDocumentWeak thisDocument = shared_static_cast<TDocument>( make_shared( mThisPointer ) );
+	TElementShared result( new TElement( thisDocument, aTagName ) );
 	result->setSmartPointer( result );
 	
 	return result;
@@ -27,7 +28,8 @@ TElementShared TDocument	::	createElement( const TDOMString aTagName )	{
 
 TTextShared TDocument	::	createText( const TDOMString aData )	{
 	
-	TTextShared result( new TText( aData ) );
+	TDocumentWeak thisDocument = shared_static_cast<TDocument>( make_shared( mThisPointer ) );
+	TTextShared result( new TText( thisDocument, aData ) );
 	result->setSmartPointer( result );
 	
 	return result;
@@ -36,7 +38,8 @@ TTextShared TDocument	::	createText( const TDOMString aData )	{
 
 TCommentShared TDocument	::	createComment( const TDOMString aData )	{
 	
-	TCommentShared result( new TComment( aData ) );
+	TDocumentWeak thisDocument = shared_static_cast<TDocument>( make_shared( mThisPointer ) );
+	TCommentShared result( new TComment( thisDocument, aData ) );
 	result->setSmartPointer( result );
 	
 	return result;
@@ -45,7 +48,8 @@ TCommentShared TDocument	::	createComment( const TDOMString aData )	{
 
 TAttrShared TDocument	::	createAttribute( const TDOMString aName )	{
 	
-	TAttrShared result( new TAttr( aName ) );
+	TDocumentWeak thisDocument = shared_static_cast<TDocument>( make_shared( mThisPointer ) );
+	TAttrShared result( new TAttr( aName, thisDocument ) );
 	result->setSmartPointer( result );
 	
 	return result;

@@ -19,7 +19,7 @@ class TText	:	public TCharacterData	{
 		// bool mIsWhiteSpaceInElement;
 	
 	public:
-		TText( const TDOMString aText );
+		TText( const TDocumentWeak aOwnerDocument, const TDOMString aText );
 		~TText();
 		bool getIsWhiteSpaceInElement() const; // Still have to look at this. Is not implemented well
 		TDOMString getWholeText() const;

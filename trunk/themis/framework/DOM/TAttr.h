@@ -23,8 +23,9 @@ class TAttr		:	public TNode	{
 		TDOMString mDefaultValue;
 		
 	public:
-		TAttr( const TDOMString aName, const bool aSpecified = false,
-				  const TDOMString aValue = "", TElementWeak aOwnerElement = TElementWeak() );
+		TAttr( const TDOMString aName, const TDocumentWeak aOwnerDocument,
+				  const bool aSpecified = false, const TDOMString aValue = "",
+				  TElementWeak aOwnerElement = TElementWeak() );
 		~TAttr();
 		TDOMString getName() const;
 		bool getSpecified() const ;

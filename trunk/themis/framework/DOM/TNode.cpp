@@ -10,9 +10,13 @@
 #include "TNodeListContainer.h"
 #include "TDOMException.h"
 
-TNode	::	TNode( const unsigned short aNodeType, const TDOMString aNodeName, const TDOMString aNodeValue )	{
+TNode	::	TNode( const unsigned short aNodeType,
+						   const TDocumentWeak aOwnerDocument,
+						   const TDOMString aNodeName,
+						   const TDOMString aNodeValue )	{
 	
 	mNodeType = aNodeType;
+	mOwnerDocument = aOwnerDocument;
 
 	mParentNode.reset();
 	mThisPointer.reset();
@@ -191,6 +195,12 @@ TNodeWeak TNode	::	getPreviousSibling() const	{
 TNamedNodeMapShared TNode	::	getAttributes() const	{
 	
 	return mAttributes;
+	
+}
+
+TDocumentWeak TNode	::	getOwnerDocument() const	{
+	
+	return mOwnerDocument;
 	
 }
 
@@ -409,7 +419,7 @@ bool TNode	::	hasChildNodes() const	{
 TNodeShared TNode	::	cloneNode( bool aDeep ) const	{
 	// Still need to implement a deep clone
 	
-	TNodeShared clonedNode( new TNode( mNodeType ) );
+	TNodeShared clonedNode( new TNode( mNodeType, mOwnerDocument ) );
 	
 	return clonedNode;
 	

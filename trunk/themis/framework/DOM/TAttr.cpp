@@ -7,7 +7,12 @@
 #include "TAttr.h"
 #include "TElement.h"
 
-TAttr	::	TAttr( const TDOMString aName, const bool aSpecified, const TDOMString aValue, TElementWeak aOwnerElement )	:	TNode( ATTRIBUTE_NODE, aName, aValue )	{
+TAttr	::	TAttr( const TDOMString aName,
+					  const TDocumentWeak aOwnerDocument,
+					  const bool aSpecified,
+					  const TDOMString aValue,
+					  TElementWeak aOwnerElement )	:
+					  		TNode( ATTRIBUTE_NODE, aOwnerDocument, aName, aValue )	{
 
 	mName = aName;
 	if ( aOwnerElement.get() == NULL )	{

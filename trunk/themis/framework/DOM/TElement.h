@@ -17,7 +17,8 @@ class TElement	:	public TNode	{
 		TDOMString mTagName;
 		
 	public:
-		TElement( const TDOMString aTagName );
+		TElement( const TDocumentWeak aOwnerDocument,
+					   const TDOMString aTagName );
 		~TElement();
 		TDOMString getTagName() const;
 		

@@ -10,7 +10,9 @@
 #include "TNodeListContainer.h"
 #include "TNodeList.h"
 
-TElement	::	TElement( const TDOMString aTagName )	:	TNode( ELEMENT_NODE, aTagName )	{
+TElement	::	TElement( const TDocumentWeak aOwnerDocument,
+								   const TDOMString aTagName )	:
+										TNode( ELEMENT_NODE, aOwnerDocument, aTagName )	{
 	
 	mTagName = aTagName;
 	
@@ -44,7 +46,7 @@ void TElement	::	setAttribute( const TDOMString aName, const TDOMString aValue )
 	if ( !attribute.get() )	{
 		// No attribute with that name yet, so create one.
 		
-		attribute = TAttrShared( new TAttr( aName, true, aValue, shared_static_cast<TElement>( make_shared( mThisPointer ) ) ) );
+		attribute = TAttrShared( new TAttr( aName, getOwnerDocument(), true, aValue, shared_static_cast<TElement>( make_shared( mThisPointer ) ) ) );
 		attribute->setSmartPointer( attribute );
 		getAttributes().get()->setNamedItem( attribute );
 	}
@@ -80,7 +82,7 @@ TAttrShared TElement	::	removeAttributeNode( TAttrShared aOldAttr )	{
 	getAttributes().get()->removeNamedItem( aOldAttr->getNodeName() );
 	TDOMString defaultValue = aOldAttr->getDefaultValue();
 	if ( defaultValue != "" )	{
-		TAttrShared newAttribute = TAttrShared( new TAttr( aOldAttr->getName(), aOldAttr->getSpecified(), aOldAttr->getValue(), aOldAttr->getOwnerElement() ) );
+		TAttrShared newAttribute = TAttrShared( new TAttr( aOldAttr->getName(), aOldAttr->getOwnerDocument(), aOldAttr->getSpecified(), aOldAttr->getValue(), aOldAttr->getOwnerElement() ) );
 		newAttribute->setSmartPointer( newAttribute );
 		getAttributes().get()->setNamedItem( newAttribute );
 	}

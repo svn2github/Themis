@@ -14,7 +14,8 @@
 class TComment	:	public TCharacterData	{
 	
 	public:
-		TComment( const TDOMString aData )	:	TCharacterData( COMMENT_NODE, aData )	{};
+		TComment( const TDocumentWeak aOwnerDocument, const TDOMString aData )	:
+				TCharacterData( COMMENT_NODE, aOwnerDocument, aData )	{};
 		~TComment()	{};
 		
 };

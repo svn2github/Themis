@@ -14,10 +14,6 @@
 
 #include "DOMSupport.h"
 
-class TNodeList;
-class TNamedNodeMap;
-class TNodeListContainer;
-
 using namespace std;
 using namespace boost;
 
@@ -39,7 +35,7 @@ class TNode	{
 		// ---------------------------------------------------------------------------------
 
 		TNamedNodeMapShared mAttributes;
-		// TDocument ownerDocument;		Not yet implemented
+		TDocumentWeak mOwnerDocument;
 		// TDOMString namespaceURI;			Not yet implemented
 		// TDOMString prefix;						Not yet implemented
 		// TDOMString localName;				Not yet implemented
@@ -66,7 +62,10 @@ class TNode	{
 		vector<TNodeShared> collectNodes( TDOMString aName, unsigned short aNodeType );
 		
 	public:
-		TNode( const unsigned short aNodeType, const TDOMString aNodeName = "", const TDOMString aNodeValue = "" );
+		TNode( const unsigned short aNodeType,
+				   const TDocumentWeak aOwnerDocument,
+				   const TDOMString aNodeName = "",
+				   const TDOMString aNodeValue = "" );
 		~TNode();
 		unsigned short getNodeType() const;
 		const TDOMString getNodeName() const;
@@ -79,6 +78,7 @@ class TNode	{
 		TNodeWeak getNextSibling() const;
 		TNodeWeak getPreviousSibling() const;
 		TNamedNodeMapShared getAttributes() const;
+		TDocumentWeak getOwnerDocument() const;
 		TNodeWeak insertBefore( TNodeShared aNewChild, TNodeShared aRefChild );	// Not yet fully implemented
 		TNodeWeak replaceChild( TNodeShared aNewChild, TNodeShared aOldChild);	// Not yet fully implemented
 		TNodeWeak removeChild( TNodeShared aOldChild );	// Not yet fully implemented

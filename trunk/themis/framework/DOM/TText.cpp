@@ -7,7 +7,9 @@
 #include "TText.h"
 #include "TDOMException.h"
 
-TText	::	TText( const TDOMString aText )	:	TCharacterData( TEXT_NODE )	{
+TText	::	TText( const TDocumentWeak aOwnerDocument,
+						  const TDOMString aText )	:
+						  		TCharacterData( TEXT_NODE, aOwnerDocument )	{
 	
 	setData( aText );
 	
@@ -70,7 +72,7 @@ TTextShared TText	::	splitText( const unsigned long aOffset )	{
 	}
 	
 	 TDOMString resultData = substringData( aOffset, getLength() - aOffset );
-	 TTextShared result = TTextShared( new TText( resultData ) );
+	 TTextShared result = TTextShared( new TText( getOwnerDocument(), resultData ) );
 	 result->setSmartPointer( result );
 	 deleteData( aOffset, getLength() - aOffset );
 	 

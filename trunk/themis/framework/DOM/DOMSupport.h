@@ -72,6 +72,18 @@ enum TreePosition	{
 // Is not UTF-16, so must be changed!
 typedef string TDOMString;
 
+// TDOMObject is equal to void
+// As far as I know, there's no Object class in C++
+typedef boost::shared_ptr<void> TDOMObject;
+
+// TDOMUserData is equal to void
+// Same as for TDOMObject
+typedef boost::shared_ptr<void> TDOMUserData;
+
+// TDOMTimeStamp is equal to unsigned long long
+// Should be able to store a number of milliseconds
+typedef unsigned long long TDOMTimeStamp;
+
 // Internally used codes
 enum NodeChange	{
 	NODE_ADDED = 1,
