@@ -1420,12 +1420,12 @@ until/unless data is written to the object; including by writing attributes out.
 			char *slash=strchr(result,'/');
 			if (strncasecmp("text",result,slash-result)==0) {
 				if (strncasecmp("html",slash+1,strlen(result)-((slash+1)-result))==0) {
-					target=HTML_PARSER;
+					target=MS_TARGET_HTML_PARSER;
 				} else
-					target=TARGET_HANDLER|CONTENT_TEXT|TARGET_PARSER;
+					target=MS_TARGET_HANDLER|MS_TARGET_CONTENT_TEXT|MS_TARGET_PARSER;
 			}
 			if (strncasecmp("image",result,slash-result)==0) {
-				target=IMAGE_HANDLER;
+				target=MS_TARGET_IMAGE_HANDLER;
 			}
 			if (strncasecmp("audio",result,slash-result)==0) {
 				target=AUDIO_HANDLER;
@@ -1438,7 +1438,7 @@ until/unless data is written to the object; including by writing attributes out.
 			}
 			slash=NULL;
 		} else 
-			target=TARGET_PARSER|TARGET_HANDLER;
+			target=MS_TARGET_PARSER|MS_TARGET_HANDLER;
 		mime.UnlockBuffer(-1);
 		
 		
@@ -1450,10 +1450,10 @@ until/unless data is written to the object; including by writing attributes out.
 		msg->AddInt64("bytes-received",request->bytesreceived);
 		BMessage container;
 		container.AddMessage("message",msg);
+		Proto->Broadcast(target,msg);
 		delete msg;
 		printf("Sending broadcast to handlers and parsers.\n");
 		
-		Proto->PlugMan->Broadcast(Proto->PlugID(),target,&container);
 	}
 	
 }
@@ -1471,6 +1471,11 @@ void httplayer::ProcessChunkedData(http_request *request,void *buffer, int size)
 //		printf("chr: %ld\tchunk: %ld\n",request->chunkbytesremaining,request->chunk);
 		if ((request->chunkbytesremaining==0) && (request->chunk==0)){
 			char *eol=(char*)memchr(((char*)buffer),'\r',20);
+			if (eol==NULL) {
+				eol=(char*)memchr(((char*)buffer),'\n',20);
+				if (eol==NULL)
+					eol=((char*)buffer)+5;//guess where the end of the line may be...
+			}
 			char temp[20];
 			memset(temp,0,20);
 			int len=eol-(char*)buffer;
@@ -1507,8 +1512,18 @@ void httplayer::ProcessChunkedData(http_request *request,void *buffer, int size)
 //			printf("========Remaining========\n%s\n++++++++++++++\n",rr);
 			delete rr;
 			eol=(char*)memchr(rem,'\r',10);//strstr(rem,"\r\n");
+			if (eol==NULL) {
+				eol=(char*)memchr(rem,'\n',10);
+				if (eol==NULL)
+					eol=rem+10;//guessing...
+			}
 			start=eol+2;
 			eol=(char*)memchr(start,'\r',10);
+			if (eol==NULL) {
+				eol=(char*)memchr(rem,'\n',10);
+				if (eol==NULL)
+					eol=rem+10;//guessing...
+			}
 			bool good=false;
 			//eol=strstr(start,"\r\n");
 			if ((eol!=NULL) && (*(eol+1)=='\n'))
@@ -1579,6 +1594,8 @@ void httplayer::ProcessData(http_request *request, void *buffer, int size) {
 //	lock->Lock();
 //	
 //}
+	int64 current_size=request->bytesreceived;
+		
 	if (request->chunked) {
 		ProcessChunkedData(request,buffer,size);
 	} else {
@@ -1619,12 +1636,12 @@ void httplayer::ProcessData(http_request *request, void *buffer, int size) {
 		char *slash=strchr(result,'/');
 		if (strncasecmp("text",result,slash-result)==0) {
 			if (strncasecmp("html",slash+1,strlen(result)-((slash+1)-result))==0) {
-				target=HTML_PARSER;
+				target=MS_TARGET_HTML_PARSER;
 			} else
-				target=TARGET_HANDLER|CONTENT_TEXT|TARGET_PARSER;
+				target=MS_TARGET_HANDLER|MS_TARGET_CONTENT_TEXT|MS_TARGET_PARSER;
 		}
 		if (strncasecmp("image",result,slash-result)==0) {
-			target=IMAGE_HANDLER;
+			target=MS_TARGET_IMAGE_HANDLER;
 		}
 		if (strncasecmp("audio",result,slash-result)==0) {
 			target=AUDIO_HANDLER;
@@ -1633,23 +1650,25 @@ void httplayer::ProcessData(http_request *request, void *buffer, int size) {
 			target=VIDEO_HANDLER;
 		}
 		if (strncasecmp("application",result,slash-result)==0) {
-			target=TARGET_PARSER|TARGET_HANDLER;
+			target=MS_TARGET_PARSER|MS_TARGET_HANDLER;
 		}
 		slash=NULL;
 	} else 
-		target=TARGET_PARSER|TARGET_HANDLER;
+		target=MS_TARGET_PARSER|MS_TARGET_HANDLER;
 	
 	
 	result=NULL;
 	if (request->contentlen!=0)
 		msg->AddInt64("content-length",request->contentlen);
 	msg->AddInt64("bytes-received",request->bytesreceived);
+	msg->AddInt64("size-delta",request->bytesreceived-current_size);
+		
 	BMessage container;
 	container.AddMessage("message",msg);
+	Proto->Broadcast(target,msg);
 	delete msg;
 	printf("Sending broadcast to handlers and parsers. target: %ld\n",target);
 	
-	Proto->PlugMan->Broadcast(Proto->PlugID(),target,&container);
 	}
 //	if (ilocked)
 //		lock->Unlock();
@@ -1781,8 +1800,8 @@ void httplayer::CloseRequest(http_request *request,bool quick) {
 	printf("http_request::CloseRequest()\n");
 	container.PrintToStream();
 	msg->PrintToStream();
+	Proto->Broadcast(MS_TARGET_ALL,msg);
 	delete msg;
-	Proto->PlugMan->Broadcast(Proto->PlugID(),ALL_TARGETS,&container);
 //	release_sem(connhandle_sem);
 //	Unlock();
 //	}
@@ -1801,6 +1820,8 @@ printf("http:SendRequest trying to lock TCP\n");
 				time_t start=time(NULL);
 				while (request->conn->result==-2) {
 					if ((time(NULL)-start)>=60)
+						break;
+					if (quit)
 						break;
 					snooze(5000);
 				}
@@ -1917,6 +1938,8 @@ bool httplayer::ResubmitRequest(http_request *request) {
 	if (request->done==0)
 		CloseRequest(request,true);
 	BMessage *info=new BMessage;
+	info->AddInt32("command",COMMAND_RETRIEVE);
+	
 	info->AddString("target_url",request->url);
 	if (request->referrer!=NULL) {
 		info->AddString("referrer",request->referrer);
@@ -1926,7 +1949,10 @@ bool httplayer::ResubmitRequest(http_request *request) {
 	}
 	request->awin=NULL;
 	KillRequest(request);
-	AddRequest(info);
+	Proto->Broadcast(MS_TARGET_SELF,info);
+	delete info;
+	
+//	AddRequest(info);
 }
 /*
 int32 httplayer::Lock(int32 timeout) 
@@ -2155,10 +2181,13 @@ BMessage *httplayer::CheckCacheStatus(http_request *request) {
 			msg->AddInt32("cache_user_token",CacheToken);
 		container->AddMessage("message",msg);
 		
-		delete msg;
 		bool nocache=false;
-		if (PluginManager->Broadcast(Proto->PlugID(),TARGET_CACHE,container)!=B_OK)
+		printf("Trying to broadcast\n");
+		Proto->Broadcast(MS_TARGET_CACHE_SYSTEM,msg);
+		printf("one\n");
+		if (Proto->broadcast_status_code!=B_OK)
 			nocache=true;
+		delete msg;
 		delete container;
 /*
 	Yes, it looks weird that we're acquiring the cache_sem again, but this makes sure
@@ -2167,8 +2196,9 @@ BMessage *httplayer::CheckCacheStatus(http_request *request) {
 */
 		if (nocache)
 			release_sem(cache_sem);
+		printf("HTTP MIGHT HANG HERE\n");
 		acquire_sem(cache_sem);
-		
+		printf("DONE AT POSSIBLE CHOKE POINT\n");
 		reply=Proto->cache_reply;
 		Proto->cache_reply=NULL;
 		if (reply==NULL) {
@@ -2199,7 +2229,8 @@ void httplayer::Start() {
 		thread=spawn_thread(StartLayer,"http_layer_manager",B_LOW_PRIORITY,this);
 		resume_thread(thread);
 		printf("http layer manager thread: %ld\n",thread);
-		
+//		helperthread=spawn_thread(StartHelper,"http_helper_thread",B_LOW_PRIORITY,this);
+//		resume_thread(helperthread);
 	}
 	else
 	{
@@ -2214,7 +2245,18 @@ int32 httplayer::StartLayer(void *arg) {
 	httplayer *obj=(httplayer*)arg;
 	return obj->LayerManager();
 }
-
+/*
+int32 httplayer::StartHelper(void *arg) {
+	httplayer *obj=(httplayer*)arg;
+	return obj->Helper(obj);
+}
+int32 httplayer::Helper(void *arg) {
+	httplayer *http=(httplayer*)arg;
+	while(http->quit!=1) {
+	}
+	return 0;
+}
+*/
 status_t httplayer::Quit() {
 	printf("http layer stopping\n");
 	
@@ -2225,6 +2267,7 @@ status_t httplayer::Quit() {
 	release_sem(http_mgr_sem);
 	printf("Waiting for thread death\n");
 	wait_for_thread(thread,&stat);
+	wait_for_thread(helperthread,&stat);
 	printf("quitting\n");
 	return stat;
 }

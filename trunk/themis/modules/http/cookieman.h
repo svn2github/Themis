@@ -14,6 +14,7 @@
 #include <Entry.h>
 #include <Locker.h>
 #include <Message.h>
+#include "msgsystem.h"
 
 //Set-Cookie: VisitorID=4; expires=Wed, 18-Feb-2004 04:15:52 GMT; path=/
 //Set-Cookie: NewVisitor=Yes; expires=Wed, 19-Feb-2003 06:15:52 GMT; path=/    
@@ -123,7 +124,7 @@ struct cookie_st {
 This class is the heart of the cookie management subsystem.
 */
 class http_protocol;
-class CookieManager {
+class CookieManager:public MessageSystem {
 	private:
 		/*!
 		\brief This function breaks a cookie header up into it's name value pairs.
@@ -205,7 +206,8 @@ class CookieManager {
 		\brief Saves all unexpired, non-discardable cookies to disk.
 		*/
 		void SaveAllCookies();
-		
+		status_t ReceiveBroadcast(BMessage *msg);
+		uint32 BroadcastTarget();
 };
 
 #endif

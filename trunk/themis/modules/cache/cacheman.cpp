@@ -140,6 +140,13 @@ void cacheman::Unregister(uint32 usertoken)
 	ClearAllRequests(usertoken);
 	CachePlug::Unregister(usertoken);
 }
+uint32 cacheman::BroadcastTarget(){
+	printf("Cache\n");
+	return MS_TARGET_CACHE_SYSTEM;
+}
+status_t cacheman::BroadcastReply(BMessage *msg) 
+{
+}
 
 CacheObject *cacheman::FindObject(int32 objecttoken) 
 {
@@ -329,6 +336,7 @@ void cacheman::Quit(bool fast)
 
 status_t cacheman::ReceiveBroadcast(BMessage *msg) 
 {
+//	printf("Cache ReceiveBroadcast\n");
 	uint32 command=0;
 	msg->FindInt32("command",(int32*)&command);
 	switch(command) {
@@ -365,12 +373,13 @@ status_t cacheman::ReceiveBroadcast(BMessage *msg)
 			switch(msg->what) {
 
 				case FindCachedObject: {
+					printf("two\n");
 					PlugClass *pobj=NULL;
 					uint32 replyid=0;
 					uint32 usertoken=0;
 					BString url;
-					if (msg->HasPointer("ReplyToPointer"))
-						msg->FindPointer("ReplyToPointer",(void**)&pobj);
+					if (msg->HasPointer("broadcaster_pointer"))
+						msg->FindPointer("broadcaster_pointer",(void**)&pobj);
 					else
 						replyid=msg->FindInt32("ReplyTo");
 					if ((pobj==NULL) && (replyid!=0))
@@ -897,6 +906,14 @@ status_t cacheman::CheckMIME()
    found=false;
   
   //Make Themis:clearonnew a visible attribute; done
+	type_code code=B_STRING_TYPE;
+	int32 count=0;
+	attrinf.GetInfo("type",&code,&count);
+	if (code==B_STRING_TYPE) {
+		for (int i=1; i<count;i++)
+			attrinf.RemoveData("type",1);
+	}
+//  attrinf.PrintToStream();
   mime.SetAttrInfo(&attrinf);
   return B_OK;
  }

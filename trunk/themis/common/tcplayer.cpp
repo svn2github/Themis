@@ -262,7 +262,7 @@ int32 tcplayer::Manager() {
 			}
 			printf("Done with queued connections.\n");
 		}
-//		snooze(15000);
+		snooze(15000);
 	}
 	exit_thread(B_OK);
 	return 0;
@@ -934,11 +934,27 @@ int32 tcplayer::Send(connection **conn,unsigned char *data, int32 size) {
 	}
 #ifdef USEOPENSSL
 	if ((*conn)->usessl) {
+		try {
+			
 		sent=SSL_write((*conn)->ssl,(const char*)data,size);
+		}
+		catch(...) {
+			printf("hmmm... it seems that the send (SSL_WRITE) triggered an exception; perhaps the connection closed before we could send...\n");
+		
+		}
+		
 	}
 	else {
 #endif
+		try {
+			
 		sent=send((*conn)->socket,data,size,0);
+		}
+		catch(...) {
+			printf("hmmm... it seems that the send triggered an exception; perhaps the connection closed before we could send...\n");
+			
+		}
+		
 #ifdef USEOPENSSL
 	}
 #endif	 
@@ -1230,8 +1246,14 @@ status_t tcplayer::Quit() {
 	printf("tcp_layer stopping\n");
 	atomic_add(&quit,1);
 	status_t status=B_OK;
+	printf("tcplayer: releasing sem for shutdown...\n");
+	
 	release_sem(tcp_mgr_sem);
+	printf("tcplayer: waiting for thread...\n");
+	
 	wait_for_thread(thread,&status);
+	printf("tcplayer: returning...\n");
+	
 	return status;
 }
 void tcplayer::SetConnectionClosedCB(int32 proto, void (*connclosedcb)(connection *conn)) 

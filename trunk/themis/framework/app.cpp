@@ -35,7 +35,9 @@ tcplayer *TCP;
 BMessage *AppSettings;
 
 App::App(const char *appsig)
-	:BApplication(appsig) {
+	:BApplication(appsig),MessageSystem() {
+	MDaemon=new MessageDaemon();
+	MsgSysRegister(this);
 	AppSettings=new BMessage;
 	LoadSettings();
 	app_info ai;
@@ -68,10 +70,10 @@ App::App(const char *appsig)
 	}
 	delete msgr;
 	delete msg;
-	PluginManager->BuildRoster(true);
 }
 App::~App(){
 	printf("app destructor\n");
+	MsgSysUnregister(this);
 	if (!qr_called)
 		QuitRequested();
 	SaveSettings();
@@ -81,6 +83,7 @@ App::~App(){
 		AppSettings=NULL;
 	}
 	printf("~app end\n");
+	delete MDaemon;
 }
 void App::AboutRequested() {
 	if (AWin==NULL) {
@@ -90,8 +93,33 @@ void App::AboutRequested() {
 	}
 	
 }
+uint32 App::BroadcastTarget() 
+{
+	printf("App\n");
+	return MS_TARGET_APPLICATION;
+}
+status_t App::ReceiveBroadcast(BMessage *msg) 
+{
+	printf("App::ReceiveBroadcast\n");
+	return B_OK;
+}
+status_t App::BroadcastReply(BMessage *msg)
+{
+	return B_OK;
+}
+
+void App::Pulse() 
+{
+	printf("App::Pulse - Sending Broadcast\n");
+	BMessage *test=new BMessage(6221972);
+	test->AddString("test string","hello");
+	test->AddInt32("birthday",4191977);
+	Broadcast(MS_TARGET_APPLICATION|MS_TARGET_COOKIE_MANAGER,test);
+	delete test;
+}
 
 bool App::QuitRequested(){
+	SetPulseRate(0);
 	atomic_add(&qr_called,1);
 	status_t stat;
 	BWindow *w=NULL;
@@ -143,7 +171,9 @@ void App::MessageReceived(BMessage *msg){
 void App::RefsReceived(BMessage *refs){
 }
 void App::ReadyToRun(){
+	PluginManager->BuildRoster(true);
 	win->Show();
+	//SetPulseRate(2000000);
 }
 void App::ArgvReceived(int32 argc, char **argv){
 }

@@ -104,8 +104,9 @@ imagewin::~imagewin()
 {
 }
 
-testplug::testplug(BMessage *info):PlugClass(info)
+testplug::testplug(BMessage *info):PlugClass(info)//,MessageSystem()
 {
+//	MsgSysRegister(this);
 	whead=NULL;
 	CacheSys=NULL;
 	CacheSys=(CachePlug*)PlugMan->FindPlugin(CachePlugin);
@@ -120,7 +121,7 @@ testplug::~testplug(){
 		delete cur;
 		cur=whead;
 	}
-	
+//	MsgSysUnregister(this);
 }
 
 void testplug::MessageReceived(BMessage *msg){

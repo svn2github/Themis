@@ -264,6 +264,9 @@ class httplayer {
 		void Done(http_request *request);
 		BTranslatorRoster *TRoster;
 		CookieManager *CookieMonster;
+		thread_id helperthread;
+//		static int32 StartHelper();
+//		int32 Helper(void *arg);
 	public:
 //		int32 Lock(int32 timeout=-1);
 		BLocker *lock;

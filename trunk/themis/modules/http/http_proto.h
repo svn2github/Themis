@@ -88,5 +88,6 @@ class http_protocol:public ProtocolPlugClass
 //	 bool RequiresHeartbeat(){return true;}
 	 void Heartbeat();
 	 friend class CookieManager;
+	 uint32 BroadcastTarget();
    };
 #endif

@@ -54,7 +54,8 @@ int qsort_cookies(const void *Alpha, const void *Beta) {
 	return 0;
 }
 
-CookieManager::CookieManager() {
+CookieManager::CookieManager():MessageSystem() {
+	MsgSysRegister(this);
 	printf("CookieManager()\n");
 	CookieSettings=new BMessage();
 	cookie_head=NULL;
@@ -99,6 +100,7 @@ CookieManager::~CookieManager() {
 	delete CookieSettings;
 	printf("cookie mime: %s\n",ThemisCookieFile);
 	printf("shutting down at: %ld\n",time(NULL));
+	MsgSysUnregister(this);
 }
 void CookieManager::CheckMIME() {
 	BMimeType mime(ThemisCookieFile);//application/x-Themis-cookie
@@ -339,7 +341,14 @@ void CookieManager::CheckMIME() {
 		attrinf.AddBool("attr:extra",false);
 	} else
 		found=false;
-	attrinf.PrintToStream();
+	type_code code=B_STRING_TYPE;
+	int32 count=0;
+	attrinf.GetInfo("type",&code,&count);
+	if (code==B_STRING_TYPE) {
+		for (int i=1; i<count;i++)
+			attrinf.RemoveData("type",1);
+	}
+//	attrinf.PrintToStream();
 	mime.SetAttrInfo(&attrinf);
 }
 void CookieManager::CheckIndicies() {
@@ -1520,22 +1529,22 @@ status_t CookieManager::SaveCookie(cookie_st *cookie) {
 		node.WriteAttr("BEOS:TYPE",B_STRING_TYPE,0,type,strlen(ThemisCookieFile)+1);
 		delete type;
 		node.WriteAttr("Themis:cookiesecure",B_BOOL_TYPE,0,&cookie->secure,sizeof(cookie->secure));
-						node.WriteAttr("Themis:creceivedate",B_INT32_TYPE,0,&cookie->datereceived,sizeof(cookie->datereceived));
-						node.WriteAttr("Themis:expiredate",B_INT32_TYPE,0,&cookie->expiredate,sizeof(cookie->expiredate));
-						if (cookie->domain!=NULL)
-						node.WriteAttr("Themis:domain",B_STRING_TYPE,0,cookie->domain,strlen(cookie->domain)+1);
-						if (cookie->path!=NULL)
-						node.WriteAttr("Themis:cookiepath",B_STRING_TYPE,0,cookie->path,strlen(cookie->path)+1);
-						if (cookie->name!=NULL)
-						node.WriteAttr("Themis:cookiename",B_STRING_TYPE,0,cookie->name,strlen(cookie->name)+1);
-						if (cookie->value!=NULL)
-						node.WriteAttr("Themis:cookievalue",B_STRING_TYPE,0,cookie->value,strlen(cookie->value)+1);
-						if (cookie->ports!=NULL)
-						node.WriteAttr("Themis:cookieports",B_STRING_TYPE,0,cookie->ports,strlen(cookie->ports)+1);
-						if (cookie->comment!=NULL)
-						node.WriteAttr("Themis:cookiecomment",B_STRING_TYPE,0,cookie->comment,strlen(cookie->comment)+1);
-						if (cookie->commenturl!=NULL)
-						node.WriteAttr("Themis:cookiecommenturl",B_STRING_TYPE,0,cookie->commenturl,strlen(cookie->commenturl)+1);
+		node.WriteAttr("Themis:creceivedate",B_INT32_TYPE,0,&cookie->datereceived,sizeof(cookie->datereceived));
+		node.WriteAttr("Themis:expiredate",B_INT32_TYPE,0,&cookie->expiredate,sizeof(cookie->expiredate));
+		if (cookie->domain!=NULL)
+			node.WriteAttr("Themis:domain",B_STRING_TYPE,0,cookie->domain,strlen(cookie->domain)+1);
+		if (cookie->path!=NULL)
+			node.WriteAttr("Themis:cookiepath",B_STRING_TYPE,0,cookie->path,strlen(cookie->path)+1);
+		if (cookie->name!=NULL)
+			node.WriteAttr("Themis:cookiename",B_STRING_TYPE,0,cookie->name,strlen(cookie->name)+1);
+		if (cookie->value!=NULL)
+			node.WriteAttr("Themis:cookievalue",B_STRING_TYPE,0,cookie->value,strlen(cookie->value)+1);
+		if (cookie->ports!=NULL)
+			node.WriteAttr("Themis:cookieports",B_STRING_TYPE,0,cookie->ports,strlen(cookie->ports)+1);
+		if (cookie->comment!=NULL)
+			node.WriteAttr("Themis:cookiecomment",B_STRING_TYPE,0,cookie->comment,strlen(cookie->comment)+1);
+		if (cookie->commenturl!=NULL)
+			node.WriteAttr("Themis:cookiecommenturl",B_STRING_TYPE,0,cookie->commenturl,strlen(cookie->commenturl)+1);
 		node.Unlock();
 	} else {
 		BString fname;
@@ -1626,4 +1635,14 @@ void CookieManager::SaveAllCookies() {
 	}
 }
 
+status_t CookieManager::ReceiveBroadcast(BMessage *msg) 
+{
+	printf("CookieManager::ReceiveBroadcast()\n");
+	return B_OK;
+}
+uint32 CookieManager::BroadcastTarget() 
+{
+	printf("CookieManager\n");
+	return MS_TARGET_COOKIE_MANAGER;
+}
 

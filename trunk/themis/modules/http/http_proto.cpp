@@ -164,6 +164,7 @@ status_t http_protocol::BroadcastReply(BMessage *msg){
 				}break;
 				case CachedObject: 
 				case CacheObjectNotFound: {
+					printf("two\n");
 					printf("http: reply from cache received.\n");
 					cache_reply=new BMessage(*msg);
 					release_sem(HTTP->cache_sem);
@@ -183,6 +184,7 @@ status_t http_protocol::BroadcastReply(BMessage *msg){
 
 status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 {
+//	printf("!!!! HTTP ReceiveBroadcast\n");
 	status_t stat=B_ERROR;
 	int32 command=0;
 	if (msg->HasInt32("command"))
@@ -230,17 +232,17 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 //			printf("http proto: action is %c%c%c%c\n",action>>24,action>>16,action>>8,action);
 			BString targ;
 			rmsg->FindString("target_url",&targ);
-			printf("http proto: target url: %s\n",targ.String());
+//			printf("http proto: target url: %s\n",targ.String());
 			
 //			HTTP->Lock();
-			printf("http proto: http locked\n");
+//			printf("http proto: http locked\n");
 			http_request *request=NULL;
-			while (request==NULL) {
+//			while (request==NULL) {
 				request=HTTP->AddRequest(rmsg);
-				if (request==NULL)
-					snooze(25000);
-			}
-			printf("http proto: add request done\n");
+//				if (request==NULL)
+//					snooze(25000);
+//			}
+//			printf("http proto: add request done\n");
 //			HTTP->Unlock();
 			//we're already deleting rmsg (as info) int he HTTP->AddRequest() call.
 //			delete rmsg;
@@ -292,10 +294,10 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 //								HTTP->Unlock();
 							}
 							
-							if (((pobj->Type()&TARGET_HANDLER)!=0) || ((pobj->Type()&TARGET_PARSER)!=0)) {
+							if (((pobj->BroadcastTarget()&TARGET_HANDLER)==pobj->BroadcastTarget()) || ((pobj->BroadcastTarget()&TARGET_PARSER)==pobj->BroadcastTarget())) {
 								if (PlugMan!=NULL) {
 									BMessage *amsg=new BMessage(GetSupportedMIMEType);
-									amsg->AddInt32("ReplyTo",Type());
+									amsg->AddInt32("ReplyTo",pobj->BroadcastTarget());
 									amsg->AddPointer("ReplyToPointer",this);
 									amsg->AddInt32("command",COMMAND_INFO_REQUEST);
 									amsg->AddBool("supportedmimetypes",true);
@@ -319,6 +321,7 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 		default:
 			return PLUG_DOESNT_HANDLE;
 	}
+	
 	printf("http_protocol::ReceiveBroadcast() exiting\n");
 }
 bool http_protocol::IsPersistent(){
@@ -406,6 +409,10 @@ http_protocol::~http_protocol() {
 	}
 	printf("~http_protocol end\n");
  }
+uint32 http_protocol::BroadcastTarget() {
+	printf("HTTP\n");
+	return MS_TARGET_HTTP_PROTOCOL;
+}
 int32 http_protocol::SpawnThread(BMessage *info)
  {
   return thread;

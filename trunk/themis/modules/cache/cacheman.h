@@ -67,7 +67,9 @@ class cacheman: public CachePlug {
 		bool IsPersistent(){return true;}
 		int32 Type();
 		void Unregister(uint32 usertoken);
+		uint32 BroadcastTarget();
 		status_t ReceiveBroadcast(BMessage *msg);
+		status_t BroadcastReply(BMessage *msg);
 //		virtual uint32 Register();
 //		virtual void Unregister(uint32 usertoken);
 		virtual int32 FindObject(uint32 usertoken, const char *URL);

@@ -46,7 +46,11 @@ int WinW=600;
 extern plugman *PluginManager;
 extern BMessage *AppSettings;
 Win::Win(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspace)
-    :BWindow(frame,title,type,flags,wspace) {
+    :BWindow(frame,title,type,flags,wspace),MessageSystem() {
+	MsgSysRegister(this);
+	// size limits
+	BScreen Screen;
+	SetSizeLimits( 300, Screen.Frame().right, 200, Screen.Frame().bottom );
     protocol=0;
 //  View=new winview(Bounds(),"mainview",B_FOLLOW_ALL,B_FRAME_EVENTS|B_WILL_DRAW|B_ASYNCHRONOUS_CONTROLS|B_NAVIGABLE_JUMP|B_FULL_UPDATE_ON_RESIZE);
 	startup=true;
@@ -63,9 +67,6 @@ Win::Win(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspa
 	DefineInterfaceColors();
 	LoadInterfaceGraphics();
 		
-	// size limits
-	BScreen Screen;
-	SetSizeLimits( 300, Screen.Frame().right, 200, Screen.Frame().bottom );
 	
 	BRect rect;
 	rect = Bounds();
@@ -127,6 +128,10 @@ Win::Win(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspa
 		delete iimsgr;
 		delete info;
 }
+Win::~Win(){
+	MsgSysUnregister(this);
+}
+
 bool Win::QuitRequested() {
 //  BMessenger *msgr=new BMessenger(NULL,Parser,NULL);
  // msgr->SendMessage(B_QUIT_REQUESTED);
@@ -285,7 +290,7 @@ void Win::MessageReceived(BMessage *msg) {
 		}	break;
 		case URL_LOADING :
 		{
-			cout << "URL_LOADING received" << endl;
+// 			cout << "URL_LOADING received" << endl;
 			
 			// all this code below and some code in
 			// FakeSite and ThemisStatusView is just demo code to show
@@ -293,6 +298,14 @@ void Win::MessageReceived(BMessage *msg) {
 						
 			FakeSite* tmpsite;
 			msg->FindPointer( "view_pointer", ( void** )&tmpsite );
+			int64 delta=0;
+			int64 contentlen=0;
+			
+			msg->FindInt64("size-delta",&delta);
+			if (msg->HasInt64("content-length"))
+				msg->FindInt64("content-length",&contentlen);
+			if (contentlen==0)
+				contentlen=100*delta;
 			
 			BString statstr( "Transfering data from " );
 			statstr.Append( tmpsite->site_title.String() );
@@ -300,7 +313,7 @@ void Win::MessageReceived(BMessage *msg) {
 			srand( ( unsigned )time( NULL ) );
 			
 			tmpsite->SetInfo(
-				rand()%40,
+				(int)(((float)delta/(float)contentlen)*100),
 				"12.3kB/s",
 				rand()%20,
 				"5.9kB/s",
@@ -325,12 +338,13 @@ void Win::MessageReceived(BMessage *msg) {
 			
 			// if either the doc loading or img loading are not finished,
 			// set up a new BMessageRunner, and resend the message
+		/*
 			if( tmpsite->GetDocBarProgress() < 100 || tmpsite->GetImgBarProgress() < 100 )
 			{
 				cout << "resending progress message" << endl;
 				BMessageRunner* plmsgr = new BMessageRunner( BMessenger( this ), msg, 300000, 1 );
 			}
-			
+		*/	
 			break;
 		}
 		case URL_OPEN :
@@ -377,14 +391,14 @@ void Win::MessageReceived(BMessage *msg) {
 			////////////////////
 			// remove this later
 			////////////////////
-			
+		/*	
 			// create a BMessage with a pointer to the new view
 			BMessage* vpmsg = new BMessage( URL_LOADING );
 			vpmsg->AddPointer( "view_pointer", fakesite );
 			
 			// create a BMessageRunner which sends a page loading progress message
 			BMessageRunner* plmsgr = new BMessageRunner( BMessenger( this ), vpmsg, 300000, 1 );
-			
+		*/	
 			////////////////////////
 			// remove this later end
 			////////////////////////
@@ -494,29 +508,27 @@ void Win::MessageReceived(BMessage *msg) {
 				
 				printf("info: %p\n",info);
 				info->PrintToStream();
-//				PlugClass *cache=(PlugClass*)PluginManager->FindPlugin(CachePlugin);
-//				if (cache!=NULL) {
 					printf("telling cache that a new page is being loaded.\n");
 					BMessage *bcast=new BMessage;
 					BMessage *lnp=new BMessage(LoadingNewPage);
 					lnp->AddInt32("command",COMMAND_INFO);
 					bcast->AddMessage("message",lnp);
+					Broadcast(MS_TARGET_ALL,lnp);
 					delete lnp;
-					PluginManager->Broadcast(TARGET_VIEW,ALL_TARGETS,bcast);
 					delete bcast;
-//					BMessenger *msgr=new BMessenger(cache->Handler(),NULL,NULL);
-//					msgr->SendMessage(LoadingNewPage);
-//					delete msgr;
-//				}
 				bcast=new BMessage(BroadcastMessage);
 				info->AddInt32("command",COMMAND_RETRIEVE);
 				bcast->AddMessage("message",info);
 				bcast->AddInt32("targets",TARGET_PROTOCOL);
 				bcast->AddInt32("source",TARGET_VIEW);
 			
-				BMessenger *msgr=new BMessenger(NULL,PluginManager,NULL);
-				msgr->SendMessage(bcast);
-				delete msgr;
+//				BMessenger *msgr=new BMessenger(NULL,PluginManager,NULL);
+//				msgr->SendMessage(bcast);
+//				delete msgr;
+				printf("about to send request broadcast.\n");
+			
+				Broadcast(MS_TARGET_PROTOCOL,info);
+				printf("done with request broadcast\n");
 			
 			//	PluginManager->Broadcast(TARGET_VIEW,TARGET_PROTOCOL,bcast);
 				delete bcast;
@@ -528,7 +540,7 @@ void Win::MessageReceived(BMessage *msg) {
 		}break;
 		case URL_TYPED :
 		{
-			cout << "URL_TYPED received" << endl;
+//			cout << "URL_TYPED received" << endl;
 			
 			// imaginary prefs
 			bool prefs_open_type_ahead = true;
@@ -548,6 +560,10 @@ void Win::MessageReceived(BMessage *msg) {
 		}
 	}
 //	Unlock();
+}
+uint32 Win::BroadcastTarget() {
+	printf("Win\n");
+	return MS_TARGET_WINDOW;
 }
 void Win::WindowActivated(bool active) {
 	if (startup) {
@@ -959,4 +975,55 @@ Win::UrlTypedHandler( bool show_all )
 			urlpopupwindow = NULL;
 		}
 	}
+}
+status_t Win::ReceiveBroadcast(BMessage *message) 
+{
+	uint32 command=0;
+	message->FindInt32("command",(int32*)&command);
+	BString url;
+	message->FindString("url",&url);
+	
+	switch(command) {
+		case COMMAND_INFO: {
+			switch (message->what) {
+				case ReturnedData: {
+						if (((FakeSite*)tabview->TabAt( tabview->Selection() )->View())->site_title.ICompare(url)==0) {
+					int64 contentlength=0;
+					int64 bytes_received=0;
+					int64 delta=0;
+					if (message->HasInt64("content-length"))
+						message->FindInt64("content-length",&contentlength);
+					message->FindInt64("bytes-received",&bytes_received);
+					message->FindInt64("size-delta",&delta);
+							
+					if (contentlength==0) {
+						BMessenger msgr(NULL,this,NULL);
+						BMessage *msg=new BMessage(URL_LOADING);
+								BView *view=tabview->TabAt(tabview->Selection())->View();
+								msg->AddPointer("view_pointer",view);
+								msg->AddInt64("bytes-received",bytes_received);
+								msg->AddInt64("size-delta",delta);
+								msgr.SendMessage(msg);
+								delete msg;
+					} else {
+								BMessenger msgr(NULL,this,NULL);
+								BMessage *msg=new BMessage(URL_LOADING);
+								BView *view=tabview->TabAt(tabview->Selection())->View();
+								msg->AddPointer("view_pointer",view);
+								msg->AddInt64("bytes-received",bytes_received);
+								msg->AddInt64("content-length",contentlength);
+								msg->AddInt64("size-delta",delta);
+								msgr.SendMessage(msg);
+								delete msg;
+										
+					}
+							}
+				
+				}break;
+				
+			}
+			
+		}break;
+	}
+	
 }

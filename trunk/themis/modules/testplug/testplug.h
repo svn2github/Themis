@@ -39,6 +39,7 @@ extern "C" __declspec(dllexport)PlugClass *GetObject(void);
 #include <View.h>
 #include <Bitmap.h>
 #include "cacheplug.h"
+#include "msgsystem.h" 
 class iview: public BView 
 {
 	public:
@@ -76,7 +77,7 @@ struct iwind
 };
 
 
-class testplug: public PlugClass {
+class testplug: public PlugClass{
 	private:
 		iwind *whead;
 	public:

@@ -17,7 +17,7 @@ appaboutview::appaboutview(BRect frame, const char *title, uint32 resizem, uint3
 	info << "\n\t\t(Compiled for net_server)";
 #endif
 	info <<"\nhttp://themis.sourceforge.net\n"<< "Copyright © 2002\n"<<"Project Founder and Lead Developer:\n\tRaymond \"Z3R0 One\" Rodgers <z3r0_one@users.sourceforge.net\n";
-	info << "Contributors:\n\t\tLinus Almstrom\n\t\tMark Hellegers\n";
+	info << "Contributors:\n\t\tLinus Almstrom\n\t\tMark Hellegers\n\t\tMichael Weirauch\n";
 	tv->MakeEditable(false);
 	tv->Insert(info.String());
 }

@@ -396,7 +396,7 @@ status_t plugman::LoadPlugin(uint32 which)
 					if (Heartbeat_mr==NULL) {
 						BMessenger *msgr=new BMessenger(this,NULL,NULL);
 						BMessage *msg=new BMessage(HeartbeatMessage);
-						Heartbeat_mr=new BMessageRunner(*msgr,msg,10000000,-1);
+						Heartbeat_mr=new BMessageRunner(*msgr,msg,1000000,-1);
 						delete msgr;
 						delete msg;
 					}
@@ -509,7 +509,7 @@ void plugman::MessageReceived(BMessage *msg) {
 			delete subm;
 		}break;
 		case HeartbeatMessage: {
-			printf("Heartbeat\n");
+//			printf("Heartbeat\n");
 			plugst *cur=head;
 			while (cur!=NULL) {
 				if (cur->uses_heartbeat) {
@@ -707,7 +707,7 @@ void plugman::MessageReceived(BMessage *msg) {
 						if (Heartbeat_mr==NULL) {
 							BMessenger *msgr=new BMessenger(this,NULL,NULL);
 							BMessage *hbmsg=new BMessage(HeartbeatMessage);
-							Heartbeat_mr=new BMessageRunner(*msgr,hbmsg,10000000,-1);
+							Heartbeat_mr=new BMessageRunner(*msgr,hbmsg,1000000,-1);
 							delete msgr;
 							delete hbmsg;
 						}

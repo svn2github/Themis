@@ -31,6 +31,7 @@ Project Start Date: October 18, 2000
 #include <Window.h>
 #include "winview.h"
 #include "htmlparser.h"
+#include "msgsystem.h"
 
 /*!
 \brief The main browser window.
@@ -44,7 +45,7 @@ This is the main browser window.
 #include "FakeSite.h"
 #include "ThemisTVS.h"
 
-class Win : public BWindow
+class Win : public BWindow, public MessageSystem
 {
 	private:
 		bool startup;
@@ -54,6 +55,7 @@ class Win : public BWindow
 	public:
 		winview *View;
 		Win(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspace=B_CURRENT_WORKSPACE);
+		~Win();
 		bool						QuitRequested();
 		void						MessageReceived(BMessage *msg);
 		//! Detects when the window is brought to the forefront, for utilization.
@@ -81,6 +83,9 @@ class Win : public BWindow
 		BBitmap*					bitmaps[10];
 		
 		rgb_color					fColorArray[6];
+		uint32 BroadcastTarget();
+		status_t ReceiveBroadcast(BMessage *message);
+		
 };
 
 #endif

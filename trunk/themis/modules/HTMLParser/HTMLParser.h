@@ -45,6 +45,9 @@ class HTMLParser	:	public BHandler, public PlugClass	{
 		float PlugVersion();
 		void Heartbeat();
 		status_t ReceiveBroadcast( BMessage * message );
+		status_t BroadcastReply(BMessage *message);
+		uint32 BroadcastTarget();
+	
 		int32 Type();
 		
 };

@@ -48,15 +48,8 @@ add a command to makelinks.sh to create this link in your plug-in's directory.
 #include <Entry.h>
 #include <OS.h>
 #include <MenuBar.h>
+#include "msgsystem.h"
 
-#define ProtocolPlugin 'pplg'
-#define ContentPlugin 'cplg'
-#define HTMLPlugin 'hplg'
-#define ImagePlugin 'iplg'
-#define MediaPlugin 'mplg'
-
-#define BroadcastMessage 'bcmg'
-#define BroadcastHandledBy 'bchb'
 
 /*
 	Target values for message broadcasting
@@ -71,6 +64,7 @@ add a command to makelinks.sh to create this link in your plug-in's directory.
 #define TARGET_VIEW '_vue'
 #define TARGET_APPLICATION '_app'
 #define TARGET_PLUGMAN '_plm'
+#define TARGET_RENDERER 'rndr'
 #define CONTENT_IMAGE	0x4
 #define CONTENT_TEXT	0x6
 #define CONTENT_SCRIPT	0x8
@@ -86,6 +80,12 @@ add a command to makelinks.sh to create this link in your plug-in's directory.
 #define PROTO_SMTP	0x808
 #define PROTO_POP	0x80a
 #define PROTO_NNTP	0x80c
+#define SCRIPT_JAVASCRIPT 0x1002
+#define SCRIPT_VBSCRIPT 0x1004
+#define SCRIPT_ACTIVEX 0x1006
+#define TEXT_HTML 0x2002
+#define TEXT_CSS 0x2004
+#define TEXT_PLAIN 0x2006
 
 #define MEMORY_CACHE TARGET_CACHE|TYPE_RAM
 //memory/ram cache
@@ -101,12 +101,14 @@ add a command to makelinks.sh to create this link in your plug-in's directory.
 //handler for video
 #define COOKIE_HANDLER TARGET_HANDLER|CONTENT_COOKIE
 //handler for cookie information transmitted in http protocol
-#define JAVASCRIPT_HANDLER TARGET_HANDLER|CONTENT_SCRIPT
+#define JAVASCRIPT_HANDLER TARGET_HANDLER|CONTENT_SCRIPT|SCRIPT_JAVASCRIPT
 //handler for javascript scripts embedded in html files
-#define HTML_PARSER TARGET_PARSER|CONTENT_TEXT
+#define HTML_PARSER TARGET_PARSER|CONTENT_TEXT|TEXT_HTML
 //handler that displays HTML text files
-#define TEXT_HANDLER TARGET_HANDLER|CONTENT_TEXT
+#define TEXT_HANDLER TARGET_HANDLER|CONTENT_TEXT|TEXT_PLAIN
 //Handler that displays text files that are not html
+#define CSS_PARSER TARGET_PARSER|CONTENT_TEXT|TEXT_CSS
+#define RENDER_ENGINE TARGET_HANDLER|TARGET_RENDERER
 
 #define PLUG_DOESNT_HANDLE 'pdnh'
 //Plug-in doesn't handle the type of message sent to it, or the type of data specified
@@ -242,7 +244,7 @@ class plugman;
 PlugClass is the base class for all of the plug-ins that Themis can and will utilize.
 Some plug-ins will use this class directly, others will probably use a derived verison.
 */
-class PlugClass {
+class PlugClass: public MessageSystem {
 	private:
 	public:
 	//!PlugClass constructor.
@@ -360,8 +362,10 @@ class PlugClass {
 		virtual void Heartbeat();
 		virtual bool RequiresHeartbeat();
 
-		virtual status_t ReceiveBroadcast(BMessage *msg);
-		virtual status_t BroadcastReply(BMessage *msg);
+		virtual status_t ReceiveBroadcast(BMessage *msg)=0;
+		virtual status_t BroadcastReply(BMessage *msg)=0;
+		virtual uint32 BroadcastTarget()=0;
+	
 		virtual int32 Type();
 		
 		//The following functions return NULL unless overridden. See each description

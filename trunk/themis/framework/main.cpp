@@ -50,5 +50,6 @@ int main() {
 	(new App(AppSig));
 	be_app->Run();
 	delete be_app;
+	fflush(stdout);
 	return 0;
 }

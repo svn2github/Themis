@@ -69,7 +69,8 @@ the app is started. When the plug-in is brought back into memory depends on what
 it, and what the plug-in actually does. For instance, the protocol plug-ins are handed
 URL information, and a number of pointers to objects which they might need.
 */
-PlugClass::PlugClass(BMessage *info) {
+PlugClass::PlugClass(BMessage *info) :MessageSystem() {
+	MsgSysRegister(this);
 	InitInfo=info;
 	thread=0;
 	Window=NULL;
@@ -84,6 +85,7 @@ PlugClass::PlugClass(BMessage *info) {
 
 PlugClass::~PlugClass() {
 	delete Lock;
+	MsgSysUnregister(this);
 }
 
 uint32 PlugClass::PlugID() {
@@ -191,15 +193,18 @@ void PlugClass::Heartbeat() {
 bool PlugClass::RequiresHeartbeat() {
 	return uses_heartbeat;
 }
-status_t PlugClass::ReceiveBroadcast(BMessage *msg) {
-	return PLUG_DOESNT_HANDLE;
-}
+
+//status_t PlugClass::ReceiveBroadcast(BMessage *msg) {
+//	return PLUG_DOESNT_HANDLE;
+//}
+
 int32 PlugClass::Type() {
 	return 0;
 }
-status_t PlugClass::BroadcastReply(BMessage *msg) {
-	return PLUG_REPLY_RECEIVED;
-}
+
+//status_t PlugClass::BroadcastReply(BMessage *msg) {
+//	return PLUG_REPLY_RECEIVED;
+//}
 
 char *PlugClass::AboutViewLabel() {
 	return NULL;

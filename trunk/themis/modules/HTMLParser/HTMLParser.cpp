@@ -273,6 +273,16 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 	
 }
 
+status_t HTMLParser		::	BroadcastReply(BMessage *message) {
+	return B_OK;
+}
+
+uint32 HTMLParser	::	BroadcastTarget() 
+{
+	return MS_TARGET_HTML_PARSER;
+	
+}
+
 int32 HTMLParser	::	Type()	{
 	
 	return TARGET_PARSER;
