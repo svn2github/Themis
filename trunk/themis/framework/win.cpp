@@ -395,23 +395,43 @@ void Win::MessageReceived(BMessage *msg) {
 						100,
 						false,	// delta = false
 						"",
-						"",
+						"Done.",
 						secure,
 						cookies_disabled );
 				}
 			}
 			else
 			{
-				tmpsite->SetInfo(
-					(int)(((float)delta/(float)contentlen)*100),
-					true,
-					"xx.xkB/s",
-					(int)(((float)delta/(float)contentlen)*100),
-					true,
-					"xx.xkB/s",
-					statstr.String(),
-					secure,
-					cookies_disabled );
+				// generate the progressbar texts
+				BString str1;
+				str1 << (int)(((float)delta/(float)contentlen)*100) << "%";
+				
+				if( req_done == false )
+				{
+					tmpsite->SetInfo(
+						(int)(((float)delta/(float)contentlen)*100),
+						true,
+						str1.String(),
+						(int)(((float)delta/(float)contentlen)*100),
+						true,
+						str1.String(),
+						statstr.String(),
+						secure,
+						cookies_disabled );
+				}
+				else
+				{
+					tmpsite->SetInfo(
+						100,
+						false,	// delta = false
+						"",
+						100,
+						false,	// delta = false
+						"",
+						"Done.",
+						secure,
+						cookies_disabled );
+				}
 			}
 			
 			// if the viewpointer points to the currently active view,
