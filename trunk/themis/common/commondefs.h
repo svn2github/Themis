@@ -148,6 +148,7 @@ to allow interoperability in some parts of the application.
 #define WINDOW_NEW				'winn'
 
 // UrlHandler message constants
+#define UH_DOC_CLOSED			'udcl'	// sent by tab to UH (removes UrlEntry)
 #define UH_LOAD_NEW_PAGE		'ulnp'	// sent by win to UH/all interested
 #define UH_LOADING_FINISHED		'ulfi'	// sent by network to UH
 #define UH_LOADING_PROGRESS		'ulpg'	// sent by network to UH
