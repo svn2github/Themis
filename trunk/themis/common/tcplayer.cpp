@@ -882,12 +882,12 @@ printf("Not connected (send)\n");
 //		printf("connection terminated.\n");
 		(*conn)->open=false;
 			char host[250];
-			int16 port;
-			(*conn)->address->GetAddr(host,(unsigned short*)&port);
+			int16 port=(*conn)->port;
+//			(*conn)->address->GetAddr(host,(unsigned short*)&port);
 #ifdef USEOPENSSL
-			*conn=ConnectTo((*conn)->proto_id,host,port,(*conn)->usessl,true);
+			*conn=ConnectTo((*conn)->proto_id,(char*)(*conn)->addrstr.String(),port,(*conn)->usessl,true);
 #else
-			*conn=ConnectTo((*conn)->proto_id,host,port,false,true);
+			*conn=ConnectTo((*conn)->proto_id,(char*)(*conn)->addrstr.String(),port,false,true);
 #endif
 			atomic_add(&(*conn)->requests,1);
 #ifdef USEOPENSSL
