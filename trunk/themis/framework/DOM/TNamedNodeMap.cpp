@@ -105,7 +105,7 @@ TNodeShared TNamedNodeMap	::	removeNamedItem( const TDOMString aName )	{
 
 TNodeWeak TNamedNodeMap	::	item( unsigned long aIndex )	{
 	
-	if ( !mNodeList )	{
+	if ( mNodeList )	{
 		return (*mNodeList)[ aIndex ];
 	}
 	
