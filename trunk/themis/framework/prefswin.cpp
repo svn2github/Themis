@@ -205,6 +205,11 @@ void prefswin::MessageReceived( BMessage* msg )
 			msg->FindString( "DTDFileString", &string );
 			cout << "DTDFileString: " << string.String() << endl;
 			fDTDToUsePath.SetTo( string.String() );
+			// save the string ( don't remove! ) the HTMLParser needs the setting at once
+			AppSettings->ReplaceString( "DTDToUsePath", fDTDToUsePath );
+			
+			// send a message to the app, which then sends a Broadcast to the HTMLParser
+			be_app_messenger.SendMessage( DTD_CHANGED );
 			break;
 		}
 		case HOMEPAGE_CHANGED :
@@ -548,6 +553,7 @@ void prefswin::MessageReceived( BMessage* msg )
 						// set the last found DTD in the prefs. we save it to the prefs,
 						// because the user might not reselect a DTD in the list, which
 						// would save the DTD.
+						BMessage* imsg = new BMessage( DTD_SELECTED );
 						if( popmenu->CountItems() > 0 )
 						{
 							if( popmenu->FindMarked() == NULL )
@@ -555,12 +561,19 @@ void prefswin::MessageReceived( BMessage* msg )
 								printf( "no marked item found\n" );
 								BMenuItem* item = popmenu->ItemAt( popmenu->CountItems() - 1 );
 								item->SetMarked( true );
-								fDTDToUsePath.SetTo( dtddir.String() );
-								fDTDToUsePath.Append( item->Label() );
-								printf( "setting fDTDToUsePath to: %s\n", fDTDToUsePath.String() );
-								AppSettings->ReplaceString( "DTDToUsePath", fDTDToUsePath );
+								// as we cannot invoke the item here, send the DTD_SELECTED message here
+								BString dtdstring( dtddir.String() );
+								dtdstring.Append( item->Label() );
+								imsg->AddString( "DTDFileString", dtdstring.String() );
+								PostMessage( imsg );
 							}
 						}
+						else
+						{
+							imsg->AddString( "DTDFileString", "none" );
+							PostMessage( imsg );
+						}
+						delete imsg;
 					}
 					delete dir;
 					// end: find a DTD

@@ -194,6 +194,15 @@ void App::MessageReceived(BMessage *msg){
 			printf( "APP B_QUIT_REQUESTED\n" );
 			break;
 		}
+		case DTD_CHANGED :
+		{
+			printf( "APP DTD_CHANGED\n" );
+			BMessage* chgmsg = new BMessage( DTD_CHANGED_PARSER );
+			chgmsg->AddInt32( "command", COMMAND_INFO );
+			Broadcast( MS_TARGET_PARSER, chgmsg );
+			delete chgmsg;
+			break;
+		}
 		case SHOW_PREFERENCES :
 		{
 			printf( "SHOW_PREFERENCES\n" );
