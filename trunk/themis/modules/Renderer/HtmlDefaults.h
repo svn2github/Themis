@@ -1,0 +1,8 @@
+#ifndef _HTML_DEFAULTS_H_
+#define _HTML_DEFAULTS_H_
+
+#define DEFAULT_TABLE_ALIGN 	"LEFT"
+#define DEFAULT_TABLE_VALIGN	"CENTER"
+
+#endif
+
