@@ -337,7 +337,7 @@ connection* tcplayer::ConnectTo(connection *target) {
 			cur=cur->next;
 		}
 		if ((cur!=NULL) && (cur!=conn)) {
-			printf("found existing connection\n");
+			printf("found existing connection:\t%s:%d\t%s:%d\n",cur->addrstr.String(),cur->port,conn->addrstr.String(),conn->port);
 			conn->socket=cur->socket;
 			conn->open=cur->open;
 			if (conn->socket==-1) {
@@ -399,7 +399,7 @@ connection* tcplayer::ConnectTo(connection *target) {
 			return conn;
 		}
 		
-		if (conn->ssl) {
+		if (conn->usessl) {
 #ifdef USEOPENSSL
 			int flags=fcntl(conn->socket,F_GETFL,0);
 			flags|=O_NONBLOCK;
@@ -1104,8 +1104,8 @@ bool tcplayer::IsValid(connection *conn) {
 	return truth;
 }
 bool tcplayer::Connected(connection *conn,bool skipvalid) {
-	BAutolock alock(lock);
-	if (alock.IsLocked()) {
+//	BAutolock alock(lock);
+//	if (alock.IsLocked()) {
 	if (conn!=NULL) {
 		if (skipvalid) {//no need to check validation
 			CheckConnectStatus://connection status checking starts here.
@@ -1168,7 +1168,7 @@ bool tcplayer::Connected(connection *conn,bool skipvalid) {
 		return conn->open;
 	}
 	//conn is NULL, so this is obviously invalid
-	}
+//	}
 	return false;
 }
 /*

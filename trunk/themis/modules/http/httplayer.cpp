@@ -1571,12 +1571,14 @@ void httplayer::ProcessChunkedData(http_request *request,void *buffer, int size)
 void httplayer::ProcessData(http_request *request, void *buffer, int size) {
 	//BAutolock alock(lock);
 //	printf("\tProcessData()\n");
-volatile int32 ilocked=0;
-if (!lock->IsLocked()) {
-	ilocked=1;
-	lock->Lock();
-	
-}
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+//volatile int32 ilocked=0;
+//if (!lock->IsLocked()) {
+//	ilocked=1;
+//	lock->Lock();
+//	
+//}
 	if (request->chunked) {
 		ProcessChunkedData(request,buffer,size);
 	} else {
@@ -1648,8 +1650,9 @@ if (!lock->IsLocked()) {
 	printf("Sending broadcast to handlers and parsers. target: %ld\n",target);
 	
 	Proto->PlugMan->Broadcast(Proto->PlugID(),target,&container);
-	if (ilocked)
-		lock->Unlock();
+	}
+//	if (ilocked)
+//		lock->Unlock();
 	
 }
 void httplayer::CloseRequest(http_request *request,bool quick) {
@@ -2078,19 +2081,20 @@ int32 httplayer::LayerManager() {
 //		} else
 //			c++;
 
-		if (current==NULL) {
-			current=requests_head;
-		} //else
+//		if (current==NULL) {
+//			current=requests_head;
+//		} //else
 		// 	current=current->next;
 		if (current==NULL) {
 //			Unlock();
 			snooze(40000);
+			current=requests_head;
 			continue;
 		}
 		lock->Lock();
 		if (current->done==0) {
-			if (current->datawaiting>=1) {
 				lock->Unlock();
+			if (current->datawaiting>=1) {
 				/*
 					If we timeout while waiting for TCP->Lock() then it's possible
 					that TCP is waiting for a lock on this protocol. A deadlock
@@ -2123,7 +2127,7 @@ int32 httplayer::LayerManager() {
 //		Unlock();
 		if (current!=NULL)
 			current=current->next;
-		snooze(20000);
+//		snooze(20000);
 		
 	}
 	memset(buffer,0,10240);
@@ -2212,7 +2216,6 @@ int32 httplayer::StartLayer(void *arg) {
 }
 
 status_t httplayer::Quit() {
-//	Lock();
 	printf("http layer stopping\n");
 	
 	atomic_add(&quit,1);

@@ -113,6 +113,8 @@ ssize_t RAMCacheObject::Write(uint32 usertoken, void *buffer, size_t size)
 	ssize_t bytes=-1;
 	if (buffer==NULL)
 		return B_ERROR;
+	if (writelockowner==NULL)
+		AcquireWriteLock(usertoken);
 	if (writelockowner!=NULL) {
 		if (writelockowner->Token()==usertoken) {
 			bytes=databuffer->WriteAt(writelockowner->WritePosition(),buffer,size);

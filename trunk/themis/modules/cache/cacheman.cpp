@@ -306,6 +306,7 @@ bool cacheman::AcquireWriteLock(uint32 usertoken, int32 objecttoken)
 }
 void cacheman::ReleaseWriteLock(uint32 usertoken,int32 objecttoken) 
 {
+	printf("Releasing WriteLock: user: %lu object: %lu\n",usertoken,objecttoken);
 	CacheObject *object=FindObject(objecttoken);
 	if (object!=NULL)
 		object->ReleaseWriteLock(usertoken);
@@ -1407,81 +1408,84 @@ ssize_t cacheman::GetCacheSize(uint32 which){
 
 status_t cacheman::SetObjectAttr(uint32 usertoken,int32 objecttoken, BMessage *info){
 	CacheObject *object=FindObject(objecttoken);
-	if (object!=NULL) {
-		if (object->HasWriteLock(usertoken)) {
-			status_t status=B_OK;
-			if (info!=NULL) {
-				printf("cacheman::SetObjectAttr\n");
-				info->PrintToStream();
-				type_code type;
-				int32 ecount=0, tcount=0, index=0;
-				char *name=NULL;
-				ecount=info->CountNames(B_ANY_TYPE);
-				BString aname,str;
-				if (ecount>=1) {
-#if (B_BEOS_VERSION > 0x0504)
-					for (index=0;info->GetInfo(B_ANY_TYPE,index,(const char**)&name,&type,&tcount)==B_OK;index++)
-#else
-					for (index=0;info->GetInfo(B_ANY_TYPE,index,&name,&type,&tcount)==B_OK;index++)
-#endif
-						{
-							for (int32 i=0; i<tcount; i++) {
-								switch(type) {
-									case B_INT64_TYPE: {
-										if (strcasecmp(name,"content-length")==0) {
-											off_t clen=0L;
-											info->FindInt64(name,i,&clen);
-											object->WriteAttr(usertoken,"Themis:content-length",type,&clen,sizeof(clen));
-										}
-										
-									}break;
-									case B_STRING_TYPE:{
-										str.Truncate(0);
-										aname.Truncate(0);
-										info->FindString(name,i,&str);
-										if (strcasecmp(name,"url")==0) {
-											aname="Themis:URL";
-										}
-										if (strcasecmp(name,"name")==0) {
-											aname="Themis:name";
-										}
-										if (strcasecmp(name,"host")==0) {
-											aname="Themis:host";
-										}
-										if ((strcasecmp(name,"content-type")==0) || (strcasecmp(name,"mime-type")==0)) {
-											aname="Themis:mime_type";
-										}
-										if (strcasecmp(name,"path")==0) {
-											aname="Themis:path";
-										}
-										if (strcasecmp(name,"etag")==0) {
-											aname="Themis:etag";
-										}
-										if (strcasecmp(name,"last-modified")==0) {
-											aname="Themis:last-modified";
-										}
-										if (strcasecmp(name,"expires")==0) {
-											aname="Themis:expires";
-										}
-										if (strcasecmp(name,"content-md5")==0) {
-											aname="Themis:content-md5";
-										}
-										printf("writing \"%s\":%s\n",aname.String(),str.String());
-										object->WriteAttr(usertoken,aname.String(),type,(char*)str.String(),str.Length()+1);
-									}break;
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		if (object!=NULL) {
+			if (object->HasWriteLock(usertoken)) {
+				status_t status=B_OK;
+				if (info!=NULL) {
+					printf("cacheman::SetObjectAttr\n");
+					info->PrintToStream();
+					type_code type;
+					int32 ecount=0, tcount=0, index=0;
+					char *name=NULL;
+					ecount=info->CountNames(B_ANY_TYPE);
+					BString aname,str;
+					if (ecount>=1) {
+	#if (B_BEOS_VERSION > 0x0504)
+						for (index=0;info->GetInfo(B_ANY_TYPE,index,(const char**)&name,&type,&tcount)==B_OK;index++)
+	#else
+						for (index=0;info->GetInfo(B_ANY_TYPE,index,&name,&type,&tcount)==B_OK;index++)
+	#endif
+							{
+								for (int32 i=0; i<tcount; i++) {
+									switch(type) {
+										case B_INT64_TYPE: {
+											if (strcasecmp(name,"content-length")==0) {
+												off_t clen=0L;
+												info->FindInt64(name,i,&clen);
+												object->WriteAttr(usertoken,"Themis:content-length",type,&clen,sizeof(clen));
+											}
+											
+										}break;
+										case B_STRING_TYPE:{
+											str.Truncate(0);
+											aname.Truncate(0);
+											info->FindString(name,i,&str);
+											if (strcasecmp(name,"url")==0) {
+												aname="Themis:URL";
+											}
+											if (strcasecmp(name,"name")==0) {
+												aname="Themis:name";
+											}
+											if (strcasecmp(name,"host")==0) {
+												aname="Themis:host";
+											}
+											if ((strcasecmp(name,"content-type")==0) || (strcasecmp(name,"mime-type")==0)) {
+												aname="Themis:mime_type";
+											}
+											if (strcasecmp(name,"path")==0) {
+												aname="Themis:path";
+											}
+											if (strcasecmp(name,"etag")==0) {
+												aname="Themis:etag";
+											}
+											if (strcasecmp(name,"last-modified")==0) {
+												aname="Themis:last-modified";
+											}
+											if (strcasecmp(name,"expires")==0) {
+												aname="Themis:expires";
+											}
+											if (strcasecmp(name,"content-md5")==0) {
+												aname="Themis:content-md5";
+											}
+											printf("writing \"%s\":%s\n",aname.String(),str.String());
+											object->WriteAttr(usertoken,aname.String(),type,(char*)str.String(),str.Length()+1);
+										}break;
+									}
+									
 								}
 								
 							}
-							
-						}
-
-				}
-				
-			} else
-				status=B_ERROR;
-			return status;
+	
+					}
+					
+				} else
+					status=B_ERROR;
+				return status;
+			}
+			
 		}
-		
 	}
 	return B_ERROR;
 }

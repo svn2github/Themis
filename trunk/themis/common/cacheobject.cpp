@@ -29,6 +29,7 @@ Project Start Date: October 18, 2000
 #include "cacheobject.h"
 #include <string.h>
 CacheObject::CacheObject(int32 token,const char *URL) {
+	lock=new BLocker(true);
 	id=token;
 	if (URL!=NULL) {
 	userlist=NULL;
@@ -57,6 +58,8 @@ CacheObject::~CacheObject() {
 		}
 	}
 	next=prev=NULL;
+	delete lock;
+	lock=NULL;
 }
 bool CacheObject::IsUsedBy(uint32 usertoken) {
 	bool found=false;

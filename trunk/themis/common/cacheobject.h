@@ -32,6 +32,7 @@ Project Start Date: October 18, 2000
 #include <SupportDefs.h>
 #include <Message.h>
 #include "cacheuser.h"
+#include <Locker.h>
 /*!
 \brief Object Oriented linked list representation of cached data.
 	The CacheObject class represents the actual cached file, whether it is on disk
@@ -53,6 +54,7 @@ class CacheObject {
 		CacheObject *next,*prev;
 		//! Finds the user object of a particular id if that user is accessing this object.
 		CacheUser *FindUser(uint32 usertoken);
+		BLocker *lock;
 	public:
 		//! The constructor.
 		CacheObject(int32 token,const char *URL);

@@ -36,6 +36,7 @@ Project Start Date: October 18, 2000
 #include <Path.h>
 #include <String.h>
 #include <fs_attr.h>
+#include <Autolock.h>
 DiskCacheObject::DiskCacheObject(int32 objecttoken, const char *URL)
 	:CacheObject(objecttoken,URL)
 {
@@ -171,18 +172,23 @@ ssize_t DiskCacheObject::Read(uint32 usertoken, void *buffer, size_t size)
 ssize_t DiskCacheObject::Write(uint32 usertoken, void *buffer, size_t size)
 {
 	ssize_t bytes=-1;
-	if (buffer==NULL)
-		return B_ERROR;
-	if (writelockowner!=NULL) {
-		if (writelockowner->Token()==usertoken) {
-			if (file==NULL) {
-				OpenFile();
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		if (buffer==NULL)
+			return B_ERROR;
+		if (writelockowner==NULL)
+			AcquireWriteLock(usertoken);
+		if (writelockowner!=NULL) {
+			if (writelockowner->Token()==usertoken) {
+				if (file==NULL) {
+					OpenFile();
+				}
+				file->Lock();
+				bytes=file->WriteAt(writelockowner->WritePosition(),buffer,size);
+				writelockowner->SetWritePosition(writelockowner->WritePosition()+bytes);
+				file->Sync();
+				file->Unlock();
 			}
-			file->Lock();
-			bytes=file->WriteAt(writelockowner->WritePosition(),buffer,size);
-			file->Sync();
-			writelockowner->SetWritePosition(writelockowner->WritePosition()+bytes);
-			file->Unlock();
 		}
 	}
 	return bytes;
@@ -191,88 +197,94 @@ BMessage *DiskCacheObject::GetInfo()
 {
 //	printf("DiskCacheObject: Getting object info.\n");
 	BMessage *attributes=new BMessage;
-	attributes->AddInt64("file_size",Size());
-	struct attr_info ai;
-	char attname[B_ATTR_NAME_LENGTH+1];
-	memset(attname,0,B_ATTR_NAME_LENGTH+1);
-	BNode node(&ref);
-	unsigned char *data=NULL;
-	BString aname;
-	node.Lock();
-	while (node.GetNextAttrName(attname)==B_OK) {
-//		printf("loop!\n");
-		node.GetAttrInfo(attname,&ai);
-		aname.Truncate(0);
-		if (data!=NULL)
-			delete data;
-		data=new unsigned char[ai.size+1];
-		memset(data,0,ai.size+1);
-		switch(ai.type) {
-			case B_INT32_TYPE:{
-			}break;
-
-			case B_STRING_TYPE:{
-				if (strcasecmp(attname,"Themis:URL")==0) {
-					aname="url";
-				}
-				if (strcasecmp(attname,"Themis:name")==0) {
-					aname="name";
-				}
-				if (strcasecmp(attname,"Themis:host")==0) {
-					aname="host";
-				}
-				if (strcasecmp(attname,"Themis:mime_type")==0) {
-					aname="mime-type";
-				}
-				if (strcasecmp(attname,"Themis:path")==0) {
-					aname="server-path";
-				}
-				if (strcasecmp(attname,"Themis:etag")==0) {
-					aname="etag";
-				}
-				if (strcasecmp(attname,"Themis:last-modified")==0) {
-					aname="last-modified";
-				}
-				if (strcasecmp(attname,"Themis:expires")==0) {
-					aname="expires";
-				}
-				if (strcasecmp(attname,"Themis:content-md5")==0) {
-					aname="content-md5";
-				}
-				printf("reading attribute %s (%ld)\n",attname,ai.size);
-				node.ReadAttr(attname,B_STRING_TYPE,0,data,ai.size);
-				attributes->AddString(aname.String(),(char*)data);
-			}break;
-
-			case B_INT64_TYPE:{
-				if (strcasecmp(attname,"Themis:content-length")==0) {
-					off_t clen=0;
-					node.ReadAttr(attname,B_INT64_TYPE,0,&clen,sizeof(clen));
-					attributes->AddInt64("content-length",clen);
-					clen=0;
-				}
-			}break;
-		}
-		delete data;
-		data=NULL;
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		attributes->AddInt64("file_size",Size());
+		struct attr_info ai;
+		char attname[B_ATTR_NAME_LENGTH+1];
 		memset(attname,0,B_ATTR_NAME_LENGTH+1);
+		BNode node(&ref);
+		unsigned char *data=NULL;
+		BString aname;
+		node.Lock();
+		while (node.GetNextAttrName(attname)==B_OK) {
+	//		printf("loop!\n");
+			node.GetAttrInfo(attname,&ai);
+			aname.Truncate(0);
+			if (data!=NULL)
+				delete data;
+			data=new unsigned char[ai.size+1];
+			memset(data,0,ai.size+1);
+			switch(ai.type) {
+				case B_INT32_TYPE:{
+				}break;
+	
+				case B_STRING_TYPE:{
+					if (strcasecmp(attname,"Themis:URL")==0) {
+						aname="url";
+					}
+					if (strcasecmp(attname,"Themis:name")==0) {
+						aname="name";
+					}
+					if (strcasecmp(attname,"Themis:host")==0) {
+						aname="host";
+					}
+					if (strcasecmp(attname,"Themis:mime_type")==0) {
+						aname="mime-type";
+					}
+					if (strcasecmp(attname,"Themis:path")==0) {
+						aname="server-path";
+					}
+					if (strcasecmp(attname,"Themis:etag")==0) {
+						aname="etag";
+					}
+					if (strcasecmp(attname,"Themis:last-modified")==0) {
+						aname="last-modified";
+					}
+					if (strcasecmp(attname,"Themis:expires")==0) {
+						aname="expires";
+					}
+					if (strcasecmp(attname,"Themis:content-md5")==0) {
+						aname="content-md5";
+					}
+					printf("reading attribute %s (%ld)\n",attname,ai.size);
+					node.ReadAttr(attname,B_STRING_TYPE,0,data,ai.size);
+					attributes->AddString(aname.String(),(char*)data);
+				}break;
+	
+				case B_INT64_TYPE:{
+					if (strcasecmp(attname,"Themis:content-length")==0) {
+						off_t clen=0;
+						node.ReadAttr(attname,B_INT64_TYPE,0,&clen,sizeof(clen));
+						attributes->AddInt64("content-length",clen);
+						clen=0;
+					}
+				}break;
+			}
+			delete data;
+			data=NULL;
+			memset(attname,0,B_ATTR_NAME_LENGTH+1);
+		}
+		node.Unlock();
+	//	attributes->PrintToStream();
 	}
-	node.Unlock();
-//	attributes->PrintToStream();
 	return attributes;
 }
 
 ssize_t DiskCacheObject::WriteAttr(uint32 usertoken, const char *attrname, type_code type,void *data,size_t size) 
 {
 	ssize_t bytes=0;
-	if (writelockowner!=NULL) {
-		if (writelockowner->Token()==usertoken){
-			if (file==NULL)
-				OpenFile();
-			BNode node(&ref);
-			node.Lock();
-			bytes=node.WriteAttr(attrname,type,0,data,size);
-			node.Unlock();
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		if (writelockowner!=NULL) {
+			if (writelockowner->Token()==usertoken){
+				if (file==NULL)
+					OpenFile();
+				BNode node(&ref);
+				node.Lock();
+				bytes=node.WriteAttr(attrname,type,0,data,size);
+				node.Unlock();
+			}
 		}
 	}
 	return bytes;
