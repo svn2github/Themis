@@ -1,18 +1,19 @@
-/*	LoadTest
-	Testing of how to load an HTML document
-	Will end up in the trash can (probably)
-
-	Mark Hellegers (M.H.Hellegers@stud.tue.nl)
-	01-07-2002
-
+/* HTMLParser implementation
+	See HTMLParser.h for some more information
 */
 
 #include <fstream>
 #include <string>
 #include <algorithm>
 #include <ctype.h>
+#include <stdio.h>
 
-#include "LoadTest.h"
+#include <Message.h>
+#include <DataIO.h>
+
+#include "HTMLParser.h"
+#include "commondefs.h"
+#include "plugman.h"
 
 #include "TDocument.h"
 #include "TElement.h"
@@ -22,7 +23,55 @@
 #include "TText.h"
 #include "TComment.h"
 
-HTMLParser	::	HTMLParser()	{
+
+HTMLParser * parser;
+BMessage ** appSettings_p;
+BMessage * appSettings;
+
+status_t Initialize( void * info )	{
+	
+	printf( "Calling Initialize...\n" );
+	
+	parser = NULL;
+	if ( info != NULL )	{
+		BMessage * message = (BMessage *) info;
+		if ( message->HasPointer( "settings_message_ptr" ) )	{
+			message->FindPointer( "settings_message_ptr", (void **) & appSettings_p );
+			appSettings = *appSettings_p;
+		}
+		parser = new HTMLParser( message );
+	}
+	else	{
+		parser = new HTMLParser();
+	}
+	
+	return B_OK;
+	
+}
+
+status_t Shutdown( bool now )	{
+	
+	delete parser;
+	
+	return B_OK;
+	
+}
+
+PlugClass * GetObject()	{
+	
+	return parser;
+	
+}
+
+HTMLParser	::	HTMLParser( BMessage * info )	:	BHandler( "HTMLParser" ), PlugClass( info )	{
+	
+}
+
+HTMLParser	::	~HTMLParser()	{
+	
+}
+
+void HTMLParser	::	reset()	{
 
 	mPos = 0;
 	mOldPos = 0;
@@ -31,10 +80,6 @@ HTMLParser	::	HTMLParser()	{
 	mTag = "";
 	mContent = "";
 	mCloseTag = false;
-	
-}
-
-HTMLParser	::	~HTMLParser()	{
 	
 }
 
@@ -2318,39 +2363,140 @@ void HTMLParser	::	normalTextTag( TElementShared aParent, bool aConserveSpaces, 
 
 }
 
-int main( int argc, char * argv[] )	{
+void HTMLParser	::	MessageReceived( BMessage * message )	{
 	
-	ifstream file;
+	message->PrintToStream();
+	
+}
 
-	if ( argc < 2 )	{
-		cout << "Please supply a document to load\n";
-		return 1;
-	}
-	else	{
-		file.open( argv[ 1 ] );
-	}
+bool HTMLParser	::	IsHandler()	{
+	
+	return false;
+	
+}
 
-	cout << "Loading document...\n";
-	string content;
-	char ch;
-	while ( file.get( ch ) )	{
-		content += ch;
-	}
-	cout << "Document loaded. " << content.size() << " characters\n";
-	cout << "Parsing file...\n";
+BHandler * HTMLParser	::	Handler()	{
 	
-	// Create a DOM document
-	TDocumentShared document( new TDocument() );
-	document->setSmartPointer( document );
+	return NULL;
 	
-	// Create a HTMLParser object
-	HTMLParser htmlParser;
-	htmlParser.setContent( content );
+}
 
-	htmlParser.startParsing( document );
+bool HTMLParser	::	IsPersistent()	{
 	
-	htmlParser.showDocument();
+	return true;
 	
-	return 0;
+}
+
+uint32 HTMLParser	::	PlugID()	{
+	
+	return 'html';
+	
+}
+
+char * HTMLParser	::	PlugName()	{
+	
+	return "HTML Parser";
+	
+}
+
+float HTMLParser	::	PlugVersion()	{
+	
+	return 0.0;
+	
+}
+
+void HTMLParser	::	Heartbeat()	{
+	
+}
+
+status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
+	
+	printf( "HTMLParser is receiving broadcast:\n" );
+	
+	int32 command = 0;
+	message->FindInt32( "command", &command );
+	
+	switch ( command )	{
+		case COMMAND_INFO_REQUEST:	{
+			printf( "COMMAND_INFO_REQUEST called\n" );
+			int32 replyto = 0;
+			message->FindInt32( "ReplyTo", &replyto );
+			switch( message->what )	{
+				case GetSupportedMIMEType:	{
+					if ( message->HasBool( "supportedmimetypes" ) )	{
+						BMessage types( SupportedMIMEType );
+						types.AddString( "mimetype", "text/html" );
+						types.AddInt32( "command", COMMAND_INFO );
+						PlugClass * plug = NULL;
+						if ( message->HasPointer( "ReplyToPointer" ) )	{
+							message->FindPointer( "ReplyToPointer", (void**) &plug );
+							if ( plug != NULL )	{
+								printf( "Replying to broadcast\n" );
+								plug->BroadcastReply( &types );
+							}
+						}
+						else	{	
+							BMessage container;
+							container.AddMessage( "message", &types );
+							//PlugMan->Broadcast( PlugID(), replyto, &container );
+						}
+					}
+					break;
+				}
+			}
+		}	
+		case COMMAND_INFO:	{
+			printf( "COMMAND_INFO called\n" );
+			// Get the pointer out
+			void * location = NULL;
+			message->FindPointer( "data_pointer", &location );
+			if ( location )	{
+				printf( "Got pointer\n" );
+				bool finished = false;
+				message->FindBool( "request_done", &finished );
+				if ( finished )	{
+					BPositionIO * pointer = (BPositionIO *) location;
+					pointer->Seek( 0, SEEK_SET );
+					char * buffer = new char[1000];
+					memset( buffer, 0, 1000 );
+					string content;
+					while ( pointer->Read( buffer, 999 ) )	{
+						content += buffer;
+					}
+	
+					// Create a DOM document
+					TDocumentShared document( new TDocument() );
+					document->setSmartPointer( document );
+					
+					// Reset to initial values
+					reset();
+
+					// Set the content and start parsing
+					setContent( content );
+					startParsing( document );
+					
+					showDocument();
+				}
+				else	{
+					printf( "More data to come...\n" );
+				}
+	
+				message->PrintToStream();
+				
+			}
+			break;
+		}
+		default:	{
+			message->PrintToStream();
+		}
+	}
+	
+	return B_OK;
+	
+}
+
+int32 HTMLParser	::	Type()	{
+	
+	return TARGET_PARSER;
 	
 }

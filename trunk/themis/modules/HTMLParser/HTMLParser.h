@@ -1,13 +1,17 @@
-/*	LoadTest header file
-	Define a class HTMLParser here
+/*	HTMLParser addon
+	Basically only testing at the moment
 	
 	Mark Hellegers (M.H.Hellegers@stud.tue.nl)
-	03-07-2002
-
+	03-09-2002
+	
 */
 
-#ifndef LOADTEST_H
-#define LOADTEST_H
+#ifndef HTMLPARSER_H
+#define HTMLPARSER_H
+
+#include <SupportDefs.h>
+#include <Handler.h>
+#include "plugclass.h"
 
 #include <string>
 
@@ -22,7 +26,11 @@ enum StringType	{
 	ATTR
 };
 
-class HTMLParser	{
+extern "C" __declspec( dllexport ) status_t Initialize( void * info = NULL );
+extern "C" __declspec( dllexport ) status_t Shutdown( bool now = false );
+extern "C" __declspec( dllexport ) PlugClass * GetObject();
+
+class HTMLParser	:	public BHandler, public PlugClass	{
 	
 	private:
 		unsigned int mPos;
@@ -123,13 +131,27 @@ class HTMLParser	{
 		void mapTag( TElementShared aParent );
 		void normalTextTag( TElementShared aParent, bool aConserveSpaces = false, bool aInsideAnchor = false );
 	
-	public:
-		HTMLParser();
-		~HTMLParser();
+		// Main functions
+		void reset();
 		void showTree( const TNodeShared aNode, int aSpacing );
 		void showDocument();
 		void setContent( string aContent );
 		void startParsing( TDocumentShared aDocument );
+	
+	public:
+		HTMLParser( BMessage * info = NULL );
+		~HTMLParser();
+		void MessageReceived( BMessage * message );
+		bool IsHandler();
+		BHandler * Handler();
+		bool IsPersistent();
+		uint32 PlugID();
+		char * PlugName();
+		float PlugVersion();
+		void Heartbeat();
+		status_t ReceiveBroadcast( BMessage * message );
+		int32 Type();
+		
 };
 
 class ReadException	{
