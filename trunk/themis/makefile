@@ -82,6 +82,7 @@ FRAMEWORKSOURCES= \
 	framework/tcpmanager.cpp \
 	framework/base64.cpp \
 	framework/protocol_plugin.cpp \
+	framework/UrlEntry.cpp \
 	framework/UrlHandler.cpp
 RENDERERSOURCES= \
 	Renderer/BitmapElement.cpp \
