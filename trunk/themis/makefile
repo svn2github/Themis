@@ -38,6 +38,7 @@ DOMLIBRARY_DEPENDS_DIR=$(BASE_LIBRARY_DEPENDS_DIR)DOM/
 TESTPLUG_DEPENDS_DIR=$(BASE_DEPENDS_DIR)testplug/
 HTMLPARSER_DEPENDS_DIR=$(BASE_DEPENDS_DIR)HTMLParser/
 IMAGEH_DEPENDS_DIR=$(BASE_ADDONS_DEPENDS_DIR)imageh/
+RENDERER_DEPENDS_DIR=$(BASE_ADDONS_DEPENDS_DIR)Renderer/
 
 #object directories
 BASE_OBJECT_DIR=objects/
@@ -49,6 +50,8 @@ DOMLIBRARY_OBJECT_DIR=$(BASE_LIBRARY_OBJECT_DIR)DOM/
 TESTPLUG_OBJECT_DIR=$(BASE_OBJECT_DIR)testplug/
 HTMLPARSER_OBJECT_DIR=$(BASE_OBJECT_DIR)HTMLParser/
 IMAGEH_OBJECT_DIR=$(BASE_ADDONS_OBJECT_DIR)imageh/
+RENDERER_OBJECT_DIR=$(BASE_ADDONS_OBJECT_DIR)Renderer/
+
 #source files
 FRAMEWORKSOURCES= \
 	framework/main.cpp \
@@ -73,7 +76,10 @@ FRAMEWORKSOURCES= \
 	framework/netbuffer.cpp \
 	framework/tcpmanager.cpp \
 	framework/base64.cpp
-#	framework/winview.cpp
+RENDERERSOURCES= \
+	Renderer/UIElement.cpp \
+	Renderer/TRenderView.cpp \
+	Renderer/TextElement.cpp	
 COMMONSOURCES= \
 	common/plugclass.cpp \
 	common/tcplayer.cpp \
@@ -152,7 +158,11 @@ DOMVIEWSOURCES= \
 IMAGEHSOURCES= \
 	imageh/imageman.cpp \
 	imageh/image.cpp
-	
+FILEPROTOCOLSOURCES= \
+	FileProtocol/FileProtocol.cpp
+MESSAGEVIEWERSOURCES= \
+	MsgViewer/MsgView.cpp \
+	MsgViewer/MsgViewer.cpp
 #make install directories as necessary
 ifeq "$(shell if [ -d $(BASE_ADDON_INSTALL_DIR) ] ; then echo 1 ; else mkdir -p $(BASE_ADDON_INSTALL_DIR) ; echo 0 ; fi)" "0"
 endif
@@ -168,6 +178,15 @@ endif
 ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR) ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR) ; echo 0 ; fi)" "0"
 endif
 #add a new line similar to those below for each plug-in/add-on
+#renderer add-on object directory
+ifeq "$(shell if [ -d $(RENDERER_OBJECT_DIR) ] ; then echo 1 ; else mkdir -p $(RENDERER_OBJECT_DIR) ; echo 0 ; fi)" "0"
+endif
+#file protocol add-on object directory
+ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)FileProtocol/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)FileProtocol/ ; echo 0 ; fi)" "0"
+endif
+#message viewer add-on object directory
+ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)MsgViewer/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)MsgViewer/ ; echo 0 ; fi)" "0"
+endif
 #http add-on object directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)http/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)http/ ; echo 0 ; fi)" "0"
 endif
@@ -207,6 +226,15 @@ endif
 ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR) ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR) ; echo 0 ; fi)" "0"
 endif
 #add a new line similar to those below for each plug-in/add-on
+#renderer add-on depends directory
+ifeq "$(shell if [ -d $(RENDERER_DEPENDS_DIR) ] ; then echo 1 ; else mkdir -p $(RENDERER_DEPENDS_DIR) ; echo 0 ; fi)" "0"
+endif
+#file protocol add-on depends directory
+ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)FileProtocol/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)FileProtocol/ ; echo 0 ; fi)" "0"
+endif
+#message viewer add-on depends directory
+ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)MsgViewer/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)MsgViewer/ ; echo 0 ; fi)" "0"
+endif
 #http add-on depends directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)http/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)http/ ; echo 0 ; fi)" "0"
 endif
@@ -315,7 +343,7 @@ endif
 #			testplug
 all: framework addons
 	@echo "Themis application and add-ons built successfully."
-addons: httpaddon cacheaddon htmlpaddon 
+addons: httpaddon cacheaddon htmlpaddon renderer fileaddon
 	@echo "All add-ons built successfully."
 clean: 
 	@rm -rf objects depends Themis
@@ -419,6 +447,55 @@ $(COMMON_DEPENDS_DIR)%.d: common/%.cpp
 $(COMMON_OBJECT_DIR)%.o: common/%.cpp $(COMMON_DEPENDS_DIR)%.d
 	@echo "Common: Updating object file $(notdir $@)"
 	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
+
+#renderer
+renderer: $(BASE_ADDON_INSTALL_DIR)renderer.so
+$(BASE_ADDON_INSTALL_DIR)renderer.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(RENDERERSOURCES),$(BASE_ADDONS_OBJECT_DIR)Renderer/$(notdir $(file:.cpp=.o)))
+	@echo "Linking renderer..."
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)renderer.so $(foreach file,$(notdir $(RENDERERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)/Renderer/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=renderer.so -L ./ -L $(BELIBRARIES)  $(STDLIBS) -lstdc++.r4 _APP_
+	@mimeset -F $(BASE_ADDON_INSTALL_DIR)renderer.so
+	@echo "Renderer plug-in compiled and linked successfully."
+$(RENDERER_DEPENDS_DIR)%.d: $(BASE_ADDON_SOURCE_DIR)Renderer/%.cpp 
+	@echo "Renderer: Updating dependency file $(notdir $@)"
+	@set -e;VAR1=$(shell echo "$(RENDERER_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(RENDERER_DEPENDS_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/add-ons\/Renderer\/\1.o depends\/add-ons\/Renderer\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
+$(RENDERER_OBJECT_DIR)%.o: $(BASE_ADDON_SOURCE_DIR)Renderer/%.cpp $(BASE_ADDONS_DEPENDS_DIR)Renderer/%.d
+	@echo "Renderer: Updating object file $(notdir $@)"
+	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
+ifneq ($(MAKECMDGOALS),clean)
+-include $(foreach file,$(BASE_ADDON_SOURCE_DIR)$(RENDERERSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)Renderer/$(notdir $(file)))
+endif
+#file protocol addon
+fileaddon: $(BASE_ADDON_INSTALL_DIR)file_protocol.so
+$(BASE_ADDON_INSTALL_DIR)file_protocol.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(FILEPROTOCOLSOURCES),$(BASE_ADDONS_OBJECT_DIR)FileProtocol/$(notdir $(file:.cpp=.o)))
+	@echo "Linking file protocol..."
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)file_protocol.so $(foreach file,$(notdir $(FILEPROTOCOLSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)FileProtocol/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=file_protocol.so -L ./ -L $(BELIBRARIES)  $(STDLIBS) -lstdc++.r4 _APP_
+	@mimeset -F $(BASE_ADDON_INSTALL_DIR)file_protocol.so
+	@echo "File Protocol plug-in compiled and linked successfully."
+$(BASE_ADDONS_DEPENDS_DIR)FileProtocol/%.d: $(BASE_ADDON_SOURCE_DIR)FileProtocol/%.cpp 
+	@echo "File Protocol: Updating dependency file $(notdir $@)"
+	@set -e;VAR1=$(shell echo "$(FILEPROTOCOL_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/add-ons\/FileProtocol\/\1.o depends\/add-ons\/FileProtocol\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
+$(BASE_ADDONS_OBJECT_DIR)FileProtocol/%.o: $(BASE_ADDON_SOURCE_DIR)FileProtocol/%.cpp $(BASE_ADDONS_DEPENDS_DIR)FileProtocol/%.d
+	@echo "File Protocol: Updating object file $(notdir $@)"
+	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
+ifneq ($(MAKECMDGOALS),clean)
+-include $(foreach file,$(BASE_ADDON_SOURCE_DIR)$(FILEPROTOCOLSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)FileProtocol/$(notdir $(file)))
+endif
+#message viewer addon
+msgvaddon: $(BASE_ADDON_INSTALL_DIR)message_viewer.so
+$(BASE_ADDON_INSTALL_DIR)message_viewer.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(MESSAGEVIEWERSOURCES),$(BASE_ADDONS_OBJECT_DIR)MsgViewer/$(notdir $(file:.cpp=.o)))
+	@echo "Linking Message Viewer..."
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)message_viewer.so $(foreach file,$(notdir $(MESSAGEVIEWERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)MsgViewer/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=file_protocol.so -L ./ -L $(BELIBRARIES)  $(STDLIBS) -lstdc++.r4 _APP_
+	@mimeset -F $(BASE_ADDON_INSTALL_DIR)message_viewer.so
+	@echo "Message Viewer plug-in compiled and linked successfully."
+$(BASE_ADDONS_DEPENDS_DIR)MsgViewer/%.d: $(BASE_ADDON_SOURCE_DIR)MsgViewer/%.cpp 
+	@echo "Message Viewer: Updating dependency file $(notdir $@)"
+	@set -e;VAR1=$(shell echo "$(FILEPROTOCOL_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/add-ons\/MsgViewer\/\1.o depends\/add-ons\/MsgViewer\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
+$(BASE_ADDONS_OBJECT_DIR)MsgViewer/%.o: $(BASE_ADDON_SOURCE_DIR)MsgViewer/%.cpp $(BASE_ADDONS_DEPENDS_DIR)MsgViewer/%.d
+	@echo "Message Viewer: Updating object file $(notdir $@)"
+	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
+ifneq ($(MAKECMDGOALS),clean)
+-include $(foreach file,$(BASE_ADDON_SOURCE_DIR)$(MESSAGEVIEWERSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)MsgViewer/$(notdir $(file)))
+endif
 
 #cache add-on
 cacheaddon: $(BASE_ADDON_INSTALL_DIR)cache.so
