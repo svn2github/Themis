@@ -31,6 +31,9 @@
 #ifndef COUNTER_HPP
 #define COUNTER_HPP
 
+// DOM Style headers
+#include "DOMStyleSupport.hpp"
+
 /// Counter implementation of the DOM CSS.
 
 /**
@@ -40,6 +43,16 @@
 */
 
 class Counter	{
+
+	private:
+		/// The identifier of the counter.
+		TDOMString mIdentifier;
+		
+		/// The list style of the counter.
+		TDOMString mListStyle;
+		
+		/// The separator of the counter.
+		TDOMString mSeparator;
 
 	public:
 		/// Constructor of the Counter class.
@@ -51,8 +64,8 @@ class Counter	{
 			@param aListStyle		The right of the rect.
 			@param aSeparator	The bottom of the rect.
 		*/
-		Counter( TDOMString aIdentifier, TDOMString aListStyle,
-					  TDOMString aSeparator );
+		Counter( const TDOMString aIdentifier, const TDOMString aListStyle,
+					  const TDOMString aSeparator );
 
 		/// Destructor of the Counter class.
 		/**
@@ -62,13 +75,13 @@ class Counter	{
 		~Counter();
 		
 		/// A function to get the identifier of the counter.
-		CSSPrimitiveValuePtr getIdentifier();
+		TDOMString getIdentifier() const;
 
 		/// A function to get the list style of the counter.
-		CSSPrimitiveValuePtr getListStyle();
+		TDOMString getListStyle() const;
 
 		/// A function to get the separator of the counter.
-		CSSPrimitiveValuePtr getSeparator();
+		TDOMString getSeparator() const;
 
 };
 

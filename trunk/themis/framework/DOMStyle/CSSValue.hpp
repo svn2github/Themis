@@ -31,6 +31,9 @@
 #ifndef CSSVALUE_HPP
 #define CSSVALUE_HPP
 
+// DOM Style headers
+#include "DOMStyleSupport.hpp"
+
 /// CSSValue implementation of the DOM CSS.
 
 /**
@@ -41,6 +44,12 @@
 
 class CSSValue	{
 	
+	private:
+		/// The css text of the value
+		TDOMString mCssText;
+		/// The type of the value.
+		unsigned short mCssValueType;
+
 	public:
 		enum	{
 			/// The value is inherited and cssText contains "inherit"
@@ -94,7 +103,7 @@ class CSSValue	{
 		void setCssText( const TDOMString aCssText );
 
 		/// A function to get the type of the value.
-		void getCssValueType();
+		unsigned short getCssValueType() const;
 };
 
 #endif
