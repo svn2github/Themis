@@ -35,6 +35,8 @@ Project Start Date: October 18, 2000
 #include <TranslationUtils.h>
 #include <DataIO.h>
 #include "cacheplug.h"
+#include <File.h>
+#include <NodeInfo.h>
 #define PlugIDdef 'test'
 #define PlugNamedef "Test Plug-in"
 #define PlugVersdef 1.0
@@ -162,7 +164,18 @@ status_t testplug::ReceiveBroadcast(BMessage *msg){
 						char *data=new char[size+1];
 						memset(data,0,size+1);
 						CacheSys->Read(cache_user_token,cache_object_token,data,size);
-						printf("The data as seen by the Test Plug-in is:\n%s\n",data);
+						printf("[Test Plug-in] Dumping the data to file \"test.data\".\n");
+						BFile *file=new BFile("test.data",B_CREATE_FILE|B_ERASE_FILE|B_READ_WRITE);
+						file->Write(data,size);
+						file->Sync();
+						BNodeInfo *ni=new BNodeInfo(file);
+						const char *mime=NULL;
+						msg->FindString("mimetype",&mime);
+						if (mime==NULL)
+							mime="application/octet-stream\0";
+						ni->SetType(mime);
+						delete ni;
+						delete file;
 						memset(data,0,size+1);
 						delete data;
 						data=NULL;
