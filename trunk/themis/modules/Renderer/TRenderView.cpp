@@ -14,14 +14,19 @@
 
 TRenderView::TRenderView(BRect frame) : BView(frame,"God",B_FOLLOW_ALL_SIDES,B_WILL_DRAW | B_FRAME_EVENTS) , UIElement(frame)
 {	
-	SetViewColor(255,255,255);
-	SetLowColor(RgbFor(255,255,255));
-	SetHighColor(0,0,0);
+	//The default High and Low Color for Themis
+	SetViewColor(T_DEFAULT_BACKGROUND);
+	SetLowColor(SetColorSelf(T_DEFAULT_BACKGROUND));
+	SetHighColor(SetColorSelf(T_DEFAULT_HIGH_COLOR));
 	
 	currentMouseOver = this;
 	parentView 		 = this;
 	
-	UIElement::frame = Bounds();
+	UIElement::frame = frame;
+	
+	printf("TRENDERVIEW: Original frame = ");
+	frame.PrintToStream();
+	printf("\n");
 	
 	//====================== ADD WHAT YOU WANT FOR TESTING=========================
 //	rgb_color color = MakeRgbFromHexa("#EB2323");
@@ -47,16 +52,8 @@ void TRenderView::Draw(BRect updateRect)
 	//Let's update the layers that need to
 	if (nextLayer)
 		for (int32 i=0; i<nextLayer->CountItems(); i++)
-			if (((UIElement *)nextLayer->ItemAt(i))->frame.Intersects(updateRect)){
-				printf("TRENDERVIEW: Calling EDraw()\n");
+			if (((UIElement *)nextLayer->ItemAt(i))->frame.Intersects(updateRect))
 				((UIElement *)nextLayer->ItemAt(i))->EDraw();
-			}
-			else {
-				printf("TRENDERVIEW: updateRect = ");
-				updateRect.PrintToStream();
-				printf("TRENDERVIEW: layer_frame = ");
-				((UIElement *)nextLayer->ItemAt(i))->frame.PrintToStream();
-			}
 
 	/*Many drawing above (mostly when drawing BBitmaps) are done asynchronously for speed
 	 (DrawBitmapAsync() for instance) so we got to Sync() for safety. */
@@ -73,6 +70,7 @@ void TRenderView::FrameResized(float width, float height)
 	UIElement::frame = Bounds();
 	printf(" to: ");
 	frame.PrintToStream();
+	printf("\n");
 	
 	//Calling EFrameResized with RELATIVES VALUES : THE RELATIVE VARIATION ! ! ! !
 	EFrameResized(frame.Width()/oldRect.Width(),frame.Height()/oldRect.Height());

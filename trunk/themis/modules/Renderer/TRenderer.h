@@ -4,6 +4,9 @@
 	
 	This code falls under the General Themis License.
 */
+#include <vector>
+using namespace std;
+
 #include <List.h>
 
 #include "cacheplug.h"
@@ -51,7 +54,7 @@ class Renderer : public PlugClass
 
 	private:
 				BList		UITrees;
-				BList 		DOMTrees;
+				vector 		<TDocumentPtr> DOMTrees;
 				
 				void		BroadcastPointer(TDocumentPtr document);
 				void		PreProcess(int32 document_number, int32 view_number, 

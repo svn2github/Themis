@@ -4,6 +4,8 @@
 	
 	This code falls under the General Themis License.
 */
+#include "Globals.h"
+#include "Utils.h"
 #include "UIElement.h"
 
 #ifndef _TABLE_ELEMENT_H_

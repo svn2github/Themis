@@ -16,7 +16,7 @@ void Renderer::BroadcastPointer(TDocumentPtr document)
 	
 	//Add the DOM & the view to the list of trees.
 	UITrees.AddItem(view);
-	DOMTrees.AddItem(&document);
+	DOMTrees.push_back(document);
 	
 	//Do the Broadcasting
 	BMessage message(RENDERVIEW_POINTER);
@@ -24,21 +24,18 @@ void Renderer::BroadcastPointer(TDocumentPtr document)
 	message.AddString("type","TRView");
 	message.AddPointer("data_pointer",view);
 	message.AddInt32("view_number",UITrees.CountItems()-1);
-	message.AddInt32("document_number",DOMTrees.CountItems()-1);
+	message.AddInt32("document_number",DOMTrees.size()-1);
 	Broadcast(MS_TARGET_ALL,&message);
 }
 
 void Renderer::PreProcess(int32 document_number, int32 view_number, BRect view_frame, BMessenger userInterface)
 {
-	void *buffer = NULL;
-	buffer = DOMTrees.ItemAt(document_number);
-	TDocumentPtr *typer = (TDocumentPtr *)buffer;
-	TDocumentPtr document = *typer;
+	TDocumentPtr document = DOMTrees[document_number];
 	
 	TRenderView *view = (TRenderView *)UITrees.ItemAt(view_number);
 	
 	//Set the correct frame
-	view->frame = view_frame;
+	view->ResizeTo(view_frame.Width(),view_frame.Height());
 	view->userInterface = userInterface;
 	
 	//Start processing the DOM Tree
@@ -71,7 +68,7 @@ void Renderer::Process( TNodePtr node, UIElement *element)
 					BRect 			frame = element->frame.InsetBySelf(2,2);
 					UIElement		*uiChild = NULL;
 					const char		*tagName = elementChild->getTagName().c_str();
-printf("RENDERER: Element %s is ",tagName);
+printf("RENDERER: Element %s has %d attributes and is ",tagName,length);
 					//Build the correct UIElement.
 /*---->TITLE*/		if (strcmp(tagName,"TITLE") == 0){
 printf("supported partially\n");
@@ -83,17 +80,19 @@ printf("supported partially\n");
 /*---->TABLE*/		else if (strcmp(tagName,"TABLE") == 0){
 printf("supported partially\n");
 						//align the frame
-						float width  = atoi(elementChild->getAttribute("WIDTH").c_str());
-						float height = atoi(elementChild->getAttribute("HEIGHT").c_str());
-	
-						const char *align  = elementChild->getAttribute("ALIGN").c_str();
-						const char *valign = elementChild->getAttribute("VALIGN").c_str();
+						float width  = DefaultIfNull(atoi,elementChild->getAttribute("WIDTH").c_str(),(float)0);
+						float height = DefaultIfNull(atoi,elementChild->getAttribute("HEIGHT").c_str(),(float)0);
 						
-						if (!align)
-							align = DEFAULT_TABLE_ALIGN;
-						if (!valign)
-							valign = DEFAULT_TABLE_VALIGN;
+						const char *align  = DefaultIfNull(elementChild->getAttribute("ALIGN").c_str(),DEFAULT_TABLE_ALIGN);
+						const char *valign = DefaultIfNull(elementChild->getAttribute("VALIGN").c_str(),DEFAULT_TABLE_VALIGN);
 						
+
+						printf("RENDERER: string WIDTH  = %s\n",elementChild->getAttribute("WIDTH").c_str());
+						printf("RENDERER: string HEIGHT = %s\n",elementChild->getAttribute("HEIGHT").c_str());
+						printf("RENDERER: string ALIGN  = %s\n",elementChild->getAttribute("ALIGN").c_str());
+						printf("RENDERER: string VALIGN = %s\n",elementChild->getAttribute("VALIGN").c_str());
+						printf("RENDERER: BRect changed from ");
+						frame.PrintToStream();
 						if (strcmp(align,"RIGHT") == 0)
 							frame.left    = frame.right - width;
 						else if (strcmp(align,"LEFT") == 0)
@@ -112,12 +111,15 @@ printf("supported partially\n");
 							frame.top     = center.y - height/2;
 							frame.bottom  = center.y + height/2;						
 						}
+						printf(" to ");
+						frame.PrintToStream();
+						printf("\n");
 						//Create the UIElement
 						uiChild = new TableElement(frame,
 										atoi(elementChild->getAttribute("CELLPADDING").c_str()),
 										atoi(elementChild->getAttribute("CELLSPACING").c_str()),
-										MakeRgbFromHexa(elementChild->getAttribute("BGCOLOR").c_str()),
-										MakeRgbFromHexa(elementChild->getAttribute("BORDERCOLOR").c_str()));
+										DefaultIfNull(MakeRgbFromHexa,elementChild->getAttribute("BGCOLOR").c_str(),SetColorSelf(T_DEFAULT_BACKGROUND)),
+										DefaultIfNull(MakeRgbFromHexa,elementChild->getAttribute("BORDERCOLOR").c_str(),SetColorSelf(T_DEFAULT_HIGH_COLOR)));
 					}
 /*---->TH*/			else if (strcmp(tagName,"TH") == 0){
 printf("supported partially\n");
@@ -150,8 +152,12 @@ printf("suppported partially\n");
 					}
 /*---->HEAD*/		else if (strcmp(tagName,"HEAD") == 0)
 printf("ignored\n");
-/*---->BODY*/		else if (strcmp(tagName,"BODY") == 0)
-printf("ignored\n");	
+/*---->BODY*/		else if (strcmp(tagName,"BODY") == 0){
+printf("partially supported\n");	
+					//	elementChild->getAttribute("BGCOLOR")
+					//	elementChild->getAttribute("TEXT")
+					//	elementChild->getAttribute("LINK")
+					}
 /*---->default:*/ 	else
 printf("unsupported yet\n");	
 				

@@ -2,8 +2,10 @@
 
 #include "TableElement.h"
 #include "Utils.h"
+
 #include <String.h> //temporary
 #include <stdio.h>  //temporary
+
 TableElement::TableElement(BRect frame, int cellpadding, int cellspacing, 
 						   rgb_color bgcolor, rgb_color bordercolor) 
 			 : UIElement(frame)
@@ -28,8 +30,13 @@ void TableElement::EDraw()
 
 	BString s = "TABLE: ";
 	s << columns  << " columns, " << rows << "rows";
-//	parentView->DrawString(s.String(),BPoint(15,15));
 	printf("%s\n",s.String());
+	printf("border_color = {%d,%d,%d}\n",bordercolor.red,bordercolor.green,bordercolor.blue);
+
+	//FillRect with the Background color and SetLowColor
+	parentView->SetLowColor(lowcolor);
+	if (!SameColor(lowcolor,T_DEFAULT_BACKGROUND))	
+		parentView->FillRect(frame);
 		
 	parentView->BeginLineArray(4+rows+columns);
 	

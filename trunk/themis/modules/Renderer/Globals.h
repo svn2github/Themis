@@ -16,6 +16,11 @@
 #define RGB_RED						255,0,0
 #define RGB_GREEN					0,255,0
 #define RGB_BLUE					0,0,255
+#define RGB_YELLOW_WHITE			255,255,230
+
+//Defaults colors
+#define T_DEFAULT_BACKGROUND   		RGB_YELLOW_WHITE
+#define T_DEFAULT_HIGH_COLOR	 	RGB_BLACK
 
 //Communication with the UI
 #define	R_WELCOME					'rwoe'
@@ -30,6 +35,5 @@
 	#define HIGH_RED				"HR"
 	#define HIGH_GREEN				"HG"
 	#define HIGH_BLUE				"HB"
-
 
 #endif

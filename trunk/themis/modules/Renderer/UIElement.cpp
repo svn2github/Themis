@@ -35,7 +35,7 @@ void UIElement::EAddChild(UIElement *element)
 	
 	//We assume here that we will never meet a RGB(0,1,0)
 	//(I'd say it's fairly true.)
-	if (SameColor(element->lowcolor,RgbFor(0,1,0)))
+	if (SameColor(element->lowcolor,SetColorSelf(0,1,0)))
 		element->lowcolor = lowcolor;
 		
 	//If the Element inherit from BeOS UI Element,add it to BeOS BViews' tree.

@@ -44,8 +44,7 @@ Renderer::~Renderer()
 	for (int32 i=0; i<UITrees.CountItems(); i++)
 		delete (TRenderView *)(UITrees.RemoveItem((int32)0));
 		
-	for (int32 i=0; i<UITrees.CountItems(); i++)
-		delete (TDocumentPtr *)(DOMTrees.RemoveItem((int32)0));	
+	DOMTrees.clear();
 
 }
 
@@ -75,6 +74,7 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 							break;
 						TDocumentPtr *typer = (TDocumentPtr *)buffer;
 						document = *typer;
+						
 						BroadcastPointer(document);
 					}
 					}break;
