@@ -65,11 +65,22 @@ unsigned short CSSPrimitiveValue	::	getPrimitiveType() const	{
 void CSSPrimitiveValue	::	setFloatValue( unsigned short aUnitType,
 															  float aFloatValue )	{
 
-	mFloatValue = aFloatValue;
+	// Keeping it simple for now.
+	if ( mPrimitiveType == aUnitType )	{
+		mFloatValue = aFloatValue;
+	}
+	else	{
+		throw TDOMException( INVALID_ACCESS_ERR );
+	}
 
 }
 
 float CSSPrimitiveValue	::	getFloatValue( unsigned short aUnitType ) const	{
+	
+	// Keeping it simple for now.
+	if ( mPrimitiveType != aUnitType )	{
+		throw TDOMException( INVALID_ACCESS_ERR );
+	}
 	
 	return mFloatValue;
 	
@@ -78,11 +89,22 @@ float CSSPrimitiveValue	::	getFloatValue( unsigned short aUnitType ) const	{
 void CSSPrimitiveValue	::	setStringValue( unsigned short aStringType,
 															   TDOMString aStringValue )	{
 
-	mStringValue = aStringValue;
+	// Keeping it simple for now.
+	if ( mPrimitiveType == aUnitType )	{
+		mStringValue = aStringValue;
+	}
+	else	{
+		throw TDOMException( INVALID_ACCESS_ERR );
+	}
 
 }
 
 TDOMString CSSPrimitiveValue	:: getStringValue()	{
+
+	// Keeping it simple for now.
+	if ( mPrimitiveType != aUnitType )	{
+		throw TDOMException( INVALID_ACCESS_ERR );
+	}
 
 	return mStringValue;
 
@@ -90,17 +112,32 @@ TDOMString CSSPrimitiveValue	:: getStringValue()	{
 
 CounterPtr CSSPrimitiveValue	::	getCounterValue()	{
 
+	// Keeping it simple for now.
+	if ( mPrimitiveType != aUnitType )	{
+		throw TDOMException( INVALID_ACCESS_ERR );
+	}
+
 	return mCounterValue;
 
 }
 
 RectPtr CSSPrimitiveValue	::	getRectValue()	{
 
+	// Keeping it simple for now.
+	if ( mPrimitiveType != aUnitType )	{
+		throw TDOMException( INVALID_ACCESS_ERR );
+	}
+
 	return mRectValue;
 	
 }
 
 RGBColorPtr CSSPrimitiveValue	::	getRGBColorValue()	{
+
+	// Keeping it simple for now.
+	if ( mPrimitiveType != aUnitType )	{
+		throw TDOMException( INVALID_ACCESS_ERR );
+	}
 
 	return mRGBColorValue;
 	

@@ -31,6 +31,17 @@
 #ifndef CSSSTYLEDECLARATION_HPP
 #define CSSSTYLEDECLARATION_HPP
 
+// DOM Style headers
+#include "DOMStyleSupport.hpp"
+
+// Declarations
+class CSSValue;
+class CSSRule;
+
+// Typedefs
+typedef boost::shared_ptr<CSSValue> CSSValuePtr;
+typedef boost::shared_ptr<CSSRule> CSSRulePtr;
+
 /// CSSStyleDeclaration implementation of the DOM CSS.
 
 /**
@@ -42,6 +53,9 @@
 */
 
 class CSSStyleDeclaration	{
+
+	private:
+		TDOMString mCssText;
 
 	public:
 		/// Constructor of the CSSStyleDeclaration class.
