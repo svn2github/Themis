@@ -38,9 +38,9 @@ Project Start Date: October 18, 2000
 #include <Message.h>
 #include <Messenger.h>
 #include <MessageRunner.h>
-cacheman::cacheman()
+cacheman::cacheman(BMessage *info)
          :BHandler("cache_manager"),
-          PlugClass()
+          PlugClass(info)
  {
   if (FindCacheDir()==B_OK)
    printf("Found or created the cache directory.\n");
@@ -364,7 +364,7 @@ status_t cacheman::CheckMIME()
  }
 status_t cacheman::CheckIndices()
  {
-  status_t stat;
+//  status_t stat;
   BVolumeRoster *volr=new BVolumeRoster;
   BVolume vol;
   dirent *ent;

@@ -38,6 +38,7 @@ Include *both* plugclass.h *and* plugclass.cpp in your plugin!
 #include <View.h>
 #include <Looper.h>
 #include <Handler.h>
+#include <Message.h>
 #include <Entry.h>
 #include <OS.h>
 #define ProtocolPlugin 'pplg'
@@ -51,7 +52,8 @@ class PlugClass
  {
   private:
   public:
-   PlugClass();
+   PlugClass(BMessage *info=NULL);
+   BMessage *InitInfo;
    virtual ~PlugClass();
    
    volatile int8 Cancel;

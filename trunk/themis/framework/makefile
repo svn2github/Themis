@@ -39,7 +39,8 @@ SRCS=  \
 	plugman.cpp \
 	../common/plugclass.cpp \
 	winview.cpp \
-	htmlparser.cpp
+	htmlparser.cpp \
+	infowin.cpp
 
 #	specify the resource files to use
 #	full path or a relative path to the resource file can be used.

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2000 Z3R0 One. All Rights Reserved.
+Copyright (c) 2000 Z3R0 One. All Rights Reserved. 
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -27,41 +27,8 @@ Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
 
-#ifndef _plugman
-#define _plugman
-#define PlugManVersion 2.0
+#include "infowin.h"
 
-//namespace PlugMan {
-#include <AppKit.h>
-#include <Looper.h>
-#include <KernelKit.h>
-#include <SupportKit.h>
-#include <StorageKit.h>
-
-#include "../common/plugstruct.h"
-#include "../common/protocol_plugin.h"
-
-class plugman: public BLooper
- {
-  private:
-   plugst *head,*tail;
-   void AddPlug(plugst *plug);
-  public:
-   BDirectory *appaddondir,*useraddondir;
-   plugman(entry_ref &appdirref);
-   ~plugman();
-   void MessageReceived(BMessage *msg);
-   bool QuitRequested();
-   void *FindPlugin(uint32 which);
-   status_t UnloadAllPlugins(bool clean=true);
-   status_t UnloadPlugin(uint32 which);
-   status_t LoadPlugin(uint32 which);
-   status_t LoadPluginFor(const char *mimetype);
-   status_t ReloadPlugin(uint32 which);
-   status_t BuildRoster(bool clean=true);
- };
-
-
-//};
-
-#endif
+infowin::infowin(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspace)
+		:BWindow(frame,title, type, flags, wspace) {
+}

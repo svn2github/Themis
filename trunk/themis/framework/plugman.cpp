@@ -125,6 +125,7 @@ plugman::plugman(entry_ref &appdirref):BLooper("plug-in manager",B_LOW_PRIORITY)
    printf("%s\n",useraddonpath.Path());
    if (!useraddondir->Contains("Themis",B_DIRECTORY_NODE))
     {
+     printf("Themis doesn't exist as a folder at above path\n");
     if ((stat=appaddondir->CreateDirectory("Themis",NULL))!=B_OK)
      {
       BString err; 
@@ -257,9 +258,10 @@ void plugman::MessageReceived(BMessage *msg)
         ni.SetTo(NULL);
         if (strstr(mtype,"executable")==NULL)
          continue;//all add-on's have an executable mimetype
+        plugst *nuplug=new plugst;
+        nuplug->ref=ref;
         ent->GetPath(&path);
         printf("Attempting to load plugin at %s\n",path.Path());
-        plugst *nuplug=new plugst;
         nuplug->sysid=load_add_on(path.Path());
         if (nuplug->sysid<=B_ERROR)
          {
@@ -294,11 +296,18 @@ void plugman::MessageReceived(BMessage *msg)
         if ((stat=get_image_symbol(nuplug->sysid,"GetObject",B_SYMBOL_TYPE_TEXT,(void**)&(nuplug->GetObject)))==B_OK)
          {
           printf("success.\n");
-          strcpy(nuplug->path,path.Path());
           nuplug->pobj=(*nuplug->GetObject)();
+          if (FindPlugin(nuplug->pobj->PlugID())!=NULL)
+           {
+            printf("plug-in already loaded.\n");
+            unload_add_on(nuplug->sysid);
+            delete nuplug;
+            continue;
+           }
+          strcpy(nuplug->path,path.Path());
           nuplug->plugid=nuplug->pobj->PlugID();
           printf("Loaded \"%s\" (%c%c%c%c) V. %1.2f\n",nuplug->pobj->PlugName(),
-          nuplug->pobj->PlugID()>>24,nuplug->pobj->PlugID()>>16,nuplug->pobj->PlugID()>>8,nuplug->pobj->PlugID(),
+          (char)nuplug->pobj->PlugID()>>24,(char)nuplug->pobj->PlugID()>>16,(char)nuplug->pobj->PlugID()>>8,(char)nuplug->pobj->PlugID(),
           nuplug->pobj->PlugVersion());
           if (!nuplug->pobj->IsPersistant())
            {
@@ -322,7 +331,7 @@ void plugman::MessageReceived(BMessage *msg)
      BLooper::MessageReceived(msg);
    }
  }
-void *plugman::FindPlugin(int32 which)
+void *plugman::FindPlugin(uint32 which)
  {
   plugst *tmp=head;
   while(tmp!=NULL)
@@ -378,17 +387,21 @@ status_t plugman::UnloadAllPlugins(bool clean)
    }
   return B_OK;
  }
-   status_t plugman::UnloadPlugin(int32 which)
+   status_t plugman::UnloadPlugin(uint32 which)
     {
+     return B_OK;
     }
-   status_t plugman::LoadPlugin(int32 which)
+   status_t plugman::LoadPlugin(uint32 which)
     {
+     return B_OK;
     }
    status_t plugman::LoadPluginFor(const char *mimetype)
     {
+     return B_OK;
     }
-   status_t plugman::ReloadPlugin(int32 which)
+   status_t plugman::ReloadPlugin(uint32 which)
     {
+     return B_OK;
     }
 status_t plugman::BuildRoster(bool clean)
  {
@@ -410,4 +423,5 @@ status_t plugman::BuildRoster(bool clean)
   msgr->SendMessage(msg);
   delete msgr;
   delete msg;
+  return B_OK;
  }

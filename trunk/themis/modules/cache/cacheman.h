@@ -38,6 +38,7 @@ Project Start Date: October 18, 2000
 #include <StorageKit.h>
 #include <SupportDefs.h>
 #include <Handler.h>
+#include <Message.h>
 #include "plugclass.h"
 #include "cache_defines.h"
 
@@ -46,7 +47,7 @@ class cacheman:public BHandler, public PlugClass
   private:
    BPath cachepath;
   public:
-   cacheman();
+   cacheman(BMessage *info=NULL);
    ~cacheman();
    void MessageReceived(BMessage *msg);
    uint32 PlugID(){return PlugIDdef;};

@@ -34,8 +34,9 @@ Include *both* plugclass.h *and* plugclass.cpp in your plugin!
 #include "plugclass.h"
 
 
-PlugClass::PlugClass()
+PlugClass::PlugClass(BMessage *info)
  {
+  InitInfo=info;
   thread=0;
  }
 

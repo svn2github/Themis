@@ -38,14 +38,6 @@ Win::Win(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspa
   View->Parser=Parser;
   AddChild(View);
  }
-Win::Win(BRect frame,const char *title, window_look look,window_feel feel,uint32 flags,uint32 wspace)
-    :BWindow(frame,title,look,feel,flags,wspace)
- {
- }
-Win::Win(BMessage *archive)
-    :BWindow(archive)
- {
- }
 bool Win::QuitRequested()
  {
   BMessenger *msgr=new BMessenger(NULL,Parser,NULL);

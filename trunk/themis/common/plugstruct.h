@@ -29,8 +29,9 @@ Project Start Date: October 18, 2000
 
 #ifndef _plugstruct
 #define _plugstruct
-#include <AppKit.h>
+//#include <Application.h>
 #include <KernelKit.h>
+#include <Entry.h>
 #include "plugclass.h"
 
 struct plugst
@@ -43,6 +44,7 @@ struct plugst
   //is the plugin currently in memory
   PlugClass *pobj;//plugin object
   PlugClass *(*GetObject)(void);
+  entry_ref ref;
   char path[B_PATH_NAME_LENGTH+B_FILE_NAME_LENGTH];
   plugst *next;
   plugst *prev;
