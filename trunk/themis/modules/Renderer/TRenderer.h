@@ -52,8 +52,8 @@ class Renderer : public PlugClass
 				BList		UITrees;
 				BList 		DOMTrees;
 				
-				void		PreProcess( TDocumentShared document);
-				void		Process( TNodeShared node, UIElement *view);				
+				void		PreProcess( TDocumentPtr document);
+				void		Process( TNodePtr node, UIElement *view);				
 };
 
 #endif

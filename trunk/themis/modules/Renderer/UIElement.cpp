@@ -48,7 +48,7 @@ void UIElement::EAddChild(UIElement *element)
 /*This is done considering that overlapments do not exist on this 
   planet which is of course true. ;-]]	
   Note: This is THE (you see big letters I hope !) func to OPTIMIZE.
-  it's called 20 times a sec. Should we make the nextLayer by default
+  it's called a billion times a nano-sec. Should we make the nextLayer by default
   constructed and therefore remove the test if (nextLayer) ?*/
 UIElement *UIElement::FindElementFor(BPoint point)
 {	

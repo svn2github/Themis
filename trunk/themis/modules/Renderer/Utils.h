@@ -4,6 +4,10 @@
 	
 	This code falls under the General Themis License.
 */
+#include <Point.h>
+#include <Rect.h>
+#include <Screen.h>
+
 #ifndef _UTILS_H_
 #define _UTILS_H_
 
@@ -31,6 +35,12 @@ inline bool SameColor(rgb_color one, rgb_color two)
 			one.blue == two.blue);
 	
 }
+/*frame is the BRect you wish to center into the into rect according to align[W|H].*/
+void CenterRectInRect(BRect *frame, BRect into, bool alignW, bool alignH); 
+
+/*returns the center BPoint of the frame*/												
+BPoint GetRectCenter(BRect frame);		
+
 #endif
 
 

@@ -44,7 +44,7 @@ Renderer::~Renderer()
 		delete (TRenderView *)(UITrees.RemoveItem((int32)0));
 		
 	for (int32 i=0; i<UITrees.CountItems(); i++)
-		delete (TDocumentShared *)(DOMTrees.RemoveItem((int32)0));	
+		delete (TDocumentPtr *)(DOMTrees.RemoveItem((int32)0));	
 
 }
 
@@ -68,11 +68,11 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 					BString type = message->FindString("type");
 					if (type == "dom"){
 						void *buffer = NULL;
-						TDocumentShared document;
+						TDocumentPtr document;
 						message->FindPointer("data_pointer", &buffer);
 						if (!buffer)
 							break;
-						TDocumentShared *typer = (TDocumentShared *)buffer;
+						TDocumentPtr *typer = (TDocumentPtr *)buffer;
 						document = *typer;
 						PreProcess(document);
 					}

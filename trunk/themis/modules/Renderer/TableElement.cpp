@@ -1,6 +1,7 @@
 /* See header for more info */
 
 #include "TableElement.h"
+#include "Utils.h"
 
 TableElement::TableElement(BRect frame, int cellpadding, int cellspacing, 
 						   rgb_color bgcolor, rgb_color bordercolor) 

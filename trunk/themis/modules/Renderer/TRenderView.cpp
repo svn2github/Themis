@@ -24,11 +24,11 @@ TRenderView::TRenderView(BRect frame) : BView(frame,"God",B_FOLLOW_ALL_SIDES,B_W
 	UIElement::frame = Bounds();
 	
 	//====================== ADD WHAT YOU WANT FOR TESTING=========================
-	rgb_color color = MakeRgbFromHexa("#EB2323");
-	ColorRectElement *rect = new ColorRectElement(BRect(25,25,220,90),color);
-	EAddChild(rect);
-	TextLinkElement *el = new TextLinkElement(BRect(30,30,190,60),TEXT,(BFont *)be_plain_font,HighColor());
-	rect->EAddChild(el);
+//	rgb_color color = MakeRgbFromHexa("#EB2323");
+//	ColorRectElement *rect = new ColorRectElement(BRect(25,25,220,90),color);
+//	EAddChild(rect);
+//	TextLinkElement *el = new TextLinkElement(BRect(30,30,190,60),TEXT,(BFont *)be_plain_font,HighColor());
+//	rect->EAddChild(el);
 	//=============================================================================
 }
 

@@ -2,6 +2,7 @@
 #include <Screen.h>
 
 //General
+#include "HtmlDefaults.h"
 #include "TRenderer.h"
 #include "TRenderWindow.h"
 #include "Utils.h"
@@ -15,7 +16,7 @@
 	  what's the title even if tha page is still empty.
 	_ Add the TRenderView and teh DOM to the lists of trees.
 	_ Process the TDocumentShared fields.*/
-void Renderer::PreProcess(TDocumentShared document)
+void Renderer::PreProcess(TDocumentPtr document)
 {
 	TRenderView *view = new TRenderView(BScreen().Frame());
 
@@ -40,35 +41,67 @@ void Renderer::PreProcess(TDocumentShared document)
 }
 
 //That's the BIG one. Don't be scared and full it! Now !
-void Renderer::Process( TNodeShared node, UIElement *element)
+void Renderer::Process( TNodePtr node, UIElement *element)
 {
-	TNodeListShared children = node->getChildNodes();
+	TNodeListPtr children = node->getChildNodes();
 	int 			length	 = 0;
 	 
 	if ((length = children->getLength()) != 0){
 		for ( int i = length - 1; i >= 0; i--){
-			TNodeShared child = make_shared(children->item(i));
+			TNodePtr child = children->item(i);
 			
 			//a switch of around a trillion line. That's all. ;-]
 			switch(child->getNodeType()){
 				case ELEMENT_NODE:{
-					TElementShared 	elementChild = shared_static_cast <TElement> (child);
-					BRect 			frame;
+					TElementPtr 	elementChild = shared_static_cast <TElement> (child);
+					//Assume that the new element is inside it's parent of at least 2 pixels
+					BRect 			frame = element->frame.InsetBySelf(2,2);
 					UIElement		*uiChild = NULL;
+					const char		*tagName = elementChild->getTagName().c_str();
 					//Build the correct UIElement.
-/*---->TITLE*/		if (strcmp(elementChild->getTagName().c_str(),"TITLE") == 0){
+/*---->TITLE*/		if (strcmp(tagName,"TITLE") == 0){
 						//TODO:We found the page's title and should set it as the View's name
 						//which view should tell the window to show that title
 					}
-/*---->TABLE*/		else if (strcmp(elementChild->getTagName().c_str(),"TABLE") == 0){
-						//TODO:Determine frame
+/*---->TABLE*/		else if (strcmp(tagName,"TABLE") == 0){
+						//align the frame
+						float width  = atoi(elementChild->getAttribute("WIDTH").c_str());
+						float height = atoi(elementChild->getAttribute("HEIGHT").c_str());
+	
+						const char *align  = elementChild->getAttribute("ALIGN").c_str();
+						const char *valign = elementChild->getAttribute("VALIGN").c_str();
+						
+						if (!align)
+							align = DEFAULT_TABLE_ALIGN;
+						if (!valign)
+							valign = DEFAULT_TABLE_VALIGN;
+						
+						if (strcmp(align,"RIGHT") == 0)
+							frame.left    = frame.right - width;
+						else if (strcmp(align,"LEFT") == 0)
+							frame.right   = frame.left + width;
+						else { //CENTER
+							BPoint center = GetRectCenter(frame);
+							frame.left    = center.x - width/2;
+							frame.right   = center.x + width/2;
+						}
+						if (strcmp(valign,"TOP") == 0)
+							frame.bottom  = frame.top + height; 
+						else if (strcmp(valign,"BOTTOM") == 0) 
+							frame.top	  = frame.bottom - height; 	
+						else { //CENTER
+							BPoint center = GetRectCenter(frame);
+							frame.top     = center.y - height/2;
+							frame.bottom  = center.y + height/2;						
+						}
+						
 						uiChild = new TableElement(frame,
 										atoi(elementChild->getAttribute("CELLPADDING").c_str()),
 										atoi(elementChild->getAttribute("CELLSPACING").c_str()),
 										MakeRgbFromHexa(elementChild->getAttribute("BGCOLOR").c_str()),
 										MakeRgbFromHexa(elementChild->getAttribute("BORDERCOLOR").c_str()));
 					}
-/*---->INPUT*/		else if (strcmp(elementChild->getTagName().c_str(),"INPUT") == 0){
+/*---->INPUT*/		else if (strcmp(tagName,"INPUT") == 0){
 						if(strcmp(elementChild->getAttribute("TYPE").c_str(),"SUBMIT") == 0){
 							//TODO: Determine frame. How ? It's not always said !
 							uiChild = new ButtonElement(
