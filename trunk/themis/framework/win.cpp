@@ -1358,32 +1358,17 @@ status_t Win::ReceiveBroadcast(BMessage *message)
 					// attach the view to the current tab
 					// this is a temporary solution only....
 					Lock();
+					
+					renderview->ResizeTo(
+						Bounds().Width(),
+						( tabview->TabAt( tabview->Selection() )->View() )->Bounds().Height() );
+					
 					tabview->TabAt( tabview->Selection() )->SetView( renderview );
+					
+					tabview->Select( tabview->Selection() );
+					
 					Unlock();
 					
-					/////////////
-					
-					/* send the renderer the welcome message */
-					BMessage* welcomemsg = new BMessage( R_WELCOME );
-					// add the view-rectangle
-					BView* view = ( tabview->TabAt( tabview->Selection() ) )->View();
-					welcomemsg->AddRect( "rect", view->Bounds() );
-					// add the messenger
-					BMessenger* mymsgr = new BMessenger( this );
-					welcomemsg->AddPointer( "messenger", mymsgr );
-					// add the view_number and document_number again
-					welcomemsg->AddInt32( "view_number", message->FindInt32( "view_number" ) );
-					welcomemsg->AddInt32( "document_number", message->FindInt32( "document_number" ) );
-					
-					// broadcast the message to the renderer
-					welcomemsg->AddInt32( "command", COMMAND_INFO );
-					
-					printf( "  R_WELCOME message follows\n" );
-					welcomemsg->PrintToStream();
-					fflush( stdout );
-					
-					Broadcast( MS_TARGET_RENDERER, welcomemsg );
-										
 					break;
 				}
 				case ReturnedData :
