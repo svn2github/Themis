@@ -28,8 +28,6 @@ BMessage * appSettings;
 
 status_t Initialize( void * info )	{
 	
-	printf( "Calling Initialize of MsgViewer...\n" );
-	
 	viewer = NULL;
 	if ( info != NULL )	{
 		BMessage * message = (BMessage *) info;
@@ -37,11 +35,9 @@ status_t Initialize( void * info )	{
 			message->FindPointer( "settings_message_ptr", (void **) & appSettings_p );
 			appSettings = *appSettings_p;
 		}
-		printf( "Constructing object\n" );
 		viewer = new MsgViewer( message );
 	}
 	else	{
-		printf( "Constructing object clean\n" );
 		viewer = new MsgViewer();
 	}
 	
@@ -51,7 +47,6 @@ status_t Initialize( void * info )	{
 
 status_t Shutdown( bool now )	{
 	
-	printf( "Shutting down MsgViewer\n" );
 	delete viewer;
 	
 	return B_OK;
@@ -80,7 +75,7 @@ MsgViewer	::	~MsgViewer()	{
 
 void MsgViewer	::	MessageReceived( BMessage * message )	{
 	
-	message->PrintToStream();
+	BHandler::MessageReceived( message );
 	
 }
 
@@ -116,7 +111,7 @@ char * MsgViewer	::	PlugName()	{
 
 float MsgViewer	::	PlugVersion()	{
 	
-	return 0.1;
+	return 0.2;
 	
 }
 
@@ -126,8 +121,6 @@ void MsgViewer	::	Heartbeat()	{
 
 status_t MsgViewer	::	ReceiveBroadcast( BMessage * message )	{
 
-	printf( "MsgViewer is receiving broadcast:\n" );
-	
 	int32 command = 0;
 	message->FindInt32( "command", &command );
 	
