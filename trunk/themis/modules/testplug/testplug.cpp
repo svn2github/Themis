@@ -47,7 +47,7 @@ testplug *TP;
 status_t Initialize(void *info) {
   AppSettings=NULL;
 	TP=NULL;
-	CachePlug *cobj;
+//	CachePlug *cobj;
   if (info!=NULL) {
 	  
 	BMessage *imsg=(BMessage *)info;
@@ -108,9 +108,11 @@ void testplug::Heartbeat(){
 }
 status_t testplug::BroadcastReply(BMessage *msg)
 {
+	return 0;
 }
 uint32 testplug::BroadcastTarget()
 {
+	return 0;
 }
 
 status_t testplug::ReceiveBroadcast(BMessage *msg){
