@@ -58,7 +58,7 @@ PlugClass * GetObject()	{
 }
 
 DOMWindow	::	DOMWindow( TDocumentShared document )	:
-							BWindow( BRect( 100, 100, 400, 400 ), "DOMWindow", B_TITLED_WINDOW,
+							BWindow( BRect( 100, 100, 450, 400 ), "DOMWindow", B_TITLED_WINDOW,
 								B_CURRENT_WORKSPACE )	{
 
 	BRect backRect = Bounds();
@@ -87,7 +87,7 @@ DOMWindow	::	DOMWindow( TDocumentShared document )	:
 
 	scrollTree->SetViewColor( ui_color( B_PANEL_BACKGROUND_COLOR ) );
 
-	listRect.left += 105;
+	listRect.left += 155;
 	
 	BRect textRect = listRect;
 	textRect.bottom -= 160;

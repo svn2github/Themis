@@ -911,13 +911,11 @@ string HTMLParser	::	getString( bool aConserveSpaces )	{
 		}
 		case '=' :	{
 			result = getAttrValue();
-			cout << result << endl;
 			mStringType = ATTRVALUE;
 			break;
 		}
 		default :	{
 			result = getAttribute();
-			cout << result << endl;
 			mStringType = ATTR;
 		}
 	}
