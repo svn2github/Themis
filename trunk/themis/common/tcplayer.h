@@ -78,8 +78,8 @@ struct connection {
 	uint32 last_trans_time;//last transaction time
 	uint32 time_to_live;
 	volatile uint8 open;
-#ifdef USEOPENSSL
 	bool usessl;
+#ifdef USEOPENSSL
 //	#ifndef BONE_VERSION
 	BIO *sslbio;
 //	#endif
