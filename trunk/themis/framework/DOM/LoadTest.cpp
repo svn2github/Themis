@@ -146,6 +146,12 @@ string HTMLParser	::	getText( bool conserveSpaces = true )	{
 					last = mContent[mPos];
 				}
 			}
+			else	{
+				if ( mContent[mPos] == '\t' && last != ' ' )	{
+					result += ' ';
+					last = ' ';
+				}
+			}
 		}
 		else	{
 			result += mContent[mPos];
@@ -322,11 +328,26 @@ void HTMLParser	::	bodyTag( TElementShared parent )	{
 						 	headingTag( element );
 					}
 					else	{
-						// Not a known tag
-						cout << "unknown tag found!!!\n";
-						
-						// Ignore it and go to the next one
-						getNextTag();
+						if ( !mTag.compare( "pre" ) )	{
+							preTag( element );
+						}
+						else	{
+							if ( !mTag.compare( "hr" ) )	{
+								hrTag( element );
+							}
+							else	{
+								if ( !mTag.compare( "blockquote" ) )	{
+									blockquoteTag( element );
+								}
+								else	{
+									// Not a known tag
+									cout << "unknown tag found!!!\n";
+									
+									// Ignore it and go to the next one
+									getNextTag();
+								}
+							}
+						}
 					}
 				}
 			}
@@ -413,6 +434,81 @@ void HTMLParser	::	headingTag( TElementShared parent )	{
 	}
 
 	cout << "Text is:" << endl << heading << endl;
+	
+}
+
+void HTMLParser	::	preTag( TElementShared parent )	{
+
+	// Name is already recognized in parent tag
+	cout << "pre tag found\n";
+
+	// Add to parent
+	TElementShared element = mDocument->createElement( "pre" );
+	parent->appendChild( element );
+	
+	bool insidePre = true;
+	
+	string text;
+	
+	while ( insidePre )	{
+		
+		text += getText();
+		
+		getNextTag();
+		if ( !isStartTag() )	{
+			if ( !mTag.compare( "pre" ) )	{
+				cout << "pre closing tag found\n";
+				insidePre = false;
+				getNextTag();
+			}
+		}
+	}
+
+	cout << "Text is:" << endl << text << endl;
+	
+}
+
+void HTMLParser	::	hrTag( TElementShared parent )	{
+
+	// Name is already recognized in parent tag
+	cout << "hr tag found\n";
+
+	// Add to parent
+	TElementShared element = mDocument->createElement( "hr" );
+	parent->appendChild( element );
+	
+	getNextTag();
+	
+}
+
+void HTMLParser	::	blockquoteTag( TElementShared parent )	{
+
+	// Name is already recognized in parent tag
+	cout << "blockquote tag found\n";
+
+	// Add to parent
+	TElementShared element = mDocument->createElement( "blockquote" );
+	parent->appendChild( element );
+	
+	bool insideBlockquote = true;
+	
+	string text;
+	
+	while ( insideBlockquote )	{
+		
+		text += getText( false );
+		
+		getNextTag();
+		if ( !isStartTag() )	{
+			if ( !mTag.compare( "blockquote" ) )	{
+				cout << "blockquote closing tag found\n";
+				insideBlockquote = false;
+				getNextTag();
+			}
+		}
+	}
+
+	cout << "Text is:" << endl << text << endl;
 	
 }
 
