@@ -33,6 +33,25 @@
 
 // DOM Style headers
 #include "CSSRule.hpp"
+#include "DOMStyleSupport.hpp"
+
+// Standard C++ headers
+#include <vector>
+
+// Declarations used
+class CSSStyleSheet;
+class CSSRule;
+class CSSRuleList;
+class MediaList;
+
+// Typedefs used
+typedef boost::shared_ptr<CSSRule> CSSRulePtr;
+typedef boost::shared_ptr<CSSRuleList> CSSRuleListPtr;
+typedef boost::shared_ptr<CSSStyleSheet> CSSStyleSheetPtr;
+typedef boost::shared_ptr<MediaList> MediaListPtr;
+
+// Namespaces used;
+using namespace std;
 
 /// CSSMediaRule implementation of the DOM CSS.
 
@@ -42,7 +61,13 @@
 	http://www.w3.org/TR/2000/REC-DOM-Level-2-Style-20001113/css.html
 */
 
+
 class CSSMediaRule	:	public CSSRule	{
+
+	private:
+		vector<CSSRulePtr> mCssRuleList;
+		CSSRuleListPtr mCssRules;
+		MediaListPtr mMedia;
 
 	public:
 		/// Constructor of the CSSMediaRule class.
@@ -53,11 +78,11 @@ class CSSMediaRule	:	public CSSRule	{
 			
 			@param	aParentStyleSheet	The parent style sheet.
 			@param	aParentRule			The parent rule.
-			@param	aMediaList				The list of media types.
+			@param	aMedia					The list of media types.
 			@param	aCssRules				The list of css rules.
 		*/
 		CSSMediaRule( CSSStyleSheetPtr aParentStyleSheet, CSSRulePtr aParentRule,
-							   MediaListPtr aMediaList, CSSRuleListPtr aCssRules );
+							   MediaListPtr aMedia, CSSRuleListPtr aCssRules );
 		
 		/// Destructor of the CSSMediaRule class.
 		/**
@@ -66,11 +91,29 @@ class CSSMediaRule	:	public CSSRule	{
 		*/
 		~CSSMediaRule();
 
-		/// A function to get the media list of the media rule.
-		MediaListPtr getMediaList();
+		/// A function to get the media of the media rule.
+		MediaListPtr getMedia() const;
 
 		/// A function to get the css rule list of the media rule.
-		CSSRuleListPtr getMediaList();
+		CSSRuleListPtr getCssRules() const;
+
+		/// A function to add a new rule.
+		/**
+			This function inserts a the rule specified by the first parameter at the
+			index specified by the second parameter.
+			
+			@param	aRule		The parsable rule text to insert.
+			@param	aIndex	The index in the media rule set to insert the rule at.
+
+			@exception	HIERARCHY_REQUEST_ERR
+								Thrown if the rule can not be inserted
+								at this point in the style sheet.
+			@exception	NO_MODIFICATION_ALLOWED_ERR
+								Thrown if the rule is readonly.
+			@exception	INDEX_SIZE_ERR
+								Thrown if the specified index is not a valid insertion point.
+		*/
+		unsigned long insertRule( const CSSRulePtr aRule, unsigned long aIndex );
 		
 		/// A function to add a new rule.
 		/**

@@ -646,6 +646,10 @@ $(BASE_ADDON_INSTALL_DIR)html_parser.so: domlib $(COMMONOBJ) $(foreach file,$(HT
 	@echo "HTML Parser add-on is now linked. Doing mimeset."
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)html_parser.so
 	@echo "HTML Parser plug-in compiled and linked successfully."
+	@mkdir -p /boot/home/config/settings/Themis/dtd
+	@cp modules/HTMLParser/HTML.3.2.Final.DTD /boot/home/config/settings/Themis/dtd/
+	@cp modules/HTMLParser/HTML.4.0.Transitional.DTD /boot/home/config/settings/Themis/dtd/
+	@echo "HTML Parser DTD's installed."
 	
 htmlparserdepends: $(foreach file,$(HTMLPARSERSOURCES),$(BASE_ADDON_SOURCE_DIR)$(file)) common/plugman.cpp common/plugclass.cpp $(COMMON_DEPENDS_DIR)plugman.d $(COMMON_DEPENDS_DIR)plugclass.d\
 					$(foreach file,$(BASE_ADDON_SOURCE_DIR)$(HTMLPARSERSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)HTMLParser/$(notdir $(file)))

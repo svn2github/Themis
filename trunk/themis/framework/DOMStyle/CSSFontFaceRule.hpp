@@ -34,6 +34,12 @@
 // DOM Style headers
 #include "CSSRule.hpp"
 
+// Declarations used
+class CSSStyleDeclaration;
+
+// Typedefs used
+typedef boost::shared_ptr<CSSStyleDeclaration> CSSStyleDeclarationPtr;
+
 /// CSSFontFaceRule implementation of the DOM CSS.
 
 /**
@@ -43,6 +49,9 @@
 */
 
 class CSSFontFaceRule	:	public CSSRule	{
+	
+	private:
+		CSSStyleDeclarationPtr mStyle;
 
 	public:
 		/// Constructor of the CSSFontFaceRule class.
@@ -65,7 +74,7 @@ class CSSFontFaceRule	:	public CSSRule	{
 		~CSSFontFaceRule();
 
 		/// A function to get the declaration block of the rule.
-		CSSStyleDeclarationPtr getStyle();
+		CSSStyleDeclarationPtr getStyle() const;
 
 };
 

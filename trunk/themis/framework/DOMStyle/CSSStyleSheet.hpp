@@ -59,6 +59,8 @@ class CSSStyleSheet	:	public StyleSheet	{
 	private:
 		/// The owner rule.
 		CSSRulePtr mOwnerRule;
+		vector<CSSRulePtr> mCssRuleList;
+		CSSRuleListPtr mCssRules;
 
 	public:
 		/// Constructor of the CSSStyleSheet class.
@@ -92,6 +94,26 @@ class CSSStyleSheet	:	public StyleSheet	{
 		/// A function to get all the rules in the stylesheet.
 		CSSRuleListPtr getCssRules() const;
 		
+		/// A function to insert a rule.
+		/**
+			This function inserts a new rule in the stylesheet.
+			The new rule becomes part of the cascade.
+			
+			@param aRule	The new rule to insert.
+			@param aIndex	The index to insert the new rule at.
+									If the index is equal to the number of rules in the stylesheet,
+									the rule is appended to the list of rules.
+			
+			@exception	HIERARCHY_REQUEST_ERR	Thrown if the rule can not be inserted
+																		at the specified index.
+			@exception	INDEX_SIZE_ERR	Thrown if the specified index is not a valid
+														insertion point.
+			@exception	NO_MODIFICATION_ALLOWED_ERR
+								Thrown if the style sheet is readonly.
+
+		*/
+		unsigned long insertRule( const CSSRulePtr aRule, unsigned long aIndex );
+
 		/// A function to insert a rule.
 		/**
 			This function inserts a new rule in the stylesheet.

@@ -34,6 +34,12 @@
 // DOM Style headers
 #include "CSSRule.hpp"
 
+// Declarations used
+class CSSStyleDeclaration;
+
+// Typedefs used
+typedef boost::shared_ptr<CSSStyleDeclaration> CSSStyleDeclarationPtr;
+
 /// CSSPageRule implementation of the DOM CSS.
 
 /**
@@ -43,6 +49,10 @@
 */
 
 class CSSPageRule	:	public CSSRule	{
+	
+	private:
+		CSSStyleDeclarationPtr mStyle;
+		TDOMString mSelectorText;
 
 	public:
 		/// Constructor of the CSSPageRule class.
@@ -87,7 +97,7 @@ class CSSPageRule	:	public CSSRule	{
 		void setSelectorText( const TDOMString aSelectorText );
 		
 		/// A function to get the declaration block of the rule.
-		CSSStyleDeclarationPtr getStyle();
+		CSSStyleDeclarationPtr getStyle() const;
 
 };
 

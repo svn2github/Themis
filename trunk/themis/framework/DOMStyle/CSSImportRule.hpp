@@ -34,6 +34,16 @@
 // DOM Style headers
 #include "CSSRule.hpp"
 
+// Declarations used
+class CSSStyleSheet;
+class MediaList;
+class CSSRule;
+
+// Typedefs used
+typedef boost::shared_ptr<CSSStyleSheet> CSSStyleSheetPtr;
+typedef boost::shared_ptr<MediaList> MediaListPtr;
+typedef boost::shared_ptr<CSSRule> CSSRulePtr;
+
 /// CSSImportRule implementation of the DOM CSS.
 
 /**
@@ -43,6 +53,11 @@
 */
 
 class CSSImportRule	:	public CSSRule	{
+
+	private:
+		TDOMString mHref;
+		MediaListPtr mMediaList;
+		CSSStyleSheetPtr mStyleSheet;
 
 	public:
 		/// Constructor of the CSSImportRule class.
@@ -72,7 +87,7 @@ class CSSImportRule	:	public CSSRule	{
 		TDOMString getHref() const;
 
 		/// A function to get the media list of the import rule.
-		MediaListPtr getMediaList();
+		MediaListPtr getMediaList() const;
 
 		/// A function to get the style sheet of the import rule.
 		/**
@@ -80,7 +95,7 @@ class CSSImportRule	:	public CSSRule	{
 			It is null if the stylesheet has not been imported yet or if
 			the style sheet is for an unsupported media type.
 		*/
-		CSSStyleSheetPtr getStyleSheet();
+		CSSStyleSheetPtr getStyleSheet() const;
 		
 };
 

@@ -34,6 +34,14 @@
 // DOM Style headers
 #include "CSSRule.hpp"
 
+// Declarations used
+class CSSStyleSheet;
+class CSSRule;
+
+// Typedefs used
+typedef boost::shared_ptr<CSSStyleSheet> CSSStyleSheetPtr;
+typedef boost::shared_ptr<CSSRule> CSSRulePtr;
+
 /// CSSCharsetRule implementation of the DOM CSS.
 
 /**
@@ -43,6 +51,9 @@
 */
 
 class CSSCharsetRule	:	public CSSRule	{
+
+	private:
+		TDOMString mEncoding;
 
 	public:
 		/// Constructor of the CSSCharsetRule class.
@@ -81,7 +92,7 @@ class CSSCharsetRule	:	public CSSRule	{
 								Thrown if the parameter represents a different type of rule
 								than the current one.
 		*/
-		void setCssText( const TDOMString aCssText );
+		void setEncoding( const TDOMString aEncoding );
 
 };
 

@@ -25,55 +25,57 @@
 	
 	Original Author: 	Mark Hellegers (M.H.Hellegers@stud.tue.nl)
 	Project Start Date: October 18, 2000
-	Class Implementation Start Date: March 07, 2004
+	Class Implementation Start Date: March 20, 2004
 */
 
 /*
-	CSSStyleSheet implementation.
-	See CSSStyleSheet.hpp for more information.
+	CSSMediaRule implementation.
+	See CSSMediaRule.hpp for more information.
 */
 
 // Standard C headers
 #include <stdio.h>
 
 // DOM Style headers
-#include "CSSStyleSheet.hpp"
-#include "CSSRule.hpp"
+#include "CSSMediaRule.hpp"
 #include "CSSRuleList.hpp"
+#include "DOMStyleSupport.hpp"
 
 // DOM Core headers
 #include "TDOMException.h"
 
-CSSStyleSheet	::	CSSStyleSheet( CSSRulePtr aOwnerRule )
-						:	StyleSheet( "text/css", TNodePtr(), StyleSheetPtr(), "", "",
-											 MediaListPtr() )	{
+CSSMediaRule	::	CSSMediaRule( CSSStyleSheetPtr aParentStyleSheet,
+												   CSSRulePtr aParentRule,
+												   MediaListPtr aMedia,
+												   CSSRuleListPtr aCssRules )
+						:	CSSRule( aParentStyleSheet, aParentRule,
+									  	  MEDIA_RULE, "" )	{
 
-	printf( "Creating CSSStyleSheet\n" );
-	
-	mOwnerRule = aOwnerRule;
-	
+	printf( "Creating CSSMediaRule\n" );
+
 	mCssRuleList = vector<CSSRulePtr>();
 	mCssRules = CSSRuleListPtr( new CSSRuleList( &mCssRuleList ) );
+
+	mMedia = aMedia;
+}
+
+CSSMediaRule	::	~CSSMediaRule()	{
 	
 }
 
-CSSStyleSheet	::	~CSSStyleSheet()	{
+MediaListPtr CSSMediaRule	::	getMedia()	const	{
+	
+	return mMedia;
 	
 }
 
-CSSRulePtr CSSStyleSheet	::	getOwnerRule() const	{
-
-	return mOwnerRule;
-	
-}
-
-CSSRuleListPtr CSSStyleSheet	::	getCssRules()	const	{
+CSSRuleListPtr CSSMediaRule	::	getCssRules()	const	{
 	
 	return mCssRules;
 	
 }
 
-unsigned long CSSStyleSheet	::	insertRule( const CSSRulePtr aRule,
+unsigned long CSSMediaRule	::	insertRule( const CSSRulePtr aRule,
 																unsigned long aIndex )	{
 
 	if ( aIndex > mCssRuleList.size() )	{
@@ -90,14 +92,14 @@ unsigned long CSSStyleSheet	::	insertRule( const CSSRulePtr aRule,
 
 }
 
-unsigned long CSSStyleSheet	::	insertRule( const TDOMString aRule,
+unsigned long CSSMediaRule	::	insertRule( const TDOMString aRule,
 																unsigned long aIndex )	{
 	// Don't like this function. Leaving it alone.
 	return 0;
 
 }
 
-void CSSStyleSheet	::	deleteRule( unsigned long aIndex )	{
+void CSSMediaRule	::	deleteRule( unsigned long aIndex )	{
 	
 	if ( aIndex > mCssRuleList.size() )	{
 		throw TDOMException( INDEX_SIZE_ERR );
