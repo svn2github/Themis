@@ -1441,26 +1441,26 @@ status_t Win::ReceiveBroadcast(BMessage *message)
 					
 					break;
 				}
-				case RENDERVIEW_UPDATE :
-				{
-					printf( "  RENDERVIEW_UPDATE\n" );
-					
-					message->PrintToStream();
-					
-					int32 view_id = 0;
-					message->FindInt32( "view_id", &view_id );
-					if( view_id == 0 )
-						break;
-					
-					ThemisTab* tab = FindTabFor( view_id );
-					if( tab == NULL )
-						break;
-					
-					// TODO
-					// fetch the drawing list, and attach it to the renderview
-					
-					break;
-				}
+//				case RENDERVIEW_UPDATE :
+//				{
+//					printf( "  RENDERVIEW_UPDATE\n" );
+//					
+//					message->PrintToStream();
+//					
+//					int32 view_id = 0;
+//					message->FindInt32( "view_id", &view_id );
+//					if( view_id == 0 )
+//						break;
+//					
+//					ThemisTab* tab = FindTabFor( view_id );
+//					if( tab == NULL )
+//						break;
+//					
+//					// TODO
+//					// fetch the drawing list, and attach it to the renderview
+//					
+//					break;
+//				}
 //				case ReturnedData :
 //				{
 //					printf( "ReturnedData\n" );
