@@ -1,8 +1,9 @@
-#include <List.h>
-#include <Rect.h>
-
 #ifndef _UIELEMENT_H_
 #define _UIELEMENT_H_
+
+#include <List.h>
+#include <Rect.h>
+#include <View.h>
 
 /*This class is never used as is, only derivated ones are.
   This class is the Base Drawing Element of the Rendered objects.
