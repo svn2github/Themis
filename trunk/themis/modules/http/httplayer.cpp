@@ -2273,13 +2273,15 @@ int32 httplayer::LayerManager() {
 					if (quit)
 						break;
 					if (!current->done) {
-						if (current->datawaiting) {
+						if ((current->datawaiting) && (current->conn->DataSize()>0L)) {
 							memset(buffer,0,size);
 							bytes=0;
 	#ifndef NEWNET
 							bytes=TCP->Receive(&current->conn,buffer,10240);
 	#else
 							bytes=current->conn->Receive(buffer,10240);
+							if (current->conn->DataSize()==0L)
+								current->datawaiting=0;
 	#endif
 							if (bytes>0) {
 								if (!current->headersdone) {
@@ -2676,7 +2678,8 @@ void httplayer::DataIsWaiting(Connection *connection)
 //		printf("(http)DataIsWaiting about to search\n");
 		http_request *req=FindRequest(connection);
 		if (req!=NULL) {
-			atomic_add(&req->datawaiting,1);
+			if (req->datawaiting==0)
+				atomic_add(&req->datawaiting,1);
 		}
 //	}
 }

@@ -234,6 +234,18 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 						break;
 					}
 					
+					const char * mimetype = NULL;
+					message->FindString( "mimetype", &mimetype );
+					
+					if ( mimetype != NULL ) {
+						if ( strncasecmp( mimetype, "image", 5 ) == 0 ) {
+							break;
+						}
+						
+					}
+					
+					
+					
 					const char * url = NULL;
 					message->FindString( "url", &url );
 					

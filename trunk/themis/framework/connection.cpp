@@ -139,7 +139,7 @@ void Connection::NotifyDisconnect() {
 
 Connection::Connection(NetworkableObject *NetObject,const char *host, uint16 port,bool secure,bool async) {
 	Init();
-	lock=new BLocker(true);
+//	lock=new BLocker(true);
 	owner=NetObject;
 	if (host!=NULL) {
 		
@@ -197,7 +197,7 @@ Connection::~Connection() {
 	}
 	
 #endif	
-	delete lock;
+//	delete lock;
 	RemoveFromList(this);
 	if (owner!=NULL) {
 		owner->DestroyingConnectionObject(this);
@@ -469,6 +469,8 @@ bool Connection::IsSecure() {
 }
 
 void Connection::Init() {
+bytes_read_by_owner=0L;
+	
 	session_bytes_sent=0L;
 	session_bytes_received=0L;
 	total_bytes_sent=0L;
@@ -634,7 +636,7 @@ off_t Connection::Receive(void *data, off_t max_size) {
 		buffer_in=current;
 		lastusedtime=real_time_clock();
 		session_bytes_out+=size;
-		printf("[Connection::Receive] %ld/%ld/%ld bytes have been transferred to owner.\n\n",session_bytes_out,session_bytes_received,DataSize());
+		printf("[Connection::Receive] %ld bytes have been transferred to owner. %ld bytes left in buffer.\n\n",session_bytes_received,DataSize());
 		fflush(stdout);
 	}
 	return size;
@@ -645,7 +647,8 @@ off_t Connection::DataSize() {
 	if (alock.IsLocked()) {
 		buffer_list_st *current=buffer_in;
 		while(current!=NULL) {
-			size+=current->buffer->Size();
+			if (current->buffer!=NULL)
+				size+=current->buffer->Size();
 			current=current->next;
 		}	
 	}

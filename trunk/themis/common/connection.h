@@ -68,7 +68,9 @@ namespace _Themis_Networking_ {
 			friend class TCPManager; //lazy man's hack for the moment, to get
 									//access to socket_id, ssl, etc... Write functions
 									//to access these things the right way.
-			BLocker *lock;
+			BLocker lock;
+			off_t bytes_read_by_owner;
+		
 			off_t session_bytes_sent, session_bytes_received;
 			off_t total_bytes_sent, total_bytes_received;
 			off_t session_bytes_out;
