@@ -287,7 +287,7 @@ endif
 #			testplug
 all: framework addons
 	@echo "Themis application and add-ons built successfully."
-addons: httpaddon cacheaddon htmlpaddon cookieaddon jsaddon
+addons: httpaddon cacheaddon htmlpaddon 
 	@echo "All add-ons built successfully."
 clean: 
 	@rm -rf objects depends Themis
