@@ -76,6 +76,7 @@ class ElementParser	:	public BaseParser	{
 										 TNodeShared aParent );
 		void processExceptions( const TElementShared & aExceptions, TNodeShared aParent );
 		void processException( const TElementShared & aExceptions, TNodeShared aParent );
+		void processExceptionOtherContent();
 		void processComments();
 		void processComment();
 		TElementShared getElementDecl( const string & aName,

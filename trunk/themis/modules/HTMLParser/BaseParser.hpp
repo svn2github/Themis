@@ -91,9 +91,9 @@ class BaseParser	{
 		TElementShared processNameGroup();
 		string processNameTokenGroup();
 		TElementShared processConnector();
-		void processAttrValueSpec();
-		void processAttrValue();
-		void processAttrValueLit();
+		string processAttrValueSpec();
+		string processAttrValue();
+		string processAttrValueLit();
 		string processCharData( string aEndString, bool aSpaceEnd = true );
 		char processDataChar();
 

@@ -94,7 +94,7 @@ void BaseParser	::	process( const string & symbol )	{
 
 void BaseParser	::	processS()	{
 
-	if ( isspace( mDocText->getChar() ) )	{
+	if ( isspace( mDocText->getChar() ) || iscntrl( mDocText->getChar() ) )	{
 		mDocText->nextChar();
 	}
 	else	{
@@ -603,21 +603,21 @@ TElementShared BaseParser	::	processConnector()	{
 
 }
 
-void BaseParser	::	processAttrValueSpec()	{
-	
+string BaseParser	::	processAttrValueSpec()	{
+
 	try	{
-		processAttrValue();
-		return;
+		// Switched around from spec in book. Is easier
+		return processAttrValueLit();
 	}
 	catch( ReadException r )	{
 		// Do nothing
 	}
-	
-	processAttrValueLit();
+
+	return processAttrValue();
 	
 }
 
-void BaseParser	::	processAttrValue()	{
+string BaseParser	::	processAttrValue()	{
 
 	// FIX ME!!!!!!!!!!!!!!!!!!!!!
 	string result = processCharData( mTagc );
@@ -627,11 +627,13 @@ void BaseParser	::	processAttrValue()	{
 	}
 	//processNameToken();
 	
+	return result;
+	
 }
 
-void BaseParser	::	processAttrValueLit()	{
+string BaseParser	::	processAttrValueLit()	{
 
-	string text = "";
+	string result = "";
 	string literal = "";
 	try	{
 		process( mLit );
@@ -652,7 +654,7 @@ void BaseParser	::	processAttrValueLit()	{
 		catch( ReadException r )	{
 			// Not yet found. Process replacable parameter data
 			try	{
-				text += processRepCharData();
+				result += processRepCharData();
 			}
 			catch( ReadException r )	{
 				r.setFatal();
@@ -662,6 +664,8 @@ void BaseParser	::	processAttrValueLit()	{
 	}
 	
 	//printf( "Value literal: %s\n", text.c_str() );
+	
+	return result;
 	
 }
 

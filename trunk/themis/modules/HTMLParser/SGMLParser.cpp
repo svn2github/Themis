@@ -39,7 +39,12 @@ SGMLParser	::	SGMLParser( const char * aDtd, const char * aDocument )
 	
 		char ch;
 		while ( file.get( ch ) )	{
-			mDocText->addChar( ch );
+			if ( ch == '\r' )	{
+				mDocText->addChar( '\n' );
+			}
+			else	{
+				mDocText->addChar( ch );
+			}
 		};
 	}
 	
@@ -227,6 +232,7 @@ TDocumentShared SGMLParser	::	parse()	{
 
 	mDocument = mElementParser->getDocument();
 	showTree( mDocument, 0 );
+	printf( "Finished with document\n" );
 
 	return mDocument;
 	
@@ -242,7 +248,12 @@ TDocumentShared SGMLParser	::	parse( const char * aDocument )	{
 	
 		char ch;
 		while ( file.get( ch ) )	{
-			mDocText->addChar( ch );
+			if ( ch == '\r' )	{
+				mDocText->addChar( '\n' );
+			}
+			else	{
+				mDocText->addChar( ch );
+			}
 		};
 
 		result = parse();

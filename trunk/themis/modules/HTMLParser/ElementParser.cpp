@@ -312,10 +312,10 @@ void ElementParser	::	processAttrSpec()	{
 	State save = mDocText->saveState();
 	try	{
 		string name = processName();
-		printf( "Found attr spec name: %s\n", name.c_str() );
 		processSStar();
 		process( mVi );
 		processSStar();
+		printf( "Found attr spec name: %s\n", name.c_str() );
 	}
 	catch( ReadException r )	{
 		// Optional.
@@ -323,7 +323,9 @@ void ElementParser	::	processAttrSpec()	{
 	}
 	
 	// Not entirely correct. Check later
-	processAttrValueSpec();
+	string value = processAttrValueSpec();
+
+	printf( "Found AttrValueSpec: %s\n", value.c_str() );
 	
 }
 
@@ -619,32 +621,10 @@ void ElementParser	::	processDataText( const TElementShared & aContent,
 void ElementParser	::	processExceptions( const TElementShared & aExceptions,
 															TNodeShared aParent )	{
 	
-	bool contentFound = true;
-	while ( contentFound )	{
-		try	{
-			processComment();
-		}
-		catch( ReadException r )	{
-			if ( r.isFatal() )	{
-				throw r;
-			}
-			try	{
-				processS();
-			}
-			catch( ReadException r )	{
-				if ( r.isFatal() )	{
-					throw r;
-				}
-				else	{
-					contentFound = false;
-				}
-			}
-		}
-	}
-
 	bool exceptionFound = true;
 	while ( exceptionFound )	{
 		try	{
+			processExceptionOtherContent();
 			processException( aExceptions, aParent );
 		}
 		catch( ReadException r )	{
@@ -686,6 +666,9 @@ void ElementParser	::	processException( const TElementShared & aExceptions,
 		}
 		catch( ReadException r )	{
 			// Not the one. Try next one
+			if ( ( ! r.isWrongTag() && r.isFatal() ) || r.isEndTag() )	{
+				throw r;
+			}
 			if ( r.isWrongTag() )	{
 				string name = r.getWrongTag();
 				printf( "Need to find tag: %s. Have %s\n", name.c_str(), elementDecl->getNodeName().c_str() );
@@ -713,6 +696,33 @@ void ElementParser	::	processException( const TElementShared & aExceptions,
 
 	throw ReadException( mDocText->getLineNr(),
 									mDocText->getCharNr(), "No exception found" );
+
+}
+
+void ElementParser	::	processExceptionOtherContent()	{
+
+	bool otherContentFound = true;
+	while ( otherContentFound )	{
+		try	{
+			processComment();
+		}
+		catch( ReadException r )	{
+			if ( r.isFatal() )	{
+				throw r;
+			}
+			try	{
+				processS();
+			}
+			catch( ReadException r )	{
+				if ( r.isFatal() )	{
+					throw r;
+				}
+				else	{
+					otherContentFound = false;
+				}
+			}
+		}
+	}
 
 }
 
