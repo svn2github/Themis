@@ -11,6 +11,7 @@
 #define BUTTON_HOME				'bhom'
 #define CLOSE_OTHER_TABS		'clot'
 #define CLOSE_URLPOPUP			'clpu'
+#define SHOW_PREFERENCES		'shpr'
 #define TAB_ADD					'tadd'
 #define TAB_CLOSE				'tclo'
 #define URL_TYPED				'urlt'

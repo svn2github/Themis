@@ -33,6 +33,7 @@ Project Start Date: October 18, 2000
 #include "appdefines.h"
 #include "plugman.h"
 #include "aboutwin.h"
+#include "prefswin.h"
 #include "msgsystem.h"
 #include "msgdaemon.h"
 //! The application framework version number. 
@@ -54,6 +55,8 @@ class App:public BApplication, public MessageSystem {
 	public:
 		//! The About window.
 		aboutwin *AWin;
+		//! The Preferences window.
+		prefswin *PWin;
 		//! Loads the settings from disk.
 		status_t LoadSettings();
 		//! Saves the settings to disk.

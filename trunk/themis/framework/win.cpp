@@ -75,14 +75,21 @@ Win::Win(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspa
 	menubar = new BMenuBar( BRect(0,0,0,0), "MENUBAR" );
 	AddChild( menubar );
 	
+	// filemenu
 	filemenu = new BMenu( "File" );
 	menubar->AddItem( filemenu );
-	optionsmenu=new BMenu("Options");
-	menubar->AddItem(optionsmenu);
-		filemenu->AddItem((new BMenuItem("About Themis",(new BMessage(B_ABOUT_REQUESTED)),'a',B_SHIFT_KEY)));
+	filemenu->AddItem((new BMenuItem("About Themis",(new BMessage(B_ABOUT_REQUESTED)),'A',B_SHIFT_KEY)));
 	BMenuItem* quitentry = new BMenuItem( "Quit", new BMessage( B_QUIT_REQUESTED ), 'Q' );
 	filemenu->AddItem( quitentry );
 	quitentry->SetTarget( this );
+	// optionsmenu
+	optionsmenu=new BMenu( "Options" );
+	menubar->AddItem(optionsmenu);
+	BMenuItem* prefsentry = new BMenuItem( "Preferences", new BMessage( SHOW_PREFERENCES ), 'P' );
+	prefsentry->SetTarget( be_app );
+	//optionsmenu->AddItem( new BMenuItem( "Preferences", new BMessage( SHOW_PREFERENCES ), 'P' ));
+	optionsmenu->AddItem( prefsentry );
+	
 		
 	// now we need the navigation view
 	navview = new ThemisNavView(

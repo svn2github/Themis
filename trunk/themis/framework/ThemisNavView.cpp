@@ -39,9 +39,9 @@ ThemisNavView::AttachedToWindow( void )
 	// create the urlview first( we need its frame for go button later )
 	urlview = new ThemisUrlView(
 		BRect(
-			rect.left + 160,
+			rect.left + 150,
 			rect.top + 4,
-			rect.right - 30,
+			rect.right - 25,
 			rect.bottom - 5 ), // minimum height automatically set by BTextControl
 		"URLVIEW", B_FOLLOW_LEFT_RIGHT, B_WILL_DRAW | //B_NAVIGABLE |
 		B_FULL_UPDATE_ON_RESIZE,
@@ -167,10 +167,10 @@ ThemisNavView::CreateInterfaceButtons()
 		{
 			case 0 : // back
 			case 1 : // fwd
-			case 2 : { posrect.left = 10 + ( i * 25 ); break; }		// stop
-			case 3 : { posrect.left = 10 + ( 4 * 25 ); break; }		// home
-			case 4 : { posrect.left = 10 + ( 5 * 25 ); break; }		// newtab
-			case 5 : { posrect.left = 10 + ( 3 * 25 ); break; }		// reload
+			case 2 : { posrect.left = 5 + ( i * 25 ); break; }		// stop
+			case 3 : { posrect.left = 5 + ( 4 * 25 ); break; }		// home
+			case 4 : { posrect.left = 5 + ( 5 * 25 ); break; }		// newtab
+			case 5 : { posrect.left = 5 + ( 3 * 25 ); break; }		// reload
 			case 6 : { posrect.left = urlview->Frame().right + 5; break; }	// go
 		}
 		posrect.right = posrect.left + 15;

@@ -30,6 +30,7 @@ Project Start Date: October 18, 2000
 #include "tcplayer.h"
 #include <Directory.h>
 #include <storage/FindDirectory.h>
+#include "ThemisTVS.h"
 plugman *PluginManager;
 tcplayer *TCP;
 BMessage *AppSettings;
@@ -43,6 +44,7 @@ App::App(const char *appsig)
 	app_info ai;
 	qr_called=0;
 	AWin=NULL;
+	PWin=NULL;
 	GetAppInfo(&ai);
 	entry_ref appdirref;
 	BEntry *ent=new BEntry(&ai.ref);
@@ -163,6 +165,23 @@ bool App::QuitRequested(){
 }
 void App::MessageReceived(BMessage *msg){
 	switch(msg->what){
+		case SHOW_PREFERENCES :
+		{
+			printf( "SHOW_PREFERENCES\n" );
+			if( PWin == NULL)
+			{
+				PWin = new prefswin(
+					BRect(100,100,600,300),
+					"Preferences",
+					B_TITLED_WINDOW_LOOK,
+					B_MODAL_APP_WINDOW_FEEL,
+					B_NOT_RESIZABLE | B_ASYNCHRONOUS_CONTROLS | B_NOT_MINIMIZABLE | B_NOT_ZOOMABLE );
+			}
+			else
+				PWin->Activate(true);
+				
+			break;
+		}
 		default:{
 			BApplication::MessageReceived(msg);
 		}
