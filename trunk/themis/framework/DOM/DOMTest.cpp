@@ -3,18 +3,26 @@
 */
 
 #include "DOMTest.h"
+#include "DOMSupport.h"
 #include "TAttr.h"
 #include "TNamedNodeMap.h"
 #include "TElement.h"
 #include "TNodeList.h"
 #include "TText.h"
-#include "DOMSupport.h"
+//#include "TDocument.h"
 
 DOMTest	::	DOMTest()	:	BApplication( "application/x-vnd.Themis-DOMTest" )	{
 	
 	printf( "Let's kick off!\n" );
 
+/*
+	TDocumentShared document( new TDocument() );
+	document->setSmartPointer( document );
+	
+	TElementShared creationTest = document->createElement( "nameOfTag" );
+*/
 	printf( "Create a Node\n" );
+	//DOMPointer<TNode> node( new TNode( ELEMENT_NODE ) );
 	TNodeShared node( new TNode( ELEMENT_NODE ) );
 	node->setSmartPointer( node );
 	
@@ -26,7 +34,8 @@ DOMTest	::	DOMTest()	:	BApplication( "application/x-vnd.Themis-DOMTest" )	{
 	catch ( TDOMException e )	{
 		printf( "Exception caught : %s\n", e.getString() );
 	}
-	
+
+	//DOMPointer<TElement> element( new TElement( "cookie" ) );
 	TElementShared element( new TElement( "cookie" ) );
 	element->setSmartPointer( element );
 
@@ -68,6 +77,7 @@ DOMTest	::	DOMTest()	:	BApplication( "application/x-vnd.Themis-DOMTest" )	{
 	}
 
 	printf( "Create a text node\n" );
+	//DOMPointer<TText> textNode( new TText( "Text test" ) );
 	TNodeShared textNode( new TNode( TEXT_NODE ) );
 	textNode->setSmartPointer( textNode );
 	printf( "Node created\n" );
@@ -97,16 +107,22 @@ DOMTest	::	DOMTest()	:	BApplication( "application/x-vnd.Themis-DOMTest" )	{
 	printf( "Type of node is: %s\n", element->getNodeTypeString() );
 
 	printf( "Creating some elements...\n" );
+	//DOMPointer<TElement> base( new TElement( "base" ) );
 	TElementShared base( new TElement( "base" ) );
 	base->setSmartPointer( base );
+	//DOMPointer<TElement> item1( new TElement( "item1" ) );
 	TElementShared item1( new TElement( "item1" ) );
 	item1->setSmartPointer( item1 );
+	//DOMPointer<TElement> item2( new TElement( "item2" ) );
 	TElementShared item2( new TElement( "item2" ) );
 	item2->setSmartPointer( item2 );
+	//DOMPointer<TElement> item3( new TElement( "item3" ) );
 	TElementShared item3( new TElement( "item3" ) );
 	item3->setSmartPointer( item3 );
+	//DOMPointer<TElement> item4( new TElement( "item4" ) );
 	TElementShared item4( new TElement( "item4" ) );
 	item4->setSmartPointer( item4 );
+	//DOMPointer<TElement> item5( new TElement( "item1" ) );
 	TElementShared item5( new TElement( "item1" ) );
 	item5->setSmartPointer( item5 );
 	printf( "Create a tree with the elements...\n" );
@@ -135,8 +151,10 @@ DOMTest	::	DOMTest()	:	BApplication( "application/x-vnd.Themis-DOMTest" )	{
 	resultStar = base->getElementsByTagName( "*" );
 	printf( "There are %i elements in base\n", (int) resultStar->getLength() );
 
+	//DOMPointer<TText> text1( new TText( "bla " ) );
 	TTextShared text1( new TText( "bla " ) );
 	text1->setSmartPointer( text1 );
+	//DOMPointer<TText> text2( new TText( "bla " ) );
 	TTextShared text2( new TText( "blub" ) );
 	text2->setSmartPointer( text2 );
 	base->appendChild( text1 );

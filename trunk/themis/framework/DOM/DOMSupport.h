@@ -8,8 +8,6 @@
 #ifndef DOMSUPPORT_H
 #define DOMSUPPORT_H
 
-#include <String.h>
-
 #include "boost/shared_ptr.hpp"
 #include "boost/weak_ptr.hpp"
 
@@ -22,6 +20,9 @@ class TNodeListContainer;
 class TNodeList;
 class TNamedNodeMap;
 class TAttr;
+class TCharacterData;
+class TComment;
+class TDocument;
 
 enum	{
 	ELEMENT_NODE = 1,
@@ -80,19 +81,25 @@ enum NodeChange	{
 typedef boost::weak_ptr<TNode> TNodeWeak;
 typedef boost::shared_ptr<TNode> TNodeShared;
 
+typedef boost::weak_ptr<TDocument> TDocumentWeak;
+typedef boost::shared_ptr<TDocument> TDocumentShared;
+
 typedef boost::weak_ptr<TElement> TElementWeak;
 typedef boost::shared_ptr<TElement> TElementShared;
 
 typedef boost::weak_ptr<TText> TTextWeak;
 typedef boost::shared_ptr<TText> TTextShared;
 
-typedef boost::shared_ptr<TNodeListContainer> TNodeListContainerShared;
-typedef boost::shared_ptr<TNodeList> TNodeListShared;
-
 typedef boost::weak_ptr<TNamedNodeMap> TNamedNodeMapWeak;
 typedef boost::shared_ptr<TNamedNodeMap> TNamedNodeMapShared;
 
 typedef boost::weak_ptr<TAttr> TAttrWeak;
 typedef boost::shared_ptr<TAttr> TAttrShared;
+
+typedef boost::weak_ptr<TComment> TCommentWeak;
+typedef boost::shared_ptr<TComment> TCommentShared;
+
+typedef boost::shared_ptr<TNodeListContainer> TNodeListContainerShared;
+typedef boost::shared_ptr<TNodeList> TNodeListShared;
 
 #endif

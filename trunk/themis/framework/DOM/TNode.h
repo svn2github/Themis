@@ -12,6 +12,8 @@
 
 #include <vector>
 
+#include <boost/detail/shared_count.hpp>
+
 #include "DOMSupport.h"
 
 class TNodeList;

@@ -7,7 +7,7 @@
 #include "TCharacterData.h"
 #include "TDOMException.h"
 
-TCharacterData	::	TCharacterData( const unsigned short aNodeType )	:	TNode( aNodeType )	{
+TCharacterData	::	TCharacterData( const unsigned short aNodeType, const TDOMString aData )	:	TNode( aNodeType )	{
 	
 }
 
