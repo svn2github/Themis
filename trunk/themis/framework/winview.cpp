@@ -185,7 +185,7 @@ void winview::MessageReceived(BMessage *msg) {
 				info->AddPointer("options_menu",optionsmenu);
 				info->AddString("target_url",workurl);
 				delete workurl;
-				info->AddInt32("action",LoadingNewPage);
+//				info->AddInt32("action",LoadingNewPage);
 				if (usepass!=NULL) {
 					
 					info->AddString("username:password",usepass);

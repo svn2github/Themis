@@ -845,8 +845,11 @@ void tcplayer::RequestDone(connection *conn,bool close) {
 			
 			if (conn->requests>0)
 				conn->requests=0;
-			if ((close) && (!conn->closedcbdone))
+			if ((close) && (!conn->closedcbdone)) {
+				atomic_add(&conn->closedcbdone,1);
 				CloseConnection(conn);
+			}
+			
 		}
 		
 	}

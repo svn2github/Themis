@@ -1466,8 +1466,11 @@ void httplayer::CloseRequest(http_request *request,bool quick) {
 	}
 	if (request->conn_released!=0)
 		request->conn_released=0;
-	if (quick)
+	if (quick) {
+		Unlock();
 		return;
+	}
+	
 	BMessage *msg=new BMessage(ProtocolConnectionClosed);
 	msg->AddInt32("command",COMMAND_INFO);
 	printf("747\n");
@@ -1485,8 +1488,10 @@ void httplayer::CloseRequest(http_request *request,bool quick) {
 		off_t pos=request->data->Position();
 		request->data->Seek(0,SEEK_END);
 		printf("CloseRequest bytes received: %Ld\n",request->data->Position());
-		
-		msg->AddInt64("bytes-received",request->data->Position());
+		if (request->data->Position()>0L)
+			msg->AddInt64("bytes-received",request->data->Position());
+		else
+			msg->AddInt64("bytes-received",0L);
 		request->data->Seek(pos,SEEK_SET);
 	}
 	
@@ -1636,7 +1641,7 @@ char *httplayer::BuildRequest(http_request *request){
 
 bool httplayer::ResubmitRequest(http_request *request) {
 	if (request->done==0)
-		CloseRequest(request);
+		CloseRequest(request,true);
 	BMessage *info=new BMessage;
 	info->AddString("target_url",request->url);
 	if (request->referrer!=NULL) {
@@ -1791,13 +1796,19 @@ int32 httplayer::LayerManager() {
 	status_t stat;
 	unsigned char *buffer=new unsigned char[10240];
 	int32 bytes=0;
+	volatile int32 c=0;
 	while (!quit) {
 		stat=Lock(20000);
-//		printf("http layermanager\n");
+		
 		if (stat!=B_OK) {
 			snooze(10000);
 			continue;
 		}
+//		if (c==99) {
+//			printf("http layermanager\n");
+//			c=0;
+//		} else
+//			c++;
 		if (current==NULL) {
 			current=requests_head;
 		} else

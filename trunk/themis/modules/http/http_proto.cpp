@@ -194,6 +194,10 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 		}
 		
 	}
+	if (command==COMMAND_RETRIEVE)
+		printf("http: command is retrieve\n");
+	if (command==COMMAND_INFO)
+		printf("http: command is info\n");
 	switch (command) {
 		case COMMAND_RETRIEVE: {
 			int32 action=0;
@@ -201,37 +205,17 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 //			printf("[http proto retrieve 1] message:\n");
 //			rmsg->PrintToStream();
 			
-			if (msg->HasInt32("action"))
-				msg->FindInt32("action",&action);
-			printf("http proto: action is %c%c%c%c\n",action>>24,action>>16,action>>8,action);
-			if (action==LoadingNewPage) {
-//				printf("http proto: PlugMan %p\n",PlugMan);
-/*
-				if (PlugMan!=NULL) {
-					BMessage *amsg=new BMessage(GetSupportedMIMEType);
-					amsg->AddInt32("ReplyTo",Type());
-					amsg->AddPointer("ReplyToPointer",this);
-					amsg->AddInt32("command",COMMAND_INFO_REQUEST);
-					amsg->AddBool("supportedmimetypes",true);
-//					printf("http proto: just before adding message to container.\n");
-					
-					BMessage container;
-					container.AddMessage("message",amsg);
-					delete amsg;
-					amsg=NULL;
-					PlugMan->Broadcast(TARGET_PARSER|TARGET_HANDLER,&container);
-				}
-*/
-			}
-//			printf("[http proto retrieve 2] message:\n");
-//			rmsg->PrintToStream();
-			
+//			if (msg->HasInt32("action"))
+//				msg->FindInt32("action",&action);
+//			printf("http proto: action is %c%c%c%c\n",action>>24,action>>16,action>>8,action);
 			BString targ;
 			rmsg->FindString("target_url",&targ);
-//			printf("http proto: target url: %s\n",targ.String());
+			printf("http proto: target url: %s\n",targ.String());
 			
 			HTTP->Lock();
+			printf("http proto: http locked\n");
 			HTTP->AddRequest(rmsg);
+			printf("http proto: add request done\n");
 			HTTP->Unlock();
 			//we're already deleting rmsg (as info) int he HTTP->AddRequest() call.
 //			delete rmsg;
@@ -239,6 +223,9 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 		}break;
 		case COMMAND_INFO: {
 			switch(msg->what) {
+				case LoadingNewPage: {
+					printf("Do something useful when winview says we're loading a new page.\n");
+				}break;
 				case PlugInLoaded: {
 					int32 pid=0;
 					msg->FindInt32("plugid",&pid);
