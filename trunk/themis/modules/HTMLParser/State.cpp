@@ -46,12 +46,6 @@ State	::	~State()	{
 	
 }
 
-vector<Position> State	::	getPositions()	const	{
-	
-	return mPositions;
-	
-}
-
 void State	::	add( const Position & aPosition )	{
 	
 	mPositions.push_back( aPosition );

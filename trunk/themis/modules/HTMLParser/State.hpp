@@ -48,9 +48,11 @@ using namespace std;
 	of the document. It is used to keep track of where in the document
 	the parser is and which way it has to go back.
 	
-	@todo Have to see if this class can't be used more to store
-			   lists of positions. Will probably have to expand on the
-			   functionality then.
+	@todo @li Have to figure out how to return references in functions.
+			   That should make life a bit easier.
+			   @li Have to figure out how to derive from template classes.
+			   Should be able to derive from a vector instead of containing one.
+			   Doesn't make too much of a difference, though.
 */
 
 class State	{
@@ -58,7 +60,9 @@ class State	{
 	private:
 		/// List of positions stored so far.
 		/**
-			@todo	Might be better to use a stack for this.
+			This variable stores the positions of the current state.
+			It only needs stack behaviour, but the stack class is too limited
+			to use here. There is no clear function, which is necessary.
 		*/
 		vector<Position> mPositions;
 		
@@ -77,14 +81,23 @@ class State	{
 			Everything is cleaned up automatically.
 		*/
 		~State();
-		/// A function to return the list of positions.
-		vector<Position> getPositions() const;
-		
+		/// Add a position to the state.
+		/**
+			Adds a new position to the state. It is added at the back,
+			so top and pop calls target this new state.
+			
+			@param	aPosition	The position to add.
+		*/		
 		void add( const Position & aPosition );
+		/// Get the top of the State, when you won't change anything.
 		Position top() const;
+		/// Get the top of the State, when you want to change something.
 		Position top();
+		/// Remove the last position.
 		void pop();
+		/// Resets the State by removing all the positions.
 		void reset();
+		/// Gives the number of positions in the State.
 		unsigned int size() const;
 
 };
