@@ -14,6 +14,7 @@
 #define TAB_ADD					'tadd'
 #define TAB_CLOSE				'tclo'
 #define URL_TYPED				'urlt'
+#define URL_LOADING				'urll'
 #define URL_OPEN				'urlo'
 #define URL_SELECT_MOUSE		'ursm'
 #define URL_SELECT_NEXT			'ursn'

@@ -45,6 +45,15 @@ FakeSite::FakeSite( BRect rect, const char* title, BWindow* win = NULL ) :
 		site_title.SetTo( "no.url.given" );
 	else
 		site_title.SetTo( title );
+		
+	// info init
+	fStatusText.SetTo( "" );
+	fSecureConnection = false;
+	fCookieEnabled = true;
+	fDocProgress = 0;
+	fDocText = "";
+	fImgProgress = 0;
+	fImgText = "";
 }
 
 FakeSite::~FakeSite( void )
@@ -125,4 +134,59 @@ FakeSite::MouseDown( BPoint point )
 			break;
 	}
 	
+}
+
+int
+FakeSite::GetDocBarProgress()
+{
+	return fDocProgress;
+}
+
+const char*
+FakeSite::GetDocBarText()
+{
+	return fDocText;
+}
+
+int
+FakeSite::GetImgBarProgress()
+{
+	return fImgProgress;
+}
+
+const char*
+FakeSite::GetImgBarText()
+{
+	return fImgText;
+}
+
+void
+FakeSite::SetInfo(
+	int doc_progress_delta,
+	const char* doc_text,
+	int img_progress_delta,
+	const char* img_text,
+	const char* statustext )
+{
+	//cout << "FakeSite::SetInfo()" << endl;
+	
+	fDocProgress += doc_progress_delta;
+	if( fDocProgress >= 100 )
+	{	
+		fDocProgress = 100;
+		fDocText = "done";
+	}
+	else
+		fDocText = ( char* )doc_text;
+	
+	fImgProgress += img_progress_delta;
+	if( fImgProgress >= 100 )
+	{
+		fImgProgress = 100;
+		fImgText = "done";
+	}
+	else
+		fImgText = ( char* )img_text;
+	
+	fStatusText.SetTo( statustext );
 }

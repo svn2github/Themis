@@ -43,7 +43,7 @@ ThemisTabView::ThemisTabView(
 void
 ThemisTabView::AttachedToWindow()
 {
-	cout << "ThemisTabView::AttachedToWindow()" << endl;
+	//cout << "ThemisTabView::AttachedToWindow()" << endl;
 	
 	SetViewColor( fBackgroundColor );
 	
@@ -63,7 +63,7 @@ ThemisTabView::AttachedToWindow()
 void
 ThemisTabView::Draw( BRect updaterect )
 {
-	cout << "ThemisTabView::Draw()" << endl;
+	//cout << "ThemisTabView::Draw()" << endl;
 	
 	// draw the background of the tabs
 	
@@ -262,7 +262,7 @@ ThemisTabView::MouseDown( BPoint point )
 		}
 		case B_SECONDARY_MOUSE_BUTTON :
 		{
-			cout << "ThemisTabView::MouseDown() : B_SECONDARY_MOUSE_DOWN" << endl;
+			//cout << "ThemisTabView::MouseDown() : B_SECONDARY_MOUSE_DOWN" << endl;
 			
 			if( point.x > count * tab_width )
 				break;
@@ -375,6 +375,14 @@ ThemisTabView::Select( int32 tabindex )
 				<< tempview->site_title.String();
 			
 			Window()->SetTitle( window_title.String() );
+			
+			// set up the statusview
+			( ( Win* )Window() )->statusview->SetValues(
+				tempview->GetDocBarProgress(),
+				tempview->GetDocBarText(),
+				tempview->GetImgBarProgress(),
+				tempview->GetImgBarText(),
+				"" );
 		}
 		else
 		{
@@ -389,6 +397,14 @@ ThemisTabView::Select( int32 tabindex )
 			
 			// set window-title-text
 			Window()->SetTitle( window_title.String() );
+			
+			// set up the statusview
+			( ( Win* )Window() )->statusview->SetValues(
+				100,
+				"",
+				100,
+				"",
+				"" );
 		}
 	}
 	

@@ -31,6 +31,7 @@ ThemisUrlView::ThemisUrlView(
 		flags )
 {
 	fDarkGrayColor = arr[4];
+	fInterfaceColor = arr[5];
 	
 	BRect tvrect = Bounds();
 	tvrect.left += 22;
@@ -81,8 +82,7 @@ ThemisUrlView::Draw( BRect updaterect )
 	list[0].Set( updaterect.right - 11, updaterect.bottom - 12 );
 	list[1].Set( updaterect.right - 5, updaterect.bottom - 12 );
 	list[2].Set( updaterect.right - 8, updaterect.bottom - 7 );
-	SetHighColor( 100, 100, 100, 255 );
-	//SetHighColor( fDarkGrayColor );
+	SetHighColor( fInterfaceColor );
 	FillPolygon( list, 3, B_SOLID_HIGH );
 	
 	SetHighColor( hi );

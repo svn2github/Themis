@@ -41,6 +41,7 @@ class ThemisUrlView : public BView
 	private:	
 		BBitmap*					fav_icon;
 		rgb_color					fDarkGrayColor;
+		rgb_color					fInterfaceColor;
 };
 
 #endif

@@ -80,7 +80,7 @@ class Win : public BWindow
 		ThemisStatusView*			statusview;
 		BBitmap*					bitmaps[10];
 		
-		rgb_color					fColorArray[5];
+		rgb_color					fColorArray[6];
 };
 
 #endif

@@ -37,6 +37,8 @@ Project Start Date: October 18, 2000
 #include <ctype.h>
 #include "ThemisIcons.h"
 #include <TranslationKit.h>
+#include <MessageRunner.h>
+#include <stdlib.h>
 
 int WinH=800;
 int WinW=600;
@@ -93,8 +95,9 @@ Win::Win(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspa
 		BRect(
 			rect.left,
 			rect.bottom - 13,	// heigth of the lower-right doc-view corner
-			rect.right - 13, // width of the lower-right doc-view corner
-			rect.bottom ) );
+			rect.right,			// - 13 taken out because of dano deors
+			rect.bottom ),
+		fColorArray );
 	AddChild( statusview );
 	
 	// the tabview-system comes last as we need the height of the statusview
@@ -280,6 +283,56 @@ void Win::MessageReceived(BMessage *msg) {
 			
 			
 		}	break;
+		case URL_LOADING :
+		{
+			cout << "URL_LOADING received" << endl;
+			
+			// all this code below and some code in
+			// FakeSite and ThemisStatusView is just demo code to show
+			// the functioning of the statusview and the progressbars
+						
+			FakeSite* tmpsite;
+			msg->FindPointer( "view_pointer", ( void** )&tmpsite );
+			
+			BString statstr( "Transfering data from " );
+			statstr.Append( tmpsite->site_title.String() );
+			
+			srand( ( unsigned )time( NULL ) );
+			
+			tmpsite->SetInfo(
+				rand()%40,
+				"12.3kB/s",
+				rand()%20,
+				"5.9kB/s",
+				statstr.String() );
+			
+			Lock();
+			// if the viewpointer points to the currently active view,
+			// update the statusview
+			if( tmpsite == tabview->TabAt( tabview->Selection() )->View() )
+			{
+				//cout << "tmpsite == current active view tab" << endl;
+							
+				statusview->SetValues(
+					tmpsite->GetDocBarProgress(),
+					tmpsite->GetDocBarText(),
+					tmpsite->GetImgBarProgress(),
+					tmpsite->GetImgBarText(),
+					statstr.String() );
+				
+			}
+			Unlock();
+			
+			// if either the doc loading or img loading are not finished,
+			// set up a new BMessageRunner, and resend the message
+			if( tmpsite->GetDocBarProgress() < 100 || tmpsite->GetImgBarProgress() < 100 )
+			{
+				cout << "resending progress message" << endl;
+				BMessageRunner* plmsgr = new BMessageRunner( BMessenger( this ), msg, 300000, 1 );
+			}
+			
+			break;
+		}
 		case URL_OPEN :
 		{
 			cout << "URL_OPEN received" << endl;
@@ -320,6 +373,21 @@ void Win::MessageReceived(BMessage *msg) {
 			FakeSite* fakesite = new FakeSite(
 				( tabview->ContainerView() )->Bounds(),
 				url.String(), this );
+			
+			////////////////////
+			// remove this later
+			////////////////////
+			
+			// create a BMessage with a pointer to the new view
+			BMessage* vpmsg = new BMessage( URL_LOADING );
+			vpmsg->AddPointer( "view_pointer", fakesite );
+			
+			// create a BMessageRunner which sends a page loading progress message
+			BMessageRunner* plmsgr = new BMessageRunner( BMessenger( this ), vpmsg, 300000, 1 );
+			
+			////////////////////////
+			// remove this later end
+			////////////////////////
 			
 			uint32 selection = tabview->Selection();
 						
@@ -628,13 +696,14 @@ Win::CreateUrlPopUpWindow()
 void
 Win::DefineInterfaceColors()
 {
-	cout << "Win::DefineInterfaceColors()" << endl;
+	//cout << "Win::DefineInterfaceColors()" << endl;
 		
 	// 0 - BackgroundColor
 	// 1 - InactiveTabColor
 	// 2 - BlackColor
 	// 3 - WhiteColor
 	// 4 - DarkGrayColor
+	// 5 - InterfaceColor
 	
 	// color for all view backgrounds, active tab and tabview background
 	fColorArray[0] = ui_color( B_MENU_BACKGROUND_COLOR );
@@ -655,6 +724,10 @@ Win::DefineInterfaceColors()
 	fColorArray[4].red = 187;
 	fColorArray[4].green = 187;
 	fColorArray[4].blue = 187;
+	// interface
+	fColorArray[5].red = 255;
+	fColorArray[5].green = 200;
+	fColorArray[5].blue = 0;
 }
 
 void
@@ -796,38 +869,38 @@ Win::UrlTypedHandler( bool show_all )
 		typed_url.ToLower();
 	}
 	
-	cout << "type_durl: " << typed_url.String() << " length: " << typed_url.Length() << endl;
+	//cout << "type_durl: " << typed_url.String() << " length: " << typed_url.Length() << endl;
 	
 	while( i < 18 )
 	{
 		cached_url.SetTo( urls[i] );
-		cout << "-----------" << cached_url.String() << "--------" << endl;
+		//cout << "-----------" << cached_url.String() << "--------" << endl;
 		
 		if( typed_url.Length() != 0 )
 		{
-			cout << "compare strings: " << cached_url.String() << " <> " << typed_url.String() << endl;
+			//cout << "compare strings: " << cached_url.String() << " <> " << typed_url.String() << endl;
 			// if the typed url matches beginning of cached url, add it
 			if( strncmp( cached_url.String(), typed_url.String(), typed_url.Length() ) == 0 )
 			{
-				cout << "both urls fit -> adding url to list" << endl;
+				//cout << "both urls fit -> adding url to list" << endl;
 				list->AddItem( new BStringItem( cached_url.String() ) );
 			}
 			else
 			{
-				cout << "urls don't fit" << endl;
+				//cout << "urls don't fit" << endl;
 				// if the urls dont match, take away the protocol of the cached url
 				if( cached_url.FindFirst( "://" ) > 0 )
 				{
-					cout << "removing proto of cached url" << endl;
+					//cout << "removing proto of cached url" << endl;
 					cached_url.MoveInto( cached_url_proto, 0, cached_url.FindFirst( "://" ) + 3 );
-					cout << "cached_url_proto: " << cached_url_proto.String() << endl;
-					cout << "cached_url: " << cached_url.String() << endl;
+					//cout << "cached_url_proto: " << cached_url_proto.String() << endl;
+					//cout << "cached_url: " << cached_url.String() << endl;
 				}
 				
 				// if the urls fit now
 				if( strncmp( cached_url.String(), typed_url.String(), typed_url.Length() ) == 0 )
 				{
-					cout << "urls fit after removing protocol -> adding url to list" << endl;
+					//cout << "urls fit after removing protocol -> adding url to list" << endl;
 					// add the missing proto again
 					if( cached_url_proto.Length() != 0 )
 						cached_url.Prepend( cached_url_proto );
@@ -836,19 +909,19 @@ Win::UrlTypedHandler( bool show_all )
 				}
 				else
 				{
-					cout << "urls don't fit after removing protocol" << endl;
+					//cout << "urls don't fit after removing protocol" << endl;
 					// if they still don't fit, remove 'www.' from cached url
 					if( cached_url.FindFirst( "www." ) == 0 )
 					{
-						cout << "removing 'www.' from cached url" << endl;
+						//cout << "removing 'www.' from cached url" << endl;
 						cached_url.Remove( 0, 4 );
-						cout << "cached_url: " << cached_url.String() << endl;
+						//cout << "cached_url: " << cached_url.String() << endl;
 					}
 					
 					// check if they finally fit
 					if( strncmp( cached_url.String(), typed_url.String(), typed_url.Length() ) == 0 )
 					{
-						cout << "urls finally match without proto and 'www.' -> adding to url to list" << endl;
+						//cout << "urls finally match without proto and 'www.' -> adding to url to list" << endl;
 						// add missing 'www.' and proto
 						cached_url.Prepend( "www." );
 						

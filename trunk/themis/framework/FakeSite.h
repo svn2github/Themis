@@ -16,20 +16,39 @@
 class FakeSite : public BView
 {
 	public:
-												FakeSite( BRect rect, const char* title, BWindow* win = NULL );
-		virtual							~FakeSite( void );
-		void								AttachedToWindow( void );
-		void								Draw( BRect updaterect );
+									FakeSite( BRect rect, const char* title, BWindow* win = NULL );
+		virtual						~FakeSite( void );
+		void						AttachedToWindow( void );
+		void						Draw( BRect updaterect );
 		virtual void				MouseDown( BPoint where );
 		
-		BWindow*						mainwin;
+		int							GetDocBarProgress();
+		const char*					GetDocBarText();
+		int							GetImgBarProgress();
+		const char*					GetImgBarText();
 		
-		BString							site_title;
+		void						SetInfo(
+										int doc_progress,
+										const char* doc_text,
+										int img_progress,
+										const char* img_text,
+										const char* statustext );
+										
+		BWindow*					mainwin;
+		
+		BString						site_title;
 		// add BString url_string later for now i use the url as title and url
 		// ( better: i set the url as site_title atm )
 		
-		BBitmap*						site_fav_icon;
-		
+		BBitmap*					site_fav_icon;
+	private:
+		int							fDocProgress;
+		char*						fDocText;
+		int							fImgProgress;
+		char*						fImgText;
+		bool						fSecureConnection;
+		bool						fCookieEnabled;
+		BString						fStatusText;
 };
 
 #endif
