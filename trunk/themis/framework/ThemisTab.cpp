@@ -219,7 +219,8 @@ ThemisTab::DrawLabel( ThemisTabView* owner, BRect frame )
 		// below 8 no string is drawn ( i use 5 here to be safe )
 		if( truncate_length > 5 )
 		{
-			label = new BString( tempview->site_title.String() );
+//			label = new BString( tempview->site_title.String() );
+			label = new BString( "lalalala" );
 			owner->TruncateString( label, B_TRUNCATE_END, truncate_length );
 		
 			owner->SetFontSize( 10.0 );
