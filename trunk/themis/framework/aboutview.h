@@ -34,6 +34,22 @@ Project Start Date: October 18, 2000
 #include <ScrollView.h>
 #include <Button.h>
 #include <List.h>
+
+#define AboutThemisApplication 0x1
+#define AboutThemisSSL 0x3
+#define AboutThemisDOM 0x2
+#define AboutThemisPlugIn 0x4
+struct about_items_st {
+	BStringItem *listitem;
+	void *pointer;
+	uint32 type;
+	about_items_st(){
+		type=0;
+		listitem=NULL;
+		pointer=NULL;
+	}
+};
+
 class aboutview:public BView {
 	private:
 		BButton *OkB;
@@ -41,8 +57,9 @@ class aboutview:public BView {
 		BListView *listv;
 		BBox *outerbox;
 		BBox *innerbox;
-		BList *items;
+		bool firstrun;
 	public:
+		BList *items;
 		aboutview(BRect frame, const char *name, uint32 resizem, uint32 flags);
 		~aboutview();
 		void MessageReceived(BMessage *msg);

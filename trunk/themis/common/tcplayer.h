@@ -194,6 +194,8 @@ class tcplayer {
 		SSL_METHOD *sslmeth;
 	SSL_CTX* sslctx;
 #endif
+		bool SSLSupported();
+		char *SSLAboutString();
 		sem_id tcp_mgr_sem;
 		sem_id conn_sem;
 		sem_id cb_sem;

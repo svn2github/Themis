@@ -32,7 +32,22 @@ Project Start Date: October 18, 2000
 tcplayer *meTCP;
 int32 TL;
 int32 TU;
-
+bool tcplayer::SSLSupported() {
+	bool supported=false;
+#ifdef USEOPENSSL
+	supported=true;
+#endif
+	return supported;
+}
+char *tcplayer::SSLAboutString() {
+	char *str=NULL;
+#ifdef USEOPENSSL
+	str="This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit (http://www.openssl.org/)\nCopyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.\nThis product includes cryptographic software written by Eric Young (eay@cryptsoft.com)\nCopyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)\nAll rights reserved.\n";
+#else
+	str="Support for SSL is not included in this version, as it was selectively compiled out; possibly due to support or compatibility issues.\nHowever, when compiled in, Themis utilizes SSL software by OpenSSL (http://www.openssl.org ). It's copyright information is as follows:\nThis product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit (http://www.openssl.org/)\nCopyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.\nThis product includes cryptographic software written by Eric Young (eay@cryptsoft.com)\nCopyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)\nAll rights reserved.\n";
+#endif
+	return str;
+}
 tcplayer::tcplayer() {
 	TL=TU=0;
 	

@@ -37,7 +37,8 @@ FRAMEWORKSOURCES= \
 	framework/winview.cpp \
 	framework/infowin.cpp \
 	framework/aboutview.cpp \
-	framework/aboutwin.cpp
+	framework/aboutwin.cpp \
+	framework/appaboutview.cpp
 #	framework/htmlparser.cpp
 COMMONSOURCES= \
 	common/plugclass.cpp \

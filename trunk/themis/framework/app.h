@@ -34,6 +34,9 @@ Project Start Date: October 18, 2000
 #include "plugman.h"
 #include "aboutwin.h"
 
+#define THEMIS_FRAMEWORK_APP_VERSION 0.40
+
+
 class App:public BApplication {
 	private:
 		Win *win;
