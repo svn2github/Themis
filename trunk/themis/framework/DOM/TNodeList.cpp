@@ -6,37 +6,34 @@
 #include "TNode.h"
 #include "TNodeListContainer.h"
 
-TNodeList	::	TNodeList( const void * aNodeList = NULL, TNodeListContainer * aContainer = NULL )	{
+#include <vector>
+
+TNodeList	::	TNodeList( const vector<TNodeShared> * aNodeList )	{
 	
-	mNodeList = (BList *) aNodeList;
-	mContainer = aContainer;
+	mNodeList = aNodeList;
 	
 }
 
 TNodeList	::	~TNodeList()	{
-
-	if ( mContainer )	{
-		mContainer->removeNodeList( this );
-	}
 
 }
 
 unsigned long TNodeList	::	getLength()	{
 	
 	if ( mNodeList )	{
-		return mNodeList->CountItems();
+		return mNodeList->size();
 	}
 	
 	return 0;
 	
 }
 
-TNode * TNodeList	::	item( unsigned long aIndex )	{
+TNodeWeak TNodeList	::	item( unsigned long aIndex )	{
 	
 	if ( mNodeList )	{
-		return (TNode *) mNodeList->ItemAt( aIndex );
+		return (*mNodeList)[ aIndex ];
 	}
 	
-	return NULL;
+	return TNodeWeak();
 	
 }

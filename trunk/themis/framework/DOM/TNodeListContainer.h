@@ -11,26 +11,27 @@
 
 #include "DOMSupport.h"
 
+#include <vector>
+
 class TNodeList;
 class TNode;
 
 class TNodeListContainer	{
 	
 	private:
-		BList * mNodes;
-		BList * mNodeLists;
+		vector<TNodeShared> * mNodes;
+		TNodeListShared mNodeList;
 		TDOMString mQueryString;
 		unsigned short mNodeType;
 				
 	public:
-		TNodeListContainer( const TDOMString aQueryString, BList * aNodes, BList * aNodeLists, unsigned short aNodeType );
+		TNodeListContainer( const TDOMString aQueryString, vector<TNodeShared> * aNodes, unsigned short aNodeType );
 		~TNodeListContainer();
 		TDOMString getQueryString() const;
 		unsigned short getNodeType() const;
-		void addNode( TNode * aNode );
-		TNode * removeNode( TNode * aNode );
-		TNodeList * addNodeList();
-		TNodeList * removeNodeList( TNodeList * aNodeList );
+		void addNode( TNodeShared aNode );
+		TNodeWeak removeNode( TNodeShared aNode );
+		TNodeListShared getNodeList();
 };
 
 #endif

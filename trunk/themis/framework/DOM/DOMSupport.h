@@ -10,6 +10,17 @@
 
 #include <String.h>
 
+#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
+
+class TNode;
+class TElement;
+class TText;
+class TNodeListContainer;
+class TNodeList;
+class TNamedNodeMap;
+class TAttr;
+
 enum	{
 	ELEMENT_NODE = 1,
 	ATTRIBUTE_NODE,
@@ -40,7 +51,7 @@ enum ExceptionCode	{
 	SYNTAX_ERR,
 	INVALID_MODIFICATION_ERR,
 	NAMESPACE_ERR,
-	INVALID_ACCESS_ERR,
+	INVALID_ACCESS_ERR
 };
 
 enum TreePosition	{
@@ -60,7 +71,26 @@ typedef BString TDOMString;
 // Internally used codes
 enum NodeChange	{
 	NODE_ADDED = 1,
-	NODE_REMOVED,
+	NODE_REMOVED
 };
+
+// Convenience definitions
+typedef boost::weak_ptr<TNode> TNodeWeak;
+typedef boost::shared_ptr<TNode> TNodeShared;
+
+typedef boost::weak_ptr<TElement> TElementWeak;
+typedef boost::shared_ptr<TElement> TElementShared;
+
+typedef boost::weak_ptr<TText> TTextWeak;
+typedef boost::shared_ptr<TText> TTextShared;
+
+typedef boost::shared_ptr<TNodeListContainer> TNodeListContainerShared;
+typedef boost::shared_ptr<TNodeList> TNodeListShared;
+
+typedef boost::weak_ptr<TNamedNodeMap> TNamedNodeMapWeak;
+typedef boost::shared_ptr<TNamedNodeMap> TNamedNodeMapShared;
+
+typedef boost::weak_ptr<TAttr> TAttrWeak;
+typedef boost::shared_ptr<TAttr> TAttrShared;
 
 #endif

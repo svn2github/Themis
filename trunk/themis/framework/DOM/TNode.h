@@ -12,13 +12,19 @@
 
 #include <stdio.h>
 
+#include <vector>
+
 #include "DOMSupport.h"
 
 class TNodeList;
 class TNamedNodeMap;
+class TNodeListContainer;
+
+using namespace std;
+using namespace boost;
 
 class TNode	{
-	
+
 	private:
 		unsigned short mNodeType;
 
@@ -26,15 +32,15 @@ class TNode	{
 		TDOMString mNodeValue;
 		
 		TNodeList * mChildNodes;
-		TNode * mParentNode;
-		TNode * mNextSibling;
-		TNode * mPreviousSibling;
+		TNodeWeak mParentNode;
+		TNodeWeak mNextSibling;
+		TNodeWeak mPreviousSibling;
 		// Not implemented variables. Implemented using functions of mNodeList
 		// const TNode * firstChild;
 		// const TNode * LastChild;
 		// ---------------------------------------------------------------------------------
 
-		TNamedNodeMap * mAttributes;
+		TNamedNodeMapShared mAttributes;
 		// TDocument ownerDocument;		Not yet implemented
 		// TDOMString namespaceURI;			Not yet implemented
 		// TDOMString prefix;						Not yet implemented
@@ -43,22 +49,23 @@ class TNode	{
 		// TDOMString textContent;			Not yet implemented
 
 		// Support attributes
-		BList * mNodeList;
-		BList * mAttributeList;
+		vector<TNodeShared> mNodeList;
+		vector<TNodeShared> mAttributeList;
 		TDOMString mNodeTypeString;
 
 		// Support function
-		bool isAncestor( const TNode * aNode ) const;
+		bool isAncestor( const TNodeShared aNode ) const;
 		
 	protected:
 		// Support attribute
-		BList * mNodeListContainers;
+		TNodeWeak mThisPointer;
+		vector<TNodeListContainerShared> mNodeListContainers;
 		// Support functions
-		bool isChildAllowed( const TNode * aNewChild ) const;
+		bool isChildAllowed( const TNodeShared aNewChild ) const;
 		void setNodeName( const TDOMString aValue );
-		void nodeChanged( TNode * aNode, NodeChange aChange );
-		void notifyNodeChange( TNode * aNotifyNode, NodeChange aChange );
-		BList * collectNodes( TDOMString aName, unsigned short aNodeType );
+		void nodeChanged( TNodeShared aNode, NodeChange aChange );
+		void notifyNodeChange( TNodeShared aNotifyNode, NodeChange aChange );
+		vector<TNodeShared> collectNodes( TDOMString aName, unsigned short aNodeType );
 		
 	public:
 		TNode( const unsigned short aNodeType, const TDOMString aNodeName = "", const TDOMString aNodeValue = "" );
@@ -68,23 +75,23 @@ class TNode	{
 		const TDOMString getNodeValue() const;
 		void setNodeValue( const TDOMString aNodeValue );
 		TNodeList * getChildNodes() const;
-		TNode * getParentNode() const;
-		TNode * getFirstChild() const;
-		TNode * getLastChild() const;
-		TNode * getNextSibling() const;
-		TNode * getPreviousSibling() const;
-		TNamedNodeMap * getAttributes() const;
-		TNode * insertBefore( TNode * aNewChild, TNode * aRefChild );	// Not yet fully implemented
-		TNode * replaceChild( TNode * aNewChild, TNode * aOldChild);	// Not yet fully implemented
-		TNode * removeChild( TNode * aOldChild );	// Not yet fully implemented
-		TNode * appendChild( TNode * aNodeChild );		// Not yet fully implemented
+		TNodeWeak getParentNode() const;
+		TNodeWeak getFirstChild() const;
+		TNodeWeak getLastChild() const;
+		TNodeWeak getNextSibling() const;
+		TNodeWeak getPreviousSibling() const;
+		TNamedNodeMapShared getAttributes() const;
+		TNodeWeak insertBefore( TNodeShared aNewChild, TNodeShared aRefChild );	// Not yet fully implemented
+		TNodeWeak replaceChild( TNodeShared aNewChild, TNodeShared aOldChild);	// Not yet fully implemented
+		TNodeWeak removeChild( TNodeShared aOldChild );	// Not yet fully implemented
+		TNodeWeak appendChild( TNodeShared aNodeChild );		// Not yet fully implemented
 		bool hasChildNodes() const;
-		TNode * cloneNode( bool aDeep ) const;	// Not yet fully implemented
+		TNodeShared cloneNode( bool aDeep ) const;	// Not yet fully implemented
 		// void normalize();		Not yet implemented
 		// bool isSupported( TDOMString aFeature, TDOMString aVersion );	Not yet implemented
 		bool hasAttributes() const;
 		// unsigned short compareTreePosition( TNode aOther );	Not yet implemented
-		bool isSameNode( const TNode * aOther ) const;	// Not yet fully implemented
+		bool isSameNode( const TNodeShared aOther ) const;	// Not yet fully implemented
 		// TDOMString lookupNamespacePrefix( TDOMString namespaceURI );	Not yet implemented
 		// TDOMString loopupNamespaceURI( TDOMString prefix );	Not yet implemented
 		// void normalizeNS();		Not yet implemented
@@ -95,6 +102,7 @@ class TNode	{
 
 		// Support functions		
 		const char * getNodeTypeString() const;
+		void setSmartPointer( TNodeShared pointer );
 
 };
 

@@ -3,14 +3,13 @@
 */
 
 #include "TNodeListContainer.h"
-#include <List.h>
 #include "TNode.h"
 #include "TNodeList.h"
 
-TNodeListContainer	::	TNodeListContainer( const TDOMString aQueryString, BList * aNodes, BList * aNodeLists, unsigned short aNodeType )	{
+TNodeListContainer	::	TNodeListContainer( const TDOMString aQueryString, vector<TNodeShared> * aNodes, unsigned short aNodeType )	{
 
 	mNodes = aNodes;
-	mNodeLists = aNodeLists;
+	mNodeList = TNodeListShared( new TNodeList( mNodes ) );
 	mQueryString = aQueryString;
 	mNodeType = aNodeType;
 	
@@ -19,7 +18,6 @@ TNodeListContainer	::	TNodeListContainer( const TDOMString aQueryString, BList *
 TNodeListContainer	::	~TNodeListContainer()	{
 
 	delete mNodes;
-	delete mNodeLists;
 
 }
 
@@ -35,36 +33,30 @@ unsigned short TNodeListContainer	::	getNodeType() const	{
 	
 }
 
-void TNodeListContainer	::	addNode( TNode * aNode )	{
-	
-	if ( !mNodes->HasItem( aNode ) )	{
-		mNodes->AddItem( aNode );
+void TNodeListContainer	::	addNode( TNodeShared aNode )	{
+
+	vector<TNodeShared>::iterator iter;
+	iter = find( mNodes->begin(), mNodes->end(), aNode );
+	if ( iter != mNodes->end() )	{
+		mNodes->push_back( aNode );
 	}
 	
 }
 
-TNode * TNodeListContainer	::	removeNode( TNode * aNode )	{
+TNodeWeak TNodeListContainer	::	removeNode( TNodeShared aNode )	{
 	
-	mNodes->RemoveItem( aNode );
+	vector<TNodeShared>::iterator iter;
+	iter = find( mNodes->begin(), mNodes->end(), aNode );
+	if ( iter != mNodes->end() )	{
+		mNodes->erase( iter );
+	}
+
 	return aNode;
 
 }
 
-TNodeList * TNodeListContainer	::	addNodeList()	{
+TNodeListShared TNodeListContainer	::	getNodeList()	{
 	
-	TNodeList * nodeList = new TNodeList( mNodes, this );
-	mNodeLists->AddItem( nodeList );
-	return nodeList;
+	return mNodeList;
 	
 }
-
-TNodeList * TNodeListContainer	::	removeNodeList( TNodeList * aNodeList )	{
-	
-	mNodeLists->RemoveItem( aNodeList );
-	if ( mNodeLists->IsEmpty() )	{
-		delete this;
-	}
-
-	return aNodeList;
-	
-}	

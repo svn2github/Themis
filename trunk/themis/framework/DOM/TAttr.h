@@ -11,27 +11,25 @@
 #include "DOMSupport.h"
 #include "TNode.h"
 
-class TElement;
-
 class TAttr		:	public TNode	{
 	
 	private:
 		TDOMString mName;
 		bool mSpecified;
 		TDOMString mValue;
-		TElement * mOwnerElement;
+		TElementWeak mOwnerElement;
 		
 		// Support variable
 		TDOMString mDefaultValue;
 		
 	public:
-		TAttr( const TDOMString aName, const bool aSpecified, const TDOMString aValue, TElement * aOwnerElement );
+		TAttr( const TDOMString aName, const bool aSpecified, const TDOMString aValue, TElementWeak aOwnerElement );
 		~TAttr();
 		TDOMString getName() const;
 		bool getSpecified() const ;
 		TDOMString getValue() const ;
 		void setValue( const TDOMString aValue );
-		TElement * getOwnerElement() const;
+		TElementWeak getOwnerElement() const;
 		friend class TNamedNodeMap;
 
 		// Suuport function

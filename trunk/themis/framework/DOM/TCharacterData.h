@@ -14,7 +14,7 @@
 class TCharacterData	:	public TNode	{
 	
 	private:
-		TDOMString * mData;
+		TDOMString mData;
 		// Not implemented variable. Implemented using function of mData
 		// int length;
 		// ---------------------------------------------------------------------------
@@ -22,7 +22,7 @@ class TCharacterData	:	public TNode	{
 	public:
 		TCharacterData( const unsigned short aNodeType );
 		~TCharacterData();
-		TDOMString * getData() const;
+		TDOMString getData() const;
 		void setData( const TDOMString aData );
 		int getLength() const;
 		TDOMString substringData( const unsigned long aOffset, const unsigned long aCount ) const;

@@ -26,23 +26,25 @@ TDOMString TElement	::	getTagName() const	{
 
 TDOMString TElement	::	getAttribute( const TDOMString aName ) const	{
 	
-	TNode * attribute = getAttributes()->getNamedItem( aName );
+	TNodeWeak attribute = getAttributes().get()->getNamedItem( aName );
 	
-	if ( !attribute )	{
+	if ( !attribute.get() )	{
 		return TDOMString( "" );
 	}
 	
-	return attribute->getNodeValue();
+	return attribute.get()->getNodeValue();
 	
 }
 	
 void TElement	::	setAttribute( const TDOMString aName, const TDOMString aValue )	{
 	
-	TAttr * attribute = (TAttr *) getAttributes()->getNamedItem( aName );
-	if ( !attribute )	{
+	TAttrShared attribute = shared_static_cast<TAttr> ( make_shared( getAttributes().get()->getNamedItem( aName ) ) );
+	if ( !attribute.get() )	{
 		// No attribute with that name yet, so create one.
-		attribute = new TAttr( aName, true, aValue, this );
-		getAttributes()->setNamedItem( (TNode *) attribute );
+		
+		attribute = TAttrShared( new TAttr( aName, true, aValue, shared_static_cast<TElement>( make_shared( mThisPointer ) ) ) );
+		attribute->setSmartPointer( attribute );
+		getAttributes().get()->setNamedItem( attribute );
 	}
 	else	{
 		attribute->setValue( aValue );
@@ -51,7 +53,7 @@ void TElement	::	setAttribute( const TDOMString aName, const TDOMString aValue )
 
 void TElement	::	removeAttribute( const TDOMString aName )	{
 
-	TAttr * attribute = (TAttr *) getAttributes()->getNamedItem( aName );
+	TAttrShared attribute = shared_static_cast<TAttr> ( make_shared( getAttributes().get()->getNamedItem( aName ) ) );
 	TDOMString defaultValue = attribute->getDefaultValue();
 	if ( defaultValue != "" )	{
 		attribute->setValue( defaultValue );
@@ -59,61 +61,58 @@ void TElement	::	removeAttribute( const TDOMString aName )	{
 
 }
 
-TAttr * TElement	::	getAttributeNode( const TDOMString aName ) const	{
+TAttrWeak TElement	::	getAttributeNode( const TDOMString aName ) const	{
 	
-	return (TAttr *) getAttributes()->getNamedItem( aName );
-	
-}
-
-TAttr * TElement	::	setAttributeNode( TAttr * aNewAttr )	{
-	
-	return (TAttr *) getAttributes()->setNamedItem( aNewAttr );
+	return shared_static_cast<TAttr> ( make_shared( getAttributes().get()->getNamedItem( aName ) ) );
 	
 }
 
-TAttr * TElement	::	removeAttributeNode( TAttr * aOldAttr )	{
+TAttrWeak TElement	::	setAttributeNode( TAttrShared aNewAttr )	{
 	
-	getAttributes()->removeNamedItem( aOldAttr->getNodeName() );
+	return shared_static_cast<TAttr> ( make_shared( getAttributes().get()->setNamedItem( aNewAttr ) ) );
+	
+}
+
+TAttrShared TElement	::	removeAttributeNode( TAttrShared aOldAttr )	{
+	
+	getAttributes().get()->removeNamedItem( aOldAttr->getNodeName() );
 	TDOMString defaultValue = aOldAttr->getDefaultValue();
 	if ( defaultValue != "" )	{
-		TAttr * newAttribute = new TAttr( aOldAttr->getName(), aOldAttr->getSpecified(), aOldAttr->getValue(), aOldAttr->getOwnerElement() );
-		getAttributes()->setNamedItem( newAttribute );
+		TAttrShared newAttribute = TAttrShared( new TAttr( aOldAttr->getName(), aOldAttr->getSpecified(), aOldAttr->getValue(), aOldAttr->getOwnerElement() ) );
+		newAttribute->setSmartPointer( newAttribute );
+		getAttributes().get()->setNamedItem( newAttribute );
 	}
 
 	return aOldAttr;
 
 }
 
-TNodeList * TElement	::	getElementsByTagName( const TDOMString aName )	{
+TNodeListShared TElement	::	getElementsByTagName( const TDOMString aName )	{
 	
-	TNodeListContainer * current;
-	int itemsInList = mNodeListContainers->CountItems();
-	for ( int i = 0; i < itemsInList; i++ )	{
-		current = (TNodeListContainer *) mNodeListContainers->ItemAt( 0 );
-		if ( current->getNodeType() == ELEMENT_NODE )	{
-			if ( current->getQueryString() == aName )	{
+	vector<TNodeListContainerShared>::iterator current;
+	for ( current = mNodeListContainers.begin(); current != mNodeListContainers.end(); current++ )	{
+		if ( current->get()->getNodeType() == ELEMENT_NODE )	{
+			if ( current->get()->getQueryString() == aName )	{
 				// There already is a NodeList with this querystring
-				// Add this one to the NodeListContainer
-				return current->addNodeList();
+				// Get a pointer to the nodelist
+				return current->get()->getNodeList();
 			}
 		}
 	}
-	
+		
 	// Not one NodeList with query aName exists yet. Create it.
-	BList * resultList = collectNodes( aName, ELEMENT_NODE );
-	TNodeList * result = new TNodeList( resultList );
-	BList * resultNodeList = new BList();
-	resultNodeList->AddItem( result );
-	TNodeListContainer * container = new TNodeListContainer( aName, resultList, resultNodeList, ELEMENT_NODE );
-	mNodeListContainers->AddItem( container );
+	vector<TNodeShared> * resultList = new vector<TNodeShared>( collectNodes( aName, ELEMENT_NODE ) );
+	TNodeListContainerShared container( new TNodeListContainer( aName, resultList, ELEMENT_NODE ) );
+	mNodeListContainers.push_back( container );
 	
-	return result;
+	return container->getNodeList();
 	
 }
 
 bool TElement	::	hasAttribute( const TDOMString aName ) const	{
-	
-	if ( getAttributes()->getNamedItem( aName ) )	{
+
+	TNodeWeak node = getAttributes()->getNamedItem( aName );
+	if ( node.get() )	{
 		return true;
 	}
 	

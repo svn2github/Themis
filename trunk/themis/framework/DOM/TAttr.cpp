@@ -5,10 +5,10 @@
 #include "TAttr.h"
 #include "TElement.h"
 
-TAttr	::	TAttr( const TDOMString aName, const bool aSpecified, const TDOMString aValue, TElement * aOwnerElement )	:	TNode( ATTRIBUTE_NODE, aName, aValue )	{
+TAttr	::	TAttr( const TDOMString aName, const bool aSpecified, const TDOMString aValue, TElementWeak aOwnerElement )	:	TNode( ATTRIBUTE_NODE, aName, aValue )	{
 
 	mName = aName;
-	if ( !aOwnerElement )	{
+	if ( aOwnerElement.get() == NULL )	{
 		mSpecified = true;
 	}
 	else	{
@@ -54,7 +54,7 @@ void TAttr	::	setValue( const TDOMString aValue )	{
 }
 
 
-TElement * TAttr	::	getOwnerElement() const	{
+TElementWeak TAttr	::	getOwnerElement()	 const	{
 	
 	return mOwnerElement;
 	

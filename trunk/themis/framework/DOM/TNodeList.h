@@ -8,7 +8,7 @@
 #ifndef TNODELIST_H
 #define TNODELIST_H
 
-#include <List.h>
+#include <vector>
 
 #include "DOMSupport.h"
 
@@ -18,19 +18,16 @@ class TNodeListContainer;
 class TNodeList	{
 	
 	private:
-		const BList * mNodeList;
+		const vector<TNodeShared> * mNodeList;
 		// Not implemented variable. Implemented using function in mNodeList
 		// unsigned long length;
 		// ---------------------------------------------------------------------------------
 		
-		// Suuport attribute
-		TNodeListContainer * mContainer;
-		
 	public:
-		TNodeList( const void * aNodeList = NULL, TNodeListContainer * aContainer = NULL );
+		TNodeList( const vector<TNodeShared> * aNodeList );
 		~TNodeList();
 		unsigned long getLength();
-		TNode * item( unsigned long aIndex );
+		TNodeWeak item( unsigned long aIndex );
 		
 };
 
