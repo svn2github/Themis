@@ -74,9 +74,7 @@ ThemisUrlView::Draw( BRect updaterect )
 	rgb_color hi = HighColor();	
 	
 	// the outer margin
-	union int32torgb convert;
-	AppSettings->FindInt32( "LightBorderColor", &convert.value );
-	SetHighColor( convert.rgb );
+	SetHighColor( kColorLightBorder );
 	StrokeRect( updaterect, B_SOLID_HIGH );
 	/*SetHighColor( 100,100,100 );
 	updaterect.InsetBy( 1, 1 );
@@ -89,8 +87,7 @@ ThemisUrlView::Draw( BRect updaterect )
 	list[0].Set( updaterect.right - 11, updaterect.bottom - 12 );
 	list[1].Set( updaterect.right - 5, updaterect.bottom - 12 );
 	list[2].Set( updaterect.right - 8, updaterect.bottom - 7 );
-	AppSettings->FindInt32( "ThemeColor", &convert.value );
-	SetHighColor( convert.rgb );
+	SetHighColor( kColorTheme );
 	FillPolygon( list, 3, B_SOLID_HIGH );
 	
 	SetHighColor( hi );

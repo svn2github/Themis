@@ -15,10 +15,10 @@
 #include "win.h"
 #include "ThemisTabView.h"
 #include "ThemisTab.h"
-#include "FakeSite.h"
 #include "ThemisNavView.h"	// ThemisPictureButton
 #include "app.h"
 #include "win.h"
+#include "../common/PrefsDefs.h"
 
 ThemisTabView::ThemisTabView(
 	BRect frame,
@@ -38,16 +38,13 @@ ThemisTabView::ThemisTabView(
 void
 ThemisTabView::AttachedToWindow()
 {
-	//cout << "ThemisTabView::AttachedToWindow()" << endl;
-	union int32torgb convert;
-	AppSettings->FindInt32( "PanelColor", &convert.value );
-	SetViewColor( convert.rgb );
+	SetViewColor( ui_color( B_PANEL_BACKGROUND_COLOR ) );
 	
 	CreateCloseTabViewButton();
 	
 	// ShowTabsAtStartup	
 	bool show_tabs = false;
-	AppSettings->FindBool( "ShowTabsAtStartup", &show_tabs );
+	AppSettings->FindBool( kPrefsShowTabsAtStartup, &show_tabs );
 	if( show_tabs == true )
 		SetNormalTabView();
 	else
@@ -66,9 +63,7 @@ ThemisTabView::Draw( BRect updaterect )
 	updaterect = Bounds();
 	
 	rgb_color lo = LowColor();
-	union int32torgb convert;
-	AppSettings->FindInt32( "PanelColor", &convert.value );
-	SetLowColor( convert.rgb );
+	SetLowColor( ui_color( B_PANEL_BACKGROUND_COLOR ) );
 	FillRect( updaterect, B_SOLID_LOW );
 	SetLowColor( lo );
 	
@@ -163,20 +158,14 @@ ThemisTabView::DrawTabs( void )
 	linerect.right = brect.right;
 	linerect.bottom = linerect.top + 1;
 	
-	// some colors
-	union int32torgb convert;
-	AppSettings->FindInt32( "ActiveTabColor", &convert.value );
-	rgb_color activetabcolor = convert.rgb;
-	AppSettings->FindInt32( "DarkBorderColor", &convert.value );
-	rgb_color darkbordercolor = convert.rgb;
-	AppSettings->FindInt32( "ShadowColor", &convert.value );
-	rgb_color shadowcolor = convert.rgb;
+	// some color
+	rgb_color active_tab_color = ui_color( B_PANEL_BACKGROUND_COLOR );
 		
-	SetHighColor( activetabcolor );
+	SetHighColor( active_tab_color );
 	FillRect( linerect, B_SOLID_HIGH );
 	
 	// and stroke a black line from left to right at bottom
-	SetHighColor( darkbordercolor );
+	SetHighColor( kColorDarkBorder );
 	StrokeLine( BPoint( brect.left, linerect.bottom + 1 ),
 		BPoint( brect.right, linerect.bottom + 1 ), B_SOLID_HIGH );
 	
@@ -189,7 +178,7 @@ ThemisTabView::DrawTabs( void )
 	StrokeLine( startpoint, BPoint( linerect.right, linerect.top - 2 ),
 		B_SOLID_HIGH );
 	// the shadow below the upper black line
-	SetHighColor( shadowcolor );
+	SetHighColor( kColorShadow );
 	startpoint.y += 1;
 	StrokeLine( startpoint, BPoint( linerect.right, linerect.top - 1 ),
 		B_SOLID_HIGH );

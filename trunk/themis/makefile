@@ -59,10 +59,10 @@ FRAMEWORKSOURCES= \
 	framework/main.cpp \
 	framework/app.cpp \
 	framework/win.cpp \
-	framework/infowin.cpp \
 	framework/aboutview.cpp \
 	framework/aboutwin.cpp \
-	framework/prefswin.cpp \
+	framework/PrefsWin.cpp \
+	framework/PrefsViews.cpp \
 	framework/appaboutview.cpp \
 	framework/ThemisNavView.cpp \
 	framework/ThemisStatusView.cpp \
@@ -74,7 +74,6 @@ FRAMEWORKSOURCES= \
 	framework/ThemisUrlPopUpView.cpp \
 	framework/ThemisUrlPopUpWindow.cpp \
 	framework/ThemisUrlView.cpp \
-	framework/FakeSite.cpp \
 	framework/msgdaemon.cpp \
 	framework/networkableobject.cpp \
 	framework/connection.cpp \

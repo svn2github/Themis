@@ -19,6 +19,7 @@
 #include "HTMLParser.h"
 #include "commondefs.h"
 #include "plugman.h"
+#include "PrefsDefs.h"
 
 // DOM headers
 #include "TDocument.h"
@@ -76,7 +77,7 @@ HTMLParser	::	HTMLParser( BMessage * aInfo )
 	
 	if ( appSettings != NULL )	{
 		const char * path;
-		appSettings->FindString( "DTDToUsePath", &path );
+		appSettings->FindString( kPrefsActiveDTDPath, &path );
 		mParser = new SGMLParser( path );
 	}
 	else	{
@@ -187,7 +188,7 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * aMessage )	{
 					Debug( "Request to change parser", PlugID() );
 					if ( appSettings != NULL )	{
 						const char * path;
-						appSettings->FindString( "DTDToUsePath", &path );
+						appSettings->FindString( kPrefsActiveDTDPath, &path );
 						string dtdLoad = "Loading new DTD: ";
 						dtdLoad += path;
 						Debug( dtdLoad.c_str(), PlugID() );

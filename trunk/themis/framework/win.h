@@ -37,7 +37,6 @@ Project Start Date: October 18, 2000
 #include "ThemisTab.h"
 #include "ThemisTabView.h"
 #include "ThemisUrlPopUpWindow.h"
-#include "FakeSite.h"
 
 /*!
 \brief The main browser window.
@@ -79,7 +78,7 @@ class Win : public BWindow, public MessageSystem
 		void						LoadInterfaceGraphics();
 		Win*						NextWindow();
 		status_t					ReceiveBroadcast(BMessage *message);
-		void						ReInitInterface();
+		void						ReInitTabHistory();
 		void						SetNextWindow( Win* nextwin );
 		void						SetQuitConfirmed( bool state );
 		

@@ -11,6 +11,7 @@
 #include "ThemisUrlPopUpView.h"
 #include "win.h"
 #include "app.h"
+#include "../common/commondefs.h"
 
 ThemisUrlPopUpView::ThemisUrlPopUpView(
 	BRect frame )
@@ -43,12 +44,10 @@ ThemisUrlPopUpView::Draw( BRect updaterect )
 			
 	rgb_color hi = HighColor();
 	
-	union int32torgb convert;
-	AppSettings->FindInt32( "LightBorderColor", &convert.value );
-	SetHighColor( convert.rgb );
+	SetHighColor( kColorLightBorder );
 	StrokeRect( updaterect, B_SOLID_HIGH );
 	
-	SetHighColor( 255,255,255 );
+	SetHighColor( 255, 255, 255 );
 	updaterect.InsetBy( 1, 1 );
 	FillRect( updaterect, B_SOLID_HIGH );
 	

@@ -37,12 +37,13 @@ Project Start Date: October 18, 2000
 #include <ctype.h>
 
 #include "app.h"
-#include "../common/commondefs.h"
 #include "protocol_plugin.h"
 #include "iostream.h"
 #include "ThemisIcons.h"
 #include "ThemisTab.h"
 #include "win.h"
+#include "../common/commondefs.h"
+#include "../common/PrefsDefs.h"
 
 // renderer stuff..
 #include "../modules/Renderer/TRenderView.h"
@@ -158,7 +159,7 @@ bool Win::QuitRequested() {
 			urlpopupwindow->Quit();
 			urlpopupwindow = 0;
 		}
-		AppSettings->ReplaceRect( "WindowRect", Frame() );
+		AppSettings->ReplaceRect( kPrefsMainWindowRect, Frame() );
 		printf( "returning true\n" );
 		return true;
 	}
@@ -263,7 +264,7 @@ void Win::MessageReceived(BMessage *msg) {
 			printf( "WIN: BUTTON_HOME\n" );
 			
 			BString homepage;
-			AppSettings->FindString( "HomePage", &homepage );
+			AppSettings->FindString( kPrefsHomePage, &homepage );
 			
 			BMessage* homemsg = new BMessage( URL_OPEN );
 			homemsg->AddString( "url_to_open", homepage.String() );
@@ -330,10 +331,9 @@ void Win::MessageReceived(BMessage *msg) {
 			}			
 				
 		}break;
-		case RE_INIT_INTERFACE :
+		case RE_INIT_TABHISTORY :
 		{
-			//cout << "RE_INIT_INTERFACE" << endl;
-			ReInitInterface();
+			ReInitTabHistory();
 			break;
 		}
 		case TAB_ADD :
@@ -412,7 +412,7 @@ void Win::MessageReceived(BMessage *msg) {
 			// stop, if there is no url, or about:blank
 			if( url.Length() == 0 )
 				break;
-			if( strcmp( url.String(), "about:blank" ) == 0 )
+			if( strcmp( url.String(), kAboutBlankPage ) == 0 )
 				break;
 			
 			uint32 selection = tabview->Selection();
@@ -627,7 +627,7 @@ void Win::MessageReceived(BMessage *msg) {
 			msg->FindBool( "show_all", &show_all );
 			
 			bool prefs_show_type_ahead = false;
-			AppSettings->FindBool( "ShowTypeAhead", &prefs_show_type_ahead );
+			AppSettings->FindBool( kPrefsShowTypeAheadWindow, &prefs_show_type_ahead );
 									
 			if( ( prefs_show_type_ahead == true ) || ( show_all == true ) )
 			{
@@ -717,7 +717,7 @@ void
 Win::Zoom( BPoint origin, float width, float height )
 {
 	bool IM = false;
-	AppSettings->FindBool( "IntelligentMaximize", &IM );
+	AppSettings->FindBool( kPrefsIntelligentZoom, &IM );
 	
 	if( IM == true )
 	{
@@ -998,31 +998,14 @@ Win::NextWindow()
 }
 
 void
-Win::ReInitInterface()
+Win::ReInitTabHistory()
 {
-	//cout << "Win:ReInitInterface()" << endl;
-	
-	union int32torgb convert;
-	AppSettings->FindInt32( "PanelColor", &convert.value );
-	
-	if( CountChildren() > 0 )
-	{
-		for( int32 i = 0; i < CountChildren(); i++ )
-		{
-			BView* child = ChildAt( i );
-			//set the new viewcolor, except for menubar
-			if( strncmp( child->Name(), "MENUBAR", 7 ) != 0 )
-				child->SetViewColor( convert.rgb );
-			child->Draw( child->Bounds() );
-		}
-	}
-	
-	// update the tabs history depth
+	/* update the tabs history depth */
 	int8 depth;
-	AppSettings->FindInt8( "TabHistoryDepth", &depth );
+	AppSettings->FindInt8( kPrefsTabHistoryDepth, &depth );
 	for( int32 i = 0; i < tabview->CountTabs(); i++ )
 		( ( ThemisTab* )tabview->TabAt( i ) )->GetHistory()->SetDepth( depth );
-	// update the nav buttons states
+	/* and update the nav buttons states */
 	tabview->SetNavButtonsByTabHistory();
 }
 

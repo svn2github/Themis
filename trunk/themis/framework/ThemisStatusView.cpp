@@ -49,9 +49,7 @@ ThemisStatusView::~ThemisStatusView( void )
 void
 ThemisStatusView::AttachedToWindow( void )
 {
-	union int32torgb convert;
-	AppSettings->FindInt32( "PanelColor", &convert.value );
-	SetViewColor( convert.rgb );
+	SetViewColor( ui_color( B_PANEL_BACKGROUND_COLOR ) );
 	
 	BRect rect = Bounds();
 	
@@ -90,19 +88,9 @@ ThemisStatusView::Draw( BRect updaterect )
 	// make the updaterect the Bounds rectangle
 	updaterect = Bounds();
 	
-	//cout << "ThemisStatusView::Draw()" << endl;
 	rgb_color lo = LowColor();
 	
-	// define the colors
-	union int32torgb convert;
-	AppSettings->FindInt32( "DarkBorderColor", &convert.value );
-	rgb_color darkbordercolor = convert.rgb;
-	AppSettings->FindInt32( "PanelColor", &convert.value );
-	rgb_color panelcolor = convert.rgb;
-	AppSettings->FindInt32( "LightBorderColor", &convert.value );
-	rgb_color lightbordercolor = convert.rgb;
-	AppSettings->FindInt32( "ShadowColor", &convert.value );
-	rgb_color shadowcolor = convert.rgb;
+	rgb_color panel_color = ui_color( B_PANEL_BACKGROUND_COLOR );
 	
 	// the top 'shadow'
 	SetLowColor( 169,169,169,255 );
@@ -111,14 +99,14 @@ ThemisStatusView::Draw( BRect updaterect )
 		BPoint( updaterect.right, updaterect.top ),
 		B_SOLID_LOW );
 	
-	SetLowColor( shadowcolor );
+	SetLowColor( kColorShadow );
 	StrokeLine(
 		BPoint( updaterect.left, updaterect.top + 1 ),
 		BPoint( updaterect.right, updaterect.top + 1 ),
 		B_SOLID_LOW );
 	
 	// fill the whole area
-	SetLowColor( panelcolor );
+	SetLowColor( panel_color );
 	FillRect(
 		BRect(
 			updaterect.left,
@@ -146,9 +134,9 @@ ThemisStatusView::Draw( BRect updaterect )
 	BPoint sep_pt_bot( fDocumentBar->Frame().left - 15, Bounds().bottom - 1 );
 	
 	// separator left to bars
-	SetLowColor( lightbordercolor );
+	SetLowColor( kColorLightBorder );
 	StrokeLine( sep_pt_top, sep_pt_bot, B_SOLID_LOW );
-	SetLowColor( shadowcolor );
+	SetLowColor( kColorShadow );
 	sep_pt_top.x +=1;
 	sep_pt_bot.x +=1;
 	StrokeLine( sep_pt_top, sep_pt_bot, B_SOLID_LOW );
@@ -156,9 +144,9 @@ ThemisStatusView::Draw( BRect updaterect )
 	// separator left to cookie icon
 	sep_pt_top.x -=15;
 	sep_pt_bot.x -=15;
-	SetLowColor( lightbordercolor );
+	SetLowColor( kColorLightBorder );
 	StrokeLine( sep_pt_top, sep_pt_bot, B_SOLID_LOW );
-	SetLowColor( shadowcolor );
+	SetLowColor( kColorShadow );
 	sep_pt_top.x +=1;
 	sep_pt_bot.x +=1;
 	StrokeLine( sep_pt_top, sep_pt_bot, B_SOLID_LOW );
@@ -166,9 +154,9 @@ ThemisStatusView::Draw( BRect updaterect )
 	// separator left to secure icon
 	sep_pt_top.x -=15;
 	sep_pt_bot.x -=15;
-	SetLowColor( lightbordercolor );
+	SetLowColor( kColorLightBorder );
 	StrokeLine( sep_pt_top, sep_pt_bot, B_SOLID_LOW );
-	SetLowColor( shadowcolor );
+	SetLowColor( kColorShadow );
 	sep_pt_top.x +=1;
 	sep_pt_bot.x +=1;
 	StrokeLine( sep_pt_top, sep_pt_bot, B_SOLID_LOW );
@@ -264,16 +252,10 @@ ThemisProgressBar::Draw( BRect updaterect )
 	SetFontSize( 10.0 );
 	
 	// define the colors
-	union int32torgb convert;
-	AppSettings->FindInt32( "PanelColor", &convert.value );
-	rgb_color panelcolor = convert.rgb;
-	AppSettings->FindInt32( "LightBorderColor", &convert.value );
-	rgb_color lightbordercolor = convert.rgb;
-	AppSettings->FindInt32( "ThemeColor", &convert.value );
-	rgb_color themecolor = convert.rgb;
-
+	rgb_color panel_color = ui_color( B_PANEL_BACKGROUND_COLOR );
+	
 	// draw the outer rectangle
-	SetHighColor( lightbordercolor );
+	SetHighColor( kColorLightBorder );
 	StrokeRect( updaterect, B_SOLID_HIGH );
 	
 	if( fProgress > 0 )
@@ -286,7 +268,7 @@ ThemisProgressBar::Draw( BRect updaterect )
 		
 		if( fProgress < 100 )
 		{
-			SetLowColor( themecolor );
+			SetLowColor( kColorTheme );
 			FillRect( progrect, B_SOLID_LOW );
 			// fill the rest of the bar with white
 			progrect.left = progrect.right;
@@ -296,7 +278,7 @@ ThemisProgressBar::Draw( BRect updaterect )
 		}
 		else	// fProgress == 100
 		{
-			SetLowColor( panelcolor );
+			SetLowColor( panel_color );
 			BRect fillrect( updaterect );
 			fillrect.InsetBy( 1, 1 );
 			FillRect( fillrect, B_SOLID_LOW );
@@ -312,12 +294,14 @@ ThemisProgressBar::Draw( BRect updaterect )
 			
 	if( fBarText.Length() > 0 )
 	{
-		float value = ( themecolor.red + themecolor.green + themecolor.blue ) / ( 3.0 * 255.0 );
-		if( value > 0.5 )
-			SetHighColor( 0, 0, 0, 255 );
-		else
-			SetHighColor( 255,255,255,255 );
-	
+//		float value = ( kColorTheme.red + kColorTheme.green + kColorTheme.blue ) / ( 3.0 * 255.0 );
+//		if( value > 0.5 )
+//			SetHighColor( 0, 0, 0, 255 );
+//		else
+//			SetHighColor( 255,255,255,255 );
+		
+		SetHighColor( 0, 0, 0, 255 );
+		
 		float strwidth = StringWidth( fBarText.String() );
 		DrawString( fBarText.String(), BPoint(
 			( updaterect.right / 2 ) - ( strwidth / 2 ),

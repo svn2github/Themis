@@ -32,6 +32,7 @@ Project Start Date: October 18, 2000
 #include "cachesorts.h"
 #include "plugman.h"
 #include "ramcacheobject.h"
+#include "PrefsDefs.h"
 #include <kernel/fs_index.h>
 #include <time.h>
 #include <Autolock.h>
@@ -1441,7 +1442,7 @@ status_t cacheman::FindCacheDir()
 		BPath path;
 		BString temp;
 		FindCache_SetEntry1:
-		AppSettings->FindString("settings_directory",&temp);
+		AppSettings->FindString(kPrefsSettingsDirectory,&temp);
 		if (temp.Length()>0) {
 			path.SetTo(temp.String());
 			path.Append("cache");

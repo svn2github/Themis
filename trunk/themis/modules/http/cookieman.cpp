@@ -18,6 +18,7 @@
 #include <Query.h>
 #include "commondefs.h"
 #include "http_proto.h"
+#include "PrefsDefs.h"
 extern http_protocol *HTTP_proto;
 #ifdef _Themis_
 #include "stripwhite.h"
@@ -538,7 +539,7 @@ void CookieManager::FindCookieDirectory() {
 					path.SetTo(&cookiedirref);
 					temp=path.Path();
 				} else {
-					HTTP_proto->AppSettings->FindString("settings_directory",&temp);
+					HTTP_proto->AppSettings->FindString(kPrefsSettingsFilePath,&temp);
 					temp<<"/cookies";
 				}
 			BEntry ent;

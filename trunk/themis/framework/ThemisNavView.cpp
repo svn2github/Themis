@@ -14,6 +14,8 @@
 #include "ThemisIcons.h"
 #include "win.h"
 #include "app.h"
+#include "../common/commondefs.h"
+
 
 ThemisNavView::ThemisNavView( BRect rect ) :
 	BView( rect, "THEMISNAVVIEW", B_FOLLOW_LEFT_RIGHT, B_WILL_DRAW | B_FULL_UPDATE_ON_RESIZE )
@@ -29,9 +31,7 @@ ThemisNavView::AttachedToWindow( void )
 {
 	BRect rect = Bounds();
 	
-	union int32torgb convert;
-	AppSettings->FindInt32( "PanelColor", &convert.value );
-	SetViewColor( convert.rgb );
+	SetViewColor( ui_color( B_PANEL_BACKGROUND_COLOR ) );
 	
 	// create the urlview first( we need its frame for go button later )
 	urlview = new ThemisUrlView(
@@ -58,28 +58,18 @@ ThemisNavView::Draw( BRect updaterect )
 	updaterect = Bounds();
 	
 	rgb_color lo = LowColor();
+	rgb_color panel_color = ui_color( B_PANEL_BACKGROUND_COLOR );
 	
-	union int32torgb convert;
-	AppSettings->FindInt32( "PanelColor", &convert.value );
-	SetLowColor( convert.rgb );	
+	SetLowColor( panel_color );	
 	FillRect( updaterect, B_SOLID_LOW );
 	
-	// the 'shadow' at the bottom of navview
-	AppSettings->FindInt32( "DarkBorderColor", &convert.value );
-	SetLowColor( convert.rgb );
+	SetLowColor( kColorDarkBorder );
 	StrokeLine(
 		BPoint( updaterect.left, updaterect.bottom ),
 		BPoint( updaterect.right, updaterect.bottom ),
 		B_SOLID_LOW );
 	
-	AppSettings->FindInt32( "PanelColor", &convert.value );
-	if( convert.rgb.red - 32 >= 0 )
-		convert.rgb.red -= 32;
-	if( convert.rgb.green - 32 >= 0 )
-		convert.rgb.green -= 32;
-	if( convert.rgb.blue - 32 >= 0 )
-		convert.rgb.blue -= 32;
-	SetLowColor( convert.rgb );
+	SetLowColor( kColorLightBorder );
 	StrokeLine(
 		BPoint( updaterect.left, updaterect.bottom - 1 ),
 		BPoint( updaterect.right, updaterect.bottom - 1 ),

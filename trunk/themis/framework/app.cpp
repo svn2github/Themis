@@ -32,6 +32,7 @@ Project Start Date: October 18, 2000
 #include <storage/FindDirectory.h>
 #include <String.h>
 #include "app.h"
+#include "PrefsDefs.h"
 #include "ThemisTab.h"
 #ifndef NEWNET
 #include "tcplayer.h"
@@ -81,29 +82,32 @@ App::App(
 	// init the GlobalHistory, and fill it with the settings data (if available)
 	printf( "APP Getting GlobalHistoryData\n" );
 	int8 ghdepth, freeurlcount;
-	AppSettings->FindInt8( "GlobalHistoryDepthInDays", &ghdepth );
-	AppSettings->FindInt8( "GlobalHistoryFreeUrlCount", &freeurlcount );
+	AppSettings->FindInt8( kPrefsGlobalHistoryDepthInDays, &ghdepth );
+	AppSettings->FindInt8( kPrefsGlobalHistoryFreeURLCount, &freeurlcount );
 	fGlobalHistory = new GlobalHistory( ghdepth, freeurlcount );
-	if( AppSettings->HasMessage( "GlobalHistoryData" ) )
+	if( AppSettings->HasMessage( kPrefsGlobalHistoryData ) )
 	{
 		BMessage* datamsg = new BMessage;
-		AppSettings->FindMessage( "GlobalHistoryData", datamsg );
+		AppSettings->FindMessage( kPrefsGlobalHistoryData, datamsg );
 		if( datamsg != NULL )
 			fGlobalHistory->Init( datamsg );
 	}
 	
 	// init the first window
 	BRect r;
+	BRect screenrect;
 	BScreen screen;
-	AppSettings->FindRect( "WindowRect", &r );
+	screenrect = screen.Frame();
+	AppSettings->FindRect( kPrefsMainWindowRect, &r );
 	// if any of the sides is out of screen, reset the rect
-	if( r.right > screen.Frame().right ||
-			r.bottom > screen.Frame().bottom ||
-			r.left < screen.Frame().left ||
-			r.top < screen.Frame().top )
+	if( !screenrect.Contains( r ) )
+//	if( r.right > screen.Frame().right ||
+//			r.bottom > screen.Frame().bottom ||
+//			r.left < screen.Frame().left ||
+//			r.top < screen.Frame().top )
 	{
-		r.Set( 150, 100, 620, 460 );
-		AppSettings->ReplaceRect( "WindowRect", r );
+		r.Set( 130, 130, 650, 450 );
+		AppSettings->ReplaceRect( kPrefsMainWindowRect, r );
 	}
 	fFirstWindow = new Win(r,"Themis",B_DOCUMENT_WINDOW,B_ASYNCHRONOUS_CONTROLS,B_CURRENT_WORKSPACE);
 	PluginManager->Window=fFirstWindow;
@@ -298,6 +302,7 @@ void App::MessageReceived(BMessage *msg){
 		case PREFSWIN_CLOSE :
 		{
 			printf( "APP PREFSWIN_CLOSE\n" );
+			SaveSettings();
 			fPrefsWin = NULL;
 			break;
 		}
@@ -307,18 +312,20 @@ void App::MessageReceived(BMessage *msg){
 			if( fPrefsWin == NULL)
 			{
 				BPoint point;
-				AppSettings->FindPoint( "PrefsWindowPoint", &point );
+				AppSettings->FindPoint( kPrefsPrefWindowPoint, &point );
 				BRect rect;
 				rect.left = point.x;
 				rect.top = point.y;
-				rect.right = rect.left + 500;
-				rect.bottom = rect.top + 265;
-				fPrefsWin = new prefswin(
-					rect,
-					"Preferences",
-					B_TITLED_WINDOW_LOOK,
-					B_NORMAL_WINDOW_FEEL,
-					B_NOT_RESIZABLE | B_ASYNCHRONOUS_CONTROLS | B_NOT_MINIMIZABLE | B_NOT_ZOOMABLE );
+				rect.right = rect.left + kPrefsWinWidth;
+				rect.bottom = rect.top + kPrefsWinHeight;
+				/* check for out of bounds */
+				BScreen screen;
+				if( !screen.Frame().Contains( rect ) )
+				{
+					rect.OffsetTo(	200, 200 );
+				}
+				fPrefsWin = new PrefsWin(
+					rect );
 			}
 			else
 				fPrefsWin->Activate(true);
@@ -452,7 +459,7 @@ void App::MessageReceived(BMessage *msg){
 				else
 				{
 					printf( "width: using settings rect\n" );
-					AppSettings->FindRect( "WindowRect", &r );
+					AppSettings->FindRect( kPrefsMainWindowRect, &r );
 					usingsettingsrect = true;
 				}
 			}
@@ -463,7 +470,7 @@ void App::MessageReceived(BMessage *msg){
 					if( minh < ( r.bottom - r.top ) )
 						r.bottom = screen.Frame().bottom - 30;
 					else
-						AppSettings->FindRect( "WindowRect", &r );
+						AppSettings->FindRect( kPrefsMainWindowRect, &r );
 				}
 			}
 				
@@ -492,7 +499,7 @@ void App::MessageReceived(BMessage *msg){
 				
 				// open with blank, home or current page
 				int8 val;
-				AppSettings->FindInt8( "NewWindowStartPage", &val );
+				AppSettings->FindInt8( kPrefsNewWindowStartPage, &val );
 				printf( "VALUE: %d\n", val );
 				switch( val )
 				{
@@ -502,7 +509,7 @@ void App::MessageReceived(BMessage *msg){
 						BMessenger msgr( FirstWindow() );
 						BMessage* homepage = new BMessage( URL_OPEN );
 						BString string;
-						AppSettings->FindString( "HomePage", &string );
+						AppSettings->FindString( kPrefsHomePage, &string );
 						homepage->AddString( "url_to_open", string.String() );
 						msgr.SendMessage( homepage );
 						delete homepage;
@@ -551,7 +558,7 @@ void App::ReadyToRun(){
 	BMessenger msgr( FirstWindow() );
 	BMessage* homepage = new BMessage( URL_OPEN );
 	BString string;
-	AppSettings->FindString( "HomePage", &string );
+	AppSettings->FindString( kPrefsHomePage, &string );
 	homepage->AddString( "url_to_open", string.String() );
 	msgr.SendMessage( homepage );
 }
@@ -559,122 +566,133 @@ void App::ReadyToRun(){
 void App::ArgvReceived(int32 argc, char **argv){
 }
 
-void App::InitSettings(char *settings_path) {
-	printf( "App::InitSettings()\n" );
-	if (settings_path!=NULL) {
-		AppSettings->AddString("settings_directory",settings_path);
-		BString name(settings_path);
-		name+="/Themis Settings";
-		AppSettings->AddString("settings_file",name.String());
-	} else {
-		AppSettings->AddString("settings_directory","/boot/home/config/settings/Themis/");
-		AppSettings->AddString("settings_file","/boot/home/config/settings/Themis/Themis Settings");
-	}
+
+void
+App::CheckSettings(
+	char* settings_path )
+{
+	printf( "App::CheckSettings()\n" );
 	
-	// add the remaining prefs
-	
-	BRect rect( 100,100,650,450 );
-	AppSettings->AddRect( "WindowRect", rect );
-	BPoint point( 200, 200 );
-	AppSettings->AddPoint( "PrefsWindowPoint", point );
-		
-	// window
-	AppSettings->AddString( "HomePage", BString( "about:blank" ) );
-	AppSettings->AddBool( "IntelligentMaximize", false );
-	AppSettings->AddBool( "ShowTypeAhead", false );
-	AppSettings->AddInt8( "NewWindowStartPage", 0 );
-	
-	// tabs
-	AppSettings->AddBool( "ShowTabsAtStartup", false );
-	AppSettings->AddBool( "OpenTabsInBackground", false );
-	AppSettings->AddInt8( "TabHistoryDepth", 10 );
-	
-	// fonts
-	
-	// colors
-	union int32torgb convert;
-//	convert.rgb = ui_color( B_MENU_BACKGROUND_COLOR );
-//	AppSettings->AddInt32( "MenuColor", convert.value );
-	convert.rgb = ui_color( B_PANEL_BACKGROUND_COLOR );
-	AppSettings->AddInt32( "PanelColor", convert.value );
-	convert.rgb.red = 255;
-	convert.rgb.green = 200;
-	convert.rgb.blue = 0;
-	AppSettings->AddInt32( "ThemeColor", convert.value );
-	convert.rgb = ui_color( B_PANEL_BACKGROUND_COLOR );
-	AppSettings->AddInt32( "ActiveTabColor", convert.value );
-	convert.rgb.red -=32;
-	convert.rgb.green -=32;
-	convert.rgb.blue -=32;
-	AppSettings->AddInt32( "InactiveTabColor", convert.value );
-	convert.rgb.red = 187;
-	convert.rgb.green = 187;
-	convert.rgb.blue = 187;
-	AppSettings->AddInt32( "LightBorderColor", convert.value );
-	convert.rgb.red = 51;
-	convert.rgb.green = 51;
-	convert.rgb.blue = 51;
-	AppSettings->AddInt32( "DarkBorderColor", convert.value );
-	convert.rgb.red = 240;
-	convert.rgb.green = 240;
-	convert.rgb.blue = 240;
-	AppSettings->AddInt32( "ShadowColor", convert.value );
-	
-	// privacy
-	AppSettings->AddInt8( "GlobalHistoryDepthInDays", 7 );
-	AppSettings->AddInt8( "GlobalHistoryFreeUrlCount", 50 );
-	
-	// HTML Parser
-	// set the DTDToUsePath to "none", as we may not find a DTD below
-	AppSettings->AddString( "DTDToUsePath", "none" );
-	
-	// find a DTD
-	BString dtddir;
-	AppSettings->FindString( "settings_directory", &dtddir );
-	dtddir.Append( "/dtd/" );
-	printf( "DTD dir: %s\n", dtddir.String() );
-				
-	BDirectory* dir = new BDirectory( dtddir.String() );
-	if( dir->InitCheck() != B_OK )
+	if( settings_path != NULL)
 	{
-		printf( "DTD directory (%s) not found!\n", dtddir.String() );
-		printf( "Setting DTDToUsePath to \"none\"\n" );
-		AppSettings->AddString( "DTDToUsePath", "none" );
+		if( !AppSettings->HasString( kPrefsSettingsDirectory ) )
+			AppSettings->AddString( kPrefsSettingsDirectory, settings_path );
+		else
+			AppSettings->ReplaceString( kPrefsSettingsDirectory, settings_path );
+		
+		BString name( settings_path );
+		name += "/ThemisSettings";	// changed naming. (without space)
+		if( !AppSettings->HasString( kPrefsSettingsFilePath ) )
+			AppSettings->AddString( kPrefsSettingsFilePath, name.String() );
+		else
+			AppSettings->ReplaceString( kPrefsSettingsFilePath, name.String() );
 	}
 	else
 	{
-		BEntry entry;
-		while( dir->GetNextEntry( &entry, false ) != B_ENTRY_NOT_FOUND )
+		if( !AppSettings->HasString( kPrefsSettingsDirectory ) )
+			AppSettings->AddString( kPrefsSettingsDirectory, "/boot/home/config/settings/Themis/" );
+		if( !AppSettings->HasString( kPrefsSettingsFilePath ) )
+			AppSettings->AddString( kPrefsSettingsFilePath, "/boot/home/config/settings/Themis/ThemisSettings" );
+	}
+	
+	/* check if the settings message contains an entry. if not add it with its default value. */
+	
+	/* General */
+	if( !AppSettings->HasRect( kPrefsMainWindowRect ) )
+		AppSettings->AddRect( kPrefsMainWindowRect, BRect( 130, 130, 650, 450 ) );
+	
+	/* Prefs General */
+	if( !AppSettings->HasInt32( kPrefsLastSelectedItem ) )
+		AppSettings->AddInt32( kPrefsLastSelectedItem, 0 );
+	if( !AppSettings->HasPoint( kPrefsPrefWindowPoint ) )
+		AppSettings->AddPoint( kPrefsPrefWindowPoint, BPoint( 200, 200 ) );
+	
+	/* Prefs Window */
+	if( !AppSettings->HasString( kPrefsHomePage ) )
+		AppSettings->AddString( kPrefsHomePage, kAboutBlankPage );
+	if( !AppSettings->HasBool( kPrefsIntelligentZoom ) )
+		AppSettings->AddBool( kPrefsIntelligentZoom, false );
+	if( !AppSettings->HasBool( kPrefsShowTypeAheadWindow ) )
+		AppSettings->AddBool( kPrefsShowTypeAheadWindow, false );
+	if( !AppSettings->HasBool( kPrefsShowTabsAtStartup ) )
+		AppSettings->AddBool( kPrefsShowTabsAtStartup, false );
+	if( !AppSettings->HasBool( kPrefsOpenTabsInBackground ) )
+		AppSettings->AddBool( kPrefsOpenTabsInBackground, false );
+	if( !AppSettings->HasInt8( kPrefsNewWindowStartPage ) )
+		AppSettings->AddInt8( kPrefsNewWindowStartPage, 0 );
+	if( !AppSettings->HasBool( kPrefsOpenBlankTargetInTab ) )
+		AppSettings->AddBool( kPrefsOpenBlankTargetInTab, false );
+	
+	/* Prefs Privacy */
+	if( !AppSettings->HasInt8( kPrefsGlobalHistoryDepthInDays ) )
+		AppSettings->AddInt8( kPrefsGlobalHistoryDepthInDays, 9 );
+	if( !AppSettings->HasInt8( kPrefsGlobalHistoryFreeURLCount ) )
+		AppSettings->AddInt8( kPrefsGlobalHistoryFreeURLCount, 50 );
+	if( !AppSettings->HasInt8( kPrefsTabHistoryDepth ) )
+		AppSettings->AddInt8( kPrefsTabHistoryDepth, 10 );
+	
+	/* Prefs Parser */
+	if( !AppSettings->HasString( kPrefsDTDDirectory ) )
+	{
+		BString dir;
+		AppSettings->FindString( kPrefsSettingsDirectory, &dir );
+		dir.Append( "/dtd" );
+		AppSettings->AddString( kPrefsDTDDirectory, dir.String() );
+	}
+	if(	!AppSettings->HasString( kPrefsActiveDTDPath ) ||
+			strcmp( AppSettings->FindString( kPrefsActiveDTDPath ), kNoDTDFoundString ) == 0 )
+	{
+		/* set our default */
+		AppSettings->AddString( kPrefsActiveDTDPath, kNoDTDFoundString );
+		
+		/* find a DTD */
+		BString dtddir;
+		AppSettings->FindString( kPrefsSettingsDirectory, &dtddir );
+		dtddir.Append( "/dtd/" );
+		printf( "DTD dir: %s\n", dtddir.String() );
+		
+		BDirectory dir( dtddir.String() );		
+		if( dir.InitCheck() != B_OK )
 		{
-			BPath path;
-			entry.GetPath( &path );
-			char name[B_FILE_NAME_LENGTH];
-			entry.GetName( name );
-						
-			BString nstring( name );
-			printf( "----------------\n" );
-			printf( "found file: %s\n", nstring.String() );
-			if( nstring.IFindFirst( "DTD", nstring.Length() - 3 ) != B_ERROR )
+			printf( "DTD directory (%s) not found!\n", dtddir.String() );
+			printf( "Setting kPrefsActiveDTDPath to \"none\"\n" );
+			AppSettings->AddString( kPrefsActiveDTDPath, kNoDTDFoundString );
+		}
+		else
+		{
+			BEntry entry;
+			while( dir.GetNextEntry( &entry, false ) != B_ENTRY_NOT_FOUND )
 			{
-				printf( "found DTD file: %s\n", nstring.String() );
-				if( AppSettings->HasString( "DTDToUsePath" ) )
+				BPath path;
+				entry.GetPath( &path );
+				char name[B_FILE_NAME_LENGTH];
+				entry.GetName( name );
+						
+				BString nstring( name );
+				printf( "----------------\n" );
+				printf( "found file: %s\n", nstring.String() );
+				if( nstring.IFindFirst( "DTD", nstring.Length() - 3 ) != B_ERROR )
 				{
-					printf( "replacing DTDToUsePath with: %s\n", path.Path() );
-					AppSettings->ReplaceString( "DTDToUsePath", path.Path() );
-				}
-				else
-				{
-					printf( "adding DTDToUsePath: %s\n", path.Path() );
-					AppSettings->AddString( "DTDToUsePath", path.Path() );
+					printf( "found DTD file: %s\n", nstring.String() );
+					if( AppSettings->HasString( kPrefsActiveDTDPath ) )
+					{
+						printf( "replacing kPrefsActiveDTDPath with: %s\n", path.Path() );
+						AppSettings->ReplaceString( kPrefsActiveDTDPath, path.Path() );
+					}
+					else
+					{
+						printf( "adding kPrefsActiveDTDPath: %s\n", path.Path() );
+						AppSettings->AddString( kPrefsActiveDTDPath, path.Path() );
+					}
 				}
 			}
 		}
+		/* end: find a DTD */
 	}
-	delete dir;
-	// end: find a DTD
 	
 	AppSettings->PrintToStream();
 }
+
 
 GlobalHistory*
 App::GetGlobalHistory()
@@ -759,29 +777,38 @@ App::FirstWindow()
 	return fFirstWindow;
 }
 
-status_t App::LoadSettings() {
+status_t
+App::LoadSettings()
+{
 	printf( "App::LoadSettings()\n" );
-	if (AppSettings!=NULL) {
+	if( AppSettings != NULL )
+	{
+		/* check if dtd dir exists, if not, create it */
 		{
 			BEntry ent("/boot/home/config/settings/Themis/dtd/",true);
 			if (!ent.Exists())
 				create_directory("/boot/home/config/settings/Themis/dtd/",0555);
 		}
+		
 		status_t ret=B_OK;
 		BPath path;
-		if (find_directory(B_USER_SETTINGS_DIRECTORY,&path)==B_OK) {
+		if (find_directory(B_USER_SETTINGS_DIRECTORY,&path)==B_OK)
+		{
 			path.Append("Themis/",true);
 			BEntry prefsent(path.Path(),true);
-			if (prefsent.Exists()) {
+			if (prefsent.Exists())
+			{
 				prefsent.GetPath(&path);
-				path.Append("Themis Settings",false);
+				path.Append("ThemisSettings",false);
 				prefsent.SetTo(path.Path(),true);
-				if (prefsent.Exists()) {
+				if (prefsent.Exists())
+				{
 					BFile *file=new BFile(&prefsent,B_READ_ONLY);
 					ret=file->InitCheck();
-					if (ret!=B_OK) {
+					if (ret!=B_OK)
+					{
 						delete file;
-						InitSettings();
+						CheckSettings();
 						return ret;
 					}
 					
@@ -789,169 +816,40 @@ status_t App::LoadSettings() {
 					ret|=AppSettings->Unflatten(file);
 					file->Unlock();
 					delete file;
-					printf("Settings loaded.\n");
-					// check for missing pref-vars
-					printf( "Checking for missing pref-vars in AppSettings.\n" );
-					if( !AppSettings->HasRect( "WindowRect" ) )
-						AppSettings->AddRect( "WindowRect", BRect( 100,100,650,450 ) );
-					if( !AppSettings->HasPoint( "PrefsWindowPoint" ) )
-						AppSettings->AddPoint( "PrefsWindowPoint", BPoint( 200,200 ) );
-					// window
-					if( !AppSettings->HasString( "HomePage" ) )
-						AppSettings->AddString( "HomePage", BString( "about:blank" ) );
-					if( !AppSettings->HasBool( "IntelligentMaximize" ) )
-						AppSettings->AddBool( "IntelligentMaximize", false );
-					if( !AppSettings->HasBool( "ShowTypeAhead" ) )
-						AppSettings->AddBool( "ShowTypeAhead", false );
-					if( !AppSettings->HasInt8( "NewWindowStartPage" ) )
-						AppSettings->AddInt8( "NewWindowStartPage", 0 );
-					// tabs
-					if( !AppSettings->HasBool( "ShowTabsAtStartup" ) )
-						AppSettings->AddBool( "ShowTabsAtStartup", false );
-					if( !AppSettings->HasBool( "OpenTabsInBackground" ) )
-						AppSettings->AddBool( "OpenTabsInBackground", false );
-					if( !AppSettings->HasInt8( "TabHistoryDepth" ) )
-						AppSettings->AddInt8( "TabHistoryDepth", 10 );
-					// fonts
-					// colors
-					union int32torgb convert;
-//					if( !AppSettings->HasInt32( "MenuColor" ) )
-//					{
-//						convert.rgb = ui_color( B_MENU_BACKGROUND_COLOR );
-//						AppSettings->AddInt32( "MenuColor", convert.value );
-//					}
-					if( !AppSettings->HasInt32( "PanelColor" ) )
-					{
-						convert.rgb = ui_color( B_PANEL_BACKGROUND_COLOR );
-						AppSettings->AddInt32( "PanelColor", convert.value );
-					}
-					if( !AppSettings->HasInt32( "ThemeColor" ) )
-					{
-						convert.rgb.red = 255;
-						convert.rgb.green = 200;
-						convert.rgb.blue = 0;
-						AppSettings->AddInt32( "ThemeColor", convert.value );
-					}
-					if( !AppSettings->HasInt32( "ActiveTabColor" ) )
-					{
-						convert.rgb = ui_color( B_PANEL_BACKGROUND_COLOR );
-						AppSettings->AddInt32( "ActiveTabColor", convert.value );
-					}
-					if( !AppSettings->HasInt32( "InactiveTabColor" ) )
-					{
-						convert.rgb = ui_color( B_PANEL_BACKGROUND_COLOR );
-						convert.rgb.red -=32;
-						convert.rgb.green -=32;
-						convert.rgb.blue -=32;
-						AppSettings->AddInt32( "InactiveTabColor", convert.value );						
-					}
-					if( !AppSettings->HasInt32( "LightBorderColor" ) )
-					{
-						convert.rgb.red = 187;
-						convert.rgb.green = 187;
-						convert.rgb.blue = 187;
-						AppSettings->AddInt32( "LightBorderColor", convert.value );
-					}
-					if( !AppSettings->HasInt32( "DarkBorderColor" ) )
-					{
-						convert.rgb.red = 51;
-						convert.rgb.green = 51;
-						convert.rgb.blue = 51;
-						AppSettings->AddInt32( "DarkBorderColor", convert.value );
-					}
-					if( !AppSettings->HasInt32( "ShadowColor" ) )
-					{
-						convert.rgb.red = 240;
-						convert.rgb.green = 240;
-						convert.rgb.blue = 240;
-						AppSettings->AddInt32( "ShadowColor", convert.value );
-					}
-					// privacy
-					if( !AppSettings->HasInt8( "GlobalHistoryDepthInDays" ) )
-						AppSettings->AddInt8( "GlobalHistoryDepthInDays", 7 );
-					if( !AppSettings->HasInt8( "GlobalHistoryFreeUrlCount" ) )
-						AppSettings->AddInt8( "GlobalHistoryFreeUrlCount", 50 );
+					printf("  Settings loaded.\n");
 					
-					// HTML Parser
-					// if we have no DTDToUsePath, or the DTDToUsePath is "none"
-					// ( checking for "none" because somebody may have added a DTD in the mean time )
-					if( !AppSettings->HasString( "DTDToUsePath" ) || strncmp( AppSettings->FindString( "DTDToUsePath" ), "none", 4 ) == 0 )
-					{
-						// set the DTDToUsePath to "none", as we may not find a DTD below
-						if( !AppSettings->HasString( "DTDToUsePath" ) )
-							AppSettings->AddString( "DTDToUsePath", "none" );
-	
-						// find a DTD
-						BString dtddir;
-						AppSettings->FindString( "settings_directory", &dtddir );
-						dtddir.Append( "/dtd/" );
-						printf( "DTD dir: %s\n", dtddir.String() );
-			
-						BDirectory* dir = new BDirectory( dtddir.String() );
-						if( dir->InitCheck() != B_OK )
-						{
-							printf( "DTD directory (%s) not found!\n", dtddir.String() );
-							printf( "Setting DTDToUsePath to \"none\"\n" );
-							AppSettings->AddString( "DTDToUsePath", "none" );
-						}
-						else
-						{
-							BEntry entry;
-							while( dir->GetNextEntry( &entry, false ) != B_ENTRY_NOT_FOUND )
-							{
-								BPath path;
-								entry.GetPath( &path );
-								char name[B_FILE_NAME_LENGTH];
-								entry.GetName( name );
-						
-								BString nstring( name );
-								printf( "----------------\n" );
-								printf( "found file: %s\n", nstring.String() );
-								if( nstring.IFindFirst( "DTD", nstring.Length() - 3 ) != B_ERROR )
-								{
-									printf( "found DTD file: %s\n", nstring.String() );
-									if( AppSettings->HasString( "DTDToUsePath" ) )
-									{
-										printf( "replacing DTDToUsePath with: %s\n", path.Path() );
-										AppSettings->ReplaceString( "DTDToUsePath", path.Path() );
-									}
-									else
-									{
-										printf( "adding DTDToUsePath: %s\n", path.Path() );
-										AppSettings->AddString( "DTDToUsePath", path.Path() );
-									}
-								}
-							}
-						}
-						delete dir;
-						// end: find a DTD
-					}
-						
-					AppSettings->PrintToStream();
+					/* check for missing entries, or add defaults if needed */
+					CheckSettings();
+					
 					return ret;
 					
-				} else {
+				}
+				else	// prefsfile does not exist
+				{
 					path.GetParent(&path);
-					InitSettings((char*)path.Path());
+					
+					/* check for missing entries, or add defaults if needed */
+					CheckSettings( ( char* )path.Path() );
+
 					SaveSettings();
 					return B_OK;
 				}
 				
-			} else {
+			}
+			else	// prefsdir does not exist
+			{
 				create_directory(path.Path(),0777);
-				InitSettings((char*)path.Path());
+				CheckSettings( ( char* )path.Path() );
 				SaveSettings();
 				
 				return B_OK;
-				
 			}
 			
-		} else {
 		}
-		return ret;
+		else
+			return B_ERROR;
 	}
 	return B_ERROR;
-	
 }
 
 status_t App::SaveSettings() {
@@ -960,8 +858,8 @@ status_t App::SaveSettings() {
 		status_t ret=B_OK;
 		
 		BString fname,dname;
-		AppSettings->FindString("settings_directory",&dname);
-		AppSettings->FindString("settings_file",&fname);
+		AppSettings->FindString(kPrefsSettingsDirectory,&dname);
+		AppSettings->FindString(kPrefsSettingsFilePath,&fname);
 		BEntry ent(dname.String());
 		if (!ent.Exists()) {
 			ret=create_directory(dname.String(),0777);
@@ -983,6 +881,9 @@ status_t App::SaveSettings() {
 		ret=AppSettings->Flatten(file);
 		file->Unlock();
 		delete file;
+		
+		// temp
+		AppSettings->PrintToStream();
 		
 		return ret;
 	}

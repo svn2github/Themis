@@ -136,7 +136,7 @@ to allow interoperability in some parts of the application.
 #define DTD_CHANGED_PARSER		'dtdp'
 #define PREFSWIN_CLOSE			'pwcl'
 #define PREFSWIN_SHOW			'pwsh'
-#define RE_INIT_INTERFACE		'riif'
+#define RE_INIT_TABHISTORY		'rith'
 #define SAVE_APP_SETTINGS		'savs'
 #define TAB_ADD					'tadd'
 #define TAB_CLOSE				'tclo'
@@ -174,15 +174,30 @@ to allow interoperability in some parts of the application.
 #define SH_RETRIEVE_STOP		'srsp'	// sent by SH to protocol(s)
 #define SH_WIN_LOADING_PROGRESS	'swlp'	// sent by SH to win
 
+// additional interface stuff
+const float kPrefsWinWidth	= 600.0;
+const float kPrefsWinHeight	= 440.0;
+const float kItemSpacing	= 10.0;
+const float kBBoxExtraInset	= 5.0;
+const float kDividerSpacing = 5.0;
+const char* const kAboutBlankPage = "about:blank";
+const char* const kAboutThemisPage = "about:themis";
+const char* const kNoDTDFoundString = "none";
+// colors which can't be grepped from the system
+#include <GraphicsDefs.h>
+const rgb_color kColorInactiveTab = { 184, 184, 184, 255 };
+const rgb_color kColorDarkBorder = { 51, 51, 51, 255 };
+const rgb_color kColorLightBorder = { 187, 187, 187, 255 };
+const rgb_color kColorShadow = { 240, 240, 240, 255 };
+const rgb_color kColorTheme = { 255, 200, 0, 255 };
+
 //ImageHandler message constants
 #define IH_LOAD_IMAGE			'ihli'
 #define IH_IMAGE_LOADED			'ihil'
 
-#include <GraphicsDefs.h>
-
-union int32torgb
-{
-	int32 value;
-	struct rgb_color rgb;
-};
+//union int32torgb
+//{
+//	int32 value;
+//	struct rgb_color rgb;
+//};
 #endif

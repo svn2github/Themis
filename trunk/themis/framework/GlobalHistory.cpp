@@ -30,8 +30,9 @@ Project Start Date: October 18, 2000
 #include <stdio.h>
 #include <time.h>
 
-#include "GlobalHistory.h"
 #include "app.h"
+#include "GlobalHistory.h"
+#include "../common/PrefsDefs.h"
 
 GlobalHistory::GlobalHistory(
 	int8 depth,
@@ -48,13 +49,16 @@ GlobalHistory::~GlobalHistory()
 	printf( "  Putting GlobalHistoryData in AppSettings\n" );
 	
 	BMessage collector;
-		
-	while( fList->CountItems() > 0 )
+	
+	int32 count = fList->CountItems();
+	
+	for( int32 i = 0; i < count; i++ )
 	{
-		GlobalHistoryItem* item = ( GlobalHistoryItem* )fList->ItemAt( fList->CountItems() - 1 );
+		GlobalHistoryItem* item = ( GlobalHistoryItem* )fList->ItemAt( ( int32 )0 );
 		if( item != NULL )
 		{
-			/* Pack up the item data in a BMessage, which will then be stored in the
+			/*
+			 * Pack up the item data in a BMessage, which will then be stored in the
 			 * collector message.
 			 */
 			
@@ -65,30 +69,22 @@ GlobalHistory::~GlobalHistory()
 			collitem.AddString( "url", item->Text() );
 			collitem.AddInt32( "time", item->Time() );
 			
-			collector.AddMessage( "GlobalHistoryItemMessage", &collitem );
-							
-			fList->RemoveItem( item );
-			delete item;
-		}
-		else
-		{
-			/* while() may loop eternally if the last item in the list is NULL.
-			 * allthough i suppose this is a rare scenario, and should not happen.
-			 */
-			fList->RemoveItem( fList->CountItems() - 1 );
-		}
+			collector.AddMessage( kPrefsGlobalHistoryItemMessage, &collitem );
+		}					
+		fList->RemoveItem( ( int32 )0 );
+		delete item;
 	}
 	delete fList;
 	
 //	collector->PrintToStream();
 	
-	if( AppSettings->HasMessage( "GlobalHistoryData" ) )
+	if( AppSettings->HasMessage( kPrefsGlobalHistoryData ) )
 		AppSettings->ReplaceMessage(
-			"GlobalHistoryData",
+			kPrefsGlobalHistoryData,
 			&collector );
 	else
 		AppSettings->AddMessage(
-			"GlobalHistoryData",
+			kPrefsGlobalHistoryData,
 			&collector );
 	
 //	AppSettings->PrintToStream();
@@ -269,7 +265,7 @@ GlobalHistory::CheckEntryExpiration()
 	
 	// remove free urls when we are over GlobalHistoryFreeUrlCount
 	int8 ghfuc = 0;
-	AppSettings->FindInt8( "GlobalHistoryFreeUrlCount", &ghfuc );
+	AppSettings->FindInt8( kPrefsGlobalHistoryFreeURLCount, &ghfuc );
 	if( freecount > ghfuc )
 	{
 //		printf( "  Removing expired free URLs.\n" );
@@ -383,14 +379,14 @@ GlobalHistory::Init(
 	type_code tc = B_ANY_TYPE;
 	int32 count = -1;
 	
-	if( datamsg->GetInfo( "GlobalHistoryItemMessage", &tc, &count ) == B_OK )
+	if( datamsg->GetInfo( kPrefsGlobalHistoryItemMessage, &tc, &count ) == B_OK )
 	{
 		printf( "  Found %ld GlobalHistoryItemMessages.\n", count );
 		
 		for( int32 i = 0; i < count; i++ )
 		{
 			BMessage* ghimsg = new BMessage;
-			datamsg->FindMessage( "GlobalHistoryItemMessage", i, ghimsg );
+			datamsg->FindMessage( kPrefsGlobalHistoryItemMessage, i, ghimsg );
 			if( ghimsg != NULL )
 			{
 				GlobalHistoryItem* newitem = new GlobalHistoryItem(

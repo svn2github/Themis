@@ -37,7 +37,7 @@ Project Start Date: October 18, 2000
 #include "msgsystem.h"
 #include "msgdaemon.h"
 #include "plugman.h"
-#include "prefswin.h"
+#include "PrefsWin.h"
 #ifdef NEWNET
 #include "tcpmanager.h"
 #endif
@@ -137,10 +137,10 @@ class App : public BApplication, public MessageSystem
 #endif
 
 	private:
-		//! Create the default settings.
-		void						InitSettings(
+		//! Checks settings for missing items, and adds defaults if required.
+		void						CheckSettings(
 										char* settings_path = NULL );
-
+		
 		//! The About window.
 		aboutwin*					fAboutWin;
 
@@ -157,7 +157,7 @@ class App : public BApplication, public MessageSystem
 		MessageDaemon*				fMessageDaemon;
 
 		//! The Preferences window.
-		prefswin*					fPrefsWin;
+		PrefsWin*					fPrefsWin;
 
 		//! Checks to see if the QuitRequested function has been called.
 		volatile int32				fQR_called;

@@ -15,7 +15,6 @@
 #include "ThemisIcons.h"
 #include "ThemisTab.h"
 #include "ThemisTabView.h"
-#include "FakeSite.h"
 #include "win.h"
 #include "app.h"
 
@@ -54,15 +53,8 @@ ThemisTab::DrawTab(
 	rgb_color lo = owner->LowColor();
 	
 	// define the colors
-	union int32torgb convert;
-	AppSettings->FindInt32( "DarkBorderColor", &convert.value );
-	rgb_color darkbordercolor = convert.rgb;
-	AppSettings->FindInt32( "ActiveTabColor", &convert.value );
-	rgb_color activetabcolor = convert.rgb;
-	AppSettings->FindInt32( "InactiveTabColor", &convert.value );
-	rgb_color inactivetabcolor = convert.rgb;
-	AppSettings->FindInt32( "ShadowColor", &convert.value );
-	rgb_color shadowcolor = convert.rgb;
+	rgb_color active_tab_color = ui_color( B_PANEL_BACKGROUND_COLOR );
+	
 					
 	// Start a line array to draw the tab --
 	// this is faster then drawing the lines
@@ -78,96 +70,98 @@ ThemisTab::DrawTab(
 	if( position != B_TAB_ANY )
 	{
 		owner->AddLine( BPoint( frame.left, frame.bottom - 1 ),
-			BPoint( frame.left + 1, frame.bottom - 2 ), darkbordercolor );
+			BPoint( frame.left + 1, frame.bottom - 2 ), kColorDarkBorder );
 		owner->AddLine( BPoint( frame.left + 1, frame.bottom - 1 ),
-			BPoint( frame.left + 2, frame.bottom - 2 ), shadowcolor );
+			BPoint( frame.left + 2, frame.bottom - 2 ), kColorShadow );
 		
 		// draw the active tabs background
-		owner->SetLowColor( activetabcolor );
+		owner->SetLowColor( active_tab_color );
 		owner->FillRect( fillrect, B_SOLID_LOW );
 		
 		// the upper border of the 'thick' line between tabs and site content
 		// which is not drawn in the active tab, but must be drawn in activetabcolor
 		owner->AddLine( BPoint( frame.left + 2, frame.bottom - 1 ),
-			BPoint( frame.right - 2, frame.bottom - 1), activetabcolor );
+			BPoint( frame.right - 2, frame.bottom - 1), active_tab_color );
 		// and the shadow of that line, which cant be seen in this tab, too
 		owner->AddLine( BPoint( frame.left + 1, frame.bottom ),
-			BPoint( frame.right, frame.bottom ), activetabcolor );
+			BPoint( frame.right, frame.bottom ), active_tab_color );
 		// except the little pixel of the shadow at the left bottom corner
 		owner->AddLine( BPoint( frame.left, frame.bottom ),
-			BPoint( frame.left, frame.bottom ), shadowcolor );
+			BPoint( frame.left, frame.bottom ), kColorShadow );
 	}
 	else	// an inactive tab
 	{
 		// draw the inactive tabs background
-		owner->SetLowColor( inactivetabcolor );
+		owner->SetLowColor( kColorInactiveTab );
 		owner->FillRect( fillrect, B_SOLID_LOW );
 		
 		// the black line 'under' the inactive tab
 		owner->AddLine( BPoint( frame.left, frame.bottom - 1 ),
-			BPoint( frame.right, frame.bottom - 1), darkbordercolor );
+			BPoint( frame.right, frame.bottom - 1), kColorDarkBorder );
 		// and the 'shadow'
 		owner->AddLine( BPoint( frame.left , frame.bottom ),
-			BPoint( frame.right , frame.bottom ), shadowcolor );
+			BPoint( frame.right , frame.bottom ), kColorShadow );
 	}
 		
 	// Left wall -- always drawn
 	owner->AddLine( BPoint( frame.left + 1, frame.bottom - 2 ),
-		BPoint( frame.left + 1, frame.top + 2 ), darkbordercolor );
+		BPoint( frame.left + 1, frame.top + 2 ), kColorDarkBorder );
 	owner->AddLine( BPoint( frame.left + 2, frame.bottom - 2 ),
-		BPoint( frame.left + 2, frame.top + 2 ), shadowcolor );
+		BPoint( frame.left + 2, frame.top + 2 ), kColorShadow );
 	
 	// Top-left corner -- always drawn
 	owner->AddLine( BPoint( frame.left + 2, frame.top + 1 ),
-		BPoint( frame.left + 2, frame.top + 1 ), darkbordercolor );
+		BPoint( frame.left + 2, frame.top + 1 ), kColorDarkBorder );
 			
 	// Top -- always drawn
 	owner->AddLine( BPoint( frame.left + 3, frame.top ),
-		BPoint( frame.right - 3, frame.top ), darkbordercolor );
+		BPoint( frame.right - 3, frame.top ), kColorDarkBorder );
 	owner->AddLine( BPoint( frame.left + 3, frame.top + 1 ),
-		BPoint( frame.right - 3, frame.top + 1 ), shadowcolor );	
+		BPoint( frame.right - 3, frame.top + 1 ), kColorShadow );	
 	
 	// Top-right corner -- always drawn
 	owner->AddLine( BPoint( frame.right - 2, frame.top + 1 ),
-		BPoint( frame.right - 2, frame.top + 1 ), darkbordercolor );
+		BPoint( frame.right - 2, frame.top + 1 ), kColorDarkBorder );
 	
 	// Right wall -- always drawn.
 	owner->AddLine( BPoint( frame.right - 1, frame.top + 2 ),
-		BPoint( frame.right - 1, frame.bottom - 2 ), darkbordercolor );
+		BPoint( frame.right - 1, frame.bottom - 2 ), kColorDarkBorder );
 	owner->AddLine( BPoint( frame.right - 2, frame.top + 2 ),
-		BPoint( frame.right - 2, frame.bottom - 2 ), shadowcolor );
+		BPoint( frame.right - 2, frame.bottom - 2 ), kColorShadow );
 	
 	// Bottom-right corner, only visible if the tab
 	// is either frontmost or the rightmost tab.
 	if( full )
 	{
 		owner->AddLine( BPoint( frame.right - 1, frame.bottom - 2 ),
-			BPoint( frame.right, frame.bottom - 1 ), darkbordercolor );
+			BPoint( frame.right, frame.bottom - 1 ), kColorDarkBorder );
 		owner->AddLine( BPoint( frame.right - 2, frame.bottom - 2 ),
-			BPoint( frame.right - 1, frame.bottom - 1 ), shadowcolor );
+			BPoint( frame.right - 1, frame.bottom - 1 ), kColorShadow );
 	}
 	
 	owner->EndLineArray();
 	
 	// Draw the label and the fav-icon by calling DrawLabel()
-	if( position != B_TAB_ANY )
-	{
-		AppSettings->FindInt32( "ActiveTabColor", &convert.value );
-		float value = ( convert.rgb.red + convert.rgb.green + convert.rgb.blue ) / ( 3.0 * 255.0 );
-		if( value > 0.5 )
-			owner->SetHighColor( 0, 0, 0, 255 );
-		else
-			owner->SetHighColor( 255,255,255,255 );
-	}
-	else
-	{
-		AppSettings->FindInt32( "InactiveTabColor", &convert.value );
-		float value = ( convert.rgb.red + convert.rgb.green + convert.rgb.blue ) / ( 3.0 * 255.0 );
-		if( value > 0.5 )
-			owner->SetHighColor( 0, 0, 0, 255 );
-		else
-			owner->SetHighColor( 255,255,255,255 );
-	}
+//	if( position != B_TAB_ANY )
+//	{
+//		AppSettings->FindInt32( "ActiveTabColor", &convert.value );
+//		float value = ( convert.rgb.red + convert.rgb.green + convert.rgb.blue ) / ( 3.0 * 255.0 );
+//		if( value > 0.5 )
+//			owner->SetHighColor( 0, 0, 0, 255 );
+//		else
+//			owner->SetHighColor( 255,255,255,255 );
+//	}
+//	else
+//	{
+//		AppSettings->FindInt32( "InactiveTabColor", &convert.value );
+//		float value = ( convert.rgb.red + convert.rgb.green + convert.rgb.blue ) / ( 3.0 * 255.0 );
+//		if( value > 0.5 )
+//			owner->SetHighColor( 0, 0, 0, 255 );
+//		else
+//			owner->SetHighColor( 255,255,255,255 );
+//	}
+
+	owner->SetHighColor( 0, 0, 0, 255 );
 	
 	DrawLabel( owner, frame );
 	owner->SetHighColor( hi );

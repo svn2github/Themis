@@ -7,9 +7,9 @@
 #include <stdio.h>
 
 // myheaders
-#include "appdefines.h"
 #include "ThemisUrlPopUpWindow.h"
 #include "win.h"
+#include "../common/commondefs.h"
 
 ThemisUrlPopUpWindow::ThemisUrlPopUpWindow( BWindow* parent, BRect frame )
 	: BWindow(
