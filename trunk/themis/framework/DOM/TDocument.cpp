@@ -84,3 +84,14 @@ TAttrPtr TDocument	::	createAttribute( const TDOMString aName )	{
 	
 }
 
+void TDocument	::	setDocumentURI( const TDOMString aURI )	{
+	
+	mDocumentURI = aURI;
+	
+}
+
+TDOMString TDocument	::	getDocumentURI() const	{
+	
+	return mDocumentURI;
+	
+}

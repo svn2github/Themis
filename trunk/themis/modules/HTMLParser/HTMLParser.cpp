@@ -244,8 +244,6 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 						
 					}
 					
-					
-					
 					const char * url = NULL;
 					message->FindString( "url", &url );
 					
@@ -297,6 +295,10 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 					SGMLTextPtr	docText = SGMLTextPtr( new SGMLText( content ) );
 					if ( parser != NULL )	{
 						mDocument = parser->parse( docText );
+						// A bit messy. Variable url is still valid. Check back to start of case.
+						string urlString( url );
+						mDocument->setDocumentURI( urlString );
+						
 						printf( "Data parsed\n" );
 
 						if ( PlugMan )	{

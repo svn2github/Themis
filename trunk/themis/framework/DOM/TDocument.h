@@ -49,6 +49,7 @@ class TDocument	:	public TNode	{
 		// DocumentType doctype // Not yet implemented
 		// DOMImplementation implementation // Not yet implemented
 		// Element documentElement // Not yet implemented
+		TDOMString mDocumentURI;
 
 	public:
 		/// Constructor of the TDocument class.
@@ -112,6 +113,19 @@ class TDocument	:	public TNode	{
 		TAttrPtr createAttribute( const TDOMString aName );
 		//EntityReference createEntityReference( const TDOMString aName ); // Not yet implemented
 		//TNodeListShared getElementsByTagName( const TDOMString aTagName ); // Not yet implemented
+		
+		/// A function to set the document URI
+		/**
+			This function sets the document URI. No checking is done to see if it is
+			a valid URI. It could be empty if the document was created with
+			a call to the constructor.
+			
+			@param aURI		The URI of the document.
+		*/
+		void setDocumentURI( const TDOMString aURI );
+		
+		/// A function to get the URI. It might be empty.
+		TDOMString getDocumentURI() const;
 
 };
 
