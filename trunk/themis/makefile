@@ -114,7 +114,7 @@ endif
 #			cacheaddon
 #			httpaddon
 #			help
-
+#			dist
 all: framework httpaddon cacheaddon
 	@echo "Themis application and add-ons built successfully."
 addons: httpaddon cacheaddon
@@ -130,7 +130,10 @@ help:
 	@echo "	cacheaddon	Just the cache addon"
 	@echo "	httpaddon	Just the HTTP addon"
 	@echo "	help		This message"
-
+	@echo "	dist		Distribution ready zip file"
+zip: all
+	@zip -ry9D Themis.zip Themis/
+	@echo "Themis.zip has been created."
 
 #framework application
 framework: frameworkdepends commondepends frameworkobjects commonobjects
