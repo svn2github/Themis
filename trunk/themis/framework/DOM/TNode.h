@@ -12,8 +12,6 @@
 
 #include <vector>
 
-#include <boost/detail/shared_count.hpp>
-
 #include "DOMSupport.h"
 
 class TNodeList;
@@ -31,7 +29,7 @@ class TNode	{
 		TDOMString mNodeName;
 		TDOMString mNodeValue;
 		
-		TNodeList * mChildNodes;
+		TNodeListShared mChildNodes;
 		TNodeWeak mParentNode;
 		TNodeWeak mNextSibling;
 		TNodeWeak mPreviousSibling;
@@ -74,7 +72,7 @@ class TNode	{
 		const TDOMString getNodeName() const;
 		const TDOMString getNodeValue() const;
 		void setNodeValue( const TDOMString aNodeValue );
-		TNodeList * getChildNodes() const;
+		TNodeListShared getChildNodes() const;
 		TNodeWeak getParentNode() const;
 		TNodeWeak getFirstChild() const;
 		TNodeWeak getLastChild() const;

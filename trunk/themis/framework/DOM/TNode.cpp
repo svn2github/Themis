@@ -20,7 +20,7 @@ TNode	::	TNode( const unsigned short aNodeType, const TDOMString aNodeName, cons
 	mPreviousSibling.reset();
 	
 	mNodeList = vector<TNodeShared>();
-	mChildNodes = new TNodeList( &mNodeList );
+	mChildNodes = TNodeListShared( new TNodeList( &mNodeList ) );
 	mNodeListContainers = vector<TNodeListContainerShared>();
 
 	switch ( mNodeType )	{
@@ -114,7 +114,7 @@ TNode	::	~TNode()	{
 		removeChild( item );
 	}
 	
-	delete mChildNodes;
+	//delete mChildNodes;
 
 }
 
@@ -152,7 +152,7 @@ void TNode	::	setNodeValue( const TDOMString aNodeValue )	{
 	
 }
 
-TNodeList * TNode	::	getChildNodes() const	{
+TNodeListShared TNode	::	getChildNodes() const	{
 	
 	return mChildNodes;
 	

@@ -9,39 +9,59 @@
 #include "TElement.h"
 #include "TNodeList.h"
 #include "TText.h"
-//#include "TDocument.h"
+#include "TDocument.h"
+#include "TDOMException.h"
+
+void DOMTest	::	showDocument( const TDocumentShared document )	{
+	
+	printf( "Root of the tree\n" );
+	showTree( document, 1 );
+
+}
+
+void DOMTest	::	showTree( const TNodeShared node, int spacing )	{
+	
+	TNodeListShared children = node->getChildNodes();
+	int length = children->getLength();
+	if ( length != 0 )	{
+		for ( int i = 0; i < length; i++ )	{
+			TNodeShared child = make_shared( children->item( i ) );
+			for ( int j = 0; j < spacing; j++ )	{
+				printf( "  " );
+			}
+			printf( "Child name: %s\n", child->getNodeName().c_str() );
+			showTree( child, spacing + 1 );
+		}
+	}	
+}
 
 DOMTest	::	DOMTest()	:	BApplication( "application/x-vnd.Themis-DOMTest" )	{
 	
 	printf( "Let's kick off!\n" );
 
-/*
 	TDocumentShared document( new TDocument() );
 	document->setSmartPointer( document );
 	
-	TElementShared creationTest = document->createElement( "nameOfTag" );
-*/
-	printf( "Create a Node\n" );
-	//DOMPointer<TNode> node( new TNode( ELEMENT_NODE ) );
-	TNodeShared node( new TNode( ELEMENT_NODE ) );
-	node->setSmartPointer( node );
+	printf( "Create an Element\n" );
+	TElementShared scooby = document->createElement( "scooby" );
 	
-	printf( "Node created\n" );
+	printf( "Attach element to document\n" );
+	document->appendChild( scooby );
+
+	printf( "Element created\n" );
 	printf( "Try to append same node\n" );
 	try	{
-		node->appendChild( node );
+		scooby->appendChild( scooby );
 	}
 	catch ( TDOMException e )	{
 		printf( "Exception caught : %s\n", e.getString() );
 	}
 
-	//DOMPointer<TElement> element( new TElement( "cookie" ) );
-	TElementShared element( new TElement( "cookie" ) );
-	element->setSmartPointer( element );
+	TElementShared element = document->createElement( "cookie" );
 
 	printf( "Try to append an element\n" );
 	try	{
-		node->appendChild( element );
+		scooby->appendChild( element );
 	}
 	catch ( TDOMException e )	{
 		printf( "Exception caught : %s\n", e.getString() );
@@ -70,7 +90,7 @@ DOMTest	::	DOMTest()	:	BApplication( "application/x-vnd.Themis-DOMTest" )	{
 
 	printf( "Try to append parent to node\n" );
 	try	{
-		element->appendChild( node );
+		element->appendChild( scooby );
 	}
 	catch ( TDOMException e )	{
 		printf( "Exception caught : %s\n", e.getString() );
@@ -78,12 +98,11 @@ DOMTest	::	DOMTest()	:	BApplication( "application/x-vnd.Themis-DOMTest" )	{
 
 	printf( "Create a text node\n" );
 	//DOMPointer<TText> textNode( new TText( "Text test" ) );
-	TNodeShared textNode( new TNode( TEXT_NODE ) );
-	textNode->setSmartPointer( textNode );
-	printf( "Node created\n" );
-	printf( "Try to add a node to the text node\n" );
+	TTextShared textNode = document->createText( "This is a test" );
+	printf( "Text node created\n" );
+	printf( "Try to add an element to the text node\n" );
 	try	{
-		textNode->insertBefore( node, TNodeShared() );
+		textNode->insertBefore( scooby, TNodeShared() );
 	}
 	catch ( TDOMException e )	{
 		printf( "Exception caught : %s\n", e.getString() );
@@ -93,7 +112,7 @@ DOMTest	::	DOMTest()	:	BApplication( "application/x-vnd.Themis-DOMTest" )	{
 	printf( "Name: %s\n", textNode->getNodeName().c_str() );
 
 	printf( "Get a node\n" );
-	const TNodeWeak newNode = node->getFirstChild();
+	const TNodeWeak newNode = scooby->getFirstChild();
 	
 	printf( "Test a node for sameness\n" );
 	if ( element->isSameNode( make_shared( newNode ) ) )	{
@@ -107,30 +126,24 @@ DOMTest	::	DOMTest()	:	BApplication( "application/x-vnd.Themis-DOMTest" )	{
 	printf( "Type of node is: %s\n", element->getNodeTypeString() );
 
 	printf( "Creating some elements...\n" );
-	//DOMPointer<TElement> base( new TElement( "base" ) );
-	TElementShared base( new TElement( "base" ) );
-	base->setSmartPointer( base );
-	//DOMPointer<TElement> item1( new TElement( "item1" ) );
-	TElementShared item1( new TElement( "item1" ) );
-	item1->setSmartPointer( item1 );
-	//DOMPointer<TElement> item2( new TElement( "item2" ) );
-	TElementShared item2( new TElement( "item2" ) );
-	item2->setSmartPointer( item2 );
-	//DOMPointer<TElement> item3( new TElement( "item3" ) );
-	TElementShared item3( new TElement( "item3" ) );
-	item3->setSmartPointer( item3 );
-	//DOMPointer<TElement> item4( new TElement( "item4" ) );
-	TElementShared item4( new TElement( "item4" ) );
-	item4->setSmartPointer( item4 );
-	//DOMPointer<TElement> item5( new TElement( "item1" ) );
-	TElementShared item5( new TElement( "item1" ) );
-	item5->setSmartPointer( item5 );
+	TElementShared base = document->createElement( "base" );
+	TElementShared item1 = document->createElement( "item1" );
+	TElementShared item2 = document->createElement( "item2" );
+	TElementShared item3 = document->createElement( "item3" );
+	TElementShared item4 = document->createElement( "item4" );
+	TElementShared item5 = document->createElement( "item1" ); // Watch out: name is item1
 	printf( "Create a tree with the elements...\n" );
 	base->appendChild( item1 );
 	base->appendChild( item2 );
 	base->appendChild( item3 );
 	item3->appendChild( item5 );
 	item5->appendChild( item4 );
+
+	printf( "Add base to document\n" );
+	document->appendChild( base );
+
+	printf( "Printing tree...\n" );
+	showDocument( document );
 
 	TNodeListShared result = base->getElementsByTagName( "item1" );
 	printf( "There are %i elements with tag name item1\n", (int) result->getLength() );
@@ -151,18 +164,12 @@ DOMTest	::	DOMTest()	:	BApplication( "application/x-vnd.Themis-DOMTest" )	{
 	resultStar = base->getElementsByTagName( "*" );
 	printf( "There are %i elements in base\n", (int) resultStar->getLength() );
 
-	//DOMPointer<TText> text1( new TText( "bla " ) );
-	TTextShared text1( new TText( "bla " ) );
-	text1->setSmartPointer( text1 );
-	//DOMPointer<TText> text2( new TText( "bla " ) );
-	TTextShared text2( new TText( "blub" ) );
-	text2->setSmartPointer( text2 );
+	TTextShared text1 = document->createText( "bla " );
+	TTextShared text2 = document->createText( "blub " );
 	base->appendChild( text1 );
 	base->appendChild( text2 );
 	
 	TTextWeak textWeak = text1;
-	
-	//text2.reset();
 	
 	printf( "Testing Text functions...\n" );
 	printf( "Whole text of nodes\n%s\n", text1->getWholeText().c_str() );
@@ -178,10 +185,13 @@ DOMTest	::	DOMTest()	:	BApplication( "application/x-vnd.Themis-DOMTest" )	{
 		printf( "Erm, this shouldn't happen\n" );
 	}
 
+	printf( "Printing what's left of the tree...\n" );
+	showDocument( document );
+
 	printf( "Cleaning up...\n" );
 
 	// Clean up and exit
-	node.reset();
+	scooby.reset();
 	element.reset();
 	
 	printf( "Exiting...\n" );

@@ -7,14 +7,16 @@
 
 #include <Application.h>
 
-#include "TNode.h"
-#include "TElement.h"
-#include "TDOMException.h"
-
 #include <string.h>
 #include <stdio.h>
 
+#include "DOMSupport.h"
+
 class DOMTest	:	public BApplication	{
+	
+	private:
+		void showDocument( const TDocumentShared document );
+		void showTree( const TNodeShared node, int spacing );
 	
 	public:
 		DOMTest();

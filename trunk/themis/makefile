@@ -62,7 +62,8 @@ DOMLIBRARYSOURCES= \
 	framework/DOM/TElement.cpp \
 	framework/DOM/TAttr.cpp \
 	framework/DOM/TCharacterData.cpp \
-	framework/DOM/TText.cpp
+	framework/DOM/TText.cpp \
+	framework/DOM/TDocument.cpp
 DOMTESTSOURCES= \
 	framework/DOM/DOMTest.cpp
 JAVASCRIPT_LIBRARY= \
