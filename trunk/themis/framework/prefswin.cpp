@@ -306,9 +306,9 @@ void prefswin::MessageReceived( BMessage* msg )
 						ShowTypeAheadbox->SetValue( 1 );
 					box->AddChild( ShowTypeAheadbox );
 					
-					rect.left = box->Frame().left + 10;
+					rect.left = box->Frame().left + 5;
 					rect.top = rect.bottom + 20;
-					rect.right = box->Frame().right - 10;
+					rect.right = box->Frame().right - 15;
 					rect.bottom = rect.top + 75;
 	
 					BBox* newwinpagebox = new BBox( rect, "NEWWINPAGEBOX" );

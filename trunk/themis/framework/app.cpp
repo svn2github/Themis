@@ -254,7 +254,7 @@ void App::MessageReceived(BMessage *msg){
 					rect,
 					"Preferences",
 					B_TITLED_WINDOW_LOOK,
-					B_MODAL_APP_WINDOW_FEEL,
+					B_NORMAL_WINDOW_FEEL,
 					B_NOT_RESIZABLE | B_ASYNCHRONOUS_CONTROLS | B_NOT_MINIMIZABLE | B_NOT_ZOOMABLE );
 			}
 			else

@@ -183,8 +183,15 @@ ThemisUrlTextView::Paste( BClipboard* clipboard )
 		be_clipboard->Unlock(); 
 	}
 	ptext.SetTo( text );
-	ptext.RemoveSet( "\n" );
-	ptext.RemoveSet( "\t" );
+	ptext.RemoveSet( "\a" );	// bell. will likely never be in, but you can never be sure :)
+	ptext.RemoveSet( "\b" );	// backspace
+	ptext.RemoveSet( "\f" );	// formfeed
+	ptext.RemoveSet( "\n" );	// newline
+	ptext.RemoveSet( "\r" );	// carriage return
+	ptext.RemoveSet( "\t" );	// horizontal tab
+	ptext.RemoveSet( "\v" );	// vertical tab
+	ptext.RemoveSet( "\'" );	// apostroph sign
+	ptext.RemoveSet( "\"" );	// quote
 	cout << "ptext: " << ptext.String() << endl;
 	SetText( ptext.String() );
 }
