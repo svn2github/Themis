@@ -124,6 +124,22 @@ void Renderer::Process( TNodePtr node, UIElement *element)
 					else //THIS MIGHT ONLY BE TEMPORARY
 						Process(child,element);
 					}break;
+				case TEXT_NODE:{
+					TTextPtr		textChild 		= shared_static_cast <TText> (child);
+					UIBox 			frame			= element->frame;
+					UIElement		*uiChild 	 	= NULL ;
+					uiChild = new TextElement(frame,child,textChild->getWholeText().c_str(), 
+							    (BFont *)be_plain_font,SetColorSelf(RGB_BLACK),12.0);
+					
+					//Is it possible to have children here ?
+					if (uiChild){
+						element->EAddChild(uiChild);			
+						printf("RENDERER: Element Added to tree\n");
+						Process(child,uiChild);
+					}
+					else //THIS MIGHT ONLY BE TEMPORARY
+						Process(child,element);
+					}break;					
 				default:{
 					printf("RENDERER: NODE unsupported yet\n");
 					}break;
