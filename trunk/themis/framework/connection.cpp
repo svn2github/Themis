@@ -147,7 +147,9 @@ Connection::Connection(NetworkableObject *NetObject,const char *host, uint16 por
 		host_name=new char[len+1];
 		memset((char*)host_name,0,len+1);
 		strcpy((char*)host_name,host);
-	}
+	} else
+		host_name=NULL;
+	
 	host_port=port;
 	use_ssl=secure;
 	
