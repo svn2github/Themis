@@ -25,7 +25,6 @@
 
 // SGMLParser headers
 #include "SGMLText.hpp"
-#include "SGMLParser.hpp"
 
 HTMLParser * parser;
 BMessage ** appSettings_p;
@@ -75,9 +74,13 @@ HTMLParser	::	HTMLParser( BMessage * info )	:	BHandler( "HTMLParser" ), PlugClas
 		userToken = cache->Register( Type(), "HTML Parser" );
 	}
 	
+	parser = new SGMLParser( "/boot/home/config/settings/Themis/dtd/HTML.4.0.Transitional.DTD" );
+	
 }
 
 HTMLParser	::	~HTMLParser()	{
+
+	delete parser;
 	
 }
 
@@ -237,10 +240,8 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 					
 					// Parse it
 					SGMLTextPtr	docText = SGMLTextPtr( new SGMLText( content ) );
-					SGMLParser parser( "/boot/home/config/settings/Themis/dtd/HTML.3.2.Final.DTD", docText );
+					mDocument = parser->parse( docText );
 					
-					mDocument = parser.parse();
-				
 					printf( "Data parsed\n" );
 			
 					//showDocument();

@@ -116,6 +116,8 @@ void BaseParser	::	processEe()	{
 
 void BaseParser	::	processComment()	{
 
+	string comment = "";
+
 	process( mCom );
 	bool comFound = false;
 	while ( ! comFound )	{
@@ -125,9 +127,12 @@ void BaseParser	::	processComment()	{
 		}
 		catch( ReadException r )	{
 			// Not yet found. Read next character
+			comment += mDocText->getChar();
 			mDocText->nextChar();
 		}
 	}
+	
+	//printf( "Comment: %s\n", comment.c_str() );
 	
 }
 

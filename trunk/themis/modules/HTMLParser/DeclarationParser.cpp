@@ -34,6 +34,12 @@ DeclarationParser	::	~DeclarationParser()	{
 	
 }
 
+void DeclarationParser	::	setDocText( SGMLTextPtr aDocText )	{
+	
+	mDocText = aDocText;
+	
+}
+
 void DeclarationParser	::	parse( const map<string, Position> & aEntityTexts )	{
 
 	mEntityTexts = aEntityTexts;

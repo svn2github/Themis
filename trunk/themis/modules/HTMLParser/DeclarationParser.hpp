@@ -26,6 +26,7 @@ class DeclarationParser	:	public BaseParser	{
 		DeclarationParser( SGMLTextPtr aDocText, TDocumentShared aDTD,
 									TElementShared aParEntities, TElementShared aCharEntities );
 		virtual ~DeclarationParser();
+		void setDocText( SGMLTextPtr aDocText );
 		void parse( const map<string, Position> & aEntityTexts );
 		void parse();	// If you don't need entities
 		virtual void processDeclaration();

@@ -43,6 +43,7 @@ class SGMLParser	:	public BaseParser	{
 		DTDParser * mDtdParser;
 		DocTypeDeclParser * mDocTypeDecl;
 		ElementParser * mElementParser;
+		bool mDtdParsed;
 		
 		// Functions
 		void setupParsers( const char * aDtd );
@@ -59,12 +60,15 @@ class SGMLParser	:	public BaseParser	{
 
 	public:
 		// Constructor
-		SGMLParser( const char * aDtd, const char * aDocument );
+		SGMLParser( const char * aDtd, const char * aDocument = NULL );
 		SGMLParser( const char * aDtd, SGMLTextPtr aDocument );
 		// Destructor
 		~SGMLParser();
-		// Parsing function
+		// Parsing functions
 		TDocumentShared parse();
+		TDocumentShared parse( const char * aDocument );
+		TDocumentShared parse( SGMLTextPtr aDocument );
+		void parseDTD();
 	
 };
 

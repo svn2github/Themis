@@ -57,6 +57,12 @@ ElementParser	::	~ElementParser()	{
 	
 }
 
+void ElementParser	::	setDocText( SGMLTextPtr aDocText )	{
+	
+	mDocText = aDocText;
+	
+}
+
 void ElementParser	::	parse( const map<string, Position> & aEntityTexts,
 										  const string & aName )	{
 
@@ -671,15 +677,37 @@ void ElementParser	::	processException( const TElementShared & aExceptions,
 	TNodeListShared list = connector->getChildNodes();
 	for ( unsigned int i = 0; i < list->getLength(); i++ )	{
 		TNodeShared child = make_shared( list->item( i ) );
+		TElementShared elementDecl =
+			getElementDecl( child->getNodeName(), mElements );
 		try	{
 			printf( "Trying an exception tag\n" );
-			TElementShared elementDecl =
-				getElementDecl( child->getNodeName(), mElements );
 			processElement( elementDecl, aParent );
 			return;
 		}
 		catch( ReadException r )	{
 			// Not the one. Try next one
+			if ( r.isWrongTag() )	{
+				string name = r.getWrongTag();
+				printf( "Need to find tag: %s. Have %s\n", name.c_str(), elementDecl->getNodeName().c_str() );
+				for ( unsigned int j = i; j < list->getLength(); j++ )	{
+					TNodeShared child = make_shared( list->item( j ) );
+					elementDecl =
+						getElementDecl( child->getNodeName(), mElements );
+					if ( elementDecl->getTagName() == name )	{
+						printf( "Found right name: %s\n", name.c_str() );
+						try	{
+							processElement( elementDecl, aParent );
+							return;
+						}
+						catch( ReadException r )	{
+							if ( ! r.isWrongTag() && r.isFatal() )	{
+								throw r;
+							}
+						}
+					}
+				}
+				break;
+			}
 		}
 	}
 

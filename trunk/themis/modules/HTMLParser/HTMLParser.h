@@ -9,15 +9,24 @@
 #ifndef HTMLPARSER_H
 #define HTMLPARSER_H
 
+// BeOS headers
 #include <SupportDefs.h>
 #include <Handler.h>
+
+// Themis headers
 #include "plugclass.h"
 #include "cacheplug.h"
 
+// Standard C++ headers
 #include <string>
 
+// DOM headers
 #include "DOMSupport.h"
 
+// SGMLParser headers
+#include "SGMLParser.hpp"
+
+// Namespaces used
 using namespace std;
 
 extern "C" __declspec( dllexport ) status_t Initialize( void * info = NULL );
@@ -32,6 +41,7 @@ class HTMLParser	:	public BHandler, public PlugClass	{
 		uint32 userToken;
 
 		TDocumentShared mDocument; // Stores the document to be build
+		SGMLParser * parser;
 	
 	public:
 		HTMLParser( BMessage * info = NULL );

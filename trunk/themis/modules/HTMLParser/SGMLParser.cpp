@@ -31,14 +31,17 @@ SGMLParser	::	SGMLParser( const char * aDtd, const char * aDocument )
 	
 	//printf( "SGMLParser constructed\n" );
 
-	// Load text
 	mDocText = SGMLTextPtr( new SGMLText() );
-	ifstream file( aDocument );
+
+	// Load text
+	if ( aDocument != NULL )	{
+		ifstream file( aDocument );
 	
-	char ch;
-	while ( file.get( ch ) )	{
-		mDocText->addChar( ch );
-	};
+		char ch;
+		while ( file.get( ch ) )	{
+			mDocText->addChar( ch );
+		};
+	}
 	
 	// Create declaration parsers
 	setupParsers( aDtd );
@@ -78,6 +81,8 @@ void SGMLParser	::	setupParsers( const char * aDtd )	{
 		new DocTypeDeclParser( mDocText, mDTD, mParEntities, mCharEntities );
 	mElementParser =
 		new ElementParser( mDocText, mDTD, mParEntities, mCharEntities );
+
+	mDtdParsed = false;
 
 }
 
@@ -127,6 +132,7 @@ void SGMLParser	::	processOtherProlog()	{
 
 	try	{
 		processS();
+		return;
 	}
 	catch( ReadException r )	{
 		if ( r.isFatal() )	{
@@ -202,7 +208,7 @@ void SGMLParser	::	processDocElement()	{
 
 TDocumentShared SGMLParser	::	parse()	{
 	
-	mDtdParser->parse();
+	parseDTD();
 	
 	try	{
 		processSStar();
@@ -223,6 +229,48 @@ TDocumentShared SGMLParser	::	parse()	{
 	showTree( mDocument, 0 );
 
 	return mDocument;
+	
+}
+
+TDocumentShared SGMLParser	::	parse( const char * aDocument )	{
+
+	TDocumentShared result;
+
+	// Load text
+	if ( aDocument != NULL )	{
+		ifstream file( aDocument );
+	
+		char ch;
+		while ( file.get( ch ) )	{
+			mDocText->addChar( ch );
+		};
+
+		result = parse();
+	
+	}
+	
+	return result;
+	
+}
+
+TDocumentShared SGMLParser	::	parse( SGMLTextPtr aDocument )	{
+
+	// Load text
+	mDocText = aDocument;
+	mCommentDecl->setDocText( mDocText );
+	mDocTypeDecl->setDocText( mDocText );
+	mElementParser->setDocText( mDocText );
+
+	return parse();
+	
+}
+
+void SGMLParser	::	parseDTD()	{
+
+	if ( ! mDtdParsed )	{
+		mDtdParser->parse();
+		mDtdParsed = true;
+	}
 	
 }
 

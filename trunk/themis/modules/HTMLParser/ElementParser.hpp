@@ -35,6 +35,7 @@ class ElementParser	:	public BaseParser	{
 		ElementParser( SGMLTextPtr aDocText, TDocumentShared aDTD,
 							   TElementShared aParEntities, TElementShared aCharEntities );
 		virtual ~ElementParser();
+		void setDocText( SGMLTextPtr aDocText );
 		void parse( const map<string, Position> & aEntityTexts, const string & aName );
 		void parse( const string & aName );	// If you don't need entities
 		TDocumentShared getDocument() const;
