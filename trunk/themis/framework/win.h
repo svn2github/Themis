@@ -30,7 +30,7 @@ Project Start Date: October 18, 2000
 #define _winclass
 #include <Menu.h>
 #include <Window.h>
-#include "htmlparser.h"
+//#include "htmlparser.h"
 #include "msgsystem.h"
 #include "ThemisNavView.h"
 #include "ThemisStatusView.h"
@@ -48,7 +48,7 @@ class Win : public BWindow, public MessageSystem
 {
 	private:
 		bool						startup;
-		HTMLParser*					Parser;
+//		HTMLParser*					Parser;
 		uint32						protocol;
   		int16						fUniqueID;
   		Win*						fNextWindow;

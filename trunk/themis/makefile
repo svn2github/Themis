@@ -69,7 +69,6 @@ FRAMEWORKSOURCES= \
 	framework/FakeSite.cpp \
 	framework/msgdaemon.cpp
 #	framework/winview.cpp
-#	framework/htmlparser.cpp
 COMMONSOURCES= \
 	common/plugclass.cpp \
 	common/tcplayer.cpp \
@@ -79,8 +78,6 @@ COMMONSOURCES= \
 	common/cacheuser.cpp \
 	common/cacheobject.cpp \
 	common/stripwhite.cpp
-#	common/tnetobject.cpp \
-#	common/lockres.cpp
 #add similar lines for new plugins, libraries, etc.
 HTTPADDONSOURCES= \
 	http/http_main.cpp \
@@ -247,7 +244,7 @@ NETWORKLIBS=-lsocket -lbind -lbnetapi -lopenssl
 NETWORKING=NONE
 # by default, debugging information will be included. to turn it off, remove or comment out (#) the -g
 # on the next line 
-COMPILE_FLAGS=-g -D_Themis_ #-Wall
+COMPILE_FLAGS=-g -D_Themis_ -DDEBUG #-Wall
 ifeq "$(shell if [ -f /system/lib/libsocket.so ] ; then echo 1 ; else echo 0 ; fi)" "1"
 	NETWORKLIBS=-lsocket -lbind -lbnetapi
 	NETWORKING=BONE
