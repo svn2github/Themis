@@ -30,6 +30,8 @@ Project Start Date: October 18, 2000
 #define OpenLocation 'oloc'
 #include <Handler.h>
 #include <stdio.h>
+#include <Button.h>
+#include "protocol_plugin.h"
 extern plugman *PluginManager;
 
 winview::winview(BRect frame,const char *name,uint32 resizem,uint32 flags)
@@ -41,7 +43,12 @@ winview::winview(BRect frame,const char *name,uint32 resizem,uint32 flags)
   BMessage *msg=new BMessage(OpenLocation);
   locline=new BTextControl(r,"locationline","Location:",NULL,msg,B_FOLLOW_TOP|B_FOLLOW_LEFT_RIGHT,B_WILL_DRAW|B_FRAME_EVENTS|B_NAVIGABLE);
   locline->SetDivider(50);
+  r=Bounds();
+  r.top=r.bottom-15;
+  r.right=r.left+30;
+  msg=new BMessage(B_CANCEL);
   AddChild(locline);
+  AddChild((new BButton(r,"cancelbutton","Stop",msg)));
   
  }
 void winview::AttachedToWindow()
@@ -52,18 +59,65 @@ void winview::MessageReceived(BMessage *msg)
  {
   switch(msg->what)
    {
+    case B_CANCEL:
+     {
+      protocol_plugin *pobj=(protocol_plugin*)PluginManager->FindPlugin(protocol);
+      if (pobj!=NULL)
+       pobj->Cancel=1;
+     }break;
     case OpenLocation:
      {
       msg->PrintToStream();
-      protocol_plugin *pobj=(protocol_plugin*)PluginManager->FindPlugin(HTTPPlugin);
+      BString url=locline->Text();
+      protocol=HTTPPlugin;
+      if (url.Length()>0)
+       {
+        int32 pos=url.FindFirst("://");
+        if ((pos>0) && (pos<6))
+         {
+           if (url.IFindFirst("https://")==0)
+            {
+             protocol=HTTPSPlugin;
+             goto ContOpenLocation;
+            }
+           if (url.IFindFirst("http://")==0)
+            {
+             protocol=HTTPPlugin;
+             goto ContOpenLocation;
+            }
+         }
+        else
+         {
+          if (pos==-1)
+           {
+            BString tmp;
+            tmp << "http://" << url.String();
+            url=tmp;
+            locline->SetText(url.String());
+           }
+         }
+       }
+      ContOpenLocation:
+      ProtocolPlugClass *pobj=(ProtocolPlugClass*)PluginManager->FindPlugin(protocol);
       printf("pobj: %p\n",pobj);
-      if (strlen(locline->Text())==0)
+      if (url.Length()==0)
        {
         return;
        }
       if (pobj!=NULL)
-       printf("page: %s\n",pobj->GetURL(locline->Text()));
-      
+       {
+        BMessage *info=new BMessage;
+        info->AddPointer("top_view",this);
+        info->AddPointer("window",Window());
+        info->AddPointer("parser",Parser);
+        info->AddPointer("target_url",url.String());
+        pobj->SpawnThread(info);
+        pobj->StartThread();
+        delete info;
+//        pobj->SetURL(url.String());
+        
+//        obj->GetURL();
+       }
      }break;
     default:
      BView::MessageReceived(msg);

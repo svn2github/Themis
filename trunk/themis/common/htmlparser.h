@@ -31,7 +31,9 @@ Project Start Date: October 18, 2000
 #define _HTMLParser
 
 #include <Looper.h>
+#include <View.h>
 #include "plugman.h"
+
 
 class HTMLParser:public BLooper
  {
@@ -40,6 +42,7 @@ class HTMLParser:public BLooper
    ~HTMLParser();
    bool QuitRequested();
    void MessageReceived(BMessage *msg);
+   BView *View;
  };
 
 #endif

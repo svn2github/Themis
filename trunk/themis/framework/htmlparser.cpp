@@ -28,10 +28,11 @@ Project Start Date: October 18, 2000
 */
 
 #include "htmlparser.h"
-
+#include <stdio.h>
 extern plugman *PluginManager;
 
 HTMLParser::HTMLParser()
+           :BLooper("html parser",B_DISPLAY_PRIORITY)
  {
   Run();
  }
@@ -40,6 +41,7 @@ HTMLParser::~HTMLParser()
  }
 bool HTMLParser::QuitRequested()
  {
+  printf("HTMLParser quitting\n");
   return true;
  }
 void HTMLParser::MessageReceived(BMessage *msg)

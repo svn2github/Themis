@@ -26,14 +26,18 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
+
 #ifndef _plugman
 #define _plugman
-#define DEBUG 1
-//Plug-in Manager
+#define PlugManVersion 2.0
+
+//namespace PlugMan {
 #include <AppKit.h>
+#include <Looper.h>
 #include <KernelKit.h>
-#include <StorageKit.h>
 #include <SupportKit.h>
+#include <StorageKit.h>
+
 #include "../common/plugstruct.h"
 #include "../common/protocol_plugin.h"
 
@@ -43,16 +47,21 @@ class plugman: public BLooper
    plugst *head,*tail;
    void AddPlug(plugst *plug);
   public:
-   BDirectory *addondir;
-   plugman();
+   BDirectory *appaddondir,*useraddondir;
+   plugman(entry_ref &appdirref);
    ~plugman();
+   void MessageReceived(BMessage *msg);
+   bool QuitRequested();
    void *FindPlugin(int32 which);
-   status_t UnloadAllPlugins();
+   status_t UnloadAllPlugins(bool clean=true);
    status_t UnloadPlugin(int32 which);
    status_t LoadPlugin(int32 which);
    status_t LoadPluginFor(const char *mimetype);
    status_t ReloadPlugin(int32 which);
-   status_t BuildRoster();
+   status_t BuildRoster(bool clean=true);
  };
+
+
+//};
 
 #endif

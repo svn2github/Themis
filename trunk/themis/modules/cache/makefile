@@ -33,8 +33,9 @@ TYPE= SHARED
 #	are included from different directories.  Also note that spaces
 #	in folder names do not work well with this makefile.
 SRCS=  \
+	../../common/plugclass.cpp \
 	cache_main.cpp \
-	cacheman.cpp
+	cacheman.cpp 
 
 #	specify the resource files to use
 #	full path or a relative path to the resource file can be used.
@@ -75,7 +76,7 @@ SYSTEM_INCLUDE_PATHS =
 #	additional paths to look for local headers
 #	thes use the form: #include "header"
 #	source file directories are automatically included
-LOCAL_INCLUDE_PATHS = 
+LOCAL_INCLUDE_PATHS = ../../common
 
 #	specify the level of optimization that you desire
 #	NONE, SOME, FULL

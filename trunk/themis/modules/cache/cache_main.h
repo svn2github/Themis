@@ -30,10 +30,12 @@ Project Start Date: October 18, 2000
 #define _cache_main
 #include <SupportKit.h>
 #include <AppKit.h>
+#include "plugclass.h"
 #include "cache_defines.h"
 extern "C" __declspec(dllexport)status_t Initialize(bool go=false);
 extern "C" __declspec(dllexport)status_t Shutdown(bool now=false);
 extern "C" __declspec(dllexport)BHandler* GetHandler();
+extern "C" __declspec(dllexport)PlugClass *GetObject(void);
 extern "C" __declspec(dllexport)char *GetPluginName(void);
 extern "C" __declspec(dllexport)int32 GetPluginID(void);
 extern "C" __declspec(dllexport)float GetPluginVers(void);

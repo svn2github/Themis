@@ -29,11 +29,11 @@ Project Start Date: October 18, 2000
 #ifndef _cache_defines
 #define _cache_defines
 
-#define PlugID 'cash'
+#define PlugIDdef 'cash'
 //cash == cache simple but fun pun
 
-#define PlugName "Cache Manager"
-#define PlugVers .01
+#define PlugNamedef "Cache Manager"
+#define PlugVersdef .10
 
 #define UpdateCache 'upca'
 

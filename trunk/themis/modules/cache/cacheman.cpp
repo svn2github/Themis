@@ -39,13 +39,22 @@ Project Start Date: October 18, 2000
 #include <Messenger.h>
 #include <MessageRunner.h>
 cacheman::cacheman()
-         :BHandler("cache_manager")
+         :BHandler("cache_manager"),
+          PlugClass()
  {
   if (FindCacheDir()==B_OK)
    printf("Found or created the cache directory.\n");
   printf("cache path: %s\n",cachepath.Path());
   CheckIndices();
   CheckMIME();
+ }
+bool cacheman::IsHandler()
+ {
+  return true;
+ }
+BHandler *cacheman::Handler()
+ {
+  return this;
  }
 cacheman::~cacheman()
  {
@@ -63,7 +72,7 @@ void cacheman::MessageReceived(BMessage *msg)
       BMessage reply(B_ERROR);
       type_code type;
       int32 count,index;
-      char *name;
+      char name[B_OS_NAME_LENGTH];
       if (msg->CountNames(B_ANY_TYPE)>=1)
        {
         printf("msg contains items\n");
@@ -85,7 +94,7 @@ void cacheman::MessageReceived(BMessage *msg)
         delete ni;
         
         msg->PrintToStream();
-        for (index=0;msg->GetInfo(B_ANY_TYPE,index,&name,&type,&count)==B_OK; index++)
+        for (index=0;msg->GetInfo(B_ANY_TYPE,index,(const char**)name,&type,&count)==B_OK; index++)
          {
           for (int i=0;i<count;i++)
            switch(type)

@@ -37,7 +37,9 @@ SRCS=  \
 	main.cpp \
 	app.cpp \
 	plugman.cpp \
-	winview.cpp
+	../common/plugclass.cpp \
+	winview.cpp \
+	htmlparser.cpp
 
 #	specify the resource files to use
 #	full path or a relative path to the resource file can be used.
@@ -64,8 +66,6 @@ LIBS=  \
 	tracker \
 	textencoding \
 	root \
-	netapi \
-	net \
 	be
 
 #	specify additional paths to directories following the standard

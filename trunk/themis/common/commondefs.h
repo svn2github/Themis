@@ -33,8 +33,9 @@ Project Start Date: October 18, 2000
 #define ThemisCacheMIME "application/x-Themis-cache"
 
 #define HTTPPlugin 'http'
+#define HTTPSPlugin 'htps'
 #define CachePlugin 'cash'
-#define HTMLPlugin 'html'
+//#define HTMLPlugin 'html'
 #define HTMLTagPlugin 'httg'
 
 #define FindCachedObject 'fcob'

@@ -29,10 +29,10 @@ Project Start Date: October 18, 2000
 #ifndef _http_defines
 #define _http_defines
 
-#define PlugID 'http'
+#define PlugIDdef 'http'
 //normal networking
 
-#define PlugName "Network (http)"
+#define PlugNamedef "Network (http)"
 
-#define PlugVers .05
+#define PlugVersdef .10
 #endif

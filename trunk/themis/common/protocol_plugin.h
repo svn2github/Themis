@@ -26,10 +26,29 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
-#ifndef _pluginabstractclass
-#define _pluginabstractclass
+#ifndef _ProtocolPlugClass
+#define _ProtocolPlugClass
 
-enum PlugType{ProtocolPlugin=0,ContentPlugin=1};
+#include <String.h>
+#include "plugclass.h"
+class ProtocolPlugClass: public PlugClass
+ {
+  public:
+   BString URL;
+   virtual const char *SetURL(const char* url) {URL=url; return URL.String();}
+   virtual BMessage *SupportedTypes(void) {return NULL;}
+   virtual void Config(BMessage *msg) {}
+   virtual void FindURI(const char *url,BString &host,int &port,BString &uri) {}
+   virtual void ParseResponse(unsigned char *resp,size_t size) {}
+   virtual unsigned char *GetDoc(BString &host,int &port,BString &uri) {return NULL;}
+   virtual unsigned char *GetDoc(const char* url) {return NULL;}
+   virtual int32 GetURL(BMessage *info) {return 0;} //use in combination with SpawnThread and StartThread
+   virtual unsigned char *GetURL(const char* url) {return NULL;}
+ };
+
+typedef ProtocolPlugClass protocol_plugin;
+//enum PlugType{ProtocolPlugin=0,ContentPlugin=1};
+/*
 class protocol_plugin
  {
   public:
@@ -47,6 +66,8 @@ class protocol_plugin
    virtual unsigned char *GetDoc(BString &host,int &port,BString &uri)=0;
    virtual unsigned char *GetDoc(const char* url)=0;
    virtual unsigned char *GetURL(const char* url)=0;
+   volatile uint8 Cancel;
+   BWindow *Window;
  };
-
+*/
 #endif

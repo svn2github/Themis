@@ -31,29 +31,19 @@ Project Start Date: October 18, 2000
 #define _plugstruct
 #include <AppKit.h>
 #include <KernelKit.h>
-#include "protocol_plugin.h"
+#include "plugclass.h"
 
 struct plugst
  {
   image_id sysid;
   //sysid is the id assigned to the plugin on load by BeOS.
-  int32 plugid;
-  /*
-   plugid is the plugin's individual id, it's a 4 char constant #define'd.
-   For example:
-	   #define JavaPlugin 'java'
-	   #define OpenSSLPlugin 'ossl'
-  */
-  char *plugname;
-  //a pointer to a string constant in each plugin
-  entry_ref ref;
-  //an entry for the plugin
+  uint32 plugid;
+  //a copy of the plug id for when it's not loaded.
   volatile bool inmemory;
   //is the plugin currently in memory
-  protocol_plugin *pobj;//protocol_plugin object
-  BHandler *handler;//if the plugin has a BHandler object instead
-  bool persistant;
-  //does the plugin load and unload based on page?
+  PlugClass *pobj;//plugin object
+  PlugClass *(*GetObject)(void);
+  char path[B_PATH_NAME_LENGTH+B_FILE_NAME_LENGTH];
   plugst *next;
   plugst *prev;
   /*
@@ -73,10 +63,7 @@ struct plugst
    {
     inmemory=false;
     pobj=NULL;
-    handler=NULL;
     sysid=0;
-    plugid=0;
-    plugname=NULL;
     next=prev=NULL;
    }
  };

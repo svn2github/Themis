@@ -33,7 +33,8 @@ TYPE= SHARED
 #	are included from different directories.  Also note that spaces
 #	in folder names do not work well with this makefile.
 SRCS=  \
-	http_main.cpp
+	http_main.cpp \
+	../../common/plugclass.cpp
 
 #	specify the resource files to use
 #	full path or a relative path to the resource file can be used.
@@ -81,7 +82,7 @@ LOCAL_INCLUDE_PATHS = \
 
 #	specify the level of optimization that you desire
 #	NONE, SOME, FULL
-OPTIMIZE= 
+OPTIMIZE= FULL
 
 #	specify any preprocessor symbols to be defined.  The symbols will not
 #	have their values set automatically; you must supply the value (if any)

@@ -27,13 +27,22 @@ Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
 #include "app.h"
+
 plugman *PluginManager;
 
 App::App(const char *appsig)
     :BApplication(appsig)
  {
+  app_info ai;
+  GetAppInfo(&ai);
+  entry_ref appdirref;
+  BEntry *ent=new BEntry(&ai.ref);
+  ent->GetParent(ent);
+  ent->GetRef(&appdirref);
+  delete ent;
+  
   BRect r(100,100,650,450);
-  PluginManager=new plugman;
+  PluginManager=new plugman(appdirref);
   PluginManager->BuildRoster();
   win=new Win(r,"Themis",B_DOCUMENT_WINDOW,B_QUIT_ON_WINDOW_CLOSE,B_CURRENT_WORKSPACE);
  }
@@ -42,7 +51,11 @@ App::~App()
  }
 bool App::QuitRequested()
  {
-  RemoveHandler((BHandler*)PluginManager->FindPlugin(CachePlugin));
+  BMessenger msgr(NULL,win,NULL);
+  msgr.SendMessage(B_QUIT_REQUESTED);
+  status_t stat;
+  wait_for_thread(win->Thread(),&stat);
+//  RemoveHandler((BHandler*)PluginManager->FindPlugin(CachePlugin));
   PluginManager->Lock();
   PluginManager->Quit();
   return true;
@@ -75,7 +88,7 @@ void App::RefsReceived(BMessage *refs)
  }
 void App::ReadyToRun()
  {
-  AddHandler((BHandler*)PluginManager->FindPlugin(CachePlugin));
+//  AddHandler((BHandler*)PluginManager->FindPlugin(CachePlugin));
   win->Show();
  }
 void App::ArgvReceived(int32 argc, char **argv)

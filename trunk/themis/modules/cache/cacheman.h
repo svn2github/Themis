@@ -38,8 +38,10 @@ Project Start Date: October 18, 2000
 #include <StorageKit.h>
 #include <SupportDefs.h>
 #include <Handler.h>
+#include "plugclass.h"
+#include "cache_defines.h"
 
-class cacheman:public BHandler
+class cacheman:public BHandler, public PlugClass
  {
   private:
    BPath cachepath;
@@ -47,6 +49,12 @@ class cacheman:public BHandler
    cacheman();
    ~cacheman();
    void MessageReceived(BMessage *msg);
+   uint32 PlugID(){return PlugIDdef;};
+   char *PlugName(){return PlugNamedef;};
+   float PlugVersion(){return PlugVersdef;};
+   bool IsHandler();
+   BHandler *Handler();
+   bool IsPersistant(){return true;}
    status_t FindCacheDir();
    status_t CheckIndices();
    status_t CheckMIME();

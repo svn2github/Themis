@@ -5,6 +5,7 @@
 #include "stripwhite.h"
 //using namespace Themis_Networking;
 http_protocol *HTTP;
+http_protocol *ME;
 status_t Initialize(bool go)
  {
   HTTP=new http_protocol;
@@ -22,25 +23,17 @@ protocol_plugin* GetObject(void)
    HTTP=new http_protocol();
   return HTTP;
  }
-PlugType http_protocol::PluginType(void)
+char* http_protocol::PlugName(void)
  {
-  return ProtocolPlugin;
+  return PlugNamedef;
  }
-bool http_protocol::IsPersistant(void)
+uint32 http_protocol::PlugID(void)
  {
-  return true;
+  return PlugIDdef;
  }
-char* http_protocol::GetPluginName(void)
+float http_protocol::PlugVersion(void)
  {
-  return PlugName;
- }
-int32 http_protocol::GetPluginID(void)
- {
-  return PlugID;
- }
-float http_protocol::GetPluginVers(void)
- {
-  return PlugVers;
+  return PlugVersdef;
  }
 status_t http_protocol::Go(void)
  {
@@ -49,6 +42,9 @@ status_t http_protocol::Go(void)
 http_protocol::http_protocol()
               :protocol_plugin()
  {
+  ME=this;
+  Cancel=0;
+  Window=NULL;
   RawBuffer=new BMallocIO;
   RawBuffer->SetBlockSize(B_PAGE_SIZE);
   buffer=new BMallocIO;
@@ -59,7 +55,36 @@ http_protocol::~http_protocol()
   delete buffer;
   delete RawBuffer;
  }
-unsigned char* http_protocol::GetURL(const char*url)
+int32 http_protocol::SpawnThread(BMessage *info)
+ {
+  thread=spawn_thread(ThreadFunc,"http thread",B_LOW_PRIORITY,info);
+  return thread;
+ }
+/*
+void http_protocol::Config(BMessage *msg)
+ {
+ }
+*/
+
+int32 http_protocol::GetURL(BMessage *info)
+ {
+  if (info!=NULL)
+   {
+    info->PrintToStream();
+    BMessage *infocp=new BMessage(*info);
+    delete infocp;
+   }
+  exit_thread(B_OK);
+  return 0;
+ }
+
+int32 http_protocol::ThreadFunc(void *info)
+ {
+  
+  return (HTTP->GetURL((BMessage *)info));
+ }
+
+unsigned char* http_protocol::GetURL(const char* url)
  {
   if (url==NULL)
    return NULL;
@@ -68,10 +93,7 @@ unsigned char* http_protocol::GetURL(const char*url)
   FindURI(url,host,port,uri);
   return GetDoc(host,port,uri);
  }
-BMessage *http_protocol::SupportedTypes(void)
- {
-  return NULL;
- }
+
 void http_protocol::FindURI(const char *url,BString &host,int &port,BString &uri)
  {
   BString master(url),servant;
@@ -156,9 +178,13 @@ unsigned char *http_protocol::GetDoc(BString &host,int &port,BString &uri)
         RawBuffer->WriteAt(RawBuffer->Position(),buf->Data(),size);
         ParseResponse(buf->Data(),buf->Size());
         delete buf;
+        buf=NULL;
+        if (Cancel)
+         break;
         buf=new BNetBuffer(B_PAGE_SIZE*10);
        }
-      delete buf;
+      if (buf!=NULL)
+       delete buf;
      }
    }
   rep->Close();
@@ -223,6 +249,8 @@ void http_protocol::ParseResponse(unsigned char *resp,size_t size)
          headtext.RemoveFirst(lf);
          while((pos=headtext.IFindFirst(":"))!=B_ERROR)
           {
+           if (Cancel)
+            break;
            headtext.MoveInto(param,0,pos);
            char *t=(char*)malloc(param.Length()+1);
            memset(t,0,param.Length()+1);

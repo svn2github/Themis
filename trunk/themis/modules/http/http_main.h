@@ -36,7 +36,8 @@ Project Start Date: October 18, 2000
   extern "C" __declspec(dllexport)status_t Initialize(bool go=false);
   extern "C" __declspec(dllexport)status_t Shutdown(bool now=false);
   extern "C" __declspec(dllexport)protocol_plugin* GetObject(void);
-  extern "C" __declspec(dllexport)class http_protocol:public protocol_plugin
+  
+class http_protocol:public ProtocolPlugClass
    {
     private:
      size_t buflen,rawbuflen;
@@ -48,18 +49,20 @@ Project Start Date: October 18, 2000
      ~http_protocol();
      BMessage headers;
      BMallocIO *buffer,*RawBuffer; //parsed and unparsed buffers respectively
-     char *GetPluginName(void);
-     int32 GetPluginID(void);
-     float GetPluginVers(void);
+     char *PlugName(void);
+     uint32 PlugID(void);
+     float PlugVersion(void);
      status_t Go(void);
-     bool IsPersistant(void);
-     PlugType PluginType(void);
-     BMessage *SupportedTypes(void);
+//     PlugType PluginType(void);
+     int32 SpawnThread(BMessage *info);
      void FindURI(const char *url,BString &host,int &port,BString &uri);
      void ParseResponse(unsigned char *resp,size_t size);
+//     void Config(BMessage *msg);
      unsigned char *GetDoc(BString &host,int &port,BString &uri);
      unsigned char *GetDoc(const char* url);
      unsigned char *GetURL(const char* url);
+     int32 GetURL(BMessage *info);
+     static int32 ThreadFunc(void *info);
    };
 // };
 #endif

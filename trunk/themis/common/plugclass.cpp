@@ -27,45 +27,120 @@ Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
 
-#include "cache_main.h"
-#include "cacheman.h"
-cacheman *CacheMan;
-status_t Initialize(bool go)
+/*
+Include *both* plugclass.h *and* plugclass.cpp in your plugin!
+*/
+
+#include "plugclass.h"
+
+
+PlugClass::PlugClass()
  {
-  CacheMan=new cacheman;
-  if (CacheMan)
-   return B_OK;
-  return B_ERROR;
- }
-status_t Shutdown(bool now=false)
- {
-//  if ((BHandler*)CacheMan->Looper()!=NULL)
-//   (BHandler*)(CacheMan->Looper())->RemoveHandler(CacheMan);
-//  delete CacheMan;
-  return B_OK;
+  thread=0;
  }
 
-BHandler* GetHandler()
+PlugClass::~PlugClass()
  {
-  return CacheMan;
  }
-PlugClass *GetObject(void)
+
+uint32 PlugClass::PlugID()
  {
-  return CacheMan;
+  return 'none';
  }
-char *GetPluginName(void)
+
+char *PlugClass::PlugName()
  {
-  return CacheMan->PlugName();
+  return "Not A Plug-in";
  }
-int32 GetPluginID(void)
+
+float PlugClass::PlugVersion()
  {
-  return CacheMan->PlugID();
+  return 0.0;
  }
-float GetPluginVers(void)
+
+bool PlugClass::NeedsThread()
  {
-  return CacheMan->PlugVersion();
+  return false;
  }
-bool IsPersistant(void)
+
+int32 PlugClass::SpawnThread(BMessage *info)
  {
-  return true;
+  //See Be Book Documentation on thread creation.
+  return 0;
  }
+
+int32 PlugClass::StartThread()
+ {
+  return (resume_thread(thread));
+ }
+
+thread_id PlugClass::Thread()
+ {
+  return thread;
+ }
+
+int32 PlugClass::TypePrimary()
+ {
+  return -1;
+ }
+
+int32 PlugClass::TypeSecondary()
+ {
+  return -1;
+ }
+
+bool PlugClass::IsHandler()
+ {
+  return false;
+ }
+
+BHandler *PlugClass::Handler()
+ {
+  return NULL;
+ }
+
+bool PlugClass::IsPersistant()
+ {
+  return false;
+ }
+
+bool PlugClass::IsLooper()
+ {
+  return false;
+ }
+
+BLooper *PlugClass::Looper()
+ {
+  return NULL;
+ }
+
+void PlugClass::Run()
+ {
+ }
+
+bool PlugClass::IsView()
+ {
+  return false;
+ }
+
+BView *PlugClass::View()
+ {
+  return NULL;
+ }
+
+BView *PlugClass::Parent()
+ {
+  return NULL;
+ }
+
+entry_ref *PlugClass::SetRef(entry_ref *nuref)
+ {
+  ref=nuref;
+  return ref;
+ }
+
+entry_ref *PlugClass::Ref()
+ {
+  return ref;
+ }
+
