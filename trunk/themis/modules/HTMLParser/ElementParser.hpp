@@ -20,12 +20,16 @@
 // Namespaces used
 using namespace std;
 
+// Declarations of SGMLParser classes
+class CommentDeclParser;
+
 class ElementParser	:	public BaseParser	{
 	
 	private:
 		string mName;
 		TElementShared mElements;
 		TDocumentShared mDocument;
+		CommentDeclParser * commentParser;
 	
 	public:
 		ElementParser( SGMLTextPtr aDocText, TDocumentShared aDTD,
@@ -39,7 +43,13 @@ class ElementParser	:	public BaseParser	{
 		string processGenIdSpec();
 		void processAttrSpecList();
 		void processAttrSpec();
-		void processContent( TElementShared aContent, TNodeShared aParent );
+		void processContent( const TElementShared & aContent,
+										const TElementShared & aExceptions,
+										TNodeShared aParent );
+		void processExceptions( const TElementShared & aExceptions, TNodeShared aParent );
+		void processException( const TElementShared & aExceptions, TNodeShared aParent );
+		void processComments();
+		void processComment();
 		TElementShared getElementDecl( const string & aName,
 														TElementShared declarations ) const;
 

@@ -16,7 +16,7 @@ DocTypeDeclParser	::	DocTypeDeclParser( SGMLTextPtr aDocText,
 															  TElementShared aCharEntities )
 							:	DeclarationParser( aDocText, aDTD, aParEntities, aCharEntities )	{
 
-	printf( "Constructing DocTypeDeclParser\n" );
+	//printf( "Constructing DocTypeDeclParser\n" );
 	
 	mDocTypeName = "";
 	
@@ -24,7 +24,7 @@ DocTypeDeclParser	::	DocTypeDeclParser( SGMLTextPtr aDocText,
 
 DocTypeDeclParser	::	~DocTypeDeclParser()	{
 
-	printf( "Destroying DocTypeDeclParser\n" );
+	//printf( "Destroying DocTypeDeclParser\n" );
 	
 }
 

@@ -40,9 +40,9 @@ class ElementDeclParser	:	public DeclarationParser	{
 		TElementShared processPrimContentToken();
 		TElementShared processElementToken();
 		TElementShared processOccIndicator();
-		void processExceptions( TElementShared aElement );
-		void processExclusions( TElementShared aElement );
-		void processInclusions( TElementShared aElement );
+		TElementShared processExceptions();
+		TElementShared processExclusions();
+		TElementShared processInclusions();
 
 		// Test function
 		void showTree( TNodeShared aNode, int aSpacing );

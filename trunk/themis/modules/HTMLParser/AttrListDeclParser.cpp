@@ -20,13 +20,13 @@ AttrListDeclParser	::	AttrListDeclParser( SGMLTextPtr aDocText,
 															TElementShared aCharEntities )
 							:	DeclarationParser( aDocText, aDTD, aParEntities, aCharEntities )	{
 
-	printf( "Constructing AttrListDeclParser\n" );
+	//printf( "Constructing AttrListDeclParser\n" );
 	
 }
 
 AttrListDeclParser	::	~AttrListDeclParser()	{
 
-	printf( "Destroying AttrListDeclParser\n" );
+	//printf( "Destroying AttrListDeclParser\n" );
 	
 }
 

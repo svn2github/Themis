@@ -16,13 +16,13 @@ MarkedSecDeclParser	::	MarkedSecDeclParser( SGMLTextPtr aDocText,
 																	 TElementShared aCharEntities )
 								:	DeclarationParser( aDocText, aDTD, aParEntities, aCharEntities )	{
 
-	printf( "Constructing MarkedSecDeclParser\n" );
+	//printf( "Constructing MarkedSecDeclParser\n" );
 	
 }
 
 MarkedSecDeclParser	::	~MarkedSecDeclParser()	{
 
-	printf( "Destroying MarkedSecDeclParser\n" );
+	//printf( "Destroying MarkedSecDeclParser\n" );
 	
 }
 

@@ -22,7 +22,7 @@ ElementDeclParser	::	ElementDeclParser( SGMLTextPtr aDocText,
 															 TElementShared aCharEntities )
 							:	DeclarationParser( aDocText, aDTD, aParEntities, aCharEntities )	{
 
-	printf( "Constructing ElementDeclParser\n" );
+	//printf( "Constructing ElementDeclParser\n" );
 
 	// Element to store the element declarations of the DTD
 	mElements = mDTD->createElement( "elements" );
@@ -32,7 +32,7 @@ ElementDeclParser	::	ElementDeclParser( SGMLTextPtr aDocText,
 
 ElementDeclParser	::	~ElementDeclParser()	{
 
-	printf( "Destroying ElementDeclParser\n" );
+	//printf( "Destroying ElementDeclParser\n" );
 	
 	//showTree( mElements, 0 );
 	
@@ -235,7 +235,8 @@ void ElementDeclParser	::	processContentModel( TElementShared aElement )	{
 
 	try	{
 		processPsPlus();
-		processExceptions( aElement );
+		TElementShared exceptions = processExceptions();
+		aElement->appendChild( exceptions );
 	}
 	catch( ReadException r )	{
 		// Do nothing
@@ -448,49 +449,67 @@ TElementShared ElementDeclParser	::	processOccIndicator()	{
 
 }
 
-void ElementDeclParser	::	processExceptions( TElementShared aElement )	{
+TElementShared ElementDeclParser	::	processExceptions()	{
+	
+	TElementShared exceptions = mDTD->createElement( "exceptions" );
 	
 	try	{
-		processExclusions( aElement );
+		TElementShared exclusions = processExclusions();
+		exceptions->appendChild( exclusions );
 		try	{
 			processPsPlus();
-			processInclusions( aElement );
+			TElementShared inclusions = processInclusions();
+			exceptions->appendChild( inclusions );
 		}
 		catch( ReadException r )	{
 			// Was optional. Do nothing
 		}
-		return;
 	}
 	catch( ReadException r )	{
 		// Not an exclusion. Try an inclusion
-		processInclusions( aElement );
+		TElementShared inclusions = processInclusions();
+		exceptions->appendChild( inclusions );
 	}
+
+	return exceptions;
 	
 }
 
-void ElementDeclParser	::	processExclusions( TElementShared aElement )	{
+TElementShared ElementDeclParser	::	processExclusions()	{
 	
 	process( kMinus );
+
+	TElementShared minus = mDTD->createElement( kMinus );
+
 	try	{
-		processNameGroup();
+		TElementShared nameGroup = processNameGroup();
+		minus->appendChild( nameGroup );
 	}
 	catch( ReadException r )	{
 		r.setFatal();
 		throw r;
 	}
 	
+	return minus;
+	
 }
 
-void ElementDeclParser	::	processInclusions( TElementShared aElement )	{
+TElementShared ElementDeclParser	::	processInclusions()	{
 
 	process( mPlus );
+
+	TElementShared plus = mDTD->createElement( mPlus );
+
 	try	{
-		processNameGroup();
+		TElementShared nameGroup = processNameGroup();
+		plus->appendChild( nameGroup );
 	}
 	catch( ReadException r )	{
 		r.setFatal();
 		throw r;
 	}
+
+	return plus;
 	
 }
 

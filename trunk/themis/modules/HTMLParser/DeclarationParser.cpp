@@ -19,7 +19,7 @@ DeclarationParser	::	DeclarationParser( SGMLTextPtr aDocText,
 															TElementShared aCharEntities )
 							:	BaseParser()	{
 
-	printf( "Constructing DeclarationParser\n" );
+	//printf( "Constructing DeclarationParser\n" );
 	
 	mDocText = aDocText;
 	mDTD = aDTD;
@@ -30,7 +30,7 @@ DeclarationParser	::	DeclarationParser( SGMLTextPtr aDocText,
 
 DeclarationParser	::	~DeclarationParser()	{
 
-	printf( "Destroying DeclarationParser\n" );
+	//printf( "Destroying DeclarationParser\n" );
 	
 }
 

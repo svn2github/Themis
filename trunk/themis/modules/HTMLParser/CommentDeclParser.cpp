@@ -16,13 +16,13 @@ CommentDeclParser	::	CommentDeclParser( SGMLTextPtr aDocText,
 																   TElementShared aCharEntities )
 								:	DeclarationParser( aDocText, aDTD, aParEntities, aCharEntities )	{
 
-	printf( "Constructing CommentDeclParser\n" );
+	//printf( "Constructing CommentDeclParser\n" );
 	
 }
 
 CommentDeclParser	::	~CommentDeclParser()	{
 
-	printf( "Destroying CommentDeclParser\n" );
+	//printf( "Destroying CommentDeclParser\n" );
 	
 }
 

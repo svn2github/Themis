@@ -19,7 +19,7 @@
 
 BaseParser	::	BaseParser()	{
 	
-	printf( "BaseParser constructed\n" );
+	//printf( "BaseParser constructed\n" );
 
 	// SGMLText to store the text
 	mDocText = SGMLTextPtr( new SGMLText() );
@@ -42,7 +42,7 @@ BaseParser	::	BaseParser()	{
 
 BaseParser	::	~BaseParser()	{
 	
-	printf( "BaseParser destroyed\n" );
+	//printf( "BaseParser destroyed\n" );
 	
 }
 

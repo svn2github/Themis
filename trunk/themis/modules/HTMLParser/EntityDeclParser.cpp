@@ -20,13 +20,13 @@ EntityDeclParser	::	EntityDeclParser( SGMLTextPtr aDocText,
 													  TElementShared aCharEntities )
 								:	DeclarationParser( aDocText, aDTD, aParEntities, aCharEntities )	{
 
-	printf( "Constructing EntityDeclParser\n" );
+	//printf( "Constructing EntityDeclParser\n" );
 	
 }
 
 EntityDeclParser	::	~EntityDeclParser()	{
 
-	printf( "Destroying EntityDeclParser\n" );
+	//printf( "Destroying EntityDeclParser\n" );
 	
 }
 
@@ -93,8 +93,8 @@ void EntityDeclParser	::	processDeclaration()	{
 		throw r;
 	}
 	
-	printf( "Entity found: %s with text: %s\n", entity->getNodeName().c_str(),
-			  entity->getAttribute( "text" ).c_str() );
+//	printf( "Entity found: %s with text: %s\n", entity->getNodeName().c_str(),
+//			  entity->getAttribute( "text" ).c_str() );
 
 }
 

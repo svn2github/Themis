@@ -28,7 +28,7 @@
 SGMLParser	::	SGMLParser( const char * aDtd, const char * aDocument )
 					:	BaseParser()	{
 	
-	printf( "SGMLParser constructed\n" );
+	//printf( "SGMLParser constructed\n" );
 
 	// Load text
 	mDocText = SGMLTextPtr( new SGMLText() );
@@ -47,7 +47,7 @@ SGMLParser	::	SGMLParser( const char * aDtd, const char * aDocument )
 SGMLParser	::	SGMLParser( const char * aDtd, SGMLTextPtr aDocument )
 					:	BaseParser()	{
 	
-	printf( "SGMLParser constructed\n" );
+	//printf( "SGMLParser constructed\n" );
 
 	// Load text
 	mDocText = aDocument;
@@ -59,7 +59,7 @@ SGMLParser	::	SGMLParser( const char * aDtd, SGMLTextPtr aDocument )
 
 SGMLParser	::	~SGMLParser()	{
 	
-	printf( "SGMLParser destroyed\n" );
+	//printf( "SGMLParser destroyed\n" );
 	
 	delete mCommentDecl;
 	delete mDtdParser;
@@ -219,5 +219,22 @@ TDocumentShared SGMLParser	::	parse()	{
 	}
 
 	return mDocument;
+	
+}
+
+
+int main( int argc, char * argv[] )	{
+	
+	if ( argc < 3 )	{
+		cout << "Please supply a dtd and a document to load\n";
+		return 1;
+	}
+	
+	SGMLParser * sgmlParser = new SGMLParser( argv[ 1 ], argv[ 2 ] );
+	TDocumentShared dtd = sgmlParser->parse();
+
+	delete sgmlParser;
+	
+	return 0;
 	
 }

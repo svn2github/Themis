@@ -29,7 +29,7 @@
 DTDParser	::	DTDParser( const char * aFileName, TDocumentShared aDTD )
 					:	BaseParser()	{
 	
-	printf( "DTDParser constructed\n" );
+	//printf( "DTDParser constructed\n" );
 
 	// Load text
 	mDocText = SGMLTextPtr( new SGMLText() );
@@ -58,7 +58,7 @@ DTDParser	::	DTDParser( const char * aFileName, TDocumentShared aDTD )
 
 DTDParser	::	~DTDParser()	{
 	
-	printf( "DTDParser destroyed\n" );
+	//printf( "DTDParser destroyed\n" );
 	
 	delete commentDecl;
 	delete markedSecDecl;
@@ -209,7 +209,7 @@ TDocumentShared DTDParser	::	parse()	{
 		}
 		catch( ReadException r )	{
 			if ( r.isEof() )	{
-				printf( "End of file reached. No errors encountered\n" );
+				printf( "End of DTD file reached. No errors encountered\n" );
 			}
 			else	{
 				printf( "Error on line %i, char %i, message: %s\n", r.getLineNr(), r.getCharNr(),
