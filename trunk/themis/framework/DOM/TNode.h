@@ -385,7 +385,8 @@ class TNode	:	public enable_shared_from_this<TNode>	{
 			
 			@param	aDeep	The boolean that indicates if a deep copy must be made or not.
 			
-			@todo	Lots of stuff. Currently only makes a copy of this node and nothing else.
+			@todo	Currently makes a basic deep copy of this node,
+						but will need to check if more values need to be set.
 		*/
 		TNodePtr cloneNode( bool aDeep ) const;
 		// void normalize();		Not yet implemented

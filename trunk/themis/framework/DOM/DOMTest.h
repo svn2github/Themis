@@ -15,8 +15,8 @@
 class DOMTest	:	public BApplication	{
 	
 	private:
-		void showDocument( const TDocumentShared document );
-		void showTree( const TNodeShared node, int spacing );
+		void showDocument( const TDocumentPtr document );
+		void showTree( const TNodePtr node, int spacing );
 	
 	public:
 		DOMTest();

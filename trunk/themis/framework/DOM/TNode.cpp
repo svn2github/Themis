@@ -460,10 +460,23 @@ bool TNode	::	hasChildNodes() const	{
 
 TNodePtr TNode	::	cloneNode( bool aDeep ) const	{
 
-	// Still need to implement a deep clone
+	// Clone the node itself
+	TNodePtr clonedNode( new TNode( mNodeType, getOwnerDocument(), mNodeName,
+													   mNodeValue ) );
 	
-	TNodePtr clonedNode( new TNode( mNodeType, mOwnerDocument ) );
-	
+	// Clone the attributes.
+	for ( unsigned int i = 0; i < mAttributeList.size(); i++ )	{
+		TNodePtr attribute = mAttributeList[ i ];
+		clonedNode->mAttributeList.push_back( attribute->cloneNode( aDeep ) );
+	}
+	// Clone the nodes.
+	if ( aDeep )	{
+		for ( unsigned int i = 0; i < mNodeList.size(); i++ )	{
+			TNodePtr node = mNodeList[ i ];
+			clonedNode->mNodeList.push_back( node->cloneNode( aDeep ) );
+		}
+	}
+		
 	return clonedNode;
 	
 }
