@@ -367,6 +367,9 @@ http_request *httplayer::AddRequest(BMessage *info) {
 	} else {
 		printf("Request is to: %s:%u\nURI: %s\n",request->host,request->port,request->uri);
 		UnprocessedReqs->AddItem(request);
+		delete info;
+		printf("End AddRequest\n");
+		return request;
 	}
 #endif
 }
@@ -912,8 +915,6 @@ void httplayer::FindURI(const char *url,char **host,uint16 *port,char **uri,bool
    }
   *host=new char[master.Length()+1];
   strcpy(*host,master.String());
-  printf("Done.\n");
-	 
   }
 int32 httplayer::LayerManager() {
 	http_request *request=NULL,*current=NULL, *current2=NULL;
