@@ -28,6 +28,7 @@ Project Start Date: October 18, 2000
 */
 #ifndef _winclass
 #define _winclass
+#include <Menu.h>
 #include <Window.h>
 #include "htmlparser.h"
 #include "msgsystem.h"

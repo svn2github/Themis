@@ -129,6 +129,8 @@ class ColorBox : public BView
 #ifndef COLORSELECTWINDOW
 #define COLORSELECTWINDOW
 
+#include <ColorControl.h>
+
 class ColorSelectWindow : public BWindow
 {
 	public:
