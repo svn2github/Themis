@@ -195,12 +195,8 @@ status_t FileProtocol	::	ReceiveBroadcast( BMessage * message )	{
 //				printf( "Written %i bytes\n", totalBytes );
 				BMessage * fileMessage = new BMessage( ProtocolConnectionClosed );
 				int32 id=0;
-				message->FindInt32("window_uid",&id);
-				fileMessage->AddInt32("window_uid",id);
-				message->FindInt32("tab_uid",&id);
-				fileMessage->AddInt32("tab_uid",id);
-				message->FindInt32("view_uid",&id);
-				fileMessage->AddInt32("view_uid",id);
+				message->FindInt32("view_id",&id);
+				fileMessage->AddInt32("view_id",id);
 				fileMessage->AddInt32( "command", COMMAND_INFO );
 				fileMessage->AddBool( "request_done", true );
 				fileMessage->AddString( "url", fileLocation.c_str() );
