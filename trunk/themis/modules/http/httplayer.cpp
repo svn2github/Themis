@@ -458,7 +458,7 @@ http_request *httplayer::AddRequest(BMessage *info) {
 					//flush the cache of the specified URL...
 					if (CacheSys!=NULL) {
 						BString url;
-						info->FindString("target_url",&url);
+						info->FindString("url",&url);
 						int32 cached_obj=CacheSys->FindObject(CacheToken,url.String());
 						if (cached_obj>=0) {
 							if (CacheSys->AcquireWriteLock(CacheToken,cached_obj)) {
@@ -502,7 +502,7 @@ http_request *httplayer::AddRequest(BMessage *info) {
 		}
 		
 		BString url;
-		info->FindString("target_url",&url);
+		info->FindString("url",&url);
 		if (url.Length()==0)
 			return NULL;
 		request->url=new char[url.Length()+1];

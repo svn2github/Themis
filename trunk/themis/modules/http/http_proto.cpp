@@ -263,7 +263,14 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 //			http_request *request=NULL;
 //			while (request==NULL) {
 				BString url;
-				rmsg->FindString("target_url",&url);
+				rmsg->FindString("url",&url);
+				if (url.FindFirst("://")==B_ERROR)
+				{
+					
+					url.Prepend("http://");
+					printf("url: %s\n",url.String());
+					rmsg->ReplaceString("url",url.String());
+				}
 				if (url.ICompare("http",4)==0)
 					HTTP->AddRequest(rmsg);
 //				if (request==NULL)
