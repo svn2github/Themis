@@ -38,16 +38,16 @@ DOMTest	::	DOMTest()	:	BApplication( "application/x-vnd.Themis-DOMTest" )	{
 		printf( "Exception caught : %s\n", e.getString() );
 	}
 
-	printf( "Tag name of the element: %s\n", element->getTagName().String() );
+	printf( "Tag name of the element: %s\n", element->getTagName().c_str() );
 	
 	printf( "Add an attribute to the element\n" );
 	element->setAttribute( "me", "king" );
 	
 	printf( "Retrieve the attribute that was just created\n" );
-	printf( "Attribute me has value: %s\n", element->getAttribute( "me" ).String() );
+	printf( "Attribute me has value: %s\n", element->getAttribute( "me" ).c_str() );
 
 	TAttrShared attr = shared_static_cast<TAttr> ( make_shared( element->getAttributes()->getNamedItem( "me" ) ) );
-	printf( "Attribute is attached to: %s\n", attr->getOwnerElement().get()->getNodeName().String() );
+	printf( "Attribute is attached to: %s\n", attr->getOwnerElement().get()->getNodeName().c_str() );
 
 	printf( "Remove attribute me through NamedNodeMap\n" );
 	element->getAttributes()->removeNamedItem( "me" );
@@ -80,7 +80,7 @@ DOMTest	::	DOMTest()	:	BApplication( "application/x-vnd.Themis-DOMTest" )	{
 	}
 	
 	printf( "Get the name of the text node\n" );
-	printf( "Name: %s\n", textNode->getNodeName().String() );
+	printf( "Name: %s\n", textNode->getNodeName().c_str() );
 
 	printf( "Get a node\n" );
 	const TNodeWeak newNode = node->getFirstChild();
@@ -142,16 +142,18 @@ DOMTest	::	DOMTest()	:	BApplication( "application/x-vnd.Themis-DOMTest" )	{
 	base->appendChild( text1 );
 	base->appendChild( text2 );
 	
+	TTextWeak textWeak = text1;
+	
 	//text2.reset();
 	
 	printf( "Testing Text functions...\n" );
-	printf( "Whole text of nodes\n%s\n", text1->getWholeText().String() );
+	printf( "Whole text of nodes\n%s\n", text1->getWholeText().c_str() );
 	printf( "Replacing the whole text\n" );
 	text1.reset();
 	text2->replaceWholeText( "This works" );
 	printf( "Text2 replaced\n" );
-	printf( "Whole text replaced by: %s\n", text2->getWholeText().String() );
-	if ( !text1 )	{
+	printf( "Whole text replaced by: %s\n", text2->getWholeText().c_str() );
+	if ( textWeak.expired() )	{
 		printf( "Node removed as it should be\n" );
 	}
 	else	{

@@ -2,6 +2,8 @@
 	See TElement.h for some more information
 */
 
+#include <string>
+
 #include "TElement.h"
 #include "TNamedNodeMap.h"
 #include "TAttr.h"
@@ -10,7 +12,7 @@
 
 TElement	::	TElement( const TDOMString aTagName )	:	TNode( ELEMENT_NODE, aTagName )	{
 	
-	mTagName.SetTo( aTagName );
+	mTagName = aTagName;
 	
 }
 

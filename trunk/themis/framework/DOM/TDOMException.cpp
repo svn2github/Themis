@@ -2,6 +2,8 @@
 	See TDOMException.h for some more information
 */
 
+#include <string>
+
 #include "TDOMException.h"
 
 TDOMException	::	TDOMException( ExceptionCode aCode )	{
@@ -9,67 +11,67 @@ TDOMException	::	TDOMException( ExceptionCode aCode )	{
 	code = aCode;
 	switch ( aCode )	{
 		case INDEX_SIZE_ERR:	{
-			string.SetTo( "INDEX_SIZE_ERR" );
+			mString =  "INDEX_SIZE_ERR" ;
 			break;
 		}
 		case DOMSTRING_SIZE_ERR:	{
-			string.SetTo( "DOMSTRING_SIZE_ERR" );
+			mString = "DOMSTRING_SIZE_ERR";
 			break;
 		}
 		case HIERARCHY_REQUEST_ERR:	{
-			string.SetTo( "HIERARCHY_REQUEST_ERR" );
+			mString = "HIERARCHY_REQUEST_ERR";
 			break;
 		}
 		case WRONG_DOCUMENT_ERR:	{
-			string.SetTo( "WRONG_DOCUMENT_ERR" );
+			mString = "WRONG_DOCUMENT_ERR";
 			break;
 		}
 		case INVALID_CHARACTER_ERR:	{
-			string.SetTo( "INVALID_CHARACTER_ERR" );
+			mString = "INVALID_CHARACTER_ERR";
 			break;
 		}
 		case NO_DATA_ALLOWED_ERR:	{
-			string.SetTo( "NO_DATA_ALLOWED_ERR" );
+			mString = "NO_DATA_ALLOWED_ERR";
 			break;
 		}
 		case NO_MODIFICATION_ALLOWED_ERR:	{
-			string.SetTo( "NO_MODIFICATION_ALLOWED_ERR" );
+			mString = "NO_MODIFICATION_ALLOWED_ERR";
 			break;
 		}
 		case NOT_FOUND_ERR:	{
-			string.SetTo( "NOT_FOUND_ERR" );
+			mString = "NOT_FOUND_ERR";
 			break;
 		}
 		case NOT_SUPPORTED_ERR:	{
-			string.SetTo( "NOT_SUPPORTED_ERR" );
+			mString = "NOT_SUPPORTED_ERR";
 			break;
 		}
 		case INUSE_ATTRIBUTE_ERR:	{
-			string.SetTo( "INUSE_ATTRIBUTE_ERR" );
+			mString = "INUSE_ATTRIBUTE_ERR";
 			break;
 		}
 		case INVALID_STATE_ERR:	{
-			string.SetTo( "INVALID_STATE_ERR" );
+			mString = "INVALID_STATE_ERR";
 			break;
 		}
 		case SYNTAX_ERR:	{
-			string.SetTo( "SYNTAX_ERR" );
+			mString = "SYNTAX_ERR";
 			break;
 		}
 		case INVALID_MODIFICATION_ERR:	{
-			string.SetTo( "INVALID_MODIFICATION_ERR" );
+			mString = "INVALID_MODIFICATION_ERR";
 			break;
 		}
 		case NAMESPACE_ERR:	{
-			string.SetTo( "NAMESPACE_ERR" );
+			mString = "NAMESPACE_ERR";
 			break;
 		}
 		case INVALID_ACCESS_ERR:	{
-			string.SetTo( "INVALID_ACCESS_ERR" );
+			mString = "INVALID_ACCESS_ERR";
 			break;
 		}
 		default:	{
-			string.SetTo( "Undefined error" );
+			mString = "Undefined error";
 			break;
 		}
 	}
@@ -88,6 +90,6 @@ ExceptionCode TDOMException	::	getCode()	{
 
 const char * TDOMException	::	getString()	{
 	
-	return string.String();
+	return mString.c_str();
 	
 }

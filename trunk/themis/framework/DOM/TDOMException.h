@@ -8,15 +8,13 @@
 #ifndef TDOMEXCEPTION_H
 #define TDOMEXCEPTION_H
 
-#include <String.h>
-
 #include "DOMSupport.h"
 
 class TDOMException	{
 	
 	private:
 		ExceptionCode code;
-		BString string;
+		TDOMString mString;
 		
 	public:
 		TDOMException( ExceptionCode aCode );

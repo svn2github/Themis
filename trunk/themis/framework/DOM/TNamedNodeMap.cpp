@@ -2,6 +2,8 @@
 	See TNamedNodeMap.h for some more information
 */
 
+#include <string>
+
 #include "TNamedNodeMap.h"
 #include "TDOMException.h"
 #include "TNode.h"

@@ -2,6 +2,8 @@
 	See TNodeListContainer.h for some more information
 */
 
+#include <string>
+
 #include "TNodeListContainer.h"
 #include "TNode.h"
 #include "TNodeList.h"

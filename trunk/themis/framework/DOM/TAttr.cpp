@@ -2,6 +2,8 @@
 	See TAttr.h for some more information
 */
 
+#include <string>
+
 #include "TAttr.h"
 #include "TElement.h"
 

@@ -2,6 +2,8 @@
 	See TText.h for some more information
 */
 
+#include <string>
+
 #include "TText.h"
 #include "TDOMException.h"
 
@@ -18,7 +20,7 @@ TText	::	~TText()	{
 bool TText	::	getIsWhiteSpaceInElement() const	{
 	
 	// I think they mean two spaces here, instead of just one.
-	if ( getData().FindFirst( "  " )	== B_ERROR )	{
+	if ( getData().find( "  " )	== string::npos )	{
 		// No ignorable whitespace
 		return false;
 	}

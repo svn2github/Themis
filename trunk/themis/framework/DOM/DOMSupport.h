@@ -13,6 +13,8 @@
 #include "boost/shared_ptr.hpp"
 #include "boost/weak_ptr.hpp"
 
+#include <string>
+
 class TNode;
 class TElement;
 class TText;
@@ -64,9 +66,9 @@ enum TreePosition	{
 	TREE_POSITION_DISCONNECTED = 0x00
 };
 
-// TDOMString is equal to BString for now.
+// TDOMString is equal to string for now.
 // Is not UTF-16, so must be changed!
-typedef BString TDOMString;
+typedef string TDOMString;
 
 // Internally used codes
 enum NodeChange	{

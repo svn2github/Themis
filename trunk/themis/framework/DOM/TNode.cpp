@@ -2,6 +2,8 @@
 	See TNode.h for some more information
 */
 
+#include <string>
+
 #include "TNode.h"
 #include "TNamedNodeMap.h"
 #include "TNodeList.h"
@@ -23,69 +25,67 @@ TNode	::	TNode( const unsigned short aNodeType, const TDOMString aNodeName, cons
 
 	switch ( mNodeType )	{
 		case ELEMENT_NODE:	{
-			mNodeName.SetTo( aNodeName );
-			//mAttributeList = new BList();
-			//mAttributes = new TNamedNodeMap( mAttributeList, this );
-			mNodeTypeString.SetTo( "ELEMENT_NODE" );
+			mNodeName = aNodeName;
+			mNodeTypeString = "ELEMENT_NODE";
 			break;
 		}
 		case ATTRIBUTE_NODE:	{
-			mNodeName.SetTo( aNodeName );
-			mNodeValue.SetTo( aNodeValue );
-			mNodeTypeString.SetTo( "ATTRIBUTE_NODE" );
+			mNodeName = aNodeName;
+			mNodeValue = aNodeValue;
+			mNodeTypeString = "ATTRIBUTE_NODE";
 			break;
 		}
 		case TEXT_NODE:	{
-			mNodeName.SetTo( "#text" );
-			mNodeValue.SetTo( aNodeValue );
-			mNodeTypeString.SetTo( "TEXT_NODE" );
+			mNodeName = "#text";
+			mNodeValue = aNodeValue;
+			mNodeTypeString = "TEXT_NODE";
 			break;
 		}
 		case CDATA_SECTION_NODE:	{
-			mNodeName.SetTo( "cdata-section" );
-			mNodeValue.SetTo( aNodeValue );
-			mNodeTypeString.SetTo( "CDATA_SECTION_NODE" );
+			mNodeName = "cdata-section";
+			mNodeValue = aNodeValue;
+			mNodeTypeString = "CDATA_SECTION_NODE";
 			break;
 		}
 		case ENTITY_REFERENCE_NODE:	{
-			mNodeTypeString.SetTo( "ENTITY_REFERENCE_NODE" );
+			mNodeTypeString = "ENTITY_REFERENCE_NODE";
 			break;
 		}
 		case ENTITY_NODE:	{
-			mNodeTypeString.SetTo( "ENTITY_NODE" );
+			mNodeTypeString = "ENTITY_NODE";
 			break;
 		}
 		case PROCESSING_INSTRUCTION_NODE:	{
-			mNodeName.SetTo( aNodeValue );
-			mNodeTypeString.SetTo( "PROCESSSING_INSTRUCTION_NODE" );
+			mNodeName = aNodeValue;
+			mNodeTypeString = "PROCESSSING_INSTRUCTION_NODE";
 			break;
 		}
 		case COMMENT_NODE:	{
-			mNodeName.SetTo( "#comment" );
-			mNodeValue.SetTo( aNodeValue );
-			mNodeTypeString.SetTo( "COMMENT_NODE" );
+			mNodeName = "#comment";
+			mNodeValue = aNodeValue;
+			mNodeTypeString = "COMMENT_NODE";
 			break;
 		}
 		case DOCUMENT_NODE:	{
-			mNodeName.SetTo( "#document" );
-			mNodeTypeString.SetTo( "DOCUMENT_NODE" );
+			mNodeName = "#document";
+			mNodeTypeString = "DOCUMENT_NODE";
 			break;
 		}
 		case DOCUMENT_TYPE_NODE:	{
-			mNodeTypeString.SetTo( "DOCUMENT_TYPE_NODE" );
+			mNodeTypeString = "DOCUMENT_TYPE_NODE";
 			break;
 		}
 		case DOCUMENT_FRAGMENT_NODE:	{
-			mNodeName.SetTo( "#document-fragment" );
-			mNodeTypeString.SetTo( "DOCUMENT_FRAGMENT_NODE" );
+			mNodeName = "#document-fragment";
+			mNodeTypeString = "DOCUMENT_FRAGMENT_NODE";
 			break;
 		}
 		case NOTATION_NODE:	{
-			mNodeTypeString.SetTo( "NOTATION_NODE" );
+			mNodeTypeString = "NOTATION_NODE";
 			break;
 		}
 		default:	{
-			mNodeTypeString.SetTo( "Undefined node" );
+			mNodeTypeString = "Undefined node";
 			break;
 		}
 	}
@@ -94,7 +94,7 @@ TNode	::	TNode( const unsigned short aNodeType, const TDOMString aNodeName, cons
 
 TNode	::	~TNode()	{
 
-	printf( "Destructor called of: %s\n", getNodeName().String() );
+	printf( "Destructor called of: %s\n", getNodeName().c_str() );
 
 	if ( mParentNode.get() != NULL )	{
 		// Still attached to the tree
@@ -145,7 +145,7 @@ void TNode	::	setNodeValue( const TDOMString aNodeValue )	{
 		case PROCESSING_INSTRUCTION_NODE:
 		case TEXT_NODE:	{
 			// Node can have a value
-			mNodeValue.SetTo( aNodeValue );
+			mNodeValue = aNodeValue;
 			break;
 		}
 	}
@@ -518,7 +518,7 @@ bool TNode	::	isChildAllowed( const TNodeShared aNewChild ) const	{
 
 void TNode	::	setNodeName( const TDOMString aValue )	{
 	
-	mNodeName.SetTo( aValue );
+	mNodeName = aValue;
 	
 }
 
@@ -579,7 +579,7 @@ vector<TNodeShared> TNode	::	collectNodes( TDOMString aName, unsigned short aNod
 
 const char * TNode	::	getNodeTypeString() const	{
 	
-	return mNodeTypeString.String();
+	return mNodeTypeString.c_str();
 	
 }
 
