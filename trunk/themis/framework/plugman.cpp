@@ -168,7 +168,7 @@ status_t plugman::BuildRoster()
         continue;
        }
       protocol_plugin* (*GetObject)(void);
-      printf("\tGetting plugin's object...");
+      printf("\tGetting plugin's object/handler...");
       fflush(stdout);
       status_t err=B_OK;
       if ((err=get_image_symbol(nuplug->sysid,"GetObject",B_SYMBOL_TYPE_TEXT,(void**)&GetObject))==B_OK)
@@ -193,7 +193,44 @@ status_t plugman::BuildRoster()
          nuplug->inmemory=true;
        }
       else
-       printf("error %ld:%ld\n",err,B_BAD_INDEX);
+       {
+        BHandler* (*GetHandler)(void);
+        if ((err=get_image_symbol(nuplug->sysid,"GetHandler",B_SYMBOL_TYPE_TEXT,(void**)&GetHandler))==B_OK)
+         {
+          nuplug->handler=(*GetHandler)();
+          char* (*GetPluginName)();
+          int32 (*GetPluginID)();
+          float (*GetPluginVers)();
+          bool (*IsPersistant)();
+          get_image_symbol(nuplug->sysid,"GetPluginName",B_SYMBOL_TYPE_TEXT,(void**)&GetPluginName);
+          get_image_symbol(nuplug->sysid,"GetPluginID",B_SYMBOL_TYPE_TEXT,(void**)&GetPluginID);
+          get_image_symbol(nuplug->sysid,"GetPluginVers",B_SYMBOL_TYPE_TEXT,(void**)&GetPluginVers);
+          get_image_symbol(nuplug->sysid,"IsPersistant",B_SYMBOL_TYPE_TEXT,(void**)&IsPersistant);
+        nuplug->plugname=(*GetPluginName)();
+        nuplug->plugid=(*GetPluginID)();
+        nuplug->persistant=(*IsPersistant)();
+          printf("ok %p\n",nuplug->handler);
+          AddPlug(nuplug);
+
+          if (!nuplug->persistant)
+           {
+            status_t (*Shutdown)();
+            get_image_symbol(nuplug->sysid,"Shutdown",B_SYMBOL_TYPE_TEXT,(void**)&Shutdown);
+            if ((*Shutdown)()==B_OK)
+             {
+              unload_add_on(nuplug->sysid);
+              nuplug->pobj=NULL;
+             }
+           }
+          else
+           nuplug->inmemory=true;
+
+         }
+        else
+         {
+          delete nuplug;
+         }
+       }
      }
    }
  }

@@ -50,8 +50,9 @@ struct plugst
   //an entry for the plugin
   volatile bool inmemory;
   //is the plugin currently in memory
+  protocol_plugin *pobj;//protocol_plugin object
+  BHandler *handler;//if the plugin has a BHandler object instead
   bool persistant;
-  protocol_plugin *pobj;//plugin object
   //does the plugin load and unload based on page?
   plugst *next;
   plugst *prev;
@@ -72,6 +73,7 @@ struct plugst
    {
     inmemory=false;
     pobj=NULL;
+    handler=NULL;
     sysid=0;
     plugid=0;
     plugname=NULL;
