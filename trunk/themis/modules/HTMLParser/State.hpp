@@ -70,7 +70,7 @@ class State	{
 			
 			@param	aPositions	The positions to store.
 		*/
-		State( const vector<Position> & aPositions );
+		State();
 		/// Destructor of the State class.
 		/**
 			The destructor of the State class does nothing.
@@ -79,6 +79,13 @@ class State	{
 		~State();
 		/// A function to return the list of positions.
 		vector<Position> getPositions() const;
+		
+		void add( const Position & aPosition );
+		Position top() const;
+		Position top();
+		void pop();
+		void reset();
+		unsigned int size() const;
 
 };
 

@@ -38,9 +38,7 @@
 // SGMLParser headers
 #include "State.hpp"
 
-State	::	State( const vector<Position> & aPositions )	{
-	
-	mPositions = aPositions;
+State	::	State()	{
 	
 }
 
@@ -51,5 +49,41 @@ State	::	~State()	{
 vector<Position> State	::	getPositions()	const	{
 	
 	return mPositions;
+	
+}
+
+void State	::	add( const Position & aPosition )	{
+	
+	mPositions.push_back( aPosition );
+
+}
+
+Position State	::	top() const	{
+	
+	return mPositions.back();
+	
+}
+
+Position State	::	top()	{
+	
+	return mPositions.back();
+	
+}
+
+void State	::	pop()	{
+	
+	mPositions.pop_back();
+	
+}
+
+void State	::	reset()	{
+	
+	mPositions.clear();
+	
+}
+
+unsigned int State	::	size() const	{
+	
+	return mPositions.size();
 	
 }

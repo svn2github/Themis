@@ -66,7 +66,8 @@ class SGMLText	{
 		/**
 			Might be better to store it in just one place: The state.
 		*/
-		vector<Position> mPositions;
+		///vector<Position> mPositions;
+		State mState;
 		
 	public:
 		/// Constructor of the SGMLText class.

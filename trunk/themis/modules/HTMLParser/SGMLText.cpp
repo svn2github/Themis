@@ -61,10 +61,10 @@ void SGMLText	::	reset( bool clearText )	{
 		mText.erase();
 	}
 
-	mPositions.clear();
+	mState.reset();
 	
 	Position textInfo( 0, mText.size(), 1, 1 );
-	mPositions.push_back( textInfo );
+	mState.add( textInfo );
 	
 }
 
@@ -94,18 +94,19 @@ void SGMLText	::	loadText( const char * aDocument )	{
 
 char SGMLText	::	nextChar()	{
 
-	Position & current = mPositions.back();
+	// Not very nice. Better to return a reference. How to do that ?
+	Position current = mState.top();
+	mState.pop();
 	
 	char c = mText[ current.getIndex() ];
 	
 	try	{
 		current.nextPosition( c );
+		mState.add( current );
 	}
 	catch( PositionException p )	{
 		// End of piece of text reached
-		//printf( "Text popped\n" );
-		mPositions.pop_back();
-		if ( mPositions.size() == 0 )	{
+		if ( mState.size() == 0 )	{
 			// End of total text reached
 			throw ReadException( current.getLineNr(), current.getCharNr(),
 											"End of text reached", END_OF_FILE_REACHED, true );
@@ -121,7 +122,7 @@ char SGMLText	::	getChar()	{
 
 	// WARNING: Might be dodgy if a zero length entity was just pushed on the stack
 	
-	Position & current = mPositions.back();
+	Position current = mState.top();
 	
 	return mText[ current.getIndex() ];
 
@@ -131,7 +132,7 @@ void SGMLText	::	addEntity( const Position & aEntity )	{
 	
 	//printf( "Adding entity: index %i, lineNr %i, charNr %i\n", aEntity.getIndex(), aEntity.getLineNr(), aEntity.getCharNr() );
 	
-	mPositions.push_back( aEntity );
+	mState.add( aEntity );
 
 	//printf( "First character of entity: %c\n", getChar() );
 	
@@ -139,19 +140,19 @@ void SGMLText	::	addEntity( const Position & aEntity )	{
 
 State SGMLText	::	saveState() const	{
 	
-	return State( mPositions );
+	return mState;
 	
 }
 
 void SGMLText	::	restoreState( const State & aState )	{
 	
-	mPositions = aState.getPositions();
+	mState = aState;
 	
 }
 
 unsigned int SGMLText	::	getLineNr() const	{
 
-	const Position & current = mPositions.back();
+	const Position current = mState.top();
 		
 	return current.getLineNr();
 	
@@ -159,7 +160,7 @@ unsigned int SGMLText	::	getLineNr() const	{
 
 unsigned int SGMLText	::	getCharNr() const	{
 	
-	const Position & current = mPositions.back();
+	const Position current = mState.top();
 		
 	return current.getCharNr();
 	
@@ -167,7 +168,7 @@ unsigned int SGMLText	::	getCharNr() const	{
 
 unsigned int SGMLText	::	getIndex() const	{
 	
-	const Position & current = mPositions.back();
+	const Position current = mState.top();
 		
 	return current.getIndex();
 	
