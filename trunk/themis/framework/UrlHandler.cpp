@@ -48,7 +48,7 @@ UrlHandler::BroadcastReply(
 
 
 uint32
-UrlHandler::BroadCastTarget()
+UrlHandler::BroadcastTarget()
 {
 	printf( "UrlHandler::BroadCastTarget()\n" );
 	
@@ -56,7 +56,7 @@ UrlHandler::BroadCastTarget()
 }
 
 status_t
-UrlHandler::ReceiveBroadCast(
+UrlHandler::ReceiveBroadcast(
 	BMessage* msg )
 {
 	printf( "UrlHandler::ReceiveBroadCast()\n" );

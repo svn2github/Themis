@@ -17,12 +17,12 @@ class UrlHandler : public MessageSystem
 		
 		void						BroadcastFinished();
 									
-		uint32						BroadCastTarget();
+		uint32						BroadcastTarget();
 		
 		status_t					BroadcastReply(
 										BMessage* msg );
 		
-		status_t					ReceiveBroadCast(
+		status_t					ReceiveBroadcast(
 										BMessage* msg );
 														
 	private:
