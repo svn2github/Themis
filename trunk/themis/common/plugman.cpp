@@ -282,7 +282,7 @@ status_t plugman::UnloadAllPlugins(bool clean) {
 }
 status_t plugman::Broadcast(int32 source,int32 targets,BMessage *msg) {
 	plugst *cur=head;
-	status_t ret=B_OK;
+	status_t ret=B_OK,final_ret=B_OK;
 	BMessage *subm=new BMessage;
 	bool iloaded=false;
 	
@@ -305,6 +305,10 @@ status_t plugman::Broadcast(int32 source,int32 targets,BMessage *msg) {
 				}
 				
 				ret=cur->pobj->ReceiveBroadcast(subm);
+				if ((cur->type&targets>=1) && (ret!=PLUG_HANDLE_GOOD))
+					final_ret|=B_ERROR;
+				
+				
 						if (ret!=PLUG_HANDLE_GOOD)
 							if (iloaded==true)
 								UnloadPlugin(cur->plugid);
@@ -336,7 +340,7 @@ status_t plugman::Broadcast(int32 source,int32 targets,BMessage *msg) {
 	}
 	
 	delete subm;
-	return ret;
+	return final_ret;
 	
 }
 status_t plugman::LoadPlugin(uint32 which) 
@@ -395,6 +399,8 @@ void *plugman::FindPlugin(node_ref &nref) {
 
 PlugClass *plugman::FindPlugin(uint32 which) 
 {
+	printf("plugman: FindPlugin (int32)\n");
+	
 	plugst *tmp=head;
 	while(tmp!=NULL) {
 		if ((tmp->plugid)==which) {
@@ -420,6 +426,8 @@ void plugman::MessageReceived(BMessage *msg) {
 			plugst *cur=head;
 			int32 targets=0;
 			int32 ret=0;
+			int32 source=0;
+			msg->FindInt32("source",&source);
 			
 			bool iloaded=false;
 			
@@ -436,6 +444,10 @@ void plugman::MessageReceived(BMessage *msg) {
 			
 			msg->FindMessage("message",subm);
 			while (cur!=NULL) {
+				if (source==cur->plugid) {
+					cur=cur->next;
+					continue;
+				}
 				iloaded=false;
 				
 				if (targets!=ALL_TARGETS) {
@@ -445,6 +457,7 @@ void plugman::MessageReceived(BMessage *msg) {
 							LoadPlugin(cur->plugid);
 							iloaded=true;
 						}
+						printf("plugman: sending broadcast to %c%c%c%c\n",cur->plugid>>24,cur->plugid>>16,cur->plugid>>8, cur->plugid);
 						
 						ret=cur->pobj->ReceiveBroadcast(subm);
 						if (ret==PLUG_HANDLE_GOOD) {

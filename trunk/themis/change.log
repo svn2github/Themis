@@ -1,4 +1,29 @@
 ========
+18 September 2002
+========
+More fixes, corrections, and functionality shifts.
+
+makefile
+Added target for the new html parser add-on. Way to go Mark! This means we are yet another step towards rendering web pages, the whole purpose of this project!
+
+modules/htmlparser/*
+The new html parser, courtesy of Mark Hellegers.
+
+common/tcplayer.cpp
+A fix for a barely noticable bug. Basically, if the domain name of an entered URL couldn't be found, then a pointer is set to NULL. Instead of just returning NULL, indicating that the connection failed, the tcplayer::ConnectTo() assumed that a valid pointer was returned. This has been corrected.
+
+framework/app.cpp framework/win.cpp
+Finally got Themis to quit when hitting Alt-q or by selecting Close All Windows from the Deskbar. Wasn't difficult really, just something I hadn't really thought about in a long while.
+
+framework/winview.cpp
+Switched the url broadcast over to the BMessenger version; which should make the window immediately available after entering a URL. The downside is that the plug-in manager will now block until a connection is made or failed.
+
+modules/cache/cacheman.cpp
+Updated the [disk] cache manager to use PlugClass::BroadcastReply() when respondign to a FindCachedObject message, if possible.
+
+modules/httplayer/*
+Updated the http layer to properly broadcast a cache search, instead of looking specifically at one cache object.
+========
 8 September 2002
 ========
 Many changes were made within the last few days, and the commit prior to this one went almost undocumented. I will attempt to include those changes in this file.

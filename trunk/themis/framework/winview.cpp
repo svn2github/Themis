@@ -209,10 +209,17 @@ void winview::MessageReceived(BMessage *msg) {
 //					msgr->SendMessage(LoadingNewPage);
 //					delete msgr;
 //				}
-				bcast=new BMessage;
+				bcast=new BMessage(BroadcastMessage);
 				info->AddInt32("command",COMMAND_RETRIEVE);
 				bcast->AddMessage("message",info);
-				PluginManager->Broadcast(TARGET_VIEW,TARGET_PROTOCOL,bcast);
+				bcast->AddInt32("targets",TARGET_PROTOCOL);
+				bcast->AddInt32("source",TARGET_VIEW);
+			
+				BMessenger *msgr=new BMessenger(NULL,PluginManager,NULL);
+				msgr->SendMessage(bcast);
+				delete msgr;
+			
+			//	PluginManager->Broadcast(TARGET_VIEW,TARGET_PROTOCOL,bcast);
 				delete bcast;
 				delete info;
 			

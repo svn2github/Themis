@@ -33,7 +33,7 @@ aboutwin::aboutwin(BRect frame, const char *title, window_type type, uint32 flag
 {
 	view=new aboutview(Bounds(),"aboutview",B_FOLLOW_ALL,B_WILL_DRAW|B_NAVIGABLE_JUMP);
 	AddChild(view);
-	
+	SetSizeLimits(500,1000,200,400);
 	Show();
 }
 

@@ -39,6 +39,7 @@ App::App(const char *appsig)
 	AppSettings=new BMessage;
 	LoadSettings();
 	app_info ai;
+	qr_called=false;
 	AWin=NULL;
 	GetAppInfo(&ai);
 	entry_ref appdirref;
@@ -50,7 +51,10 @@ App::App(const char *appsig)
 	TCP=new tcplayer;
 	TCP->Start();
 	BRect r(100,100,650,450);
-	win=new Win(r,"Themis",B_DOCUMENT_WINDOW,B_QUIT_ON_WINDOW_CLOSE,B_CURRENT_WORKSPACE);
+	if (AppSettings->HasRect("main_window_rect"))
+		AppSettings->FindRect("main_window_rect",&r);
+	
+	win=new Win(r,"Themis",B_DOCUMENT_WINDOW,B_QUIT_ON_WINDOW_CLOSE|B_ASYNCHRONOUS_CONTROLS,B_CURRENT_WORKSPACE);
 	PluginManager->Window=win;
 	BMessenger *msgr=new BMessenger(PluginManager,NULL,NULL);
 		BMessage *msg=new BMessage(AddInitInfo);
@@ -67,6 +71,9 @@ App::App(const char *appsig)
 	PluginManager->BuildRoster(true);
 }
 App::~App(){
+	printf("app destructor\n");
+	if (!qr_called)
+		QuitRequested();
 	SaveSettings();
 	if (AppSettings!=NULL)
 		delete AppSettings;
@@ -82,7 +89,7 @@ void App::AboutRequested() {
 }
 
 bool App::QuitRequested(){
-	printf("app destructor\n");
+	qr_called=true;
 	status_t stat;
 	BWindow *w=NULL;
 	BMessenger *msgr=NULL;
@@ -90,9 +97,11 @@ bool App::QuitRequested(){
 	while (CountWindows()>0) {
 		w=WindowAt(0);
 		if (w!=NULL) {
+//			printf("app: quit message target is Window \"%s\".\n",w->Title());
 			msgr=new BMessenger(NULL,w,NULL);
 			th=w->Thread();
 			msgr->SendMessage(B_QUIT_REQUESTED);
+//			printf("app: quit requested message sent, waiting for the window to die.\n");
 			wait_for_thread(th,&stat);
 			delete msgr;
 		}

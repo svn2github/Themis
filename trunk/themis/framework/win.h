@@ -42,6 +42,7 @@ class Win:public BWindow
    bool QuitRequested();
    void MessageReceived(BMessage *msg);
    void WindowActivated(bool active);
+   void WorkspacesChanged(uint32 oldws, uint32 newws);
  };
 
 #endif

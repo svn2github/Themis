@@ -247,7 +247,15 @@ void cacheman::MessageReceived(BMessage *mmsg)
         node.Unset();
         //fix this later so that it should get more specific before returning
        }
-       mmsg->SendReply(&reply);
+	   PlugClass *pobj=NULL;
+		 mmsg->FindPointer("ReplyToPointer",(void**)&pobj);
+		 if (pobj!=NULL) {
+		 	reply.AddInt32("command",COMMAND_INFO);
+			 
+		 	pobj->BroadcastReply(&reply);
+			 
+		 } else
+	       mmsg->SendReply(&reply);
      }break;
     case CreateCacheObject:
      {

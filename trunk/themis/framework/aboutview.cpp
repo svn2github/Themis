@@ -100,7 +100,7 @@ aboutview::aboutview(BRect frame, const char *name, uint32 resizem, uint32 flags
 	outerbox->AddChild(scroll);
 	r.left=r.right+20.0;
 	r.right=outerbox->Bounds().right-5.0;
-	innerbox=new BBox(r,"inner-about-box",B_FOLLOW_H_CENTER|B_FOLLOW_TOP_BOTTOM|B_FOLLOW_LEFT_RIGHT,B_WILL_DRAW|B_FRAME_EVENTS|B_NAVIGABLE_JUMP,B_FANCY_BORDER);
+	innerbox=new BBox(r,"inner-about-box",B_FOLLOW_TOP_BOTTOM|B_FOLLOW_LEFT_RIGHT,B_WILL_DRAW|B_FRAME_EVENTS|B_NAVIGABLE_JUMP,B_FANCY_BORDER);
 	outerbox->AddChild(innerbox);
 //add known items for about list.
 

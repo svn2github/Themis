@@ -41,6 +41,7 @@ class App:public BApplication {
 	private:
 		Win *win;
 		void InitSettings(char *settings_path=NULL);
+		bool qr_called;
 	public:
 		aboutwin *AWin;
 		status_t LoadSettings();

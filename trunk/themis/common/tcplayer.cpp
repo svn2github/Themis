@@ -366,6 +366,12 @@ connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, b
 		sockaddr_in servaddr;
 //		current->address->GetAddr(servaddr);
 		conn->hptr=gethostbyname(host);
+		if (conn->hptr==NULL) {
+			//the name can't be found...
+			KillConnection(conn);
+			return NULL;
+		}
+		
 		conn->pptr=(struct in_addr**)conn->hptr->h_addr_list;
 		memcpy(&servaddr.sin_addr,*conn->pptr,sizeof(struct in_addr));
 		servaddr.sin_port=htons(port);
@@ -573,6 +579,8 @@ if (target->open) {
 	
 	closesocket(target->socket);
 	target->socket=-1;
+	target->open=false;
+	
 }
 if (target->socket!=-1)
 	target->socket=-1;
@@ -829,7 +837,7 @@ void tcplayer::RequestDone(connection *conn,bool close) {
 		atomic_add(&conn->requests,-1);
 		if (conn->requests>0)
 			conn->requests=0;
-		if (close)
+		if ((close) && (!conn->closedcbdone))
 			CloseConnection(conn);
 	}
 }

@@ -74,6 +74,7 @@ httplayer::httplayer(tcplayer *_TCP)
 	requests_head=NULL;
 	quit=0;
 	http_mgr_sem=create_sem(1,"http_mgr_sem");
+	cache_sem=create_sem(1,"cache_sem");
 	connhandle_sem=create_sem(1,"connection_handler_sem");
 	reqhandle_sem=create_sem(1,"request_handler_sem");
 	httplayer_sem=create_sem(1,"httplayer_sem");
@@ -107,6 +108,8 @@ httplayer::~httplayer()
 	}
 //	release_sem(http_mgr_sem);
 	delete_sem(http_mgr_sem);
+	delete_sem(cache_sem);
+	
 	http_mgr_sem=0;
 //	release_sem(connhandle_sem);
 	delete_sem(connhandle_sem);
@@ -926,8 +929,8 @@ void httplayer::ProcessHeaders(http_request *request,void *buffer,int size) {
 									slash=NULL;
 									
 								} else
-									url<<destination;
-								
+									url<<'/'<<destination;
+							printf("%d redirect to: %s\n",request->status,url.String());
 						}
 						
 						
@@ -1390,7 +1393,9 @@ if (!lock->IsLocked()) {
 void httplayer::CloseRequest(http_request *request) {
 //	acquire_sem(connhandle_sem);
 	//atomic_add(&request->done,1);
-	int result=request->conn->result;
+	int result=0;
+//	if (request->conn!=NULL)
+		result=request->conn->result;
 	
 	Done(request);
 	if (request->conn!=NULL) {
@@ -1413,6 +1418,7 @@ void httplayer::CloseRequest(http_request *request) {
 	msg->AddString("url",request->url);
 	msg->AddInt32("From",Proto->PlugID());
 	msg->AddPointer("FromPointer",Proto);
+	msg->AddPointer("data_pointer",request->data);
 	char *resultstr=NULL;
 	resultstr=FindHeader(request,"content-type");
 	int32 target=0;
@@ -1428,7 +1434,14 @@ void httplayer::CloseRequest(http_request *request) {
 		else {
 			
 			msg->AddBool("request_done",true);
-			msg->AddInt32("status",UnexpectedDisconnect);
+			if (request->chunked) {
+				if (request->chunkbytesremaining!=0)
+					msg->AddInt32("status",UnexpectedDisconnect);
+			} else {
+				if ((request->contentlen!=0) && (request->contentlen>request->bytesreceived))
+					msg->AddInt32("status",UnexpectedDisconnect);
+			}
+			
 		}
 	}
 	
@@ -1457,8 +1470,16 @@ printf("http:SendRequest trying to lock TCP\n");
 					bytes=TCP->Send(&request->conn,(unsigned char *)requeststr,strlen(requeststr));
 //					TCP->Unlock();
 					printf("%ld bytes sent on connection: %p\n",bytes,request->conn);
-				} else
+				} else {
+					BString title;
+					BString mesg;
+					title<<"Connection failed: - "<<request->host;
+					mesg<<"Your attempt to connect to the server at "<<request->host<<" has failed.";
+					(new BAlert( title.String(),mesg.String(),"D'oh"))->Go();
+					
 					printf("The connection failed.\n");
+				}
+				
 			TCP->Unlock();
 	
 }
@@ -1508,6 +1529,8 @@ char *httplayer::BuildRequest(http_request *request){
 			if (realm!=NULL) {
 				reqstr<<"Authorization: Basic "<<realm->auth<<"\r\n";
 			}
+			printf("Checking cache status.\n");
+	
 			BMessage *cachestatus=CheckCacheStatus(request);
 			if (cachestatus!=NULL) {
 				request->cacheinfo=cachestatus;
@@ -1524,6 +1547,8 @@ char *httplayer::BuildRequest(http_request *request){
 					}
 				}
 			}
+			printf("(cache status) done.\n");
+	
 			reqstr << "\r\n";
 			printf("Request string:\n---------\n%s\n---------\n",reqstr.String());
 	requeststr=new char[reqstr.Length()+1];
@@ -1746,6 +1771,7 @@ int32 httplayer::LayerManager() {
 
 BMessage *httplayer::CheckCacheStatus(http_request *request) {
 	if (request!=NULL) {
+		
 		if (CachePlug==NULL)
 			PluginManager->FindPlugin(CachePlugin);
 		if (CachePlug==NULL)
@@ -1753,10 +1779,38 @@ BMessage *httplayer::CheckCacheStatus(http_request *request) {
 		BMessenger *msgr=new BMessenger(CachePlug->Handler(),NULL,NULL);
 		BMessage *msg=new BMessage(FindCachedObject);
 		msg->AddString("url",request->url);
-		BMessage *reply=new BMessage(B_ERROR);
-		msgr->SendMessage(msg,reply);
+		BMessage *reply=NULL;
+		acquire_sem(cache_sem);
+		BMessage container;
+		msg->AddInt32("ReplyTo",Proto->PlugID());
+		msg->AddPointer("ReplyToPointer",Proto);
+		msg->AddInt32("command",COMMAND_INFO_REQUEST);
+		msg->AddBool("cache_item",true);
+		container.AddMessage("message",msg);
+		
 		delete msg;
 		delete msgr;
+		bool nocache=false;
+		if (PluginManager->Broadcast(Proto->PlugID(),TARGET_CACHE,&container)!=B_OK)
+			nocache=true;
+		
+/*
+	Yes, it looks weird that we're acquiring the cache_sem again, but this makes sure
+	that we get a response back from the cache before we continue. We only want to release
+	the sem in this function before reacquiring it if there are no cache plug-ins.
+*/
+		if (nocache)
+			release_sem(cache_sem);
+		acquire_sem(cache_sem);
+		
+		reply=Proto->cache_reply;
+		Proto->cache_reply=NULL;
+		if (reply==NULL) {
+			reply=new BMessage(CacheObjectNotFound);
+		}
+		
+		release_sem(cache_sem);
+		
 		if (reply->what==CacheObjectNotFound){
 			delete reply;
 			return NULL;

@@ -76,5 +76,6 @@ class http_protocol:public ProtocolPlugClass
   	 int32 Type();
  	 status_t ReceiveBroadcast(BMessage *msg);
 	 status_t BroadcastReply(BMessage *msg);
+	 BMessage *cache_reply;
    };
 #endif

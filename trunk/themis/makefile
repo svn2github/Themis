@@ -19,6 +19,7 @@ BASE_ADDONS_DEPENDS_DIR=$(BASE_DEPENDS_DIR)add-ons/
 COMMON_DEPENDS_DIR=$(BASE_DEPENDS_DIR)comon/
 DOMLIBRARY_DEPENDS_DIR=$(BASE_LIBRARY_DEPENDS_DIR)DOM/
 TESTPLUG_DEPENDS_DIR=$(BASE_DEPENDS_DIR)testplug/
+HTMLPARSER_DEPENDS_DIR=$(BASE_DEPENDS_DIR)HTMLParser/
 
 #object directories
 BASE_OBJECT_DIR=objects/
@@ -28,6 +29,7 @@ COMMON_OBJECT_DIR=$(BASE_OBJECT_DIR)common/
 BASE_ADDONS_OBJECT_DIR=$(BASE_OBJECT_DIR)add-ons/
 DOMLIBRARY_OBJECT_DIR=$(BASE_LIBRARY_OBJECT_DIR)DOM/
 TESTPLUG_OBJECT_DIR=$(BASE_OBJECT_DIR)testplug/
+HTMLPARSER_OBJECT_DIR=$(BASE_OBJECT_DIR)HTMLParser/
 
 #source files
 FRAMEWORKSOURCES= \
@@ -86,6 +88,9 @@ JSADDONSOURCES= \
 	js/jsman.cpp
 TESTPLUGSOURCES= \
 	testplug/testplug.cpp
+HTMLPARSERSOURCES= \
+	HTMLParser/HTMLParser.cpp
+	
 #make install directories as necessary
 ifeq "$(shell if [ -d $(BASE_ADDON_INSTALL_DIR) ] ; then echo 1 ; else mkdir -p $(BASE_ADDON_INSTALL_DIR) ; echo 0 ; fi)" "0"
 endif
@@ -116,6 +121,10 @@ endif
 #DOM Library object directory
 ifeq "$(shell if [ -d $(DOMLIBRARY_OBJECT_DIR) ] ; then echo 1 ; else mkdir -p $(DOMLIBRARY_OBJECT_DIR) ; echo 0 ; fi)" "0"
 endif
+#HTML Parser object directory
+ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)HTMLParser/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)HTMLParser/ ; echo 0 ; fi)" "0"
+endif
+
 #testplug add-on object directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)testplug/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)testplug/ ; echo 0 ; fi)" "0"
 endif
@@ -142,6 +151,9 @@ ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)js/ ] ; then echo 1 ; else mkdir
 endif
 #DOM Library depends directory
 ifeq "$(shell if [ -d $(DOMLIBRARY_DEPENDS_DIR) ] ; then echo 1 ; else mkdir -p $(DOMLIBRARY_DEPENDS_DIR) ; echo 0 ; fi)" "0"
+endif
+#HTML Parser depends directory
+ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)HTMLParser/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)HTMLParser/ ; echo 0 ; fi)" "0"
 endif
 #testplug add-on depends directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)testplug/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)testplug/ ; echo 0 ; fi)" "0"
@@ -191,6 +203,7 @@ endif
 #			cacheaddon
 #			cookieaddon
 #			jsaddon
+#			htmlpaddon
 #			httpaddon
 #			help
 #			dist
@@ -198,9 +211,10 @@ endif
 #			libs
 #			domtest
 #			domloadtest
+#			testplug
 all: framework addons domtest domloadtest
 	@echo "Themis application and add-ons built successfully."
-addons: httpaddon cacheaddon cookieaddon jsaddon
+addons: httpaddon cacheaddon htmlpaddon cookieaddon jsaddon
 	@echo "All add-ons built successfully."
 clean: 
 	@rm -rf objects depends Themis
@@ -226,6 +240,7 @@ help:
 	@echo "	cacheaddon	Just the cache addon"
 	@echo "	cookieaddon	Just the cookie addon"
 	@echo "	jsaddon		Javascript addon"
+	@echo "	htmlpaddon	HTML Parser addon"
 	@echo "	httpaddon	Just the HTTP addon"
 	@echo "	help		This message"
 	@echo "	dist		Distribution ready zip file"
@@ -233,6 +248,7 @@ help:
 	@echo "	libs		Just the ibraries"
 	@echo "	domtest		DOM test application"
 	@echo "	domloadtest	DOM LoadTest application"
+	@echo "	testplug	A sample/test plug-in"
 	@echo "*** NOTE ***"
 	@echo "You will get errors if you use any of the \"clean\" targets in combination with any of the build targets."
 libs: domlib
@@ -325,6 +341,30 @@ $(BASE_ADDONS_DEPENDS_DIR)testplug/%.d:  $(BASE_ADDON_SOURCE_DIR)testplug/%.cpp 
 $(BASE_ADDONS_OBJECT_DIR)testplug/%.o: $(BASE_ADDON_SOURCE_DIR)testplug/%.cpp $(BASE_ADDONS_DEPENDS_DIR)testplug/%.d
 	@echo "testplug: Updating object file $(notdir $@)"
 	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
+
+#testplug add-on
+htmlpaddon: domlib htmlparserdepends htmlparserobjects
+	@echo "Linking testplug" 
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)html_parser.so $(foreach file,$(notdir $(HTMLPARSERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)HTMLParser/$(file)) $(COMMON_OBJECT_DIR)plugclass.o $(COMMON_OBJECT_DIR)plugman.o -nostart -Xlinker $(LDFLAGS) -soname=html_parser.so -L ./ -L $(BELIBRARIES) -L$(BASE_APP_LIB_INSTALL_DIR)  -lbe -lroot -ldom -lstdc++.r4
+	@echo "HTML Parser add-on is now linked. Doing mimeset."
+	@mimeset -F $(BASE_ADDON_INSTALL_DIR)html_parser.so
+	@echo "HTML Parser plug-in compiled and linked successfully."
+	
+htmlparserdepends: $(foreach file,$(HTMLPARSERSOURCES),$(BASE_ADDON_SOURCE_DIR)$(file)) common/plugman.cpp common/plugclass.cpp $(COMMON_DEPENDS_DIR)plugman.d $(COMMON_DEPENDS_DIR)plugclass.d\
+					$(foreach file,$(BASE_ADDON_SOURCE_DIR)$(HTMLPARSERSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)HTMLParser/$(notdir $(file)))
+	@echo "HTML Parser depends are done."
+	
+htmlparserobjects: $(COMMON_OBJECT_DIR)plugman.o $(COMMON_OBJECT_DIR)plugclass.o\
+					$(foreach file,$(BASE_ADDON_SOURCE_DIR)$(HTMLPARSERSOURCES),$(BASE_ADDONS_OBJECT_DIR)HTMLParser/$(notdir $(file:.cpp=.o)))
+	@echo "HTML Parser objects are done."
+	
+$(BASE_ADDONS_DEPENDS_DIR)HTMLParser/%.d:  $(BASE_ADDON_SOURCE_DIR)HTMLParser/%.cpp $(BASE_ADDON_SOURCE_DIR)HTMLParser/%.h
+	@echo "HTML Parser: Updating dependency file $(notdir $@)"
+	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)HTMLParser/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)HTMLParser/"|sed 's/\//\\\//g'); $(CC) -Icommon -Iframework/DOM -I./ -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
+
+$(BASE_ADDONS_OBJECT_DIR)HTMLParser/%.o: $(BASE_ADDON_SOURCE_DIR)HTMLParser/%.cpp $(BASE_ADDONS_DEPENDS_DIR)HTMLParser/%.d
+	@echo "HTML Parser: Updating object file $(notdir $@)"
+	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -Iframework/DOM -I./ -c $< -o $@
 
 #http add-on
 httpaddon: httpaddondepends httpaddonobjects

@@ -249,6 +249,8 @@ class httplayer {
 		header_st *AddHeader(http_request *request, char *attribute, char* value);
 		void ClearHeaders(http_request *request);	
 		sem_id connhandle_sem;
+		sem_id cache_sem;
+	
 		sem_id reqhandle_sem;
 		sem_id httplayer_sem;
 		char *BuildRequest(http_request *request);

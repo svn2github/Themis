@@ -142,6 +142,12 @@ status_t http_protocol::BroadcastReply(BMessage *msg){
 					}
 					
 				}break;
+				case CachedObject: 
+				case CacheObjectNotFound: {
+					cache_reply=new BMessage(*msg);
+					release_sem(HTTP->cache_sem);
+				}break;
+				
 				default: {
 					msg->PrintToStream();
 					//display the message info, but otherwise ignore it
