@@ -62,6 +62,10 @@ class HTMLParser	{
 		bool isFormTag();
 		bool isEmptyBlockTag();
 		bool isTableTag();
+		bool isTrTag();
+		bool isCaptionTag();
+		bool isTdTag();
+		bool isThTag();
 		bool isFontStyleTag();
 		bool isFontStylePreTag();
 		bool isPhraseTag();
@@ -87,17 +91,18 @@ class HTMLParser	{
 		void htmlTag();
 		void headTag( TElementShared aParent );
 		void normalHeadTag( TElementShared aParent );
-		void bodyStyleTag( TElementShared aParent );
+		void bodyStyleTag( TElementShared aParent, bool aInsideForm = false );
 		void adressTag( TElementShared aParent );
-		void blockLevelTag( TElementShared aParent );
-		void textLevelTag( TElementShared aParent );
+		void blockLevelTag( TElementShared aParent, bool aInsideForm = false );
+		void textLevelTag( TElementShared aParent, bool aConserveSpace = false, bool aInsideAnchor = false );
 		void flowLevelTag( TElementShared aParent );
 		void pTag( TElementShared aParent );
 		void listTag( TElementShared aParent );
+		void tableTag( TElementShared aParent );
+		void trTag( TElementShared aParent );
 		void preTag( TElementShared aParent );
-		void aTag( TElementShared aParent, bool aConserveSpaces = false );
 		void emptyElementTag( TElementShared aParent );
-		void normalTextTag( TElementShared aParent, bool aConserveSpaces = false );
+		void normalTextTag( TElementShared aParent, bool aConserveSpaces = false, bool aInsideAnchor = false );
 	
 	public:
 		HTMLParser();
