@@ -269,7 +269,7 @@ class httplayer {
 		void ClearRequests();
 		void GetURL(BMessage *info);
 		void SetTCP(tcplayer *_TCP);
-		void CloseRequest(http_request *request);
+		void CloseRequest(http_request *request,bool quick=false);
 		bool ResubmitRequest(http_request *request);
 		void ConnectionClosed(connection *conn);
 		void DReceived(connection *conn);

@@ -26,7 +26,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
-
+#include <Debug.h>
 #include "httplayer.h"
 #include <string.h>
 #include <stdio.h>
@@ -1442,7 +1442,9 @@ if (!lock->IsLocked()) {
 		lock->Unlock();
 	
 }
-void httplayer::CloseRequest(http_request *request) {
+void httplayer::CloseRequest(http_request *request,bool quick) {
+	Lock();
+	
 //	acquire_sem(connhandle_sem);
 	//atomic_add(&request->done,1);
 	int result=0;
@@ -1464,9 +1466,30 @@ void httplayer::CloseRequest(http_request *request) {
 	}
 	if (request->conn_released!=0)
 		request->conn_released=0;
+	if (quick)
+		return;
 	BMessage *msg=new BMessage(ProtocolConnectionClosed);
 	msg->AddInt32("command",COMMAND_INFO);
-	msg->AddInt64("bytes-received",request->bytesreceived);
+	printf("747\n");
+	
+	if (request->bytesreceived>0){
+		
+		printf("CloseRequest bytes received: %Ld\n",request->bytesreceived);
+	
+		msg->AddInt64("bytes-received",request->bytesreceived);
+	}
+	
+	else {
+		//debugger("Stop here.");
+		
+		off_t pos=request->data->Position();
+		request->data->Seek(0,SEEK_END);
+		printf("CloseRequest bytes received: %Ld\n",request->data->Position());
+		
+		msg->AddInt64("bytes-received",request->data->Position());
+		request->data->Seek(pos,SEEK_SET);
+	}
+	
 	msg->AddString("url",request->url);
 	msg->AddInt32("From",Proto->PlugID());
 	msg->AddPointer("FromPointer",Proto);
@@ -1497,14 +1520,15 @@ void httplayer::CloseRequest(http_request *request) {
 		}
 	}
 	
-	if (request->contentlen!=0)
+	if (request->contentlen>0)
 		msg->AddInt64("content-length",request->contentlen);
 	BMessage container;
 	container.AddMessage("message",msg);
 	delete msg;
 	Proto->PlugMan->Broadcast(Proto->PlugID(),ALL_TARGETS,&container);
 //	release_sem(connhandle_sem);
-
+	Unlock();
+	
 }
 void httplayer::SendRequest(http_request *request, char *requeststr){
 printf("http:SendRequest trying to lock TCP\n");
