@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2000 Z3R0 One. All Rights Reserved.
+Copyright (c) 2002 Raymond "Z3R0 One" Rodgers. All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -23,52 +23,52 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
+Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
-
 #ifndef _plugman
 #define _plugman
-#define PlugManVersion 2.0
+#define PlugManVersion 3.0
 
-#include <AppKit.h>
+#include <Application.h>
 #include <Looper.h>
-#include <KernelKit.h>
-#include <SupportKit.h>
-#include <StorageKit.h>
+#include <File.h>
+#include <Entry.h>
 #include <Window.h>
+#include <Message.h>
 #include <MessageRunner.h>
-#include "../common/plugstruct.h"
-#include "../common/protocol_plugin.h"
-//#include "tcplayer.h"
-
+#include <Messenger.h>
+#include "plugstruct.h"
+#include "plugclass.h"
 class tcplayer;
+class PlugClass;
 
 class plugman: public BLooper {
 	private:
-		plugst *head,*tail;
-		void AddPlug(plugst *plug);
-		int32 heartcount;
-		BMessageRunner *Heartbeat_mr;
-	public:
+		entry_ref startup_dir_ref;
+		entry_ref startup_addon_dir;
+		entry_ref user_addon_dir;
+		struct stat sad_stat,uad_stat;
 		BMessage *InitInfo;
-		tcplayer *TCPLayer;
-		BMessage **AppSettings;
-		BWindow *Window;
-		BDirectory *appaddondir,*useraddondir;
+		BMessageRunner *Heartbeat_mr;
+		volatile int32 heartcount;
+		plugst *head, *tail;
+		void AddPlug(plugst *plug);
+	public:
 		plugman(entry_ref &appdirref);
 		~plugman();
-		void MessageReceived(BMessage *msg);
 		bool QuitRequested();
-		void *FindPlugin(uint32 which,uint32 secondary=0);
-		void *FindPlugin(node_ref &nref);
 		status_t UnloadAllPlugins(bool clean=true);
-		status_t UnloadPlugin(uint32 which);
+		status_t UnloadPlugin(uint32 which,bool clean=false);
+		BWindow *Window;
+		PlugClass *FindPlugin(uint32);
+		void *FindPlugin(node_ref &nref);
+		void MessageReceived(BMessage *msg);
+		status_t Broadcast(int32 targets,BMessage *msg);
+		void BuildRoster(bool clean=true);
 		status_t LoadPlugin(uint32 which);
-		status_t LoadPluginFor(const char *mimetype);
-		status_t ReloadPlugin(uint32 which);
-		status_t BuildRoster(bool clean=true);
+	
 };
 
-
 #endif
+

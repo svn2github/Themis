@@ -72,6 +72,17 @@ cacheman::~cacheman()
  	if (trashdir!=NULL)
  		delete trashdir;
  }
+int32 cacheman::Type() 
+{
+	return DISK_CACHE;
+}
+status_t cacheman::ReceiveBroadcast(BMessage *msg)
+{
+	MessageReceived(msg);
+	return PLUG_HANDLE_GOOD;
+	
+}
+
 void cacheman::MessageReceived(BMessage *mmsg)
  {
 // 	mmsg->PrintToStream();

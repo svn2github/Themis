@@ -33,6 +33,7 @@ Project Start Date: October 18, 2000
 #include <KernelKit.h>
 #include <Entry.h>
 #include "plugclass.h"
+#include <string.h>
 
 struct plugst {
 	image_id sysid;
@@ -45,7 +46,10 @@ struct plugst {
 	PlugClass *(*GetObject)(void);
 	entry_ref ref;
 	node_ref nref;
+	time_t mod_time;
 	char path[B_PATH_NAME_LENGTH+B_FILE_NAME_LENGTH];
+	int32 type;
+	char *name;
 	plugst *next;
 	plugst *prev;
 	/*
@@ -69,7 +73,17 @@ struct plugst {
 		pobj=NULL;
 		sysid=0;
 		next=prev=NULL;
+		name=NULL;
+		
 	}
+	~plugst() {
+		if (name!=NULL) {
+			memset(name,0,strlen(name)+1);
+			delete name;
+		}
+		
+	}
+	
 };
 
 #endif

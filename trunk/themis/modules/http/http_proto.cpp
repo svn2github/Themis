@@ -71,6 +71,49 @@ protocol_plugin* GetObject(void)
    HTTP_proto=new http_protocol();
   return HTTP_proto;
  }
+int32 http_protocol::Type() 
+{
+	return HTTP_PROTOCOL;
+}
+status_t http_protocol::ReceiveBroadcast(BMessage *msg)
+{
+	status_t stat=B_ERROR;
+	int32 command=0;
+	if (msg->HasInt32("command"))
+		msg->FindInt32("command",&command);
+ 	BView *vw;
+	msg->FindPointer("window",(void**)&win);
+	 
+	msg->FindPointer("top_view",(void**)&vw);
+ 	if (view==NULL) {
+		view=vw;
+			BMenu *v;
+			msg->FindPointer("options_menu",(void**)&v);
+//			HOH->AddMenu(v);
+//			win->AddHandler((BHandler*)HOH);
+		
+	} else {
+		if (vw!=view) {
+			BMenu *v;
+			msg->FindPointer("options_menu",(void**)&v);
+//			HOH->AddMenu(v);
+			
+			view=vw;
+		}
+		
+	}
+	
+	switch (command) {
+		case COMMAND_RETRIEVE: {
+			HTTP->Lock();
+			HTTP->AddRequest(msg);
+			HTTP->Unlock();
+		}break;
+		default:
+			return PLUG_DOESNT_HANDLE;
+	}
+	
+}
  
 char* http_protocol::PlugName(void)
  {

@@ -184,3 +184,9 @@ void PlugClass::Heartbeat() {
 bool PlugClass::RequiresHeartbeat() {
 	return uses_heartbeat;
 }
+status_t PlugClass::ReceiveBroadcast(BMessage *msg) {
+	return PLUG_DOESNT_HANDLE;
+}
+int32 PlugClass::Type() {
+	return 0;
+}

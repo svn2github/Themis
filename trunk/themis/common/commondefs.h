@@ -81,7 +81,9 @@ Project Start Date: October 18, 2000
 
 #define AddInitInfo '_aii'
 #define RemoveInitInfo '_rii'
-#define ProtocolBroadcast 'prbc'
-#define CacheBroadcast 'chbc' 
+//#define ProtocolBroadcast 'prbc'
+//#define CacheBroadcast 'chbc' 
 #define AppWideBroadcast 'awbc'
+#define PluginBroadcast 'plgb'
+
 #endif

@@ -28,6 +28,7 @@ Project Start Date: October 18, 2000
 */
 #include "win.h"
 #include "commondefs.h"
+#include "protocol_plugin.h"
 int WinH=800;
 int WinW=600;
 
@@ -51,26 +52,25 @@ bool Win::QuitRequested() {
 void Win::MessageReceived(BMessage *msg) {
 	switch(msg->what) {
 		case PlugInLoaded: {
-			
-	protocol_plugin *pobj=NULL;
+					
+			protocol_plugin *pobj=NULL;
 			msg->FindPointer("plugin",(void**)&pobj);
+					
+			if (pobj!=NULL) {
+				printf("Window: plugin loaded %c%c%c%c\n",(int)pobj->PlugID()>>24,(int)pobj->PlugID()>>16,(int)pobj->PlugID()>>8,(int)pobj->PlugID());
+				pobj->Window=this;
+				pobj->AddMenuItems(View->optionsmenu);
+			} else {
+				printf("Win: pobj was null\n");
+				
+			}
 			
-	if (pobj!=NULL) {
-			printf("Window: plugin loaded %c%c%c%c\n",pobj->PlugID()>>24,pobj->PlugID()>>16,pobj->PlugID()>>8,pobj->PlugID());
-		
-		pobj->Window=this;
-		pobj->AddMenuItems(View->optionsmenu);
-		
-	} else {
-		printf("Win: pobj was null\n");
-		
-	}
-	
 		}break;
 		default: {
 			BWindow::MessageReceived(msg);
 		}
 	}
+//	Unlock();
 }
 void Win::WindowActivated(bool active) {
 	if (startup) {

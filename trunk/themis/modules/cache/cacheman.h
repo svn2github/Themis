@@ -57,6 +57,9 @@ class cacheman:public BHandler, public PlugClass
    status_t FindCacheDir();
    status_t CheckIndices();
    status_t CheckMIME();
+   int32 Type();
+   status_t ReceiveBroadcast(BMessage *msg);
+	 
  };
 
 #endif

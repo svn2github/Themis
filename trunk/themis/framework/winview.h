@@ -39,7 +39,7 @@ Project Start Date: October 18, 2000
 #include <Button.h>
 #include "plugman.h"
 #include "plugclass.h"
-#include "htmlparser.h"
+//#include "htmlparser.h"
 class winview:public BView {
 	public:
 		winview(BRect frame,const char *name,uint32 resizem,uint32 flags);
@@ -47,8 +47,8 @@ class winview:public BView {
 		void MessageReceived(BMessage *msg);
 		BTextControl *locline;
 		BButton *stopbutton;
-		int32 protocol;
-		HTMLParser *Parser;
+		uint32 protocol;
+//		HTMLParser *Parser;
 		sem_id proto_sem;
 		BMenuBar *menubar;
 		BMenu *filemenu;

@@ -90,19 +90,49 @@ void winview::MessageReceived(BMessage *msg) {
 			stopbutton->SetEnabled(false);
 		}break;
 		case OpenLocation: {
+			char *usepass=NULL;
+			char *workurl=NULL;
 			stopbutton->SetEnabled(true);
 			msg->PrintToStream();
 			BString url=locline->Text();
 			int len=strlen(locline->Text());
 			char *url_=new char[len+1];
+			workurl=new char[len+1];
 			memset(url_,0,len+1);
+			memset(workurl,0,len+1);
 			strcpy(url_,locline->Text());
+			strcpy(workurl,url_);
 			protocol=HTTPPlugin;
 			if (url.Length()>0) {
 				int32 pos=url.FindFirst("://");
-				char *colon=strstr(url_,"://");
+				char *at=strchr(workurl,'@');
+				char *colon=strstr(workurl,"://");
+				if (at!=NULL) {
+					colon=strstr(url_,"://");
+					at=strchr(url_,'@');
+					if (colon!=NULL) {
+						int32 len2=at-(colon+3);
+						usepass=new char[len2+1];
+						memset(usepass,0,len2);
+						strncpy(usepass,colon+3,len2);
+						memset(workurl,0,len+1);
+						strncpy(workurl,url_,(colon-url_)+3);
+						strcat(workurl,at+1);
+						colon=strstr(workurl,"://");
+					} else {
+						int32 len2=at-url_;
+						char *usepass=new char[len2+1];
+						memset(usepass,0,len);
+						strncpy(usepass,url_,len2);
+						memset(workurl,0,len+1);
+						strcpy(workurl,at+1);
+						colon=NULL;
+					}
+					
+				}
+				
 				if (colon!=NULL) {
-					pos=colon-url_;
+					pos=colon-workurl;
 					char *protostr=new char[pos+1];
 					memset(protostr,0,pos+1);
 					strncpy(protostr,url_,pos);
@@ -119,29 +149,51 @@ void winview::MessageReceived(BMessage *msg) {
 			if (url.Length()==0) {
 				return;
 			}
-			if (pobj!=NULL) {
+//			if (pobj!=NULL) {
 				BMessage *info=new BMessage;
 				info->AddPointer("tcp_layer_ptr",TCP);
 				info->AddPointer("top_view",this);
 				info->AddPointer("window",Window());
-				info->AddPointer("parser",Parser);
+//				info->AddPointer("parser",Parser);
 				info->AddPointer("plug_manager",PluginManager);
 				info->AddPointer("main_menu_bar",menubar);
 				info->AddPointer("file_menu",filemenu);
 				info->AddPointer("options_menu",optionsmenu);
-				info->AddString("target_url",url.String());
+				info->AddString("target_url",workurl);
+				delete workurl;
 				info->AddInt32("action",LoadingNewPage);
+				if (usepass!=NULL) {
+					
+					info->AddString("username:password",usepass);
+					memset(usepass,0,strlen(usepass)+1);
+					delete usepass;
+				}
+				
 				printf("info: %p\n",info);
 				info->PrintToStream();
-				PlugClass *cache=(PlugClass*)PluginManager->FindPlugin(CachePlugin);
-				if (cache!=NULL) {
+//				PlugClass *cache=(PlugClass*)PluginManager->FindPlugin(CachePlugin);
+//				if (cache!=NULL) {
 					printf("telling cache that a new page is being loaded.\n");
-					BMessenger *msgr=new BMessenger(cache->Handler(),NULL,NULL);
-					msgr->SendMessage(LoadingNewPage);
-					delete msgr;
-				}
-				pobj->GetURL(info);
-			}
+					BMessage *bcast=new BMessage;
+					BMessage *lnp=new BMessage(LoadingNewPage);
+					lnp->AddInt32("command",COMMAND_INFO);
+					bcast->AddMessage("message",lnp);
+					delete lnp;
+					PluginManager->Broadcast(TARGET_CACHE,bcast);
+					delete bcast;
+//					BMessenger *msgr=new BMessenger(cache->Handler(),NULL,NULL);
+//					msgr->SendMessage(LoadingNewPage);
+//					delete msgr;
+//				}
+				bcast=new BMessage;
+				info->AddInt32("command",COMMAND_RETRIEVE);
+				bcast->AddMessage("message",info);
+				PluginManager->Broadcast(TARGET_PROTOCOL,bcast);
+				delete bcast;
+				delete info;
+			
+//				pobj->GetURL(info);
+//			}
 		}break;
 		default:
 		BView::MessageReceived(msg);

@@ -70,5 +70,7 @@ class http_protocol:public ProtocolPlugClass
      static int32 ThreadFunc(void *info);
 	 void AddMenuItems(BMenu *menu);
 	 void RemoveMenuItems();
+  	 int32 Type();
+ 	 status_t ReceiveBroadcast(BMessage *msg);
    };
 #endif

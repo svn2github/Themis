@@ -28,6 +28,8 @@ Project Start Date: October 18, 2000
 */
 #include "app.h"
 #include "tcplayer.h"
+#include <Directory.h>
+#include <storage/FindDirectory.h>
 plugman *PluginManager;
 tcplayer *TCP;
 BMessage *AppSettings;
@@ -46,6 +48,7 @@ App::App(const char *appsig)
 	TCP->Start();
 	BRect r(100,100,650,450);
 	win=new Win(r,"Themis",B_DOCUMENT_WINDOW,B_QUIT_ON_WINDOW_CLOSE,B_CURRENT_WORKSPACE);
+	PluginManager->Window=win;
 	BMessenger *msgr=new BMessenger(PluginManager,NULL,NULL);
 		BMessage *msg=new BMessage(AddInitInfo);
 		msg->AddPointer("tcp_layer_ptr",TCP);
@@ -58,8 +61,7 @@ App::App(const char *appsig)
 		}
 	delete msgr;
 		delete msg;
-	PluginManager->BuildRoster();
-	PluginManager->Window=win;
+	PluginManager->BuildRoster(true);
 }
 App::~App(){
 }
@@ -85,9 +87,14 @@ bool App::QuitRequested(){
 	}
 	msgr=new BMessenger(NULL,PluginManager,NULL);
 	th=PluginManager->Thread();
+	printf("App: Sending quit message to Plug-in Manager.\n");
+	
 	msgr->SendMessage(B_QUIT_REQUESTED);
 	delete msgr;
+	printf("App: Waiting for Plug-in manager to quit.\n");
 	wait_for_thread(th,&stat);
+	printf("Done.\n");
+	
 	//  PluginManager->Lock();
 	//  PluginManager->Quit();
 	return true;

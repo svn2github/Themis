@@ -50,6 +50,137 @@ add a command to makelinks.sh to create this link in your plug-in's directory.
 #define ImagePlugin 'iplg'
 #define MediaPlugin 'mplg'
 
+#define BroadcastMessage 'bcmg'
+#define BroadcastHandledBy 'bchb'
+
+/*
+	Target values for message broadcasting
+*/
+#define ALL_TARGETS 0x0
+#define TARGET_CACHE	0x20
+#define TARGET_PROTOCOL	0x40
+#define TARGET_HANDLER	0x80
+#define TARGET_PARSER	0x100
+#define TARGET_DOM	'_dom'
+#define TARGET_WINDOW '_wnd'
+#define TARGET_VIEW '_vue'
+#define CONTENT_IMAGE	0x4
+#define CONTENT_TEXT	0x6
+#define CONTENT_SCRIPT	0x8
+#define CONTENT_AUDIO	0xa
+#define CONTENT_VIDEO	0xc
+#define CONTENT_COOKIE	0xe
+#define CONTENT_DATA	0x10
+#define TYPE_DISK	0x404
+#define TYPE_RAM	0x406
+#define PROTO_HTTP	0x804
+#define PROTO_FTP	0x806
+#define PROTO_SMTP	0x808
+#define PROTO_POP	0x80a
+#define PROTO_NNTP	0x80c
+
+#define MEMORY_CACHE TARGET_CACHE|TYPE_RAM
+//memory/ram cache
+#define DISK_CACHE TARGET_CACHE|TYPE_DISK
+//disk cache
+#define HTTP_PROTOCOL TARGET_PROTOCOL|PROTO_HTTP
+//http protocol
+#define IMAGE_HANDLER TARGET_HANDLER|CONTENT_IMAGE
+//handler for images
+#define AUDIO_HANDLER TARGET_HANDLER|CONTENT_AUDIO
+//handler for audio
+#define VIDEO_HANDLER TARGET_HANDLER|CONTENT_VIDEO
+//handler for video
+#define COOKIE_HANDLER TARGET_HANDLER|CONTENT_COOKIE
+//handler for cookie information transmitted in http protocol
+#define JAVASCRIPT_HANDLER TARGET_HANDLER|CONTENT_SCRIPT
+//handler for javascript scripts embedded in html files
+#define HTML_PARSER TARGET_PARSER|CONTENT_TEXT
+//handler that displays HTML text files
+#define TEXT_HANDLER TARGET_HANDLER|CONTENT_TEXT
+//Handler that displays text files that are not html
+
+#define PLUG_DOESNT_HANDLE 'pdnh'
+//Plug-in doesn't handle the type of message sent to it, or the type of data specified
+//in the message.
+#define PLUG_HANDLE_GOOD 'phgd'
+//The plug-in can handle the message/data sent.
+
+//commands that can be sent to the plug-ins
+/*
+	Exact behavior of a command depends on the type of plug-in the message is sent to.
+	Notes follow each command.
+	Commands are sent in the included message (the sub-BMessage) in a int32 field
+	called command. 
+*/
+
+#define COMMAND_RETRIEVE 0x100
+/*
+	Protocols:	This will trigger the protocol to look for a URL string in the BMessage.
+				If there is no specific URL listed, the protocol then looks for host,
+				port, and path to try to accomplish its mission.
+	Cache:		This command will tell the cache plug-in(s) to look for a file that
+				matches the URL (or host, port, and path) contained in the message,
+				and create a reference variable to the file/object. All relevant
+				information available to the cache should be sent as part of the response.
+*/
+#define COMMAND_STORE 0x101
+/*
+	Protocols:	This will trigger the protocol to send data to the enclosed URL.
+				If the protocol supports more than one sending method, then
+				the message should also include a "STORE_METHOD" string to specify
+				the actual method to be used by the protocol. Variables and/or data
+				to be sent should have their names stored in the "VARIABLES" string.
+				Be sure to include a length variable for any pointers:
+				An unsigned char pointer might be stored in the message as follows:
+						msg->AddString("VARIABLES","buffer");
+						msg->AddPointer("buffer",buff);
+						msg->AddInt32("buffer",buff_len);
+	Cache:		The cache plug-ins should only receive a store command from a protocol
+				plug-in. Depending on whether the protocol needs disk or RAM storage,
+				the cache should create a record of the data being sent by the protocol
+				for retrieval.All relevant information should be sent as part of the
+				message.
+*/
+#define COMMAND_SEND 0x102
+/*
+	Protocols:	This should be just a raw send by the protocol. This might be something
+				as simple as a notification message, or uploading a file.
+*/
+#define COMMAND_CLEAR 0x103
+/*
+	Protocols:	This should close any and all open requests, and delete/free all
+				transaction records, unless a specific URL is indicated. If a specific
+				URL is indicated, only requests for that URL should be cleared.
+	Cache:		This should clear the cache. If a particular URL is specified, then only
+				the records for that URL should be cleared.
+	Parsers:	The parser's buffers should be emptied and cleared.
+	Handlers:	The handler's buffers should be emptied and cleared.
+	Scripts:	The script handler should empty its buffers, contexts, etc, and clear them.
+*/
+#define COMMAND_UPDATE 0x104
+/*
+	Cache:		This should only be called by a protocol. There is new information to be
+				recorded about the specied URL. All relevant information should be sent
+				as part of the message.
+	Parsers:	Should update their buffers with the information sent.
+	Handlers:	Should first clear their buffers, and then use the information sent.
+				This is different from parsing as a parser knows specifics about the
+				data, where as a handler (more or less) just displays the data.
+	Scripts:	Should update their buffers with the information sent.
+*/
+#define COMMAND_PROCESS 0x105
+/*
+	Parsers:	Should handle the sent data appropriately.
+	Handlers:	Should display the data sent appropriately.
+	Scripts:	Should process the data appropriately.
+*/
+#define COMMAND_INFO 0x106
+/*
+	This command can be sent by any part of the application and any part that receives
+	it should behave according to its own function. This message can be ignored, though
+	it probably won't always be.
+*/
 int32 strtoval(char *proto); //plug-in identifier converter 4 char string to int32
 
 class PlugClass {
@@ -114,7 +245,9 @@ class PlugClass {
 		bool uses_heartbeat;
 		virtual void Heartbeat();
 		virtual bool RequiresHeartbeat();
-	
+
+		virtual status_t ReceiveBroadcast(BMessage *msg);
+		virtual int32 Type();
 };
 
 #endif 
