@@ -3,6 +3,9 @@
 */
 
 #include "TNode.h"
+#include "TNamedNodeMap.h"
+#include "TNodeList.h"
+#include "TDOMException.h"
 
 TNode	::	TNode( const unsigned short aNodeType, const TDOMString aNodeName = "", const TDOMString aNodeValue = "" )	{
 	

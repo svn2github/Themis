@@ -10,9 +10,6 @@
 
 #include "DOMSupport.h"
 #include "TNode.h"
-#include "TAttr.h"
-
-class TAttr;
 
 class TElement	:	public TNode	{
 	

@@ -3,10 +3,14 @@
 */
 
 #include "TNamedNodeMap.h"
+#include "TDOMException.h"
+#include "TNode.h"
+#include "TAttr.h"
 
-TNamedNodeMap	::	TNamedNodeMap( void * aNodeList = NULL )	{
+TNamedNodeMap	::	TNamedNodeMap( void * aNodeList = NULL, const TNode * aMappedNode = NULL )	{
 	
 	mNodeList = (BList *) aNodeList;
+	mMappedNode = aMappedNode;
 	
 }
 
@@ -23,6 +27,7 @@ unsigned long TNamedNodeMap	::	getLength()	{
 	return 0;
 	
 }
+
 
 TNode * TNamedNodeMap	::	getNamedItem( const TDOMString aName )	{
 	
@@ -44,6 +49,21 @@ TNode * TNamedNodeMap	::	getNamedItem( const TDOMString aName )	{
 
 TNode * TNamedNodeMap	::	setNamedItem( TNode * aArg )	{
 	
+	// Check to see if it can be added to this element
+	if ( aArg->getNodeType() == ATTRIBUTE_NODE )	{
+		TAttr * arg = (TAttr *) aArg;
+		if ( arg->getOwnerElement() != NULL && arg->getOwnerElement() != (const TElement *) mMappedNode && mMappedNode )	{
+			printf( "Err, oops\n" );
+			throw TDOMException( INUSE_ATTRIBUTE_ERR );
+		}
+	}
+
+	if ( mMappedNode )	{
+		if ( !( mMappedNode->getNodeType() == ELEMENT_NODE && aArg->getNodeType() == ATTRIBUTE_NODE ) )	{
+			throw TDOMException( HIERARCHY_REQUEST_ERR );
+		}
+	}
+
 	TNode * node = getNamedItem( *( aArg->getNodeName() ) );
 	if ( !node )	{
 		mNodeList->AddItem( (void *) aArg );
@@ -60,7 +80,9 @@ TNode * TNamedNodeMap	::	setNamedItem( TNode * aArg )	{
 TNode * TNamedNodeMap	::	removeNamedItem( const TDOMString aName )	{
 	
 	TNode * node = getNamedItem( aName );
-	mNodeList->RemoveItem( node );
+	if ( !( mNodeList->RemoveItem( node ) ) )	{
+		throw TDOMException( NOT_FOUND_ERR );
+	}
 
 	return node;
 
@@ -75,3 +97,4 @@ TNode * TNamedNodeMap	::	item( unsigned long aIndex )	{
 	return NULL;
 	
 }
+

@@ -3,6 +3,7 @@
 */
 
 #include "TAttr.h"
+#include "TElement.h"
 
 TAttr	::	TAttr( const TDOMString aName, const bool aSpecified, const TDOMString aValue, TElement * aOwnerElement )	:	TNode( ATTRIBUTE_NODE, aName, aValue )	{
 
@@ -50,6 +51,7 @@ void TAttr	::	setValue( const TDOMString aValue )	{
 	mSpecified = true;
 	
 }
+
 
 TElement * TAttr	::	getOwnerElement() const	{
 	

@@ -9,7 +9,6 @@
 #define TCHARACTERDATA_H
 
 #include "DOMSupport.h"
-
 #include "TNode.h"
 
 class TCharacterData	:	public TNode	{

@@ -3,6 +3,7 @@
 */
 
 #include "TCharacterData.h"
+#include "TDOMException.h"
 
 TCharacterData	::	TCharacterData( const unsigned short aNodeType )	:	TNode( aNodeType )	{
 	

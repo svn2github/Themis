@@ -11,7 +11,6 @@
 #include <List.h>
 
 #include "DOMSupport.h"
-#include "TNode.h"
 
 class TNode;
 
@@ -24,11 +23,12 @@ class TNamedNodeMap	{
 
 		// Support variables
 		BList * mNodeList;
-		TNode * mMappedNode;
+		const TNode * mMappedNode;
 		
 	public:
-		TNamedNodeMap( void * aNodeList = NULL );
+		TNamedNodeMap( void * aNodeList = NULL, const TNode * aMappedNode = NULL );
 		~TNamedNodeMap();
+
 		unsigned long getLength();
 		TNode * getNamedItem( const TDOMString aName ); // Still have to check if exceptions work right
 		TNode * setNamedItem( TNode * aArg ); // Still have to check if exceptions work right

@@ -37,6 +37,16 @@ DOMTest	::	DOMTest()	:	BApplication( "application/x-vnd.Themis-DOMTest" )	{
 	printf( "Retrieve the attribute that was just created\n" );
 	printf( "Attribute me has value: %s\n", element->getAttribute( "me" ).String() );
 
+	printf( "Remove attribute me through NamedNodeMap\n" );
+	element->getAttributes()->removeNamedItem( "me" );
+	
+	if ( element->getAttribute( "me" ) == "" )	{
+		printf( "Removal succesfull\n" );
+	}
+	else	{
+		printf( "Removal failed\n" );
+	}
+
 	printf( "Try to append parent to node\n" );
 	try	{
 		element->appendChild( node );

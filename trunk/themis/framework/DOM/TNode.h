@@ -13,9 +13,6 @@
 #include <stdio.h>
 
 #include "DOMSupport.h"
-#include "TNodeList.h"
-#include "TDOMException.h"
-#include "TNamedNodeMap.h"
 
 class TNodeList;
 class TNamedNodeMap;

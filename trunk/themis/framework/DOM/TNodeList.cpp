@@ -3,6 +3,7 @@
 */
 
 #include "TNodeList.h"
+#include "TNode.h"
 
 TNodeList	::	TNodeList( const void * aNodeList = NULL )	{
 	

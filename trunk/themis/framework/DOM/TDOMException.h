@@ -8,9 +8,9 @@
 #ifndef TDOMEXCEPTION_H
 #define TDOMEXCEPTION_H
 
-#include "DOMSupport.h"
-
 #include <String.h>
+
+#include "DOMSupport.h"
 
 class TDOMException	{
 	

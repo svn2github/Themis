@@ -3,6 +3,8 @@
 */
 
 #include "TElement.h"
+#include "TNamedNodeMap.h"
+#include "TAttr.h"
 
 TElement	::	TElement( const TDOMString aTagName )	:	TNode( ELEMENT_NODE )	{
 	
@@ -24,7 +26,11 @@ TDOMString TElement	::	getAttribute( const TDOMString aName ) const	{
 	
 	TNode * attribute = getAttributes()->getNamedItem( aName );
 	
-	return *attribute->getNodeValue();
+	if ( !attribute )	{
+		return TDOMString( "" );
+	}
+	
+	return *( attribute->getNodeValue() );
 	
 }
 	
@@ -34,7 +40,7 @@ void TElement	::	setAttribute( const TDOMString aName, const TDOMString aValue )
 	if ( !attribute )	{
 		// No attribute with that name yet, so create one.
 		attribute = new TAttr( aName, true, aValue, this );
-		getAttributes()->setNamedItem( attribute );
+		getAttributes()->setNamedItem( (TNode *) attribute );
 	}
 	else	{
 		attribute->setValue( aValue );

@@ -11,7 +11,6 @@
 #include <List.h>
 
 #include "DOMSupport.h"
-#include "TNode.h"
 
 class TNode;
 

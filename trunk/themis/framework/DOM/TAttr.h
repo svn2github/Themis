@@ -10,11 +10,10 @@
 
 #include "DOMSupport.h"
 #include "TNode.h"
-#include "TElement.h"
 
 class TElement;
 
-class TAttr	:	public TNode	{
+class TAttr		:	public TNode	{
 	
 	private:
 		TDOMString mName;
