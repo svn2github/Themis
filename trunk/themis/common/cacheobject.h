@@ -31,6 +31,12 @@ Project Start Date: October 18, 2000
 
 #include <SupportDefs.h>
 #include "cacheuser.h"
+/*
+	The CacheObject class represents the actual cached file, whether it is on disk
+or in RAM or stored else-where (potentially even across a network). It contains the actual
+data that will be utilized by other parts of the application even though it is not
+directly accessible to those parts. 
+*/
 class CacheObject {
 	protected:
 		CacheUser *userlist;
