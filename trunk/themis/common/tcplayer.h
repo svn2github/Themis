@@ -35,7 +35,6 @@ Include *both* plugclass.h *and* plugclass.cpp in your plugin!
 #ifndef _http_main
 #define _http_main
 #include <sys/socket.h>
-#include <NetAddress.h>
 #ifdef USENETSERVER
 #include <NetKit.h>
 #endif
