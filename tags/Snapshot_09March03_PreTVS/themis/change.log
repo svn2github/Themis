@@ -1,0 +1,159 @@
+========
+18 September 2002
+========
+More fixes, corrections, and functionality shifts.
+
+makefile
+Added target for the new html parser add-on. Way to go Mark! This means we are yet another step towards rendering web pages, the whole purpose of this project!
+
+modules/htmlparser/*
+The new html parser, courtesy of Mark Hellegers.
+
+common/tcplayer.cpp
+A fix for a barely noticable bug. Basically, if the domain name of an entered URL couldn't be found, then a pointer is set to NULL. Instead of just returning NULL, indicating that the connection failed, the tcplayer::ConnectTo() assumed that a valid pointer was returned. This has been corrected.
+
+framework/app.cpp framework/win.cpp
+Finally got Themis to quit when hitting Alt-q or by selecting Close All Windows from the Deskbar. Wasn't difficult really, just something I hadn't really thought about in a long while.
+
+framework/winview.cpp
+Switched the url broadcast over to the BMessenger version; which should make the window immediately available after entering a URL. The downside is that the plug-in manager will now block until a connection is made or failed.
+
+modules/cache/cacheman.cpp
+Updated the [disk] cache manager to use PlugClass::BroadcastReply() when respondign to a FindCachedObject message, if possible.
+
+modules/httplayer/*
+Updated the http layer to properly broadcast a cache search, instead of looking specifically at one cache object.
+========
+8 September 2002
+========
+Many changes were made within the last few days, and the commit prior to this one went almost undocumented. I will attempt to include those changes in this file.
+
+common/plugclass.*
+Added two new commands COMMAND_ASSUME_RESPONSIBILITY and COMMAND_RELEASE_RESOURCE, new targets TARGET_APPLICATION and TARGET_DOM, and new functions AboutViewLabel(), AboutView(), SettingsViewLabel(), and SettingsView(). All but the new targets are described in the header file.
+
+common/plugman.*
+Added additional argument to the Broadcast() function.
+
+common/tcplayer.*
+Added new callback support; this time for notifying protocols when a connection has closed.
+
+framework/app.*
+Added the aboutwin.h file to add enable the newly created about window.
+
+framework/aboutwin.* framework/aboutview.*
+Newly created, but very much incomplete, about window and view.
+
+framework/win.cpp
+Commented out remaining references to Parser, and added a shortcut to access the about window: Shift-Alt-a.
+
+modules/http/*
+Additional fixes everywhere... HTTP layer now sends a broadcast (targeted by mime type if possible) everytime it receives data, and when a request is completed.
+
+modules/cache/*
+A major and important fix. Up until now, if the cache had a URL in storage, it would either erase the cached file and/or set its size to zero (0) to make sure that it would be properly updated. This functionality has been removed. Cached files, when its determined that they have not been updated, will now be properly read from disk [upon request].
+
+modules/testplug/*
+Added image viewing capability for jpeg and png images. Until today, it also would try to view gif images, but since the gif translator is not included in BeOS by default, and this is just a test plug-in, I removed the support for gif images. Images will be displayed in a separate window.
+========
+26 August 2002
+========
+All plug-ins
+Fixed an age old typo: IsPersistent() not IsPersistant(). Also added some more message Broadcast support.
+
+The Message Broadcast System
+IS STILL NOT COMPLETE. I've done a little more work, and ironed out a few more issues, but it is still far from finished. The HTTP protocol now broadcasts a COMMAND_INFO_REQUEST to handlers and parsers, looking for the various supported MIME types. See the newly added testplug for information on how to respond to this message. Even this functionality is not fully implemented or documented yet.
+
+modules/testplug/*
+This is a sample plug-in stripped pretty much to the bare bones. It does have a few unnecessary functions (MessageReceived, IsHandler, and Handler among them) but is pretty much empty. Feel free to modify this plug-in's code, copy it, or utilize it in any way that proves helpful. It's meant just for testing out code, and isn't in the standard build. To build it, simply type "make testplug".
+
+Javascript and Cookie plug-ins
+These are very much unfinished plug-ins that are included in the standard build now. The cookie plug-in, in fact, has barely been started, though it does build, get loaded, and process a "Heartbeat". The cookie plug-in is off to an excellent start if someone wants to work on it. Otherwise, I'll hop on it after I finish the broadcast system. The Javascript plug-in can process a simple script, but is very much incomplete as well. It needs to have a link to the DOM, window, and view, among other things, but I have some ideas on how to implement these links.
+
+IGNORE ALL CHANGES TO framework/htmlparser.*!! Much of the code being committed has been in an experimental directory for some time, and I made progress from this directory with the broadcast system. I was too lazy to tell cvs to ignore these files.
+
+The HTTP add-on still needs to be updated to send a broadcast when a file transfer has begun! So don't be surprised if you don't see many broadcasts yet.
+
+The cache plug-in likewise has not been properly updated. 
+
+
+========
+26 July 2002
+========
+common/stripwhite.h
+Added a new simple function for trimming white space off the start and end of a string.It returns a new'ed char * if successful,null if not.
+
+common/tcplayer.*
+Many ugly little changes to make the new http layer work correctly. Many new changes will need to be added and done before this is really ideal. Considering moving this to a shared library.
+
+framework/app.cpp
+Added a little bit of locking of the TCP layer.
+
+modules/http/*
+Massive changes. New locking system for both the HTTP layer and TCP layer protocols; most functions completely rewritten in the HTTP layer, including several brand new functions; code clarity is improved overall; chunked transfer encoding defeated once again. The HTTP protocol may now be considered reliable. It still has issues, but is much better overall.
+
+General notes:
+While the HTTP protocol has been greatly improved, it is not bug free. There is a definitely locking/deadlock issue that was introduced with these changes, however it's considered relatively minor. In addition, there is a new issue that apparently triggers extra connection structures to come into existance in  the TCP protocol layer. These sometimes crash the application on shutdown. Bugs will be filed for both of these known issues on the SourceForge project page (https://sourceforge.net/tracker/?group_id=13124&atid=113124 ) .
+========
+21 February 2002
+========
+Lots of little changes, and one big one that occurred a few days ago:
+
+framework/DOM/*
+Added the Document Object Model classes that Mark Hellegers has been working on.
+
+Various project files
+Updated to reflect new location of the binaries.
+
+makefile
+Updated to reflect the overnight addition of the new tcp/ip and http protocols.Not to mention the DOM and DOM test application.
+
+modules/http/httplayer.cpp and httplayer.h
+Various bug fixes, including one where the server would send the http header as it generated it rather than as a block of text. This caused a key variable to be NULL, and caused a crash.
+
+
+========
+18 February 2002
+========
+
+makelinks.sh
+All functionality removed.
+
+framework/win.h framework/win.cpp
+References to HTMLParser have been commented out. It has been causing compile errors for some strange reason.
+
+makefile
+Completely redone. See README.1ST for information. All other makefiles are to be removed.
+
+README.1ST
+Tasty tidbits added for flavoring.
+
+========
+17 June 2001
+========
+
+makelinks.sh
+Added new links for plugclass.cpp to both the cache and http modules.
+
+common/commondefs.h
+Added new protocol specific command values.
+
+common/plugclass.cpp common/plugclass.h
+Changed the Cancel variable from int8 to int32, and added a Stop function that uses atomic_add to change the value of Cancel.
+
+documentation/plugin_api.txt
+Updated (as in added some of the necessary info to) this file so that others may begin hacking away on plugins properly.
+
+framework/app.cpp
+The QuitRequested function will now wait for the PluginManager to die properly. This will ensure that the plugins are unloaded prior to the application quitting. This should potentially eliminate some memory leaks.
+
+framework/plugman.cpp
+The QuitRequested function will now call UnloadAllPlugins with the "clean" parameter set to true to unload every last plugin loaded. Also corrected the plugin load portion of MessageReceived to properly mark in memory plugins as being in memory.
+
+framework/winview.cpp framework/winview.h
+Made the stop button a little more permanent; it's still in an arbitrary location at the moment, but it now has a class wide pointer variable. There is also some testing code commented out in the MessageReceived function.
+
+modules/http/http_defines.h
+Changed the plugin version number, added two internal command values.
+
+modules/http/http_main.cpp modules/http/http_main.h
+Massive changes. Added license to the cpp file. Added new class http_worker which will perform http transactions in separate threads. The main http_protocol thread is now simply a manager for the http_worker class; it accepts new requests through a port called "http_protocol_port" and creates new http_workers to handle the transactions. See http_protocol::GetURL() for information on how to create appropriate messages to generate http_workers.
