@@ -865,11 +865,11 @@ status_t plugman::UnloadPlugin(uint32 which,bool clean) {
 					
 					if (get_image_symbol(cur->sysid,"Shutdown",B_SYMBOL_TYPE_TEXT,(void**)&Shutdown)==B_OK)
 						(*Shutdown)(true);
-					unload_add_on(cur->sysid);
 					if (cur->uses_heartbeat) {
 						atomic_add(&heartcount,-1);
 						cur->uses_heartbeat=false;
 					}
+					unload_add_on(cur->sysid);
 				}
 				delete cur;
 				break;
@@ -895,11 +895,11 @@ status_t plugman::UnloadPlugin(uint32 which,bool clean) {
 					}
 					if (get_image_symbol(cur->sysid,"Shutdown",B_SYMBOL_TYPE_TEXT,(void**)&Shutdown)==B_OK)
 						(*Shutdown)(true);
-					unload_add_on(cur->sysid);
 					if (cur->uses_heartbeat) {
 						atomic_add(&heartcount,-1);
 						cur->uses_heartbeat=false;
 					}
+					unload_add_on(cur->sysid);
 					cur->pobj=NULL;
 				}
 				

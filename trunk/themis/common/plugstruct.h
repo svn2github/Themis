@@ -65,7 +65,7 @@ struct plugst {
 			nextone->prev=current->prev;
 			delete current;
 	*/
-	bool uses_heartbeat;
+	volatile bool uses_heartbeat;
 	plugst() {
 		plugid=0;
 		uses_heartbeat=false;

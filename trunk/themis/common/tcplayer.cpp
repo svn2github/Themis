@@ -311,6 +311,14 @@ uint32 tcplayer::Connections() {
 Danger! Danger! Ugly monstrosity that seems to work! Needs to be rewritten!!!
 */
 connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, bool forcenew) {
+	bool ilocked=false;
+		if (!lock->IsLocked()) {
+			ilocked=true;
+			lock->Lock();
+			
+		}
+		
+
 	printf("Requestor wants to connect to %s:%d\n",host,port);
 	connection *conn=NULL;
 	int32 sockproto=0;
@@ -318,17 +326,20 @@ connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, b
 		sockproto=IPPROTO_TCP;
 #endif
 	if (forcenew) {
+		printf("[forcenew]");
+		
 		NewConnectStruct:
+		printf("\tNew Connection\n");
+		
 		connection *cur=conn_head;
-		if (cur==NULL) {
 			conn=new connection;
+		if (cur==NULL) {
 			conn_head=conn;
 			cur=conn;
 		} else {
 			while (cur->next!=NULL)
 				cur=cur->next;
-			cur->next=new connection;
-			conn=cur->next;
+			cur->next=conn;
 			cur=cur->next;
 		}
 		//mtx->lock();
@@ -349,14 +360,22 @@ connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, b
 	} else {
 		connection *cur=conn_head;
 		while (cur!=NULL) {
+			printf("desired host: %s\ncur->host: %s\n",host,cur->addrstr.String());
+			
 			if ((strcasecmp(host,cur->addrstr.String())==0) && (cur->port==port))
 				break;
 			cur=cur->next;
 		}
+		printf("cur: %p\n",cur);
+		
 		if (cur==NULL)
 			goto NewConnectStruct;
-		if (cur->requests!=0)
+		if (cur->requests!=0) {
+			printf("found existing connection, but it's busy.\n");
 			goto NewConnectStruct;
+		}
+		printf("found existing connection, it's available.\n");
+		
 		if (!Connected(cur,true)) {
 			cur->socket=socket(AF_INET,SOCK_STREAM,sockproto);
 			sockaddr_in servaddr;
@@ -368,13 +387,24 @@ connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, b
 			else
 				cur->open=false;
 			printf("Connected? %s\n",cur->open?"yes":"no");
-			conn=cur;
-		}
+		} 
+		conn=cur;
+		
 	}
 	if (conn!=NULL) {
 	conn->proto_id=protoid;
-		if (!conn->open)
+	conn->addrstr=host;
+		conn->port=port;
+#ifdef USEOPENSSL
+		conn->usessl=ssl;
+#endif		
+		if (!conn->open) {
+			if (ilocked)
+				lock->Unlock();
+			
 			return conn;
+		}
+		
 		if (ssl) {
 #ifdef USEOPENSSL
 				int flags=fcntl(conn->socket,F_GETFL,0);
@@ -466,6 +496,9 @@ connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, b
 #endif
 		}
 	}
+	if (ilocked)
+		lock->Unlock();
+	
 	return conn;
 }
 
@@ -516,8 +549,12 @@ void tcplayer::CloseConnection(connection *target) {
 //	if (acquire_sem(conn_sem)!=B_OK)
 //		return;
 //mtx->lock();
+if (target->open) {
+	
 	closesocket(target->socket);
 	target->socket=-1;
+}
+
 //mtx->unlock();
 	target->open=false;
 #ifdef USEOPENSSL
@@ -538,7 +575,12 @@ void tcplayer::CloseConnection(connection *target) {
 void tcplayer::KillConnection(connection *target) {
 //	if (acquire_sem_etc(conn_sem,1,B_ABSOLUTE_TIMEOUT,100000)!=B_OK)
 //		return;
-	if (target->open) {
+	if (target==NULL)
+		return;
+	
+	printf("Killing connection %p\n",target);
+	
+		if (target->open) {
 //mtx->lock();
 		closesocket(target->socket);
 //mtx->unlock();
@@ -896,7 +938,7 @@ bool tcplayer::Connected(connection *conn,bool skipvalid) {
 		//mtx->unlock();
 		if (oldstatus)
 			if (!conn->open)
-				printf("Connection %p on socket %ld closed\n",conn,conn->socket);
+				printf("1:Connection %p on socket %ld closed\n",conn,conn->socket);
 		
 	return conn->open;
 		
@@ -985,7 +1027,7 @@ bool tcplayer::Connected(connection *conn,bool skipvalid) {
 		//mtx->unlock();
 		if (oldstatus)
 			if (!conn->open)
-				printf("Connection %p on socket %ld closed\n",conn,conn->socket);
+				printf("2:Connection %p on socket %ld closed\n",conn,conn->socket);
 		
 	return conn->open;
 		
