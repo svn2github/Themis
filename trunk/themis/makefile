@@ -88,14 +88,17 @@ FRAMEWORKSOURCES= \
 #	framework/UrlHandler.cpp
 RENDERERSOURCES= \
 	Renderer/BitmapElement.cpp \
-	Renderer/BitmapLinkElement.cpp \
+	Renderer/CheckBoxElement.cpp \
 	Renderer/ButtonElement.cpp \
-	Renderer/ColorRectElement.cpp \
+	Renderer/FileElement.cpp \
 	Renderer/CSS_Units.cpp \
 	Renderer/TableElement.cpp \
 	Renderer/TextControlElement.cpp \
 	Renderer/TextElement.cpp \
-	Renderer/TextLinkElement.cpp \
+	Renderer/FormElement.cpp \
+	Renderer/PElement.cpp \
+	Renderer/RadioButtonElement.cpp \
+	Renderer/TextAreaElement.cpp \
 	Renderer/TRenderer.cpp \
 	Renderer/TRendererEngine.cpp \
 	Renderer/TRenderView.cpp \
@@ -325,7 +328,7 @@ NETWORKLIBS=-lsocket -lbind  -lopenssl
 NETWORKING=NONE
 # by default, debugging information will be included. to turn it off, remove or comment out (#) the -g
 # on the next line 
-COMPILE_FLAGS=-g -D_Themis_ -DDEBUG -DNEWNET #-Wall
+COMPILE_FLAGS=-g -D_Themis_ -DDEBUG -Wall -Wno-multichar 
 ifeq "$(shell if [ -f $(BASE_APP_LIB_INSTALL_DIR)libcl.so ] ; then echo 0; else unzip -d $(BASE_APP_LIB_INSTALL_DIR) 3rd_party/cryptlib_netserver.zip;  ln -s libcl.so.3.1.0 $(BASE_APP_LIB_INSTALL_DIR)libcl.so ; echo 1; fi)" "1"
 endif
 ifeq "$(shell if [ -f $(BASE_APP_LIB_INSTALL_DIR)libz.so ] ; then echo 0; else unzip -d $(BASE_APP_LIB_INSTALL_DIR) 3rd_party/libz.zip; echo 1; fi)" "1"
@@ -491,7 +494,7 @@ $(COMMON_OBJECT_DIR)%.o: common/%.cpp $(COMMON_DEPENDS_DIR)%.d
 renderer: $(BASE_ADDON_INSTALL_DIR)renderer.so domlib
 $(BASE_ADDON_INSTALL_DIR)renderer.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(RENDERERSOURCES),$(BASE_ADDONS_OBJECT_DIR)Renderer/$(notdir $(file:.cpp=.o)))
 	@echo "Linking renderer..."
-	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)renderer.so $(foreach file,$(notdir $(RENDERERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)/Renderer/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=renderer.so -L ./ -L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) $(STDLIBS) -ldom -lstdc++.r4 _APP_ 
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)renderer.so $(foreach file,$(notdir $(RENDERERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)/Renderer/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=renderer.so -L ./ -L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) $(STDLIBS) -ldom -ltracker -lstdc++.r4 _APP_ 
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)renderer.so
 	@echo "Renderer plug-in compiled and linked successfully."
 $(RENDERER_DEPENDS_DIR)%.d: $(BASE_ADDON_SOURCE_DIR)Renderer/%.cpp 

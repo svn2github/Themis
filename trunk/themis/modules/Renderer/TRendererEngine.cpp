@@ -1,4 +1,31 @@
-/* See header TRenderer.h for more info */
+/*
+	Copyright (c) 2003 Olivier Milla. All Rights Reserved.
+	
+	Permission is hereby granted, free of charge, to any person
+	obtaining a copy of this software and associated documentation
+	files (the "Software"), to deal in the Software without
+	restriction, including without limitation the rights to use,
+	copy, modify, merge, publish, distribute, sublicense, and/or
+	sell copies of the Software, and to permit persons to whom
+	the Software is furnished to do so, subject to the following
+	conditions:
+	
+	   The above copyright notice and this permission notice
+	   shall be included in all copies or substantial portions
+	   of the Software.
+	
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+	KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+	WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+	PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+	OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+	OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+	
+	Original Author: 	Olivier Milla (methedras@online.fr)
+	Project Start Date: October 18, 2000
+*/
 #include <Alert.h>
 #include <Screen.h>
 
@@ -11,9 +38,7 @@
 #include "UIBox.h"
 #include "Utils.h"
 
-//Elements
-#include "Elements.h"
-
+#define GET_ATTRIBUTE_VALUE(attribute,default_value) (attribute.get() != NULL) ? attribute->getNodeValue().c_str() : default_value; 
 
 void Renderer::BroadcastPointer(TRenderView *view)
 {
@@ -27,14 +52,12 @@ void Renderer::BroadcastPointer(TRenderView *view)
 
 int32 Renderer::PreProcess(void *data)
 {
-	printf( "Renderer::PreProcess()\n" );
-	
 	preprocess_thread_param *cdata = (preprocess_thread_param *)data;
 
 	//The new view
 	TRenderView *view = new TRenderView(UIBox(800,450),cdata->document);	
 	view->siteID   = cdata->siteID;
-	view->urlID	   = cdata->urlID;
+	view->urlID    = cdata->urlID;
 	view->renderer = cdata->renderer;
 
 	cdata->renderer->locker->Lock();
@@ -71,40 +94,36 @@ int32 Renderer::PreProcess(void *data)
 	message->AddInt32("site_id",view->siteID);
 	message->AddInt32("url_id",view->urlID);
 	message->AddPointer("renderview_pointer",(void *)view);
-//	printf( "RENDERER: sending RENDERVIEW_POINTER\n" );
-//	cdata->renderer->Broadcast(MS_TARGET_ALL,message);
+	cdata->renderer->Broadcast(MS_TARGET_ALL,message);
 						
 	//Start processing the DOM Tree
 	printf("RENDERER: START PROCESSING...\n");
+	processing_context context;
 	bigtime_t time = real_time_clock_usecs();
-	cdata->renderer->Process(cdata->document,view); 
+	cdata->renderer->Process(cdata->document,view,context); 
 	printf("RENDERER: DONE PROCESSING in %g microseconds.\n",real_time_clock_usecs() - time);
 	
-	// send broadcast here. otherwise the renderer would have to inform us with
-	// subsequent update notifications about the view...
-	printf( "RENDERER: sending RENDERVIEW_POINTER\n" );
-	cdata->renderer->Broadcast(MS_TARGET_ALL,message);
-
-
 	//Do the Broadcasting to say we are done rendering
-	//message->what = SH_RENDER_FINISHED;
-	//message->RemoveName("renderview_pointer");
-	
-//Commented as make the thread crash. Might need some fixing or may be moved elsewhere
-//	cdata->renderer->Broadcast(MS_TARGET_URLHANDLER,message);	
+	message->what = SH_RENDER_FINISHED;
+	message->RemoveName("renderview_pointer");
+
+	cdata->renderer->Broadcast(MS_TARGET_SITEHANDLER,message);	
 	
 	//Update the view
 	//cdata->view->Invalidate();
 	
 	delete message;
-		
+
+	//Free what we created in MessageReceived in TRenderer.cpp
+	delete cdata;
+			
 	//Show the View, will be removed as soon as the REAL window uses the view
 	//(new TRenderWindow((TRenderView *)UITrees.ItemAt(UITrees.CountItems()-1)))->Show();	
 	return 0;
 }
 
 //That's the BIG one. Don't be scared and full it! Now !
-void Renderer::Process( TNodePtr node, UIElement *element)
+void Renderer::Process(TNodePtr node, UIElement *element, processing_context context)
 {
 	//Validity Check
 	if (node.get() == NULL)
@@ -114,14 +133,9 @@ void Renderer::Process( TNodePtr node, UIElement *element)
 	int 			length	 = 0;
 	 
 	if ((length = children->getLength()) != 0){
-		UIBox	above_element_frame;
-		if (element->nextLayer == NULL)
-			element->nextLayer = new BList(length);
-//		printf("LENGTH = %d\n",length);
-//		printf("CREATING BList %d, attached to element %d\n",element->nextLayer,element); 
-		for ( int i = length - 1; i >= 0; i--){
+		for ( int i = 0; i < length; i++){
 			TNodePtr child = children->item(i);
-//			printf("I = %d\n",i);
+
 			//a switch of around a trillion line. That's all. ;-]
 			switch(child->getNodeType()){
 				case ELEMENT_NODE:{
@@ -129,7 +143,7 @@ void Renderer::Process( TNodePtr node, UIElement *element)
 					UIBox 			frame			= element->frame;
 					UIElement		*uiChild 	 	= NULL;
 					const char		*tagName 		= elementChild->getTagName().c_str();
-					int8			css_display_v   = GetCSSDisplay(elementChild);
+//					int8			css_display_v   = GetCSSDisplay(elementChild);
 					
 					
 					/*We split in two: what's about tables and what is not
@@ -153,63 +167,225 @@ void Renderer::Process( TNodePtr node, UIElement *element)
 							//Do Nothing
 					
 					//Give the element Min/Max values
-					if (!(/*non-replaced-inline-element and */css_display_v > 6))
-						GetCSSMinMaxValues(elementChild,uiChild);
+//					if (!(/*non-replaced-inline-element and */css_display_v > 6))
+//						GetCSSMinMaxValues(elementChild,uiChild);
 					
-/*****TITLE*****/	if (strcmp(tagName,"TITLE") == 0){
+/*******P*******/	if (strcmp(tagName,"P") == 0){
+						uiChild = new PElement(child);
+						element->EAddChild(uiChild);
+						Process(child,uiChild,context);
+						break;
+					}
+/*******A*******/	else if (strcmp(tagName,"A") == 0){
+						if (child->hasAttributes()){
+							TNamedNodeMapPtr attributes = child->getAttributes();
+							TNodePtr attribute;			
+							Process(child,element,context);											
+						}
+						else {
+							printf("RENDERER ERROR: A element has no attributes\n");
+							Process(child,element,context);
+						}
+						break;
+					}
+/******IMG******/	else if (strcmp(tagName,"IMG") == 0){
+						uiChild = new BitmapElement(frame,child,"paste_url_here");
+						element->EAddChild(uiChild);
+						Process(child,uiChild,context);
+						break;
+					}
+/*****INPUT*****/	else if (strcmp(tagName,"INPUT") == 0){
+						if (child->hasAttributes()) {
+							TNamedNodeMapPtr attributes = child->getAttributes();
+							TNodePtr attribute;
+							attribute = attributes->getNamedItem("TYPE"); 
+							const char *type = GET_ATTRIBUTE_VALUE(attribute,"text");
+							attribute = attributes->getNamedItem("NAME");
+							const char *name = GET_ATTRIBUTE_VALUE(attribute,NULL);
+							attribute = attributes->getNamedItem("VALUE");
+							const char *value = GET_ATTRIBUTE_VALUE(attribute,NULL);								
+							
+							//switch the type: text, button, etc and build the elements as expected
+							//TODO: Check w3c compliance one by one and handle all the possible options
+							if (type[0] == 't'){ //equivalent to strcmp(type,"text") but faster
+								uiChild = new TextControlElement(frame,child,name,value,false);
+							} 							
+							else if (type[0] == 'b'){ //equivalent to strcmp(type,"button") but faster
+								uiChild = new ButtonElement(frame,child,name,value,PUSH_BUTTON_MODE);							
+							}
+							else if (type[0] == 'p'){ //equivalent to strcmp(type,"password") but faster
+								uiChild = new TextControlElement(frame,child,name,value,true);
+							}
+							else if (type[0] == 's'){ //equivalent to strcmp(type,"submit") but faster
+								uiChild = new ButtonElement(frame,child,name,value,SUBMIT_BUTTON_MODE);							
+							}
+							else if (type[0] == 'c'){ //equivalent to strcmp(type,"checkbox") but faster
+								uiChild = new CheckBoxElement(frame,child,name,value);
+							}
+							else if (type[0] == 'i'){ //equivalent to strcmp(type,"image") but faster
+								//uiChild = ??? TODO ???  (Use IMAGE_BUTTON_MODE as buttonMode !!)
+							}
+							else if (type[1] == 'a'){ //equivalent to strcmp(type,"radio") but faster
+								uiChild = new RadioButtonElement(frame,child,name,value);
+							}
+							else if (type[1] == 'e'){ //equivalent to strcmp(type,"reset") but faster
+								uiChild = new ButtonElement(frame,child,name,value,RESET_BUTTON_MODE);							
+							}
+							else if (type[0] == 'h'){ //equivalent to strcmp(type,"hidden") but faster
+								//uiChild = ??? TODO ???
+							}
+							else if (type[0] == 'f'){ //equivalent to strcmp(type,"file") but faster
+								uiChild = new FileElement(frame,node,name,value,FILE_BUTTON_MODE);
+							}																																																
+							else
+								printf("RENDERER ERROR: type strcmp failed: type = %s\n",type);				
+						}					
+						else
+							printf("RENDERER ERROR: INPUT has no attributes.\n");
+						
+						//probably temporary
+						if (uiChild){
+							element->EAddChild(uiChild);						
+							Process(child,uiChild,context);
+						}
+						else
+							Process(child,element,context);
+						break;
+					}
+/****TEXTAREA****/	else if (strcmp(tagName,"TEXTAREA") == 0){
+						if (child->hasAttributes()) {	
+							TNamedNodeMapPtr attributes = child->getAttributes();
+							TNodePtr attribute = attributes->getNamedItem("NAME");
+							const char *name = GET_ATTRIBUTE_VALUE(attribute,NULL);
+							uiChild = new TextAreaElement(frame,node,name);
+						}
+						//probably temporary
+						if (uiChild){
+							element->EAddChild(uiChild);						
+							Process(child,uiChild,context);
+						}
+						else
+							Process(child,element,context);						
+						break;
+					}					
+/*****BUTTON*****/	else if (strcmp(tagName,"BUTTON") == 0){ //IMPORTANT NOTE: By now a BUTTON tag is strictly equivalent visualy to a INPUT tag that constructs a button. Should be changed later.
+						if (child->hasAttributes()) {	
+							TNamedNodeMapPtr attributes = child->getAttributes();
+							TNodePtr attribute;
+							attribute = attributes->getNamedItem("NAME");
+							const char *name = GET_ATTRIBUTE_VALUE(attribute,NULL);
+							attribute = attributes->getNamedItem("VALUE");
+							const char *value = GET_ATTRIBUTE_VALUE(attribute,NULL);									
+							attribute = attributes->getNamedItem("TYPE"); 
+							const char *type = GET_ATTRIBUTE_VALUE(attribute,"submit"); //submit is the default value
+							
+							t_button_mode mode;
+							if 		(type[0] == 's') mode = SUBMIT_BUTTON_MODE;
+							else if (type[0] == 'p') mode = PUSH_BUTTON_MODE;
+							else					 mode = RESET_BUTTON_MODE;
+							
+							uiChild = new ButtonElement(frame,child,name,value,mode);	
+						}
+						else
+							printf("RENDERER ERROR: BUTTON has no attributes.\n");
+													
+						if (uiChild){
+							element->EAddChild(uiChild);
+							Process(child,uiChild,context);
+						}
+						else
+							Process(child,element,context);
+						break;
+					}
+/******FORM*****/	else if (strcmp(tagName,"FORM") == 0){
+						uiChild = new FormElement(child);
+						if (uiChild){
+							element->EAddChild(uiChild);
+							Process(child,uiChild,context);
+						}
+						else
+							Process(child,element,context);
+						break;
+					} 
+/*****TITLE*****/	else if (strcmp(tagName,"TITLE") == 0){
 						TNodeListPtr    loc_children = child->getChildNodes();
 						int 			loc_length	 = loc_children->getLength();
 						
 						if (loc_length > 1)	 //Just for debug in case
-							printf("RENDERER: WOOPS HEADER HAS MORE THAN 1 CHILD\n");
+							printf("RENDERER WARNING: WOOPS HEADER HAS MORE THAN 1 CHILD\n");
 							
 						TNodePtr loc_child = loc_children->item(0);
 
 						if (loc_child->getNodeType() == TEXT_NODE){
 							TTextPtr loc_textChild = shared_static_cast <TText> (loc_child);	
 							element->parentView->SetName(loc_textChild->getWholeText().c_str());
-							printf("RENDERER: Name of the view found: %s !!!!!!\n",element->parentView->Name());
+							printf("RENDERER INFO: Name of the view found: %s !!!!!!\n",element->parentView->Name());
 						}
 						else { // just for debug in case
-							printf("RENDERER: WOOPS TITLE CHILD IS NOT A TEXT_NODE\n");
-							printf("RENDERER: TYPE IS %s\n",loc_child->getNodeName().c_str());
+							printf("RENDERER WARNING: WOOPS TITLE CHILD IS NOT A TEXT_NODE\n");
+							printf("RENDERER WARNING: TYPE IS %s\n",loc_child->getNodeName().c_str());
 						}
 						
 						//We should jump that whole part I think by now
-						Process(node->getNextSibling(),element);					
+						Process(node->getNextSibling(),element,context);	
+						break;				
 					}
-					
-					//Add the element to the UI Tree and go down the tree.
-					if (uiChild){
-						element->EAddChild(uiChild);
-						printf("RENDERER: Element Added to tree\n");
-						Process(child,uiChild);
+/*****BODY******/	else if(strcmp(tagName,"BODY") == 0){
+						if (child->hasAttributes()) {	
+							TNamedNodeMapPtr attributes = child->getAttributes();
+							TNodePtr attribute = attributes->getNamedItem("TEXT"); // !! DEPRECATED !! Here for compatibility
+							const char *text = GET_ATTRIBUTE_VALUE(attribute,NULL);
+							attribute = attributes->getNamedItem("LINK"); 		   // !! DEPRECATED !! Here for compatibility
+							const char *link = GET_ATTRIBUTE_VALUE(attribute,NULL);
+							//Use this given color as text Link
+							attribute = attributes->getNamedItem("ALINK"); 		   // !! DEPRECATED !! Here for compatibility
+							const char *alink = GET_ATTRIBUTE_VALUE(attribute,NULL);
+							//Use this given color as as unvisited text Link
+							attribute = attributes->getNamedItem("VLINK"); 		   // !! DEPRECATED !! Here for compatibility
+							const char *vlink = GET_ATTRIBUTE_VALUE(attribute,NULL);
+							//Use this given color as active text Link														
+						}					
+						break;						
 					}
-					else //THIS MIGHT ONLY BE TEMPORARY
-						Process(child,element);
+					else {
+						Process(child,element,context); //if nobody understands the tag, let's go down the tree anyway
+					}
 					}break;
 				case TEXT_NODE:{
 					TTextPtr		textChild 		= shared_static_cast <TText> (child);
 					UIElement		*uiChild 	 	= NULL ;
-					uiChild = new TextElement(child,textChild->getWholeText().c_str(), 
-							    (BFont *)be_plain_font,SetColorSelf(RGB_BLACK),12.0);
+					BFont			*font			= new BFont(be_plain_font);
+					rgb_color		*high           = new rgb_color;
+					SetColor(high,RGB_BLACK);
+					TextElement 	*textElement    = NULL;
+					if (element->nextLayer != NULL)
+						textElement = FindText((UIElement *)element->nextLayer->LastItem());
 					
-					
-					//Is it possible to have children here ?
-					if (uiChild){
-						element->EAddChild(uiChild);			
-						printf("RENDERER: Text Element Added to tree %d\n",element->nextLayer);
-						Process(child,uiChild);
+					//TODO: Do all the cooking of font: size, direction, features, etc.
+					if (textElement){
+						textElement->AppendText(textChild->getWholeText().c_str(),font,high);
+						printf("RENDERER DEBUG: Text Element %s appened to test %d\n",textChild->getWholeText().c_str(),textElement);
+						Process(child,textElement,context);	//uiChild = textElement;					
 					}
-					else //THIS MIGHT ONLY BE TEMPORARY
-						Process(child,element);
-					}break;					
+					else {
+						uiChild = new TextElement(child,textChild->getWholeText().c_str(),font,high);
+						element->EAddChild(uiChild);			
+						printf("RENDERER DEBUG: Text Element %s Added to tree %d\n",textChild->getWholeText().c_str(),element->nextLayer);
+						Process(child,uiChild,context);								    
+					}
+					}break;				
 				default:{
-					printf("RENDERER: NODE unsupported yet\n");
+					printf("RENDERER WARNING: NODE unsupported yet\n");
 					}break;
 			}
 		}
 	}
+}
+
+//TODO: To be enhanced !!
+TextElement *Renderer::FindText(UIElement *element)
+{
+	return dynamic_cast <TextElement *> (element);
 }
 
 //Gets the correct UIBox size, without calculating it's position

@@ -1,5 +1,31 @@
-/* See header for more info */
-
+/*
+	Copyright (c) 2003 Olivier Milla. All Rights Reserved.
+	
+	Permission is hereby granted, free of charge, to any person
+	obtaining a copy of this software and associated documentation
+	files (the "Software"), to deal in the Software without
+	restriction, including without limitation the rights to use,
+	copy, modify, merge, publish, distribute, sublicense, and/or
+	sell copies of the Software, and to permit persons to whom
+	the Software is furnished to do so, subject to the following
+	conditions:
+	
+	   The above copyright notice and this permission notice
+	   shall be included in all copies or substantial portions
+	   of the Software.
+	
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+	KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+	WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+	PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+	OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+	OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+	
+	Original Author: 	Olivier Milla (methedras@online.fr)
+	Project Start Date: October 18, 2000
+*/
 #include <stdio.h>
 
 #include <AppDefs.h>
@@ -11,12 +37,11 @@
 
 UIElement::UIElement(UIBox frame, TNodePtr node)
 {
-	UIElement::frame 	  = frame;
-	isZoomable 			  = true;
+	UIElement::frame	  = frame;
 	nextLayer			  = NULL;
 	parentView			  = NULL;
 	previousElement		  = NULL;
-	SetColor(&lowcolor,0,1,0);
+	SetColor(&lowColor,0,1,0);
 	
 	parentElement		  = NULL;
 	UIElement::node 	  = node;
@@ -29,9 +54,17 @@ UIElement::UIElement(UIBox frame, TNodePtr node)
 
 UIElement::~UIElement()
 {
-	if (nextLayer)
-		while (nextLayer->CountItems() > 0)
-			delete (UIElement *)(nextLayer->RemoveItem((int32)0));
+	if (nextLayer){
+		UIElement *element = NULL;
+		BView	  *view    = NULL;
+		while (nextLayer->CountItems() > 0){
+			element = (UIElement *)(nextLayer->RemoveItem((int32)0));
+			view = dynamic_cast <BView *> (element);
+			if (view)
+				parentView->RemoveChild(view); 
+			delete element;
+		}
+	}
 	delete nextLayer;
 }
 
@@ -43,12 +76,12 @@ void UIElement::EAddChild(UIElement *element)
 	
 	//We assume here that we will never meet a RGB(0,1,0)
 	//(I'd say it's fairly true.)
-	if (SameColor(element->lowcolor,SetColorSelf(0,1,0)))
-		element->lowcolor = lowcolor;
+	if (SameColor(element->lowColor,SetColorSelf(0,1,0)))
+		element->lowColor = lowColor;
 		
 	//If the Element inherit from BeOS UI Element,add it to BeOS BViews' tree.
 	if (dynamic_cast <BView *> (element))
-		parentView->AddChild(dynamic_cast <BView *> (element));
+		parentView->AddChild(dynamic_cast <BView *> (element)); 
 	
 	if (!nextLayer)
 		nextLayer = new BList();
@@ -82,6 +115,7 @@ void UIElement::EDraw()
 	  They know the rect they have to draw in: it's their 'frame' field 
 	  which can be updated by the TRenderView on resize/etc...
 	*/
+	
 	if (nextLayer)
 		for(int32 i=0; i<nextLayer->CountItems(); i++)
 			((UIElement *)nextLayer->ItemAt(i))->EDraw();	
@@ -113,6 +147,10 @@ void UIElement::EMouseMoved(BPoint point, uint32 transit, const BMessage *messag
 
 void UIElement::EFrameResized(float width, float height)
 {
+	/*The normal scheme of implementation is:
+		1) To find whether a min/max value has been hit
+		2) Update the value of the frame of the object
+		
 	//Do the calculus of the new frame for the element (for derivated classes)
 	
 	//Applies the min/max-height/width rules
@@ -145,13 +183,16 @@ ElementFrame UIElement::GetElementFrame()
 	return element;
 }
 
-/*
-void UIElement::ProportionalResizingAndMoving(float deltaWidth, float deltaHeight)
+void UIElement::FillBackgroundColor()
 {
-	frame.right  = frame.left + frame.Width()*deltaWidth;
-	frame.bottom = frame.top  + frame.Height()*deltaHeight;
+	parentView->SetLowColor(lowColor);
 
-	frame.left = frame.left*deltaWidth; 
-	frame.top  = frame.top*deltaHeight;
+	if (SameColor(parentElement->lowColor,lowColor))	
+		return;
+	
+	parentView->SetHighColor(lowColor);
+	
+	parentView->FillRect(frame);
 }
-*/
+
+//BRect UIElement::GetContainingBlock()

@@ -1,8 +1,35 @@
-/* See header for more info */
-
+/*
+	Copyright (c) 2003 Olivier Milla. All Rights Reserved.
+	
+	Permission is hereby granted, free of charge, to any person
+	obtaining a copy of this software and associated documentation
+	files (the "Software"), to deal in the Software without
+	restriction, including without limitation the rights to use,
+	copy, modify, merge, publish, distribute, sublicense, and/or
+	sell copies of the Software, and to permit persons to whom
+	the Software is furnished to do so, subject to the following
+	conditions:
+	
+	   The above copyright notice and this permission notice
+	   shall be included in all copies or substantial portions
+	   of the Software.
+	
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+	KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+	WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+	PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+	OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+	OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+	
+	Original Author: 	Olivier Milla (methedras@online.fr)
+	Project Start Date: October 18, 2000
+*/
 
 #include "Globals.h"
 #include "TRenderer.h"
+
 #define 	THREAD_NAMES	7
 
 const char *THREAD_NAME[] = {
@@ -93,7 +120,6 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 						cache = NULL;
 					}break;
 				case SH_RENDER_START:{ //New way to do
-					printf( "RENDERER: SH_RENDER_START\n" );
 					void *buffer = NULL;
 					TDocumentPtr document;
 					message->FindPointer("dom_tree_pointer",&buffer);
@@ -102,17 +128,13 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 					TDocumentPtr *typer = (TDocumentPtr *)buffer;
 					document = *typer;		
 					DOMTrees.push_back(document);								
-					//Start Processing in a new thread so people think it'll work faster ;-))
-					int32 site_id;
-					int32 url_id;
-					message->FindInt32( "site_id", &site_id );
-					message->FindInt32( "url_id", &url_id );
-					// allocate the struct on the heap now ;)
+					//Start Processing in a new thread
+					// allocate the struct on the heap now ;) (thx emwe)
 					preprocess_thread_param* param = new preprocess_thread_param;
 					param->document = document;
 					param->renderer = this;
-					param->siteID = site_id;
-					param->urlID = url_id;
+					param->siteID = message->FindInt32("site_id");
+					param->urlID = message->FindInt32("url_id");
 					//feeding the random generator
 					srand(time(NULL));
 					thread_id id = spawn_thread(PreProcess,THREAD_NAME[rand()%THREAD_NAMES],30,(void *)param);								
@@ -157,8 +179,7 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 			}	
 		}
 	}
-//	printf("Renderer: ReceiveBroadcast is exiting\n");
-	
+		
 	return PLUG_HANDLE_GOOD;
 }
 
@@ -199,7 +220,7 @@ char *Renderer::PlugName()
 
 float Renderer::PlugVersion()
 {
-	return 0.01;	
+	return 0.05;	
 }
 
 int32 Renderer::Type()

@@ -1,8 +1,30 @@
-/*	Themis Renderer
-
-	Olivier MILLA (Methedras) methedras@online.fr
+/*
+	Copyright (c) 2003 Olivier Milla. All Rights Reserved.
 	
-	This code falls under the General Themis License.
+	Permission is hereby granted, free of charge, to any person
+	obtaining a copy of this software and associated documentation
+	files (the "Software"), to deal in the Software without
+	restriction, including without limitation the rights to use,
+	copy, modify, merge, publish, distribute, sublicense, and/or
+	sell copies of the Software, and to permit persons to whom
+	the Software is furnished to do so, subject to the following
+	conditions:
+	
+	   The above copyright notice and this permission notice
+	   shall be included in all copies or substantial portions
+	   of the Software.
+	
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+	KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+	WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+	PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+	OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+	OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+	
+	Original Author: 	Olivier Milla (methedras@online.fr)
+	Project Start Date: October 18, 2000
 */
 #include <Cursor.h>
 #include <List.h>
@@ -36,10 +58,21 @@ class TRenderView;
 */  			   
 struct ElementFrame {
 	bool	isFrameOnly;
-	UIBox	mainframe;
+	UIBox	mainFrame;
 //	BPoint	startPoint; Not sure it's useful
 	BPoint  endPoint;
 };
+
+/*
+typedef enum css_positioning_scheme {
+	CSS_NORMAL_FLOW			=0,
+	CSS_FLOAT				=1,
+	CSS_ABSOLUTE_POSITION	=2;
+};
+
+struct CSSContext{
+	css_flow;	
+};*/
 
 /*This class is never used as is, only derivated ones are.
   This class is the Base Drawing Element of the Rendered objects.
@@ -48,7 +81,7 @@ struct ElementFrame {
 class UIElement
 {
 	public:
-								UIElement(UIBox frame, TNodePtr node);
+								UIElement(UIBox frame, TNodePtr node); //IMPORTANT NOTE: By now the frame argument is useless as it is never taken into account in the drawing mechanisms 
 		virtual 				~UIElement();
 
 				void			EAddChild(UIElement *element);
@@ -62,7 +95,7 @@ class UIElement
 				
 		virtual	void			EMessageReceived(BMessage *message);
 								/*You keep the ownership of message
-								  arg: you must delete it yourself if needed.*/
+								  arg: you must delete it yourself (if needed !!!).*/
 								  
 		virtual ElementFrame	GetElementFrame();
 
@@ -76,10 +109,7 @@ class UIElement
 				//The node from the DOM Tree				
 				TNodePtr		node;
 				
-				//Some options of the element TODO: Use or Remove
-				bool			isZoomable;
-				
-				rgb_color		lowcolor;
+				rgb_color		lowColor;
 								
 				BList 			*nextLayer; 
 
@@ -90,12 +120,17 @@ class UIElement
 				double			minHeight, maxHeight;
 				double 			minWidth , maxWidth;
 				
-				//The previous element in parent's BList
+				//The previous element in parent's nextLayer BList
 				UIElement		*previousElement;
 
 	protected:
-				//Some UIElements call this on EFrameResized()
-			//	void			ProportionalResizingAndMoving(float deltaWidth, float deltaHeight);
+				//A method that fills the frame with the backgroud color
+				//and set the correct lowColor
+				void			FillBackgroundColor();	
+				
+//				CSSContext		cssContext;
+				
+//				BRect			GetContainingBlock();
 };
 
 #endif
