@@ -78,7 +78,7 @@ class GlobalHistoryItem : public BStringItem
 										time_t time,
 										uint32 level = 0,
 										bool expaned = true );
-									~GlobalHistoryItem();
+		virtual						~GlobalHistoryItem();
 		
 		void						Print();
 		void						SetFree();
