@@ -32,22 +32,8 @@ SGMLParser	::	SGMLParser( const char * aDtd, const char * aDocument )
 	//printf( "SGMLParser constructed\n" );
 
 	mDocText = SGMLTextPtr( new SGMLText() );
+	mDocText->loadText( aDocument );
 
-	// Load text
-	if ( aDocument != NULL )	{
-		ifstream file( aDocument );
-	
-		char ch;
-		while ( file.get( ch ) )	{
-			if ( ch == '\r' )	{
-				mDocText->addChar( '\n' );
-			}
-			else	{
-				mDocText->addChar( ch );
-			}
-		};
-	}
-	
 	// Create declaration parsers
 	setupParsers( aDtd );
 	
@@ -243,25 +229,10 @@ TDocumentPtr SGMLParser	::	parse()	{
 
 TDocumentPtr SGMLParser	::	parse( const char * aDocument )	{
 
-	TDocumentPtr result;
 
-	// Load text
-	if ( aDocument != NULL )	{
-		ifstream file( aDocument );
+	mDocText->loadText( aDocument );
 	
-		char ch;
-		while ( file.get( ch ) )	{
-			if ( ch == '\r' )	{
-				mDocText->addChar( '\n' );
-			}
-			else	{
-				mDocText->addChar( ch );
-			}
-		};
-
-		result = parse();
-	
-	}
+	TDocumentPtr result = parse();
 	
 	return result;
 	

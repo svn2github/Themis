@@ -33,13 +33,8 @@ DTDParser	::	DTDParser( const char * aFileName, TDocumentPtr aDTD )
 
 	// Load text
 	mDocText = SGMLTextPtr( new SGMLText() );
-	ifstream file( aFileName );
-	
-	char ch;
-	while ( file.get( ch ) )	{
-		mDocText->addChar( ch );
-	};
-	
+	mDocText->loadText( aFileName );
+		
 	mDTD = aDTD;
 	
 	// Create declaration parsers
@@ -252,14 +247,7 @@ TDocumentPtr DTDParser	::	parse()	{
 
 TDocumentPtr DTDParser	::	parse( const char * aFileName )	{
 	
-	mDocText->reset( true );
-
-	ifstream file( aFileName );
-	
-	char ch;
-	while ( file.get( ch ) )	{
-		mDocText->addChar( ch );
-	};
+	mDocText->loadText( aFileName );
 	
 	return parse();
 	

@@ -100,32 +100,15 @@ class Position	{
 			character number up to date.
 			
 			@param	aText	The text to which the position belongs.
-			@return	The new position in the document.
 			
 			@exception	PositionException	Thrown if going to the next index
 															will cause it to go past the end
 															of the piece of text to keep
 															track of.
-			@todo	@li	Have to see if the return value is of any use.
-						@li	Have to see if it is not better to use a smart pointer
-								to store the text, instead of giving it as an argument
-								to this function each time.
-						@li	The tab size is hard set to 4. Dunno if that is good.
+			@todo	@li	The tab size is hard set to 4. Dunno if that is good.
+						@li	Have a look at the body of the function. Hmm...
 		*/
-		unsigned int nextPosition( const string & aText );
-		/// A function to increase the size of the piece of text.
-		/**
-			This function increases the size of the piece of text allowing
-			a Position object to look at a larger part of a document.
-			It is primarily used when loading a new document and the
-			Position object already exists.
-			
-			@todo	@li	Have to see if this function is really necessary.
-						@li	Have to see if we can add a parameter to set
-								the size with which to increase.
-								It currently looks very inefficient.
-		*/
-		void increaseSize();
+		void nextPosition( const char aChar );
 
 };
 

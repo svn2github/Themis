@@ -78,15 +78,15 @@ unsigned int Position	::	getSize() const	{
 	
 }
 
-unsigned int Position	::	nextPosition( const string & aText )	{
+void Position	::	nextPosition( const char aChar )	{
 
 	if ( mIndex + 1 >= mEnd )	{
 		mIndex--;
 		throw PositionException();
 	}
 
-	if ( aText[ mIndex ] != '\n' )	{
-		if ( aText[ mIndex ] != '\t' )	{
+	if ( aChar != '\n' )	{
+		if ( aChar != '\t' )	{
 			mCharNr++;
 		}
 		else	{
@@ -99,13 +99,5 @@ unsigned int Position	::	nextPosition( const string & aText )	{
 		mCharNr = 1;
 	}
 	mIndex++;
-	
-	return mIndex;
 
-}
-
-void Position	::	increaseSize()	{
-	
-	mEnd++;
-	
 }
