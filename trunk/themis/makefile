@@ -39,6 +39,7 @@ TESTPLUG_DEPENDS_DIR=$(BASE_DEPENDS_DIR)testplug/
 HTMLPARSER_DEPENDS_DIR=$(BASE_DEPENDS_DIR)HTMLParser/
 IMAGEH_DEPENDS_DIR=$(BASE_ADDONS_DEPENDS_DIR)imageh/
 RENDERER_DEPENDS_DIR=$(BASE_ADDONS_DEPENDS_DIR)Renderer/
+CSSPARSER_DEPENDS_DIR=$(BASE_ADDONS_DEPENDS_DIR)CSSParser/
 
 #object directories
 BASE_OBJECT_DIR=objects/
@@ -51,6 +52,7 @@ TESTPLUG_OBJECT_DIR=$(BASE_OBJECT_DIR)testplug/
 HTMLPARSER_OBJECT_DIR=$(BASE_OBJECT_DIR)HTMLParser/
 IMAGEH_OBJECT_DIR=$(BASE_ADDONS_OBJECT_DIR)imageh/
 RENDERER_OBJECT_DIR=$(BASE_ADDONS_OBJECT_DIR)Renderer/
+CSSPARSER_OBJECT_DIR=$(BASE_ADDONS_OBJECT_DIR)CSSParser/
 
 #source files
 FRAMEWORKSOURCES= \
@@ -156,7 +158,17 @@ HTMLPARSERSOURCES= \
 	HTMLParser/PositionException.cpp  \
 	HTMLParser/ReadException.cpp  \
 	HTMLParser/SGMLParser.cpp 
-
+CSSPARSERSOURCES= \
+	CSSParser/AtRuleParser.cpp \
+	CSSParser/Encoding.cpp \
+	CSSParser/Hashtable.cpp \
+	CSSParser/InputStream.cpp \
+	CSSParser/Properties.cpp \
+	CSSParser/PropertyParser.cpp \
+	CSSParser/StyleSheet.cpp \
+	CSSParser/StyleSheetParser.cpp \
+	CSSParser/cssmain.cpp
+	
 DOMVIEWSOURCES= \
 	DOMView/DOMView.cpp
 IMAGEHSOURCES= \
@@ -182,6 +194,9 @@ endif
 ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR) ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR) ; echo 0 ; fi)" "0"
 endif
 #add a new line similar to those below for each plug-in/add-on
+#css parser add-on object directory
+ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)CSSParser ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)CSSParser ; echo 0 ; fi)" "0"
+endif
 #renderer add-on object directory
 ifeq "$(shell if [ -d $(RENDERER_OBJECT_DIR) ] ; then echo 1 ; else mkdir -p $(RENDERER_OBJECT_DIR) ; echo 0 ; fi)" "0"
 endif
@@ -230,6 +245,9 @@ endif
 ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR) ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR) ; echo 0 ; fi)" "0"
 endif
 #add a new line similar to those below for each plug-in/add-on
+#css parser add-on depends directory
+ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)CSSParser ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)CSSParser ; echo 0 ; fi)" "0"
+endif
 #renderer add-on depends directory
 ifeq "$(shell if [ -d $(RENDERER_DEPENDS_DIR) ] ; then echo 1 ; else mkdir -p $(RENDERER_DEPENDS_DIR) ; echo 0 ; fi)" "0"
 endif
@@ -485,6 +503,22 @@ $(BASE_ADDONS_OBJECT_DIR)FileProtocol/%.o: $(BASE_ADDON_SOURCE_DIR)FileProtocol/
 	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
 ifneq ($(MAKECMDGOALS),clean)
 -include $(foreach file,$(BASE_ADDON_SOURCE_DIR)$(FILEPROTOCOLSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)FileProtocol/$(notdir $(file)))
+endif
+#css parser addon
+csspaddon: $(BASE_ADDON_INSTALL_DIR)css_parser.so
+$(BASE_ADDON_INSTALL_DIR)css_parser.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(CSSPARSERSOURCES),$(BASE_ADDONS_OBJECT_DIR)CSSParser/$(notdir $(file:.cpp=.o)))
+	@echo "Linking css parser..."
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)css_parser.so $(foreach file,$(notdir $(CSSPARSERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)CSSParser/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=css_parser.so -L ./ -L $(BELIBRARIES)  $(STDLIBS) -lstdc++.r4 _APP_
+	@mimeset -F $(BASE_ADDON_INSTALL_DIR)css_parser.so
+	@echo "CSS Parser plug-in compiled and linked successfully."
+$(BASE_ADDONS_DEPENDS_DIR)CSSParser/%.d: $(BASE_ADDON_SOURCE_DIR)CSSParser/%.cpp 
+	@echo "CSS Parser: Updating dependency file $(notdir $@)"
+	@set -e;VAR1=$(shell echo "$(FILEPROTOCOL_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/add-ons\/CSSParser\/\1.o depends\/add-ons\/CSSParser\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
+$(BASE_ADDONS_OBJECT_DIR)CSSParser/%.o: $(BASE_ADDON_SOURCE_DIR)CSSParser/%.cpp $(BASE_ADDONS_DEPENDS_DIR)CSSParser/%.d
+	@echo "CSS Parser: Updating object file $(notdir $@)"
+	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
+ifneq ($(MAKECMDGOALS),clean)
+-include $(foreach file,$(BASE_ADDON_SOURCE_DIR)$(CSSPARSERSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)CSSParser/$(notdir $(file)))
 endif
 #message viewer addon
 msgvaddon: $(BASE_ADDON_INSTALL_DIR)message_viewer.so
