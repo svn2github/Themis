@@ -31,6 +31,7 @@ Project Start Date: October 18, 2000
 #include "cache_defines.h"
 #include <stdio.h>
 #include <kernel/fs_index.h>
+#include <kernel/OS.h>
 #include <string.h>
 #include <String.h>
 #include <AppKit.h>
@@ -58,12 +59,94 @@ void cacheman::MessageReceived(BMessage *msg)
      }break;
     case CreateCacheObject:
      {
+      printf("CreateCacheObject\n");
+      BMessage reply(B_ERROR);
+      type_code type;
+      int32 count,index;
+      char *name;
+      if (msg->CountNames(B_ANY_TYPE)>=1)
+       {
+        printf("msg contains items\n");
+        bigtime_t reqtime=real_time_clock_usecs();
+        BPath pth(cachepath);
+        BString fname;
+        fname <<reqtime;
+        pth.Append(fname.String());
+        entry_ref ref;
+         {
+          BEntry ent(pth.Path(),true);
+          ent.GetRef(&ref);
+         }
+        BFile *file=new BFile(&ref,B_CREATE_FILE|B_ERASE_FILE|B_READ_WRITE);
+        BNode *node=new BNode(&ref);
+        node->Lock();
+        BNodeInfo *ni=new BNodeInfo(node);
+        ni->SetType(ThemisCacheMIME);
+        delete ni;
+        
+        msg->PrintToStream();
+        for (index=0;msg->GetInfo(B_ANY_TYPE,index,&name,&type,&count)==B_OK; index++)
+         {
+          for (int i=0;i<count;i++)
+           switch(type)
+            {
+             case B_INT32_TYPE:
+              {
+               if (strcasecmp(name,"what")==0)
+                continue;
+               if (strcasecmp(name,"when")==0)
+                continue;
+              }break;
+             case B_STRING_TYPE:
+              {
+               if (strcasecmp(name,"url")==0)
+                {
+                 msg->FindString(name,&fname);//let's reuse stuff! :)
+                 node->WriteAttr("Themis:URL",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
+                 continue;
+                }
+               if (strcasecmp(name,"name")==0)
+                {
+                 msg->FindString(name,&fname);
+                 node->WriteAttr("Themis:name",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
+                 continue;
+                }
+               if (strcasecmp(name,"host")==0)
+                {
+                 msg->FindString(name,&fname);
+                 node->WriteAttr("Themis:host",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
+                 continue;
+                }
+               if (strcasecmp(name,"mime")==0)
+                {
+                 msg->FindString(name,&fname);
+                 node->WriteAttr("Themis:mime_type",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
+                 continue;
+                }
+               if (strcasecmp(name,"path")==0)
+                {
+                 msg->FindString(name,&fname);
+                 node->WriteAttr("Themis:path",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
+                 continue;
+                }
+              }break;
+            }
+         }
+        node->Unlock();
+        node->Sync();
+        delete node;
+        delete file;
+        reply.what=B_OK;
+        reply.AddRef("ref",&ref);
+       }
+      msg->SendReply(&reply);
      }break;
     case UpdateCachedObject:
      {
      }break;
     case ClearCache:
      {
+      msg->PrintToStream();
       printf("Clearing cache...\n");
       BVolumeRoster volr;
       BVolume vol;
@@ -241,6 +324,32 @@ status_t cacheman::CheckMIME()
   else
    found=false;
   //Make Themis:host a visible attribute; done
+  //Make Themis:path a visible attribute
+  for (int32 i=0;i<attrcount;i++)
+   {
+    BString item;
+    attrinf.FindString("attr:name",i,&item);
+    if (item=="Themis:path")
+     {
+      found=true;
+      break;
+     }
+   }
+  if ((!found) || (installall))
+   {
+    attrinf.AddString("attr:name","Themis:path");
+    attrinf.AddString("attr:public_name","Server Path");
+    attrinf.AddInt32("attr:type",B_STRING_TYPE);
+    attrinf.AddInt32("attr:width",200);
+    attrinf.AddInt32("attr:alignment",B_ALIGN_CENTER);
+    attrinf.AddBool("attr:public",true);
+    attrinf.AddBool("attr:editable",true);
+    attrinf.AddBool("attr:viewable",true);
+    attrinf.AddBool("attr:extra",false);
+   }
+  else
+   found=false;
+  //Make Themis:path a visible attribute; done
   mime.SetAttrInfo(&attrinf);
   return B_OK;
  }
@@ -269,6 +378,28 @@ status_t cacheman::CheckIndices()
        }
       found=false;
       //duplicate and modify the next block as necessary to add more indices
+      //begin block
+      //BEOS:TYPE is where the file was originally found
+      //double check to make sure that the mime type index exists
+      printf("\t\tlooking for \"BEOS:TYPE\" index...");
+      fflush(stdout);
+      while((ent=fs_read_index_dir(d)))
+       {
+        if (strcasecmp(ent->d_name,"BEOS:TYPE")==0)
+         {
+          printf("found it.\n");
+          found=true;
+          break;
+         }
+       }
+      if (!found)
+       {
+        printf("created it.\n");
+        fs_create_index(vol.Device(),"BEOS:TYPE",B_STRING_TYPE,0);
+       }
+      fs_rewind_index_dir(d);
+      found=false;
+      //end block
       //begin block
       //Themis:URL is where the file was originally found
       printf("\t\tlooking for \"Themis:URL\" index...");

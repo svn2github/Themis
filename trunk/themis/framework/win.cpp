@@ -35,7 +35,6 @@ Win::Win(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspa
   view=new winview(Bounds(),"mainview",B_FOLLOW_ALL,B_WILL_DRAW|B_FRAME_EVENTS|B_ASYNCHRONOUS_CONTROLS|B_NAVIGABLE|B_NAVIGABLE_JUMP);
   AddChild(view);
   
-  AddHandler((BHandler*)PluginManager->FindPlugin(CachePlugin));
  }
 Win::Win(BRect frame,const char *title, window_look look,window_feel feel,uint32 flags,uint32 wspace)
     :BWindow(frame,title,look,feel,flags,wspace)
@@ -47,7 +46,6 @@ Win::Win(BMessage *archive)
  }
 bool Win::QuitRequested()
  {
-  RemoveHandler((BHandler*)PluginManager->FindPlugin(CachePlugin));
   return true;
  }
 void Win::MessageReceived(BMessage *msg)
@@ -64,9 +62,25 @@ void Win::WindowActivated(bool active)
  {
   if (startup)
    {
-    BMessenger *msgr=new BMessenger((BHandler*)PluginManager->FindPlugin(CachePlugin),NULL,NULL);
-    msgr->SendMessage(ClearCache);
-    delete msgr;
+//the following bmessages create and clear a cache file as a test...
+//    BMessenger *msgr=new BMessenger((BHandler*)PluginManager->FindPlugin(CachePlugin),NULL,NULL);
+//     {
+//      BMessage msg(CreateCacheObject);
+//      BMessage reply;
+//      msg.AddString("URL","http://themis.sourceforge.net");
+//      msg.AddString("name","index.html");
+//      msg.AddString("host","themis.sourceforge.net:80");
+//      msg.AddString("path","/");
+//      msg.AddString("mime","text/html");
+//      msgr->SendMessage(&msg,&reply);
+//      if (reply.what==B_OK)
+//       {
+//        printf("cachefile created.\n");
+//        reply.PrintToStream();
+//       }
+//     }
+//    msgr->SendMessage(ClearCache);
+//    delete msgr;
     startup=false;
    }
  }

@@ -42,6 +42,7 @@ App::~App()
  }
 bool App::QuitRequested()
  {
+  RemoveHandler((BHandler*)PluginManager->FindPlugin(CachePlugin));
   PluginManager->Lock();
   PluginManager->Quit();
   return true;
@@ -74,6 +75,7 @@ void App::RefsReceived(BMessage *refs)
  }
 void App::ReadyToRun()
  {
+  AddHandler((BHandler*)PluginManager->FindPlugin(CachePlugin));
   win->Show();
  }
 void App::ArgvReceived(int32 argc, char **argv)
