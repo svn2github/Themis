@@ -240,7 +240,7 @@ frameworkdepends: $(FRAMEWORKSOURCES) $(foreach file,$(FRAMEWORKSOURCES:.cpp=.d)
 frameworkobjects: $(foreach file,$(FRAMEWORKSOURCES),$(FRAMEWORK_OBJECT_DIR)$(notdir $(file:.cpp=.o)))
 	@echo "Framework object files are done."
 
-$(FRAMEWORK_DEPENDS_DIR)%.d: framework/%.cpp  framework/%.h
+$(FRAMEWORK_DEPENDS_DIR)%.d: framework/%.cpp
 	@echo "Framework: Updating dependency file $(notdir $@)"
 	@set -e;VAR1=$(shell echo "$(FRAMEWORK_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(FRAMEWORK_OBJECT_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
 
