@@ -49,6 +49,7 @@ add a command to makelinks.sh to create this link in your plug-in's directory.
 #define ImagePlugin 'iplg'
 #define MediaPlugin 'mplg'
 
+int32 strtoval(char *proto); //plug-in identifier converter 4 char string to int32
 
 class PlugClass
  {

@@ -33,6 +33,27 @@ Include *both* plugclass.h *and* plugclass.cpp in your plugin!
 
 #include "plugclass.h"
 
+int32 strtoval(char *proto) {
+	int32 value=0;
+	if (strlen(proto)>=4) {
+	 value=(int(proto[0])<<24);
+	 value+=(int(proto[1])<<16);
+	 value+=(int(proto[2])<<8);
+	 value+=int(proto[3]);
+	}
+	else
+	 {
+	  if (strlen(proto)==3) {
+		 value=(int(proto[0])<<24);
+		 value+=(int(proto[1])<<16);
+		 value+=(int(proto[2])<<8);
+		 value+=(int('_'));
+	  }
+	  else
+	  	value=-1;
+	 }
+	return value;
+}
 
 PlugClass::PlugClass(BMessage *info)
  {
