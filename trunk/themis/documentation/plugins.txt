@@ -1,10 +1,10 @@
 This document describes the functionality and nature of the various plugins included with Themis.
 
 First Created: Dec 3, 2000 2:06 pm PST
-Last Updated: Dec 3, 2000 2:06 pm PST
+Last Updated: June 17, 2001 4:06 pm PST
 
 cache.so
 This plugin, when requested via BMessage will search for and/or create cache files when so requested by the protocol. For instance, with the HTTP protocol plugin, if caching is enabled, cache.so will first seek any cache files that match the current URL, and if found, return an entry_ref to the calling object. If not, the HTTP protocol will download the page, and ask the cache plugin for an entry ref to store the data in.
 
 http_plugin.so
-This is the most basic and common protocol on the web. As of this writing, it can communicate with most servers well enough to pull down a web page and/or other resource, however, it is not yet complete.
+This is the most basic and common protocol on the web. (17 June 2001) Although still incomplete, the http plugin is now capable of communicating with and downloading data from the Poorman, RobinHood, Apache, and Internet Information Server web servers. In theory, it should now work with all other web servers as well. The plugin does not yet handle server error messages or authentication yet, nor does it know what to do with data that is returned by the server with the "no-cache" header. This will be fixed in the future. The plugin is also multi-threaded now.

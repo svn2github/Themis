@@ -48,11 +48,14 @@ winview::winview(BRect frame,const char *name,uint32 resizem,uint32 flags)
   r.right=r.left+30;
   msg=new BMessage(B_CANCEL);
   AddChild(locline);
-  AddChild((new BButton(r,"cancelbutton","Stop",msg)));
+  stopbutton=new BButton(r,"cancelbutton","Stop",msg);
+  stopbutton->SetEnabled(false);
+  AddChild(stopbutton);
   
  }
 void winview::AttachedToWindow()
  {
+  stopbutton->SetTarget(this);
   locline->SetTarget(this);
  }
 void winview::MessageReceived(BMessage *msg)
@@ -61,12 +64,17 @@ void winview::MessageReceived(BMessage *msg)
    {
     case B_CANCEL:
      {
+      printf("Ordering protocol to stop\n");
       protocol_plugin *pobj=(protocol_plugin*)PluginManager->FindPlugin(protocol);
       if (pobj!=NULL)
-       pobj->Cancel=1;
+       pobj->Stop();
+       status_t stat;
+      wait_for_thread(pobj->Thread(),&stat);
+      stopbutton->SetEnabled(false);
      }break;
     case OpenLocation:
      {
+      stopbutton->SetEnabled(true);
       msg->PrintToStream();
       BString url=locline->Text();
       protocol=HTTPPlugin;
@@ -116,7 +124,22 @@ void winview::MessageReceived(BMessage *msg)
         info->PrintToStream();
         pobj->SpawnThread(info);
         pobj->StartThread();
-        delete info;
+//        delete info;
+//    snooze(5000000);
+//  port_id httpport=find_port("http_protocol_port");
+//  BMessage *msg=new BMessage(FetchItem);
+//  msg->AddString("target_url","http://127.0.0.1");
+//  size_t size=msg->FlattenedSize();
+//  char *data=new char[size+1];
+//  memset(data,0,size+1);
+//  msg->Flatten(data,size);
+//  delete msg;
+//  for (int32 i=0; i<1000;i++)
+//   {
+//    printf("writing message #%ld to port.\n",i);
+//    write_port(httpport,FetchItem,data,size);
+//   }
+//  delete data;
 //        pobj->SetURL(url.String());
         
 //        obj->GetURL();

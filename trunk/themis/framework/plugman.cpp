@@ -211,12 +211,15 @@ plugman::plugman(entry_ref &appdirref):BLooper("plug-in manager",B_LOW_PRIORITY)
  }
 plugman::~plugman()
  {
+  printf("plugman destructor\n");
   stop_watching(this,NULL);
   delete appaddondir;
   delete useraddondir;
  }
 bool plugman::QuitRequested()
  {
+  printf("plugman QuitRequested()\n");
+  UnloadAllPlugins(true);
   return true;
  }
 void plugman::MessageReceived(BMessage *msg)
@@ -408,6 +411,7 @@ void *plugman::FindPlugin(uint32 which, uint32 secondary)
    {
   	if (LoadPlugin(tmp->plugid)!=B_OK)
   		return NULL;
+  	tmp->inmemory=true;
    if (tmp->pobj->IsHandler())
     AddHandler((BHandler*)tmp->pobj->Handler());
    }
@@ -449,15 +453,19 @@ void plugman::AddPlug(plugst *plug)
  }
 status_t plugman::UnloadAllPlugins(bool clean)
  {
+  printf("UnloadAllPlugins\n");
   plugst *cur=head,*tmp;
   while (cur!=NULL)
    {
+    if (cur->pobj!=NULL)
+	    printf("Unloading plugin: %s\n",cur->pobj->PlugName());
     if (clean)
      {
       tmp=cur->next;
       if (cur->inmemory)
        {
         status_t (*Shutdown)(bool);
+
         if (get_image_symbol(cur->sysid,"Shutdown",B_SYMBOL_TYPE_TEXT,(void**)&Shutdown)==B_OK)
           (*Shutdown)(true);
         unload_add_on(cur->sysid);
@@ -493,6 +501,7 @@ status_t plugman::UnloadAllPlugins(bool clean)
            status_t (*Shutdown)(bool);
            if (get_image_symbol(cur->sysid,"Shutdown",B_SYMBOL_TYPE_TEXT,(void**)&Shutdown)==B_OK)
              (*Shutdown)(true);
+           cur->inmemory=false;
            unload_add_on(cur->sysid);
           }
          delete cur;

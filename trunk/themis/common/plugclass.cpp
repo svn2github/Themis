@@ -84,6 +84,11 @@ thread_id PlugClass::Thread()
  {
   return thread;
  }
+ 
+void PlugClass::Stop()
+ {
+  atomic_add(&Cancel,1);
+ }
 
 int32 PlugClass::TypePrimary()
  {

@@ -33,7 +33,7 @@ TYPE= SHARED
 #	are included from different directories.  Also note that spaces
 #	in folder names do not work well with this makefile.
 SRCS=  \
-	../../common/plugclass.cpp \
+	plugclass.cpp \
 	cache_main.cpp \
 	cacheman.cpp 
 

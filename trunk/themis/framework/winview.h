@@ -36,6 +36,7 @@ Project Start Date: October 18, 2000
 #include <SupportKit.h>
 #include "appdefines.h"
 #include <TextControl.h>
+#include <Button.h>
 #include "plugman.h"
 #include "plugclass.h"
 #include "htmlparser.h"
@@ -46,6 +47,7 @@ class winview:public BView
    void AttachedToWindow();
    void MessageReceived(BMessage *msg);
    BTextControl *locline;
+   BButton *stopbutton;
    uint32 protocol;
    HTMLParser *Parser;
    sem_id proto_sem;

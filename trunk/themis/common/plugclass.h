@@ -28,7 +28,8 @@ Project Start Date: October 18, 2000
 */
 
 /*
-Include *both* plugclass.h *and* plugclass.cpp in your plugin!
+Include *both* plugclass.h *and* plugclass.cpp in your plugin! If necessary,
+add a command to makelinks.sh to create this link in your plug-in's directory.
 */
 
 #ifndef _PlugClass
@@ -41,6 +42,7 @@ Include *both* plugclass.h *and* plugclass.cpp in your plugin!
 #include <Message.h>
 #include <Entry.h>
 #include <OS.h>
+
 #define ProtocolPlugin 'pplg'
 #define ContentPlugin 'cplg'
 #define HTMLPlugin 'hplg'
@@ -56,7 +58,7 @@ class PlugClass
    BMessage *InitInfo;
    virtual ~PlugClass();
    
-   volatile int8 Cancel;
+   volatile int32 Cancel;
    virtual uint32 PlugID();
    virtual uint32 SecondaryID();
   /*
@@ -79,6 +81,7 @@ class PlugClass
    virtual int32 SpawnThread(BMessage *info);
    virtual int32 StartThread();
    virtual thread_id Thread();
+   virtual void Stop();
    thread_id thread;
    
    BWindow *Window;

@@ -30,6 +30,7 @@ Project Start Date: October 18, 2000
 #define _http_main
 #include <SupportKit.h>
 #include <AppKit.h>
+#include <KernelKit.h>
 #include <NetEndpoint.h>
 #include "protocol_plugin.h"
 //namespace Themis_Networking
@@ -37,14 +38,39 @@ Project Start Date: October 18, 2000
   extern "C" __declspec(dllexport)status_t Initialize(void *info=NULL);
   extern "C" __declspec(dllexport)status_t Shutdown(bool now=false);
   extern "C" __declspec(dllexport)protocol_plugin* GetObject(void);
-  
+class http_worker
+ {
+  public:
+   http_worker(BMessage *info);
+   ~http_worker();
+   port_id http_proto_port;
+   int32 sock;
+   BMessage *Info;
+   volatile int32 die;
+   bool Quit();
+   int32 *benval;
+   sem_id httpsem;
+   thread_id thread;
+   static int32 GetIt(void *);
+     void FindURI(const char *url,BString &host,uint16 &port,BString &uri);
+     BMessage *ProcessRespLine(const char *data);
+     BMessage *GetHead(BMessage *info,int32 use_sock=-1);
+     BMessage *GetURL(BMessage *info);
+     thread_id Thread();
+     BList *list;
+ };  
 class http_protocol:public ProtocolPlugClass
    {
     private:
+     port_id http_proto_port;
      size_t buflen,rawbuflen;
      bool chunked;
      int32 chunksize;
      bool headerreceived;
+     BList *Threads;
+     BList *queue;
+     int32 benval;
+     sem_id httpsem;
     public:
      http_protocol();
      ~http_protocol();
@@ -54,16 +80,15 @@ class http_protocol:public ProtocolPlugClass
      uint32 PlugID(void);
      float PlugVersion(void);
      status_t Go(void);
-//     PlugType PluginType(void);
      int32 SpawnThread(BMessage *info);
-     void FindURI(const char *url,BString &host,int &port,BString &uri);
-     void ParseResponse(unsigned char *resp,size_t size);
-//     void Config(BMessage *msg);
-     unsigned char *GetDoc(BString &host,int &port,BString &uri);
-     BMessage *GetHead(BMessage *info,BNetEndpoint *use_ep=NULL);
-     unsigned char *GetDoc(const char* url);
-     unsigned char *GetURL(const char* url);
-     BMessage *GetURL_(BMessage *info);
+     bool IsPersistant(){return true;}
+     void Stop();
+   //  void FindURI(const char *url,BString &host,int &port,BString &uri);
+ //    void ParseResponse(unsigned char *resp,size_t size);
+  //   BMessage *ProcessRespLine(const char *data);
+ //    unsigned char *GetDoc(BString &host,int &port,BString &uri);
+ //    unsigned char *GetDoc(const char* url);
+ //    unsigned char *GetURL(const char* url);
      int32 GetURL(BMessage *info);
      static int32 ThreadFunc(void *info);
    };

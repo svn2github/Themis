@@ -51,13 +51,22 @@ App::~App()
  }
 bool App::QuitRequested()
  {
-  BMessenger msgr(NULL,win,NULL);
-  msgr.SendMessage(B_QUIT_REQUESTED);
+  printf("app destructor\n");
+  BMessenger *msgr=new BMessenger(NULL,win,NULL);
+  thread_id th;
   status_t stat;
-  wait_for_thread(win->Thread(),&stat);
+  th=win->Thread();
+  msgr->SendMessage(B_QUIT_REQUESTED);
+  wait_for_thread(th,&stat);
 //  RemoveHandler((BHandler*)PluginManager->FindPlugin(CachePlugin));
-  PluginManager->Lock();
-  PluginManager->Quit();
+  delete msgr;
+  msgr=new BMessenger(NULL,PluginManager,NULL);
+  th=PluginManager->Thread();
+  msgr->SendMessage(B_QUIT_REQUESTED);
+  delete msgr;
+  wait_for_thread(th,&stat);
+//  PluginManager->Lock();
+//  PluginManager->Quit();
   return true;
  }
 void App::MessageReceived(BMessage *msg)

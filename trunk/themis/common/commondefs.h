@@ -44,4 +44,11 @@ Project Start Date: October 18, 2000
 #define UpdateCachedObject 'ucob'
 #define ClearCache 'clca'
 
+//protocol items
+#define FetchItem 'fitm'
+#define StayAlive 'live'
+#define ReturnedData 'data'
+#define SendData 'send'
+#define ThreadDone 'done'
+
 #endif
