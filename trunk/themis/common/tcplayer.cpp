@@ -195,7 +195,7 @@ connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, b
 		nu->address->SetTo(host,port);
 		nu->socket=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
 		sockaddr_in servaddr;
-		mtx->lock();
+		//mtx->lock();
 		nu->address->GetAddr(servaddr);
 		nu->result=connect(nu->socket,(sockaddr *)&servaddr,sizeof(servaddr));
 #ifdef USEOPENSSL
@@ -235,7 +235,7 @@ connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, b
   printf ("\t issuer: %s\n", str);
   free (str);
 			}
-		mtx->unlock();
+		//mtx->unlock();
 		}
 #endif			
 		if (nu->result<0) {
@@ -304,12 +304,12 @@ connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, b
 #if USENETSERVER
 		sockproto=0;
 #endif
-		mtx->lock();
+		//mtx->lock();
 		current->socket=socket(AF_INET,SOCK_STREAM,sockproto);
 		sockaddr_in servaddr;
 		current->address->GetAddr(servaddr);
 		current->result=connect(current->socket,(sockaddr *)&servaddr,sizeof(servaddr));
-		mtx->unlock();
+		//mtx->unlock();
 		if (current->result==0) {
 			current->open=true;
 		} else {
@@ -325,7 +325,7 @@ connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, b
 */		
 #ifdef USEOPENSSL
 		if (ssl){
-mtx->lock();
+//mtx->lock();
 			printf("Uses SSL...\n");
 			current->usessl=true;	
 			printf("Creating new context...");
@@ -414,7 +414,7 @@ mtx->lock();
   printf ("\t issuer: %s\n", str);
   free (str);
 				}
-mtx->unlock();				
+//mtx->unlock();				
 		}
 #endif
 		
@@ -439,9 +439,9 @@ mtx->unlock();
 				sockaddr_in servaddr;
 				current->address->GetAddr(servaddr);
 				current->socket=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
-mtx->lock();
+//mtx->lock();
 				current->result=connect(current->socket,(sockaddr *)&servaddr,sizeof(servaddr));
-mtx->unlock();
+//mtx->unlock();
 /*			if (!Connected(current,true)) {
 				current->open=false;
 					
@@ -450,7 +450,7 @@ mtx->unlock();
 */			
 #ifdef USEOPENSSL
 				if (ssl){
-				mtx->lock();
+				//mtx->lock();
 			current->usessl=true;	
 			current->ssl = SSL_new (sslctx);
 			SSL_set_fd (current->ssl, current->socket);
@@ -486,7 +486,7 @@ mtx->unlock();
   free (str);
 
 		}
-mtx->unlock();
+//mtx->unlock();
 				}
 #endif
 				
@@ -554,9 +554,9 @@ connection *tcplayer::NextConnection() {
 void tcplayer::CloseConnection(connection *target) {
 	if (acquire_sem(conn_sem)!=B_OK)
 		return;
-mtx->lock();
+//mtx->lock();
 	closesocket(target->socket);
-mtx->unlock();
+//mtx->unlock();
 	target->open=false;
 #ifdef USEOPENSSL
 	if (target->usessl){
@@ -577,9 +577,9 @@ void tcplayer::KillConnection(connection *target) {
 	if (acquire_sem_etc(conn_sem,1,B_ABSOLUTE_TIMEOUT,100000)!=B_OK)
 		return;
 	if (target->open) {
-mtx->lock();
+//mtx->lock();
 		closesocket(target->socket);
-mtx->unlock();
+//mtx->unlock();
 		target->open=false;
 #ifdef USEOPENSSL
 		if (target->usessl){
@@ -645,16 +645,16 @@ printf("Not connected (send)\n");
 	ssize_t sent=0;
 #ifdef USEOPENSSL
 	if ((*conn)->usessl) {
-		mtx->lock();
+		//mtx->lock();
 		sent=SSL_write((*conn)->ssl,(const char*)data,size);
-		mtx->unlock();
+		//mtx->unlock();
 //		CHK_SSL(sent);
 	}
 	else {
 #endif
-		mtx->lock();
+		//mtx->lock();
 		sent=send((*conn)->socket,data,size,0);
-		mtx->unlock();
+		//mtx->unlock();
 #ifdef USEOPENSSL
 	}
 #endif	 
@@ -681,22 +681,22 @@ int32 tcplayer::Receive(connection **conn, unsigned char *data, int32 size) {
 //	 atomic_add(&(*conn)->requests,1);
 	printf("TCP layer Receive\n");
 	int option=1;
-	mtx->lock();
+	//mtx->lock();
 	setsockopt((*conn)->socket,SOL_SOCKET,SO_NONBLOCK,&option,sizeof(option));
-	mtx->unlock();
+	//mtx->unlock();
 	ssize_t got=0;
 	if (Connected((*conn))) {
 #ifdef USEOPENSSL
 		if ((*conn)->usessl) {
-			mtx->lock();
+			//mtx->lock();
 			got=SSL_read ((*conn)->ssl,(char*)data,size);
-			mtx->unlock();
+			//mtx->unlock();
 //			CHK_SSL(got);
 		} else {
 #endif
-			mtx->lock();
+			//mtx->lock();
 			got=recv((*conn)->socket,data,size,0);
-			mtx->unlock();
+			//mtx->unlock();
 #ifdef USEOPENSSL
 		}	
 #endif
@@ -709,15 +709,15 @@ int32 tcplayer::Receive(connection **conn, unsigned char *data, int32 size) {
 	} else {
 #ifdef USEOPENSSL
 		if ((*conn)->usessl) {
-			mtx->lock();
+			//mtx->lock();
 			got=SSL_read((*conn)->ssl,(char*)data,size);
-			mtx->unlock();
+			//mtx->unlock();
 //			CHK_SSL(got);
 		} else {
 #endif
-			mtx->lock();
+			//mtx->lock();
 			got=recv((*conn)->socket,data,size,0);
-			mtx->unlock();
+			//mtx->unlock();
 #ifdef USEOPENSSL
 		}
 #endif
@@ -736,9 +736,9 @@ int32 tcplayer::Receive(connection **conn, unsigned char *data, int32 size) {
 //	if ((*conn)->requests==1)
 //		atomic_add(&(*conn)->requests,-1);
 	option=0;
-	mtx->lock();
+	//mtx->lock();
 	setsockopt((*conn)->socket,SOL_SOCKET,SO_NONBLOCK,&option,sizeof(option));
-	mtx->unlock();
+	//mtx->unlock();
 	return got;
 }
 
@@ -758,7 +758,7 @@ bool tcplayer::DataWaiting(connection *conn) {
 //		printf("[DataWaiting] Connection status reports differ\n");
 	
 	int option=1;
-	mtx->lock();
+	//mtx->lock();
 	setsockopt(conn->socket,SOL_SOCKET,SO_NONBLOCK,&option,sizeof(option));
 		
 	struct timeval tv;
@@ -782,7 +782,7 @@ bool tcplayer::DataWaiting(connection *conn) {
 			answer=false;
 #endif
 	}
-	mtx->unlock();
+	//mtx->unlock();
 	return answer;
 		
 	}
@@ -821,9 +821,9 @@ bool tcplayer::Connected(connection *conn,bool skipvalid) {
 	int iret=0;
 	bool bOK=true;
 	int option=1;
-	mtx->lock();
+	//mtx->lock();
 	setsockopt(conn->socket,SOL_SOCKET,SO_NONBLOCK,&option,sizeof(option));
-	mtx->unlock();
+	//mtx->unlock();
 //		printf("checking connection status...");
 //		fflush(stdout);
 		
@@ -832,26 +832,26 @@ bool tcplayer::Connected(connection *conn,bool skipvalid) {
 		
 		struct timeval timeout={0,10000};
 		fd_set readsocketset;
-		mtx->lock();
+		//mtx->lock();
 		FD_ZERO(&readsocketset);
 		FD_SET(conn->socket,&readsocketset);
 		iret=select(32,&readsocketset,NULL,NULL,&timeout);
-		mtx->unlock();
+		//mtx->unlock();
 		bOK=(iret>0);
 		
 		if (bOK){
-		mtx->lock();
+		//mtx->lock();
 		bOK = FD_ISSET(conn->socket, &readsocketset );
-		mtx->unlock();
+		//mtx->unlock();
 		}
 		
         if( bOK ) 
         { 
                 char szBuffer[1] = ""; 
 #ifdef BONE_VERSION
-                mtx->lock();
+                //mtx->lock();
                 iret = recv( conn->socket, szBuffer, 1, MSG_PEEK ); 
-                mtx->unlock();
+                //mtx->unlock();
 //				printf("iret: %d\n",iret);
 //				if (iret==0)
 //					printf("error: %d\n",errno);
@@ -877,9 +877,9 @@ bool tcplayer::Connected(connection *conn,bool skipvalid) {
         }
 		option=0;
 //		printf("%s\n",conn->open ? "connected":"disconnected");
-		mtx->lock();
+		//mtx->lock();
 		setsockopt(conn->socket,SOL_SOCKET,SO_NONBLOCK,&option,sizeof(option));
-		mtx->unlock();
+		//mtx->unlock();
 		if (oldstatus)
 			if (!conn->open)
 				printf("Connection %p on socket %ld closed\n",conn,conn->socket);
@@ -904,34 +904,34 @@ bool tcplayer::Connected(connection *conn,bool skipvalid) {
 	int option=1;
 //		printf("checking connection status...");
 //		fflush(stdout);
-	mtx->lock();	
+	//mtx->lock();	
 	/*int err=*/setsockopt(conn->socket,SOL_SOCKET,SO_NONBLOCK,&option,sizeof(option));
-	mtx->unlock();
+	//mtx->unlock();
 //		if (err<0)
 //			printf("err %d\n",err);
 		
 		struct timeval timeout={0,10000};
-		mtx->lock();
+		//mtx->lock();
 		fd_set readsocketset;
 		FD_ZERO(&readsocketset);
 		FD_SET(conn->socket,&readsocketset);
 		iret=select(32,&readsocketset,NULL,NULL,&timeout);
-		mtx->unlock();
+		//mtx->unlock();
 		bOK=(iret>0);
 		
 		if (bOK){
-		mtx->lock();
+		//mtx->lock();
 		bOK = FD_ISSET(conn->socket, &readsocketset );
-		mtx->unlock();
+		//mtx->unlock();
 		}
 		
         if( bOK ) 
         { 
                 char szBuffer[1] = ""; 
 #ifdef BONE_VERSION
-        mtx->lock();
+        //mtx->lock();
                 iret = recv( conn->socket, szBuffer, 1, MSG_PEEK ); 
-        mtx->unlock();
+        //mtx->unlock();
 //				printf("iret: %d\n",iret);
 //				if (iret==0)
 //					printf("error: %d\n",errno);
@@ -957,9 +957,9 @@ bool tcplayer::Connected(connection *conn,bool skipvalid) {
         }
 		option=0;
 //		printf("%s\n",conn->open ? "connected":"disconnected");
-		mtx->lock();
+		//mtx->lock();
 		setsockopt(conn->socket,SOL_SOCKET,SO_NONBLOCK,&option,sizeof(option));
-		mtx->unlock();
+		//mtx->unlock();
 		if (oldstatus)
 			if (!conn->open)
 				printf("Connection %p on socket %ld closed\n",conn,conn->socket);
