@@ -85,8 +85,6 @@ httplayer::httplayer(tcplayer *_TCP)
 	__TCP==_TCP;
 	meHTTP=this;
 	Basic=NULL;
-	UnprocessedReqs=new BList(1);
-	ResubmitReqs=new BList(1);
 	requests_head=NULL;
 	quit=0;
 	http_mgr_sem=create_sem(1,"http_mgr_sem");
@@ -132,17 +130,7 @@ httplayer::~httplayer() {
 */
 httplayer::~httplayer() 
 {
-	ResubmitReqs->MakeEmpty();
-	delete ResubmitReqs;
-	ResubmitReqs=NULL;
 	http_request *req;
-	while(UnprocessedReqs->CountItems()>0) {
-		req=(http_request*)UnprocessedReqs->RemoveItem((int32)0);
-		if (req!=NULL)
-			delete req;
-	}
-	delete UnprocessedReqs;
-	UnprocessedReqs=NULL;
 	
 	while(requests_head!=NULL) {
 		req=requests_head->next;
@@ -578,13 +566,11 @@ http_request *httplayer::AddRequest(BMessage *info) {
 #else
 // We have and want to be able to use OpenSSL in Themis.
 		printf("Request is to: %s:%u\nURI: %s\n",request->host,request->port,request->uri);
-		UnprocessedReqs->AddItem(request);
 		delete info;
 		printf("End AddRequest\n");
 #endif
 		} else {
 			printf("Request is to: %s:%u\nURI: %s\n",request->host,request->port,request->uri);
-			UnprocessedReqs->AddItem(request);
 			delete info;
 			printf("End AddRequest\n");
 		}
