@@ -343,6 +343,33 @@ void BaseParser	::	processSStar()	{
 
 void BaseParser	::	processPs()	{
 
+	switch( mDocText->getChar() )	{
+		case '-':	{
+			try	{
+				processComment();
+				return;
+			}
+			catch( ReadException r )	{
+				if ( r.isFatal() )	{
+					throw;
+				}
+				break;
+			}
+		}
+		case '%':	{
+			try	{
+				processParEntityReference();
+				return;
+			}
+			catch( ReadException r )	{
+				if ( r.isFatal() )	{
+					throw r;
+				}
+				break;
+			}
+		}
+	}
+
 	try	{
 		processS();
 		return;
@@ -357,6 +384,8 @@ void BaseParser	::	processPs()	{
 	catch( ReadException r )	{
 		// Do nothing
 	}
+
+/*
 	try	{
 		processParEntityReference();
 		return;
@@ -376,6 +405,7 @@ void BaseParser	::	processPs()	{
 			throw;
 		}
 	}
+*/
 
 	throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(), "Ps expected" );
 	
