@@ -116,6 +116,7 @@ void cacheman::MessageReceived(BMessage *mmsg)
       query.Fetch();
       ent.Unset();
       char fname[255];
+/*
       while (query.GetNextEntry(&ent,false)==B_OK) {
       	count++;
       	printf("count %lu\t",count);
@@ -124,6 +125,7 @@ void cacheman::MessageReceived(BMessage *mmsg)
 //      	ent.Remove();
       	ent.Unset();
       }
+*/
       printf("\n%lu cached file(s) removed due to new URL entered by user.\n",count);
    	}break;
     case FindCachedObject:
