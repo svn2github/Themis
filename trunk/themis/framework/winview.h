@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2000 Z3R0 One. All Rights Reserved.
+Copyright (c) 2000 Z3R0 One. All Rights Reserved. 
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -26,12 +26,24 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
-#ifndef _appdefines
-#define _appdefines
-#include "../common/commondefs.h"
+#ifndef _mainwinview
+#define _mainwinview
 
-#define AppSig ThemisAppSig
-
-
+#include <View.h>
+#include <Menu.h>
+#include <MenuItem.h>
+#include <MenuBar.h>
+#include <SupportKit.h>
+#include "appdefines.h"
+#include <TextControl.h>
+#include "plugman.h"
+class winview:public BView
+ {
+  public:
+   winview(BRect frame,const char *name,uint32 resizem,uint32 flags);
+   void AttachedToWindow();
+   void MessageReceived(BMessage *msg);
+   BTextControl *locline;
+ };
 
 #endif

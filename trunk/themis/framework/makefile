@@ -36,7 +36,8 @@ SRCS=  \
 	win.cpp \
 	main.cpp \
 	app.cpp \
-	plugman.cpp
+	plugman.cpp \
+	winview.cpp
 
 #	specify the resource files to use
 #	full path or a relative path to the resource file can be used.

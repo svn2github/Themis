@@ -29,15 +29,20 @@ Project Start Date: October 18, 2000
 #ifndef _winclass
 #define _winclass
 #include <InterfaceKit.h>
+#include "winview.h"
 
 class Win:public BWindow
  {
+  private:
+   bool startup;
   public:
+   winview *view;
    Win(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspace=B_CURRENT_WORKSPACE);
    Win(BRect frame,const char *title, window_look look,window_feel feel,uint32 flags,uint32 wspace=B_CURRENT_WORKSPACE);
    Win(BMessage *archive);
    bool QuitRequested();
    void MessageReceived(BMessage *msg);
+   void WindowActivated(bool active);
  };
 
 #endif

@@ -27,14 +27,15 @@ Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
 #include "app.h"
+plugman *PluginManager;
 
 App::App(const char *appsig)
     :BApplication(appsig)
  {
   BRect r(100,100,650,450);
-  win=new Win(r,"Themis",B_TITLED_WINDOW,B_QUIT_ON_WINDOW_CLOSE,B_CURRENT_WORKSPACE);
   PluginManager=new plugman;
   PluginManager->BuildRoster();
+  win=new Win(r,"Themis",B_DOCUMENT_WINDOW,B_QUIT_ON_WINDOW_CLOSE,B_CURRENT_WORKSPACE);
  }
 App::~App()
  {
@@ -55,7 +56,7 @@ void App::MessageReceived(BMessage *msg)
       msg->FindPointer("http",(void**)&proto);
       if (proto!=NULL)
        {
-        fprintf(stdout,"webpage:\n%s\n.end\n",(char*)proto->GetURL("https://Themis.sourceforge.net/"));
+        fprintf(stdout,"webpage:\n%s\n.end\n",(char*)proto->GetURL("http://127.0.0.1/"));
        }
      }break;
     default:

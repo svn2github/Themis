@@ -28,6 +28,8 @@ Project Start Date: October 18, 2000
 */
 
 #include "plugman.h"
+#include "commondefs.h"
+#include <stdio.h>
 
 plugman::plugman()
         :BLooper("plug-in manager",B_LOW_PRIORITY)
@@ -63,6 +65,24 @@ plugman::~plugman()
      }
    }
   delete addondir;
+ }
+void *plugman::FindPlugin(int32 which)
+ {
+  plugst *tmp=head;
+  while(tmp!=NULL)
+   {
+    if (tmp->plugid==which)
+     {
+      printf("found it\n");
+      break;
+     }
+    tmp=tmp->next;
+   }
+  if (tmp==NULL)
+   return NULL;
+  if (tmp->pobj!=NULL)
+   return tmp->pobj;
+  return tmp->handler;
  }
 status_t plugman::UnloadAllPlugins()
  {

@@ -35,4 +35,6 @@ Project Start Date: October 18, 2000
 #define PlugName "Cache Manager"
 #define PlugVers .01
 
+#define UpdateCache 'upca'
+
 #endif

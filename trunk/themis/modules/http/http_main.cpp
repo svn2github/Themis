@@ -173,12 +173,14 @@ void http_protocol::ParseResponse(unsigned char *resp,size_t size)
   BString tmp;
   if (buffer->BufferLength()==0)
    {//gather header info
-    char crlf[3];
-    crlf[0]=10;
-    crlf[1]=13;
-    crlf[2]=10;
+    char crlf[5];
+    crlf[0]=13;
+    crlf[1]=10;
+    crlf[2]=13;
+    crlf[3]=10;
+    crlf[4]=0;
      char *headend=strstr((char*)resp,crlf);//end of header
-     char *databeg=headend+(3);
+     char *databeg=headend+(4);
      char *curp=NULL;
      int32 endofhead=0;
      if(headend!=NULL)

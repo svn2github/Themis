@@ -28,11 +28,15 @@ Project Start Date: October 18, 2000
 */
 #include "cacheman.h"
 #include "../../common/commondefs.h"
+#include "cache_defines.h"
 #include <stdio.h>
 #include <kernel/fs_index.h>
 #include <string.h>
 #include <String.h>
 #include <AppKit.h>
+#include <Message.h>
+#include <Messenger.h>
+#include <MessageRunner.h>
 cacheman::cacheman()
          :BHandler("cache_manager")
  {
@@ -49,6 +53,51 @@ void cacheman::MessageReceived(BMessage *msg)
  {
   switch(msg->what)
    {
+    case FindCachedObject:
+     {
+     }break;
+    case CreateCacheObject:
+     {
+     }break;
+    case UpdateCachedObject:
+     {
+     }break;
+    case ClearCache:
+     {
+      printf("Clearing cache...\n");
+      BVolumeRoster volr;
+      BVolume vol;
+      for (int i=0;i<5;i++)
+      //the query repeats 5 times to make sure all appropriate files are removed
+       {
+        while (volr.GetNextVolume(&vol)==B_OK)
+         {
+          BQuery query;
+          query.Clear();
+          query.SetVolume(&vol);
+          query.PushAttr("BEOS:TYPE");
+          query.PushString(ThemisCacheMIME);
+          query.PushOp(B_EQ);
+          query.Fetch();
+          snooze(100000);
+          BEntry ent;
+          char fname[B_FILE_NAME_LENGTH];
+          while (query.GetNextEntry(&ent)==B_OK)
+           {
+            ent.GetName(fname);
+            printf("\t\t%s: ",fname);
+            if ((ent.InitCheck()==B_OK) && (ent.Exists()))
+             {
+              if(ent.Remove()==B_OK)
+               printf("removed\n");
+              else
+               printf("error\n");
+             }
+           }
+         }
+        volr.Rewind();
+       }
+     }break;
     default:
      {
       BHandler::MessageReceived(msg);

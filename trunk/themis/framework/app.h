@@ -33,12 +33,12 @@ Project Start Date: October 18, 2000
 #include "appdefines.h"
 #include "plugman.h"
 
+
 class App:public BApplication
  {
   private:
    Win *win;
   public:
-   plugman *PluginManager;
    App(const char *appsig);
    ~App();
    bool QuitRequested();

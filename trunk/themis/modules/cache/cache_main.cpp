@@ -39,6 +39,8 @@ status_t Initialize(bool go)
  }
 status_t Shutdown(bool now=false)
  {
+  if (CacheMan->Looper()!=NULL)
+   (CacheMan->Looper())->RemoveHandler(CacheMan);
   delete CacheMan;
   return B_OK;
  }

@@ -32,4 +32,14 @@ Project Start Date: October 18, 2000
 #define ThemisAppSig "application/x-vnd.becommunity-themis"
 #define ThemisCacheMIME "application/x-Themis-cache"
 
+#define HTTPPlugin 'http'
+#define CachePlugin 'cash'
+#define HTMLPlugin 'html'
+
+#define FindCachedObject 'fcob'
+#define CreateCacheObject 'ccob'
+#define CacheObjectNotFound 'conf'
+#define UpdateCachedObject 'ucob'
+#define ClearCache 'clca'
+
 #endif

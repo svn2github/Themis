@@ -46,6 +46,7 @@ class plugman: public BLooper
    BDirectory *addondir;
    plugman();
    ~plugman();
+   void *FindPlugin(int32 which);
    status_t UnloadAllPlugins();
    status_t UnloadPlugin(int32 which);
    status_t LoadPlugin(int32 which);
