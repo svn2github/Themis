@@ -27,6 +27,7 @@ class HTMLParser	{
 	private:
 		unsigned int mPos;
 		unsigned int mOldPos; // Position in string before last read.
+		bool mAttrNoValue; // Indicates if an tag attribute has a value
 		string mTag;	// Current tag
 		string mContent; // Content of the to be parsed file
 		StringType mStringType; // Type of the text last retrieved
@@ -36,6 +37,7 @@ class HTMLParser	{
 		bool isStartTag()	;
 		bool isDocTypeTag();
 		bool isHtmlTag();
+		bool isCommentTag();
 		bool isHeadTag();
 		bool isBodyTag();
 		bool isTitleTag();
@@ -70,17 +72,25 @@ class HTMLParser	{
 		bool isFontStylePreTag();
 		bool isPhraseTag();
 		bool isFormFieldTag();
+		bool isInputTag();
+		bool isSelectTag();
+		bool isTextAreaTag();
+		bool isOptionTag();
 		bool isAnchorTag();
 		bool isEmptyTextTag();
 		bool isEmptyTextPreTag();
 		bool isAppletTag();
+		bool isParamTag();
 		bool isFontTag();
 		bool isMapTag();
+		bool isAreaTag();
 		// Functions for getting a part of the input
+		bool isWhiteSpace();
 		string getTag();
 		string getText( bool aConserveSpaces = false );
 		string getAttrValue();
-		string getAttribute();		
+		string getAttribute();
+		string getComment();
 		string getString( bool aConserveSpaces = false );
 		// Functions for moving around in the input
 		void skipTag(); // Skip the whole tag
@@ -89,19 +99,25 @@ class HTMLParser	{
 		// Tag recognition functions
 		void doctypeTag();
 		void htmlTag();
+		void commentTag( TElementShared aParent );
 		void headTag( TElementShared aParent );
 		void normalHeadTag( TElementShared aParent );
 		void bodyStyleTag( TElementShared aParent, bool aInsideForm = false );
 		void adressTag( TElementShared aParent );
 		void blockLevelTag( TElementShared aParent, bool aInsideForm = false );
-		void textLevelTag( TElementShared aParent, bool aConserveSpace = false, bool aInsideAnchor = false );
+		void textLevelTag( TElementShared aParent, bool aConserveSpaces = false, bool aInsideAnchor = false );
 		void flowLevelTag( TElementShared aParent );
+		void formFieldTag( TElementShared aParent, bool aConserveSpaces = false );
 		void pTag( TElementShared aParent );
 		void listTag( TElementShared aParent );
 		void tableTag( TElementShared aParent );
 		void trTag( TElementShared aParent );
 		void preTag( TElementShared aParent );
 		void emptyElementTag( TElementShared aParent );
+		void selectTag( TElementShared aParent, bool aConserveSpaces = false );
+		void pcDataTag( TElementShared aParent, bool aConserveSpaces = false );
+		void appletTag( TElementShared aParent, bool aConserveSpaces = false, bool aInsideAnchor = false );
+		void mapTag( TElementShared aParent );
 		void normalTextTag( TElementShared aParent, bool aConserveSpaces = false, bool aInsideAnchor = false );
 	
 	public:

@@ -20,6 +20,7 @@
 #include "TNodeList.h"
 #include "TNamedNodeMap.h"
 #include "TText.h"
+#include "TComment.h"
 
 HTMLParser	::	HTMLParser()	{
 
@@ -95,6 +96,16 @@ bool HTMLParser	::	isDocTypeTag()	{
 bool HTMLParser	::	isHtmlTag()	{
 	
 	if ( !mTag.compare( "html" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isCommentTag()	{
+	
+	if ( !mTag.compare( "!--" ) )	{
 		return true;
 	}
 	
@@ -480,7 +491,47 @@ bool HTMLParser	::	isFormFieldTag()	{
 	
 	return false;
 	
-}	 
+}
+
+bool HTMLParser	::	isInputTag()	{
+	
+	if ( !mTag.compare( "input" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isSelectTag()	{
+	
+	if ( !mTag.compare( "select" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isTextAreaTag()	{
+	
+	if ( !mTag.compare( "textarea" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isOptionTag()	{
+	
+	if ( !mTag.compare( "option" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
 
 bool HTMLParser	::	isAnchorTag()	{
 	
@@ -524,6 +575,16 @@ bool HTMLParser	::	isAppletTag()	{
 	
 }
 
+bool HTMLParser	::	isParamTag()	{
+	
+	if ( !mTag.compare( "param" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
 bool HTMLParser	::	isFontTag()	{
 	
 	if ( !mTag.compare( "font" ) )	{
@@ -537,6 +598,26 @@ bool HTMLParser	::	isFontTag()	{
 bool HTMLParser	::	isMapTag()	{
 	
 	if ( !mTag.compare( "map" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isAreaTag()	{
+	
+	if ( !mTag.compare( "area" ) )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+bool HTMLParser	::	isWhiteSpace()	{
+	
+	if ( mContent[mPos] == ' ' || mContent[mPos] == '\t' || mContent[mPos] == '\n' )	{
 		return true;
 	}
 	
@@ -570,8 +651,7 @@ string HTMLParser	::	getTag()	{
 		mPos++;
 	}
 	
-	while ( mPos != mContent.size() && mContent[mPos] != ' ' &&
-			   mContent[mPos] != '\n' && mContent[mPos] != '\t' && mContent[mPos] != '>' )	{
+	while ( mPos != mContent.size() && !isWhiteSpace() && mContent[mPos] != '>' )	{
 		mTag += tolower( mContent[mPos] );
 		mPos++;
 	}
@@ -631,7 +711,7 @@ string HTMLParser	::	getAttrValue()	{
 	
 	mPos++;
 	
-	while ( mPos != mContent.size() && mContent[mPos] == ' ' )	{
+	while ( mPos != mContent.size() && isWhiteSpace() )	{
 		mPos++;
 	}
 	
@@ -648,7 +728,7 @@ string HTMLParser	::	getAttrValue()	{
 		mPos++;
 	}
 	else	{
-		while ( mPos != mContent.size() && mContent[mPos] != '>' && mContent[mPos] != ' ' )	{
+		while ( mPos != mContent.size() && mContent[mPos] != '>' && !isWhiteSpace() )	{
 			result += mContent[mPos];
 			mPos++;
 		}
@@ -661,10 +741,11 @@ string HTMLParser	::	getAttrValue()	{
 string HTMLParser	::	getAttribute()	{
 
 	mOldPos = mPos;
+	mAttrNoValue = false;
 
 	string result;
 
-	while ( mPos != mContent.size() && mContent[mPos] == ' ' )	{
+	while ( mPos != mContent.size() && isWhiteSpace() )	{
 		mPos++;
 	}
 	
@@ -672,10 +753,47 @@ string HTMLParser	::	getAttribute()	{
 		return result;
 	}
 	
-	while ( mPos != mContent.size() && mContent[mPos] != '=' && mContent[mPos] != ' ' && mContent[mPos] != '>' )	{
+	while ( mPos != mContent.size() && mContent[mPos] != '=' && !isWhiteSpace() )	{
 		// I'm assuming case does not matter with attribute names
 		result+= tolower( mContent[mPos] );
 		mPos++;
+	}
+	
+	while ( mPos != mContent.size() && isWhiteSpace() )	{
+		mPos++;
+	}
+	
+	if ( mContent[mPos] != '=' )	{
+		// Attribute doesn't have a value
+		mAttrNoValue = true;
+	}
+	
+	return result;
+	
+}
+
+string HTMLParser	::	getComment()	{
+	
+	string result;
+	
+	while ( mPos != mContent.size() && mContent[mPos] != '>' )	{
+		result += mContent[mPos];
+		mPos++;
+	}
+	
+	char last = result[ result.size() - 1 ];
+	
+	if ( last == '-' )	{
+		result.erase( result.size() - 1 );
+		last = result[ result.size() - 1 ];
+		if ( last == '-' )	{
+			result.erase( result.size() - 1 );
+			last = result[ result.size() - 1 ];
+			while ( last == ' ' || last == '\t' || last == '\n' )	{
+				result.erase( result.size() - 1 );
+				last = result[ result.size() - 1 ];
+			}
+		}
 	}
 	
 	return result;
@@ -808,6 +926,10 @@ void HTMLParser	::	htmlTag()	{
 				bodyStyleTag( element );
 				continue;
 			}
+			if ( isCommentTag() )	{
+				commentTag( element );
+				continue;
+			}
 
 			cout << "Unknown tag found. Skipping...\n";
 			skipTag();
@@ -825,6 +947,21 @@ void HTMLParser	::	htmlTag()	{
 			}
 		}
 	}
+	
+}
+
+void HTMLParser	::	commentTag( TElementShared aParent )	{
+
+	cout << "comment tag found\n";
+
+	string data = getComment();
+
+	// Add to parent
+	TCommentShared comment = mDocument->createComment( data );
+	aParent->appendChild( comment );
+
+	cout << "Comment:\n";
+	cout << data << endl;
 	
 }
 
@@ -942,6 +1079,10 @@ void HTMLParser	::	bodyStyleTag( TElementShared aParent, bool aInsideForm )	{
 		switch ( mStringType )	{
 			case ATTR :	{
 				attribute = data;
+				if ( mAttrNoValue )	{
+					element->setAttribute( attribute, "" );
+					attribute = "";
+				}
 				break;
 			}
 			case ATTRVALUE :	{
@@ -969,6 +1110,10 @@ void HTMLParser	::	bodyStyleTag( TElementShared aParent, bool aInsideForm )	{
 					}
 					if ( isTextLevelTag() )	{
 						textLevelTag( element );
+						continue;
+					}
+					if ( isCommentTag() )	{
+						commentTag( element );
 						continue;
 					}
 		
@@ -1023,6 +1168,10 @@ void HTMLParser	::	adressTag( TElementShared aParent )	{
 		switch ( mStringType )	{
 			case ATTR :	{
 				attribute = data;
+				if ( mAttrNoValue )	{
+					element->setAttribute( attribute, "" );
+					attribute = "";
+				}
 				break;
 			}
 			case ATTRVALUE :	{
@@ -1042,6 +1191,10 @@ void HTMLParser	::	adressTag( TElementShared aParent )	{
 					}
 					if ( isTextLevelTag() )	{
 						textLevelTag( element );
+						continue;
+					}
+					if ( isCommentTag() )	{
+						commentTag( element );
 						continue;
 					}
 		
@@ -1123,12 +1276,11 @@ void HTMLParser	::	textLevelTag( TElementShared aParent, bool aConserveSpaces, b
 	if ( isFontStyleTag() ||
 		 isPhraseTag() ||
 		 isFontTag() )	{
-		normalTextTag( aParent );
+		normalTextTag( aParent, aConserveSpaces, aInsideAnchor );
 		return;
 	}
 	if ( isFormFieldTag() )	{
-		//formFieldTag( aParent );
-		skipTag();
+		formFieldTag( aParent, aConserveSpaces );
 		return;
 	}
 	if ( isAnchorTag() )	{
@@ -1148,13 +1300,11 @@ void HTMLParser	::	textLevelTag( TElementShared aParent, bool aConserveSpaces, b
 		return;
 	}
 	if ( isAppletTag() )	{
-		//appletTag( aParent );
-		skipTag();
+		appletTag( aParent, aConserveSpaces, aInsideAnchor );
 		return;
 	}
 	if ( isMapTag() )	{
-		//mapTag( aParent );
-		skipTag();
+		mapTag( aParent );
 		return;
 	}
 	
@@ -1168,6 +1318,23 @@ void HTMLParser	::	flowLevelTag( TElementShared aParent )	{
 	}
 	if ( isTextLevelTag() )	{
 		textLevelTag( aParent );
+		return;
+	}
+
+}
+
+void HTMLParser	::	formFieldTag( TElementShared aParent, bool aConserveSpaces )	{
+	
+	if ( isInputTag() )	{
+		emptyElementTag( aParent );
+		return;
+	}
+	if ( isSelectTag() )	{
+		selectTag( aParent, aConserveSpaces );
+		return;
+	}
+	if ( isTextAreaTag() )	{
+		pcDataTag( aParent, aConserveSpaces );
 		return;
 	}
 
@@ -1193,6 +1360,10 @@ void HTMLParser	::	pTag( TElementShared aParent )	{
 		switch ( mStringType )	{
 			case ATTR :	{
 				attribute = data;
+				if ( mAttrNoValue )	{
+					element->setAttribute( attribute, "" );
+					attribute = "";
+				}
 				break;
 			}
 			case ATTRVALUE :	{
@@ -1217,6 +1388,10 @@ void HTMLParser	::	pTag( TElementShared aParent )	{
 						cout << "p closed implicitly\n";
 						insideP = false;
 						backPedal();
+						continue;
+					}
+					if ( isCommentTag() )	{
+						commentTag( element );
 						continue;
 					}
 		
@@ -1286,6 +1461,10 @@ void HTMLParser	::	listTag( TElementShared aParent )	{
 		switch ( mStringType )	{
 			case ATTR :	{
 				attribute = data;
+				if ( mAttrNoValue )	{
+					element->setAttribute( attribute, "" );
+					attribute = "";
+				}
 				break;
 			}
 			case ATTRVALUE :	{
@@ -1306,6 +1485,10 @@ void HTMLParser	::	listTag( TElementShared aParent )	{
 					}
 					if ( isDTTag() && !listItem )	{
 						textLevelTag( element );
+						continue;
+					}
+					if ( isCommentTag() )	{
+						commentTag( element );
 						continue;
 					}
 		
@@ -1358,6 +1541,10 @@ void HTMLParser	::	tableTag( TElementShared aParent )	{
 		switch ( mStringType )	{
 			case ATTR :	{
 				attribute = data;
+				if ( mAttrNoValue )	{
+					element->setAttribute( attribute, "" );
+					attribute = "";
+				}
 				break;
 			}
 			case ATTRVALUE :	{
@@ -1377,6 +1564,10 @@ void HTMLParser	::	tableTag( TElementShared aParent )	{
 					}
 					if ( isCaptionTag() )	{
 						normalTextTag( element );
+						continue;
+					}
+					if ( isCommentTag() )	{
+						commentTag( element );
 						continue;
 					}
 		
@@ -1429,6 +1620,10 @@ void HTMLParser	::	trTag( TElementShared aParent )	{
 		switch ( mStringType )	{
 			case ATTR :	{
 				attribute = data;
+				if ( mAttrNoValue )	{
+					element->setAttribute( attribute, "" );
+					attribute = "";
+				}
 				break;
 			}
 			case ATTRVALUE :	{
@@ -1444,6 +1639,10 @@ void HTMLParser	::	trTag( TElementShared aParent )	{
 				if ( isStartTag() )	{
 					if ( isThTag() || isTdTag() )	{
 						bodyStyleTag( element );
+						continue;
+					}
+					if ( isCommentTag() )	{
+						commentTag( element );
 						continue;
 					}
 		
@@ -1476,7 +1675,6 @@ void HTMLParser	::	trTag( TElementShared aParent )	{
 	
 }
 
-
 void HTMLParser	::	preTag( TElementShared aParent )	{
 
 	cout << "pre tag found\n";
@@ -1497,6 +1695,10 @@ void HTMLParser	::	preTag( TElementShared aParent )	{
 		switch ( mStringType )	{
 			case ATTR :	{
 				attribute = data;
+				if ( mAttrNoValue )	{
+					element->setAttribute( attribute, "" );
+					attribute = "";
+				}
 				break;
 			}
 			case ATTRVALUE :	{
@@ -1525,32 +1727,31 @@ void HTMLParser	::	preTag( TElementShared aParent )	{
 						normalTextTag( element, true );
 						continue;
 					}
-/*
 					if ( isFormFieldTag() )	{
-						formFielTag( element, true );
+						formFieldTag( element, true );
 						continue;
 					}
-*/
 					if ( isAnchorTag() )	{
 						normalTextTag( element, true, true );
 						continue;
 					}
-/*
 					if ( isAppletTag() )	{
 						appletTag( element, true );
 						continue;
 					}
-*/	
 					if ( isEmptyTextPreTag() )	{
 						emptyElementTag( element );
 						continue;
 					}
-/*
-					if ( isMap() )	{
+					if ( isMapTag() )	{
 						mapTag( element );
 						continue;
 					}
-*/						
+					if ( isCommentTag() )	{
+						commentTag( element );
+						continue;
+					}
+
 					// Not a known tag
 					cout << "Unknown tag found. Skipping...\n";
 					skipTag();
@@ -1592,6 +1793,10 @@ void HTMLParser	::	emptyElementTag( TElementShared aParent )	{
 		switch ( mStringType )	{
 			case ATTR :	{
 				attribute = data;
+				if ( mAttrNoValue )	{
+					element->setAttribute( attribute, "" );
+					attribute = "";
+				}
 				break;
 			}
 			case ATTRVALUE :	{
@@ -1608,6 +1813,307 @@ void HTMLParser	::	emptyElementTag( TElementShared aParent )	{
 				// At the end of the empty element tag
 				insideEmptyElement = false;
 				backPedal();
+				break;
+			}
+		}
+	}
+	
+}
+
+void HTMLParser	::	selectTag( TElementShared aParent, bool aConserveSpaces )	{
+	
+	cout << "select tag found\n";
+
+	// Add to parent
+	TElementShared element = mDocument->createElement( "select" );
+	aParent->appendChild( element );
+
+	bool insideSelect = true;
+	string attribute;
+	
+	while ( insideSelect )	{
+		string data = getString();
+
+		cout << "Received string " << data.size() << ": " << data << endl;
+
+		switch ( mStringType )	{
+			case ATTR :	{
+				attribute = data;
+				if ( mAttrNoValue )	{
+					element->setAttribute( attribute, "" );
+					attribute = "";
+				}
+				break;
+			}
+			case ATTRVALUE :	{
+				if ( attribute.compare( "" ) )	{
+					// Attribute has a name
+					// I'll declare it legal
+					element->setAttribute( attribute, data );
+					attribute = "";
+				}
+				break;
+			}
+			case TAG :	{
+				if ( isStartTag() )	{
+					if ( isOptionTag() )	{
+						pcDataTag( element, aConserveSpaces );
+						continue;
+					}
+					if ( isCommentTag() )	{
+						commentTag( element );
+						continue;
+					}
+		
+					// Not a known tag
+					cout << "Unknown tag found. Skipping...\n";
+					skipTag();
+					
+				}
+				else	{			
+					if ( isSelectTag() )	{
+						cout <<  " tr closing tag found\n";
+		
+						// End the while loop
+						insideSelect = false;
+					}
+					else	{
+						cout << "Unknown closing tag found. Skipping...\n";
+					}
+				}
+				break;
+			}
+			case TEXT :	{
+				if ( data.compare( " " ) && data.compare( "" ) )	{
+					cout << "Text found in illegal place. Skipping...\n";
+				}
+				break;
+			}
+		}
+	}
+	
+}
+
+void HTMLParser	::	pcDataTag( TElementShared aParent, bool aConserveSpaces )	{
+	
+	cout << mTag << " tag found\n";
+
+	// Save the tag name
+	string tag = mTag;
+
+	// Add to parent
+	TElementShared element = mDocument->createElement( mTag );
+	aParent->appendChild( element );
+
+	bool insidePcData = true;
+	string attribute;
+	
+	while ( insidePcData )	{
+		string data = getString( aConserveSpaces );
+
+		cout << "Received string " << data.size() << ": " << data << endl;
+
+		switch ( mStringType )	{
+			case ATTR :	{
+				attribute = data;
+				if ( mAttrNoValue )	{
+					element->setAttribute( attribute, "" );
+					attribute = "";
+				}
+				break;
+			}
+			case ATTRVALUE :	{
+				if ( attribute.compare( "" ) )	{
+					// Attribute has a name
+					// I'll declare it legal
+					element->setAttribute( attribute, data );
+					attribute = "";
+				}
+				break;
+			}
+			case TAG :	{
+				if ( isStartTag() )	{
+					if ( isCommentTag() )	{
+						commentTag( element );
+						continue;
+					}
+		
+					// Not a known tag
+					cout << "Unknown tag found. Skipping...\n";
+					skipTag();
+					
+				}
+				else	{			
+					if ( !mTag.compare( tag ) )	{
+						cout << mTag << " closing tag found\n";
+		
+						// End the while loop
+						insidePcData = false;
+					}
+					else	{
+						cout << "Unknown closing tag found. Skipping...\n";
+					}
+				}
+				break;
+			}
+			case TEXT :	{
+				if ( ( data.compare( " " ) && data.compare( "" ) ) || ( aConserveSpaces && data.compare( "" ) ) )	{
+					cout << "Text found in illegal place. Skipping...\n";
+				}
+				break;
+			}
+		}
+	}
+	
+}
+
+void HTMLParser	::	appletTag( TElementShared aParent, bool aConserveSpaces, bool aInsideAnchor )	{
+	
+	cout << "applet tag found\n";
+
+	// Add to parent
+	TElementShared element = mDocument->createElement( "applet" );
+	aParent->appendChild( element );
+
+	bool insideApplet = true;
+	string attribute;
+	
+	while ( insideApplet )	{
+		string data = getString();
+
+		cout << "Received string " << data.size() << ": " << data << endl;
+
+		switch ( mStringType )	{
+			case ATTR :	{
+				attribute = data;
+				if ( mAttrNoValue )	{
+					element->setAttribute( attribute, "" );
+					attribute = "";
+				}
+				break;
+			}
+			case ATTRVALUE :	{
+				if ( attribute.compare( "" ) )	{
+					// Attribute has a name
+					// I'll declare it legal
+					element->setAttribute( attribute, data );
+					attribute = "";
+				}
+				break;
+			}
+			case TAG :	{
+				if ( isStartTag() )	{
+					if ( isParamTag() )	{
+						emptyElementTag( element );
+						continue;
+					}
+					if ( isTextLevelTag() )	{
+						textLevelTag( element, aConserveSpaces, aInsideAnchor );
+						continue;
+					}
+					if ( isCommentTag() )	{
+						commentTag( element );
+						continue;
+					}
+		
+					// Not a known tag
+					cout << "Unknown tag found. Skipping...\n";
+					skipTag();
+					
+				}
+				else	{			
+					if ( isAppletTag() )	{
+						cout <<  " tr closing tag found\n";
+		
+						// End the while loop
+						insideApplet = false;
+					}
+					else	{
+						cout << "Unknown closing tag found. Skipping...\n";
+					}
+				}
+				break;
+			}
+			case TEXT :	{
+				if ( ( data.compare( " " ) && data.compare( "" ) ) || ( aConserveSpaces && data.compare( "" ) ) )	{
+					cout << "Text is:" << endl << data << endl;
+					TTextShared text = mDocument->createText( data );
+					element->appendChild( text );
+				}
+				break;
+			}
+		}
+	}
+	
+}
+
+void HTMLParser	::	mapTag( TElementShared aParent )	{
+	
+	cout << "map tag found\n";
+
+	// Add to parent
+	TElementShared element = mDocument->createElement( "map" );
+	aParent->appendChild( element );
+
+	bool insideMap = true;
+	string attribute;
+	
+	while ( insideMap )	{
+		string data = getString();
+
+		cout << "Received string " << data.size() << ": " << data << endl;
+
+		switch ( mStringType )	{
+			case ATTR :	{
+				attribute = data;
+				if ( mAttrNoValue )	{
+					element->setAttribute( attribute, "" );
+					attribute = "";
+				}
+				break;
+			}
+			case ATTRVALUE :	{
+				if ( attribute.compare( "" ) )	{
+					// Attribute has a name
+					// I'll declare it legal
+					element->setAttribute( attribute, data );
+					attribute = "";
+				}
+				break;
+			}
+			case TAG :	{
+				if ( isStartTag() )	{
+					if ( isAreaTag() )	{
+						emptyElementTag( element );
+						continue;
+					}
+					if ( isCommentTag() )	{
+						commentTag( element );
+						continue;
+					}
+		
+					// Not a known tag
+					cout << "Unknown tag found. Skipping...\n";
+					skipTag();
+					
+				}
+				else	{			
+					if ( isMapTag() )	{
+						cout <<  " tr closing tag found\n";
+		
+						// End the while loop
+						insideMap = false;
+					}
+					else	{
+						cout << "Unknown closing tag found. Skipping...\n";
+					}
+				}
+				break;
+			}
+			case TEXT :	{
+				if ( ( data.compare( " " ) && data.compare( "" ) ) )	{
+					cout << "Text found in illegal place. Skipping...\n";
+				}
 				break;
 			}
 		}
@@ -1639,6 +2145,10 @@ void HTMLParser	::	normalTextTag( TElementShared aParent, bool aConserveSpaces, 
 		switch ( mStringType )	{
 			case ATTR :	{
 				attribute = data;
+				if ( mAttrNoValue )	{
+					element->setAttribute( attribute, "" );
+					attribute = "";
+				}
 				break;
 			}
 			case ATTRVALUE :	{
@@ -1664,6 +2174,10 @@ void HTMLParser	::	normalTextTag( TElementShared aParent, bool aConserveSpaces, 
 				else	{
 					if ( isTextLevelTag() )	{
 						textLevelTag( element, aConserveSpaces, aInsideAnchor );
+						continue;
+					}
+					if ( isCommentTag() )	{
+						commentTag( element );
 						continue;
 					}
 
