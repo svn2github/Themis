@@ -348,6 +348,9 @@ void ElementParser	::	processElement( const TElementShared & aElementDecl,
 		}
 		printf( "Closed up %s implicitly\n", aElementDecl->getNodeName().c_str() );
 	}
+
+	// Take out any unknown tags
+	processUnknownTags();
 	
 }
 
