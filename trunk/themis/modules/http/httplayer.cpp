@@ -1408,6 +1408,7 @@ void httplayer::CloseRequest(http_request *request) {
 	if (request->conn_released!=0)
 		request->conn_released=0;
 	BMessage *msg=new BMessage(ProtocolConnectionClosed);
+	msg->AddInt32("command",COMMAND_INFO);
 	msg->AddInt64("bytes-received",request->bytesreceived);
 	msg->AddString("url",request->url);
 	msg->AddInt32("From",Proto->PlugID());
