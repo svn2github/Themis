@@ -16,7 +16,7 @@ MessageSystem::MessageSystem(char *msg_sys_name)
 	if (MS_Name==NULL)
 		MS_Name="MessageSystem member";
 	broadcast_status_code=B_NO_ERROR;
-	_message_queue_=new BMessageQueue();
+//	_message_queue_=new BMessageQueue();
 	_msg_receiver_sem_=create_sem(0,"message_receiver_sem");
 	_ms_receiver_quit_=0;
 	_msg_receiver_running_=0;
@@ -26,12 +26,15 @@ MessageSystem::MessageSystem(char *msg_sys_name)
 
 MessageSystem::~MessageSystem()
 {
-	_ms_receiver_quit_=1;
-	release_sem(_msg_receiver_sem_);
-	delete_sem(_msg_receiver_sem_);
-	delete _message_queue_;
-	status_t stat;
-	wait_for_thread(_msg_receiver_thread_,&stat);
+	BAutolock alock(msgsyslock);
+	if (alock.IsLocked()) {
+		_ms_receiver_quit_=1;
+		release_sem(_msg_receiver_sem_);
+		delete_sem(_msg_receiver_sem_);
+//		delete _message_queue_;
+		status_t stat;
+		wait_for_thread(_msg_receiver_thread_,&stat);
+	}
 }
 int32 MessageSystem::MS_Start_Thread(void *arg) 
 {
@@ -43,7 +46,9 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 {
 	while (!_Quit_Thread_) {
 		if (acquire_sem(process_sem)==B_OK) {
+#ifdef DEBUG
 			printf("MessageSystem::_ProcessBroadcasts_\n");
+#endif
 			if (has_data(_ProcessThread_)) {
 //				BMessage *msg;
 				thread_id sender_thread;
@@ -79,7 +84,7 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 							found=true;
 //							broadcaster->broadcast_status_code|=cur->ptr->ReceiveBroadcast(msg);
 							_message_targets_++;
-								cur->ptr->_message_queue_->AddMessage(new BMessage(*msg));
+								cur->ptr->_message_queue_.AddMessage(new BMessage(*msg));
 								if (cur->ptr->_msg_receiver_running_==0) {
 									release_sem(cur->ptr->_msg_receiver_sem_);
 								}
@@ -97,7 +102,7 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 							if (current_target==sender_target_id) {
 								found=true;
 								broadcaster->broadcast_successful_receives++;
-								cur->ptr->_message_queue_->AddMessage(new BMessage(*msg));
+								cur->ptr->_message_queue_.AddMessage(new BMessage(*msg));
 								if (cur->ptr->_msg_receiver_running_==0) {
 									release_sem(cur->ptr->_msg_receiver_sem_);
 								}
@@ -113,7 +118,7 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 								found=true;
 //								printf("calling ReceiveBroadcast()\n");
 								broadcaster->broadcast_successful_receives++;
-								cur->ptr->_message_queue_->AddMessage(new BMessage(*msg));
+								cur->ptr->_message_queue_.AddMessage(new BMessage(*msg));
 								if (cur->ptr->_msg_receiver_running_==0) {
 									release_sem(cur->ptr->_msg_receiver_sem_);
 								}
@@ -137,6 +142,7 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 				}
 				delete msg;
 				delete container;
+				broadcaster->BroadcastFinished();
 			}
 //			printf("processing pass done.\n");
 		}
@@ -194,19 +200,19 @@ int32 MessageSystem::_ProcessMessage_(void *arg)
 			if (_ms_receiver_quit_)
 				break;
 			me->_msg_receiver_running_=1;
-			me->_message_queue_->Lock();
-			if (!me->_message_queue_->IsEmpty()) {
-				count=me->_message_queue_->CountMessages();
+			me->_message_queue_.Lock();
+			if (!me->_message_queue_.IsEmpty()) {
+				count=me->_message_queue_.CountMessages();
 			}
-			me->_message_queue_->Unlock();
+			me->_message_queue_.Unlock();
 			if (count>0) {
 				while (count!=0) {
 					if (_ms_receiver_quit_)
 						break;
-			me->_message_queue_->Lock();
-					msg=me->_message_queue_->NextMessage();
-					count=me->_message_queue_->CountMessages();
-			me->_message_queue_->Unlock();
+			me->_message_queue_.Lock();
+					msg=me->_message_queue_.NextMessage();
+					count=me->_message_queue_.CountMessages();
+			me->_message_queue_.Unlock();
 					me->ReceiveBroadcast(msg);
 					delete msg;
 					msg=NULL;
@@ -286,10 +292,15 @@ void MessageSystem::MsgSysRegister(MessageSystem *target){
 		cur->ptr=target;
 		broadcast_target_count++;
 	}
+#ifdef DEBUG
 	printf("New receiver registered; Broadcast System Members: %ld\n",broadcast_target_count);
+#endif
 }
 uint32 MessageSystem::BroadcastTarget() 
 {
 	return MS_TARGET_UNKNOWN;
 }
-		
+void MessageSystem::BroadcastFinished()
+{
+}
+

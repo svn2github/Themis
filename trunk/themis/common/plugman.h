@@ -42,6 +42,7 @@ Project Start Date: October 18, 2000
 #include <Locker.h>
 #include "plugstruct.h"
 #include "plugclass.h"
+#include "msgsystem.h"
 class tcplayer;
 class PlugClass;
 /*!
@@ -49,7 +50,7 @@ class PlugClass;
 This class is responsible for loading and unloading plug-ins, and routing "broadcast" messages between
 plug-ins and application components.
 */
-class plugman: public BLooper {
+class plugman: public BLooper, public MessageSystem {
 	private:
 		//! The directory from which Themis was started.
 		entry_ref startup_dir_ref;
@@ -69,10 +70,15 @@ class plugman: public BLooper {
 		//! Add a plug-in structure to the internal linked list.
 		void AddPlug(plugst *plug);
 		BLocker *Locker;
+		volatile int32 _quitting_;
+		sem_id quit_sem;
 	public:
 		plugman(entry_ref &appdirref);
 		~plugman();
 		bool QuitRequested();
+		uint32 BroadcastTarget();
+		status_t BroadcastReply(BMessage *msg);
+		status_t ReceiveBroadcast(BMessage *msg);
 		//! Unload all plug-ins currently in memory.
 		/*!
 		\param clean
@@ -91,12 +97,12 @@ class plugman: public BLooper {
 		void *FindPlugin(node_ref &nref);
 		void MessageReceived(BMessage *msg);
 		//! Broadcasts a message to one or more plug-ins, and potentially some application portions.
-		status_t Broadcast(int32 source,int32 targets,BMessage *msg);
+//		status_t Broadcast(int32 source,int32 targets,BMessage *msg);
 		//! Builds a linked list of add-ons that are in the various add-on directories.
 		void BuildRoster(bool clean=true);
 		//! Loads a specific plug-in into memory.
 		status_t LoadPlugin(uint32 which);
-	
+		void BroadcastFinished();
 };
 
 #endif

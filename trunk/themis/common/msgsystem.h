@@ -96,6 +96,7 @@ enum MsgSysTargets
 	MS_TARGET_WINDOW=0x101a,//!< Send a message to a specific window.
 	MS_TARGET_MEMORY_CACHE=MS_TARGET_CACHE|MS_TARGET_TYPE_RAM, //!< Send a message to the cache system for a RAM cache object.
 	MS_TARGET_DISK_CACHE=MS_TARGET_CACHE|MS_TARGET_TYPE_DISK, //!< Send a message to the cache system for a disk cache object.
+	MS_TARGET_PLUG_IN_MANAGER='plgm' //!< Send a message to the plug-in manager.
 };
 class MessageDaemon;
 /*!
@@ -231,7 +232,7 @@ This is the number of targets that received the most recently broadcast message.
 \brief This keeps track of messages received before they've been processed by the receiver.
 
 */
-		BMessageQueue *_message_queue_;
+		BMessageQueue _message_queue_;
 /*!
 \brief 
 
@@ -313,7 +314,12 @@ and calling this function.
 
 */
 		virtual uint32 BroadcastTarget();
+/*!
+\brief This notifies the sender of a broadcast that the message system has finished sending the message to the desired targets.
 
+
+*/
+		virtual void BroadcastFinished();
 };
 
 

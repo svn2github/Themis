@@ -53,6 +53,7 @@ void showbits(int32 val)
 plugman::plugman(entry_ref &appdirref)
 	:BLooper("plug-in manager",B_LOW_PRIORITY) {
 	Lock();
+	MsgSysRegister(this);
 	Locker=new BLocker(true);
 	heartcount=0;
 	Heartbeat_mr=NULL;	
@@ -99,28 +100,40 @@ plugman::plugman(entry_ref &appdirref)
 		//what the? there is no ~/config/add-ons/ directory?
 	}
 	delete entry;
+#ifdef DEBUG
 	printf("Themis Add-on Directories:\n");
+#endif
 	path->SetTo(&startup_addon_dir);
+#ifdef DEBUG
 	printf("\t%s\n",path->Path());
+#endif
 	path->SetTo(&user_addon_dir);
+#ifdef DEBUG
 	printf("\t%s\n",path->Path());
+#endif
+#ifdef DEBUG
 	printf("Setting up node watching:\n");
+#endif
 	dir->SetTo(&startup_addon_dir);
 	node_ref nref;
 	dir->GetNodeRef(&nref);
 	status_t stat=watch_node(&nref,B_WATCH_DIRECTORY,this,this);
 	path->SetTo(&startup_addon_dir);
 	dir->GetStatFor(path->Path(),&sad_stat);
+#ifdef DEBUG
 	printf("\t%s: %ld\n",path->Path(),stat);
+#endif
 	dir->SetTo(&user_addon_dir);
 	dir->GetNodeRef(&nref);
 	path->SetTo(&user_addon_dir);
 	dir->GetStatFor(path->Path(),&uad_stat);
 	stat=watch_node(&nref,B_WATCH_DIRECTORY,this,this);
+#ifdef DEBUG
 	printf("\t%s: %ld\n",path->Path(),stat);
+#endif
 	delete path;
 	delete dir;
-
+	_quitting_=0;
 /*
 //A bit of test code to make sure that I have the bit mapping correct
 	printf("TARGET_CACHE:\t\t%ld\t",TARGET_CACHE);
@@ -235,19 +248,31 @@ plugman::plugman(entry_ref &appdirref)
 }
 plugman::~plugman() {
 	stop_watching((BHandler *)this,(BLooper*)this);
+	Locker->Lock();
 	delete Locker;
+	MsgSysUnregister(this);
 }
 bool plugman::QuitRequested() {
 
 	BMessage *msg=new BMessage(B_QUIT_REQUESTED);
 	msg->AddInt32("command",COMMAND_INFO);
-	BMessage container;
-	container.AddMessage("message",msg);
+	quit_sem=create_sem(0,"plug-man quitter");
+	atomic_add(&_quitting_,1);
+	Broadcast(MS_TARGET_ALL,msg);
 	delete msg;
-	Broadcast(TARGET_PLUGMAN,ALL_TARGETS,&container);
-
+	printf("Waiting for Quit Broadcast to finish.\n");
+	if (acquire_sem(quit_sem)==B_OK)
+		release_sem(quit_sem);
+	delete_sem(quit_sem);
+	printf("Unloading all plugins\n");
 	UnloadAllPlugins(true);
 	return true;
+}
+void plugman::BroadcastFinished() {
+	if (_quitting_) {
+		printf("releasing plug-man quitter sem\n");
+		release_sem(quit_sem);
+	}
 }
 status_t plugman::UnloadAllPlugins(bool clean) {
 	plugst *cur=NULL,*tmp=NULL;
@@ -255,7 +280,9 @@ status_t plugman::UnloadAllPlugins(bool clean) {
 	while (cur!=NULL) {
 		if (cur->inmemory) {
 			status_t (*Shutdown)(bool);
+#ifdef DEBUG
 				printf("Unloading plug-in: %s\n",cur->name);
+#endif
 				if (cur->pobj->IsHandler()) {
 					Lock();
 					RemoveHandler(cur->pobj->Handler());
@@ -276,7 +303,9 @@ status_t plugman::UnloadAllPlugins(bool clean) {
 					(*Shutdown)(true);
 				unload_add_on(cur->sysid);
 		} else {
+#ifdef DEBUG
 			printf("Unloading plug-in: %s\n",cur->name);
+#endif
 		}
 		
 		tmp=cur->next;
@@ -290,6 +319,7 @@ status_t plugman::UnloadAllPlugins(bool clean) {
 	}
 	
 }
+/*
 status_t plugman::Broadcast(int32 source,int32 targets,BMessage *msg) {
 	plugst *cur=head;
 //this makes sure that at least one plug-in will receive the broadcast. if there isn't
@@ -327,7 +357,9 @@ status_t plugman::Broadcast(int32 source,int32 targets,BMessage *msg) {
 					iloaded=true;
 					
 				}
+#ifdef DEBUG
 				printf("Sending broadcast to: %s - %ld\n",cur->pobj->PlugName(),cur->pobj->Type());
+#endif
 				ret=cur->pobj->ReceiveBroadcast(subm);
 				if ((cur->type&targets>=1) && (ret!=PLUG_HANDLE_GOOD))
 					final_ret|=B_ERROR;
@@ -338,13 +370,17 @@ status_t plugman::Broadcast(int32 source,int32 targets,BMessage *msg) {
 							if (iloaded==true)
 								UnloadPlugin(cur->plugid);
 
+#ifdef DEBUG
 				printf("Broadcast sent to: %s\t%ld (%c%c%c%c)\n",cur->pobj->PlugName(),ret,ret>>24,ret>>16,ret>>8,ret);
+#endif
 			}
 		} else {
 			if (!cur->inmemory)
 				LoadPlugin(cur->plugid);
 			cur->pobj->ReceiveBroadcast(subm);
+#ifdef DEBUG
 				printf("Broadcast sent to: %s\t%ld\n",cur->pobj->PlugName(),ret);
+#endif
 		}
 		cur=cur->next; 
 	}
@@ -365,10 +401,13 @@ status_t plugman::Broadcast(int32 source,int32 targets,BMessage *msg) {
 	}
 	
 	delete subm;
+#ifdef DEBUG
 	printf("plugman is returning: %ld; B_OK= %ld\n",final_ret,B_OK);
+#endif
 	return final_ret;
 	
 }
+*/
 status_t plugman::LoadPlugin(uint32 which) 
 {
 	plugst *cur=head;//,*tmp;
@@ -425,12 +464,16 @@ void *plugman::FindPlugin(node_ref &nref) {
 
 PlugClass *plugman::FindPlugin(uint32 which) 
 {
+#ifdef DEBUG
 	printf("plugman: FindPlugin (int32)\n");
+#endif
 	
 	plugst *tmp=head;
 	while(tmp!=NULL) {
 		if ((tmp->plugid)==which) {
+#ifdef DEBUG
 			printf("plugman::FindPlugin: found it\n");
+#endif
 			break;
 		}
 		tmp=tmp->next;
@@ -448,6 +491,7 @@ PlugClass *plugman::FindPlugin(uint32 which)
 }
 void plugman::MessageReceived(BMessage *msg) {
 	switch(msg->what) {
+/*
 		case BroadcastMessage: {
 			plugst *cur=head;
 			int32 targets=0;
@@ -483,7 +527,9 @@ void plugman::MessageReceived(BMessage *msg) {
 							LoadPlugin(cur->plugid);
 							iloaded=true;
 						}
+#ifdef DEBUG
 						printf("plugman: sending broadcast to %s\n",cur->pobj->PlugName());
+#endif
 						
 						ret=cur->pobj->ReceiveBroadcast(subm);
 						if (ret==PLUG_HANDLE_GOOD) {
@@ -494,8 +540,10 @@ void plugman::MessageReceived(BMessage *msg) {
 								UnloadPlugin(cur->plugid);
 						}
 						
+#ifdef DEBUG
 						
 						printf("Broadcast sent to: %s\t%ld(%c%c%c%c)\n",cur->pobj->PlugName(),ret,ret>>24,ret>>16,ret>>8,ret);
+#endif
 					}
 				} else {
 					if (!cur->inmemory)
@@ -508,6 +556,7 @@ void plugman::MessageReceived(BMessage *msg) {
 			delete reply;
 			delete subm;
 		}break;
+*/
 		case HeartbeatMessage: {
 //			printf("Heartbeat\n");
 			plugst *cur=head;
@@ -609,7 +658,9 @@ void plugman::MessageReceived(BMessage *msg) {
 				stat=B_ERROR;
 			reply.what=stat;
 			msg->SendReply(&reply);
+#ifdef DEBUG
 			printf("Plug-Man: Add Init Info - %ld\n",stat);
+#endif
 			InitInfo->PrintToStream();
 			
 		}break;
@@ -647,7 +698,9 @@ void plugman::MessageReceived(BMessage *msg) {
 				ni.GetType(mtype);
 				ni.SetTo(NULL);
 				if (strstr(mtype,"executable")==NULL) {
+#ifdef DEBUG
 					printf("file isn't executable.\n");
+#endif
 					
 					continue;//all add-on's have an executable mimetype
 				}
@@ -657,45 +710,63 @@ void plugman::MessageReceived(BMessage *msg) {
 				node.GetNodeRef(&nuplug->nref);
 				ent->GetPath(&path);
 				ent->GetModificationTime(&nuplug->mod_time);
+#ifdef DEBUG
 				printf("Attempting to load plugin at %s\n",path.Path());
+#endif
 				nuplug->sysid=load_add_on(path.Path());
 				if (nuplug->sysid<=B_ERROR) {
+#ifdef DEBUG
 					printf("\t\tFailed.\n");
+#endif
 					delete nuplug;
 					continue;
 				}
 				status_t (*Initialize)(void *info);
 				if (get_image_symbol(nuplug->sysid,"Initialize",B_SYMBOL_TYPE_TEXT,(void**)&Initialize)==B_OK) {
+#ifdef DEBUG
 					printf("\tInitializing...");
+#endif
 					fflush(stdout);
 					if ((*Initialize)(InitInfo)!=B_OK) {
+#ifdef DEBUG
 						printf("failure, aborting\n");
+#endif
 						unload_add_on(nuplug->sysid);
 						delete nuplug;
 						continue;
 					}
+#ifdef DEBUG
 					printf("success\n");
+#endif
 					
 				} else {
+#ifdef DEBUG
 					printf("\tUnable to load initializer function, aborting.\n");
+#endif
 					unload_add_on(nuplug->sysid);
 					delete nuplug;
 					continue;
 				}
+#ifdef DEBUG
 				printf("Attempting to get object...");
+#endif
 				fflush(stdout);
 				status_t stat;
 				if ((stat=get_image_symbol(nuplug->sysid,"GetObject",B_SYMBOL_TYPE_TEXT,(void**)&(nuplug->GetObject)))==B_OK) {
 					nuplug->pobj=(*nuplug->GetObject)();
 					if (nuplug->pobj==NULL) {
+#ifdef DEBUG
 						printf("plug-in does not have a plug-class object!\n");
+#endif
 						unload_add_on(nuplug->sysid);
 						delete nuplug;
 						continue;
 						
 					}
 					
+#ifdef DEBUG
 					printf("success.\n");
+#endif
 					nuplug->type=nuplug->pobj->Type();
 					int32 namlen=strlen(nuplug->pobj->PlugName());
 					
@@ -717,7 +788,9 @@ void plugman::MessageReceived(BMessage *msg) {
 					PlugClass *oldplug=NULL;
 					
 					if ((oldplug=FindPlugin(nuplug->pobj->PlugID()))!=NULL) {
+#ifdef DEBUG
 						printf("\tplug-in already loaded.\n");
+#endif
 						
 						//compare versions and modification time.
 						float oldv=oldplug->PlugVersion(),nuv=nuplug->pobj->PlugVersion();
@@ -727,8 +800,12 @@ void plugman::MessageReceived(BMessage *msg) {
 						status_t (*Shutdown)(bool);
 						if (get_image_symbol(nuplug->sysid,"Shutdown",B_SYMBOL_TYPE_TEXT,(void**)&Shutdown)==B_OK)
 							(*Shutdown)(true);
-						else
+						else {
+							
+#ifdef DEBUG
 							printf("plug-in has no Shutdown function; couldn't shutdown nicely.\n");
+#endif
+						}
 						unload_add_on(nuplug->sysid);
 						nuplug->pobj=NULL;//yeah, I know it's about to be deleted, but...
 						delete nuplug;
@@ -752,8 +829,12 @@ void plugman::MessageReceived(BMessage *msg) {
 									status_t (*Shutdown)(bool);
 									if (get_image_symbol(nuplug->sysid,"Shutdown",B_SYMBOL_TYPE_TEXT,(void**)&Shutdown)==B_OK)
 										(*Shutdown)(true);
-									else
+									else {
+#ifdef DEBUG
 										printf("plug-in has no Shutdown function; couldn't shutdown nicely.\n");
+#endif
+										
+									}
 									unload_add_on(nuplug->sysid);
 									nuplug->pobj=NULL;//yeah, I know it's about to be deleted, but...
 									delete nuplug;
@@ -770,20 +851,28 @@ void plugman::MessageReceived(BMessage *msg) {
 					}
 					strcpy(nuplug->path,path.Path());
 					nuplug->plugid=nuplug->pobj->PlugID();
+#ifdef DEBUG
 					 printf("%c%c%c%c\n",nuplug->pobj->PlugID()>>24,nuplug->pobj->PlugID()>>16,nuplug->pobj->PlugID()>>8,nuplug->pobj->PlugID());
 					          printf("Loaded \"%s\" (%c%c%c%c) V. %1.2f\n",nuplug->pobj->PlugName(),
 					          nuplug->pobj->PlugID()>>24,nuplug->pobj->PlugID()>>16,nuplug->pobj->PlugID()>>8,nuplug->pobj->PlugID(),
 					          nuplug->pobj->PlugVersion());
 					if (nuplug->pobj->SecondaryID()!=0)
 						printf("\tSecondary ID: %c%c%c%c\n",nuplug->pobj->SecondaryID()>>24,nuplug->pobj->SecondaryID()>>16,nuplug->pobj->SecondaryID()>>8,nuplug->pobj->SecondaryID());
+#endif
 					if (!nuplug->pobj->IsPersistent()) {
 						status_t (*Shutdown)(bool);
+#ifdef DEBUG
 						printf("Plug-in is not persistent.\n");
+#endif
 						
 						if (get_image_symbol(nuplug->sysid,"Shutdown",B_SYMBOL_TYPE_TEXT,(void**)&Shutdown)==B_OK)
 							(*Shutdown)(true);
-						else
+						else {
+#ifdef DEBUG
 							printf("plug-in has no Shutdown function; couldn't shutdown nicely.\n");
+#endif
+							
+						}
 						unload_add_on(nuplug->sysid);//this will probably trigger a crash
 						nuplug->inmemory=false;
 						nuplug->pobj=NULL;
@@ -793,13 +882,17 @@ void plugman::MessageReceived(BMessage *msg) {
 							AddHandler((BHandler*)nuplug->pobj->Handler());
 					}
 				} else {
+#ifdef DEBUG
 					printf("failure, aborting %ld\n",stat);
+#endif
 					unload_add_on(nuplug->sysid);
 					delete nuplug;
 					continue;
 				}
 				AddPlug(nuplug);
+#ifdef DEBUG
 				printf("\tPlug-in successfully loaded.\n");
+#endif
 				node.Unset();
 				ent->Unset();
 			}
@@ -828,7 +921,9 @@ void plugman::MessageReceived(BMessage *msg) {
 						msg->FindInt64("node",&nref.node);
 						plugst *tmp=(plugst*)FindPlugin(nref);
 						if (tmp!=NULL) {
+#ifdef DEBUG
 							printf("Unloading plugin %s\n",tmp->pobj->PlugName());
+#endif
 							UnloadPlugin(tmp->plugid,true);
 						}
 					}break;
@@ -853,7 +948,9 @@ void plugman::MessageReceived(BMessage *msg) {
 						if (((oldref==startup_addon_dir)||(oldref==user_addon_dir))
 							&&  ((newref==startup_addon_dir)||(newref==user_addon_dir))) {
 							//um... the addon moved from one directory to the other... do nothing.
+#ifdef DEBUG
 							printf("add-on jumped from one Themis add-on directory to another... doing nothing.\n");
+#endif
 							return;
 						}
 							
@@ -862,7 +959,9 @@ void plugman::MessageReceived(BMessage *msg) {
 							msg->FindInt64("node",&nref.node);
 							plugst *tmp=(plugst*)FindPlugin(nref);
 							if (tmp!=NULL) {
+#ifdef DEBUG
 								printf("Unloading plugin %s\n",tmp->pobj->PlugName());
+#endif
 								UnloadPlugin(tmp->plugid,true);
 							}
 						} else {
@@ -877,7 +976,9 @@ void plugman::MessageReceived(BMessage *msg) {
 					}break;
 					
 					default: {
+#ifdef DEBUG
 						printf("Other opcode. Message:\n");
+#endif
 						msg->PrintToStream();
 					}
 					
@@ -891,7 +992,9 @@ void plugman::MessageReceived(BMessage *msg) {
 //	Unlock();
 }
 status_t plugman::UnloadPlugin(uint32 which,bool clean) {
+#ifdef DEBUG
 	printf("PlugMan: Unload plugin %c%c%c%c\n",which>>24,which>>16,which>>8,which);
+#endif
 	
 		plugst *cur=head,*prev=NULL;
 		uint32 type=0,id=0;
@@ -983,10 +1086,8 @@ status_t plugman::UnloadPlugin(uint32 which,bool clean) {
 	msg->AddInt32("type",type);
 	msg->AddInt32("command",COMMAND_INFO);
 	msg->AddInt32("plugid",id);
-	BMessage container;
-	container.AddMessage("message",msg);
+	Broadcast(MS_TARGET_ALL,msg);
 	delete msg;
-	Broadcast(TARGET_PLUGMAN,ALL_TARGETS,&container);
 	return B_OK;
 }
 void plugman::AddPlug(plugst *plug) {
@@ -1006,20 +1107,20 @@ void plugman::AddPlug(plugst *plug) {
 		tmp->next=plug;
 		plug->prev=last;
 	}
+#ifdef DEBUG
+	printf("Sending PlugInLoaded message\n");
+#endif
 	BMessage *msg=new BMessage(PlugInLoaded);
 	msg->AddInt32("type",plug->type);
 	msg->AddInt32("command",COMMAND_INFO);
 	msg->AddInt32("plugid",plug->plugid);
 	if (plug->inmemory)
 		msg->AddPointer("plugin",plug->pobj);
-	BMessage container;
-	container.AddMessage("message",msg);
-	Broadcast(TARGET_PLUGMAN,ALL_TARGETS,&container);
-	printf("Sending PlugInLoaded message\n");
+	Broadcast(MS_TARGET_ALL,msg);
 	
-	BMessenger *msgr=new BMessenger(NULL,Window,NULL);
-	msgr->SendMessage(msg);
-	delete msgr;
+//	BMessenger *msgr=new BMessenger(NULL,Window,NULL);
+//	msgr->SendMessage(msg);
+//	delete msgr;
 	delete msg;
 	}
 }
@@ -1045,4 +1146,16 @@ void plugman::BuildRoster(bool clean) {
 	delete msgr;
 	delete msg;
 	delete dir;
+}
+status_t plugman::ReceiveBroadcast(BMessage *msg)
+{
+	//does nothing.
+}
+status_t plugman::BroadcastReply(BMessage *msg)
+{
+	//does nothing
+}
+uint32 plugman::BroadcastTarget()
+{
+	return MS_TARGET_PLUG_IN_MANAGER;
 }
