@@ -31,6 +31,16 @@
 #ifndef CSSVALUE_HPP
 #define CSSVALUE_HPP
 
+// Boost headers
+#include "boost/shared_ptr.hpp"
+#include "boost/weak_ptr.hpp"
+
+// Declarations
+class CSSValue;
+
+// Typedefs
+typedef boost::shared_ptr<CSSValue> CSSValuePtr;
+
 // DOM Style headers
 #include "DOMStyleSupport.hpp"
 

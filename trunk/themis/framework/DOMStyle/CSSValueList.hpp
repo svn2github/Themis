@@ -35,6 +35,12 @@
 #include "boost/shared_ptr.hpp"
 #include "boost/weak_ptr.hpp"
 
+// Declarations
+class CSSValueList;
+
+// Typedefs
+typedef boost::shared_ptr<CSSValueList> CSSValueListPtr;
+
 // DOM Style headers
 #include "CSSValue.hpp"
 
@@ -48,6 +54,9 @@
 
 class CSSValueList	:	public CSSValue	{
 	
+	private:
+		const vector<CSSValuePtr> * mValueList;
+
 	public:
 		/// Constructor of the CSSValueList class.
 		/**
@@ -56,9 +65,14 @@ class CSSValueList	:	public CSSValue	{
 			changed after construction.
 			
 			@param	aCssText			The css text of the values to store.
-			@param	aCssValueType	The type of the values to store.
+			@param	aValueList			The list of css values to store.
+			
+			@todo	@li	Have to look if we have to pass aCssText.
+						@li	Have to get rid of the ugly vector passing.
+								Look into modifying the class so it can be set readonly after a point.
+								Or create a shareable list class that can be added to this class easier.
 		*/
-		CSSValue( const TDOMString aCssText, unsigned short aCssValueType );
+		CSSValueList( const TDOMString aCssText, const vector<CSSValuePtr> * aValueList );
 		
 		/// Destructor of the CSSValuList class.
 		/**
@@ -68,7 +82,7 @@ class CSSValueList	:	public CSSValue	{
 		~CSSValueList();
 		
 		/// A function to get the number of css values in the list.
-		unsigned long getLength();
+		unsigned long getLength() const;
 		
 		/// A function to get an item.
 		/**
