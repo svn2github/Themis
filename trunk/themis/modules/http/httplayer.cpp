@@ -1100,6 +1100,19 @@ void httplayer::DoneWithHeaders(http_request *request,bool nocaching) {
 #ifdef DEBUG
 	printf("DoneWithHeaders\n");
 #endif
+	printf("Headers:\n");
+	printf("\tHTTP Status:\t%u\n",request->status);
+	printf("\tURL:\t%s\n",request->url);
+	printf("\t==============\n");
+	{
+		header_st *curh=request->headers;
+		while(curh!=NULL) {
+			printf("\t%s:\t%s\n",curh->name,curh->value);
+			curh=curh->next;
+		}
+		
+	}
+	
 	atomic_add(&request->headersdone,1);
 	char *result;
 	result=FindHeader(request,"transfer-encoding");
@@ -1465,8 +1478,12 @@ until/unless data is written to the object; including by writing attributes out.
 		BMessage *msg=new BMessage(ReturnedData);
 		msg->AddInt32("command",COMMAND_INFO);
 		if (!nocaching) {
+	if (request->cache_object_token>=0) {
+		
 			msg->AddInt32("cache_object_token",request->cache_object_token);
 			msg->AddInt32("cache_system",request->cache_system_type);
+	}
+	
 		}
 		msg->AddString("url",request->url);
 		msg->AddBool("request_done",true);
@@ -1531,9 +1548,10 @@ until/unless data is written to the object; including by writing attributes out.
 		else
 			msg->AddInt64("content-length",request->contentlen);
 		msg->AddInt64("bytes-received",request->bytesreceived);
-		BMessage container;
-		container.AddMessage("message",msg);
+		printf("HTTP Layer - Done With Headers Broadcast:\n");
+		msg->PrintToStream();
 		Proto->Broadcast(target,msg);
+		
 		delete msg;
 #ifdef DEBUG
 		printf("Sending broadcast to handlers and parsers.\n");
@@ -1712,7 +1730,8 @@ void httplayer::ProcessData(http_request *request, void *buffer, int size) {
 	msg->AddBool( "secure", request->secure );
 	//
 	msg->AddInt32("command",COMMAND_INFO);
-	msg->AddInt32("cache_object_token",request->cache_object_token);
+	if (request->cache_object_token>=0)
+		msg->AddInt32("cache_object_token",request->cache_object_token);
 //	msg->AddPointer("data_pointer",request->data);
 	if (request->url!=NULL)
 		msg->AddString("url",request->url);
@@ -1851,7 +1870,8 @@ void httplayer::CloseRequest(http_request *request,bool quick) {
 		msg->AddString("url",request->url);
 	msg->AddInt32("From",Proto->PlugID());
 	msg->AddPointer("FromPointer",Proto);
-	msg->AddInt32("cache_object_token",request->cache_object_token);
+	if (request->cache_object_token>=0)
+		msg->AddInt32("cache_object_token",request->cache_object_token);
 //	msg->AddPointer("data_pointer",request->data);
 	char *resultstr=NULL;
 	resultstr=FindHeader(request,"content-type");
@@ -2407,11 +2427,15 @@ BMessage *httplayer::CheckCacheStatus(http_request *request) {
 			if (request->cacheinfo!=NULL)
 				delete request->cacheinfo;
 			request->cache_object_token=reply->FindInt32("cache_object_token");
-			request->cacheinfo=CacheSys->GetInfo(CacheToken,request->cache_object_token);
+			if (request->cache_object_token>=0) {
+				
+				request->cacheinfo=CacheSys->GetInfo(CacheToken,request->cache_object_token);
 #ifdef DEBUG
 			printf("56789 cache info\n");
 #endif
 			request->cacheinfo->PrintToStream();
+			}
+			
 		}
 		delete reply;
 		return request->cacheinfo;
@@ -2587,7 +2611,53 @@ void httplayer::ConnectionTerminated(Connection *connection)
 		http_request *req=requests_head;
 		while (req!=NULL) {
 			if (req->conn==connection) {
-				printf("Connection to server has terminated.\n");
+				
+				printf("Connection to server has terminated. Cache object: %ld\n",req->cache_object_token);
+/*
+{
+							memset(buffer,0,size);
+							bytes=0;
+	#ifndef NEWNET
+							bytes=TCP->Receive(&current->conn,buffer,10240);
+	#else
+							bytes=current->conn->Receive(buffer,10240);
+	#endif
+							if (bytes>0) {
+								if (!current->headersdone) {
+									ProcessHeaders(current,buffer,bytes);
+								} else {
+									ProcessData(current,buffer,bytes);
+								}
+							}
+							
+						}
+*/
+				printf("Data Waiting on Terminated connection? %d\n",req->conn->IsDataWaiting());
+				
+				if (req->conn->IsDataWaiting()) {
+					printf("Terminated: Data is waiting\n");
+					
+					off_t datasize=req->conn->DataSize();
+					unsigned char *buffer=new unsigned char[datasize];
+					memset(buffer,0,datasize);
+					off_t recbytes=req->conn->Receive(buffer,datasize);
+					if (recbytes>0) {
+						printf("terminated: %ld bytes received\n",recbytes);
+						printf("%s\n",(char*)buffer);
+						
+						if (!req->headersdone) {
+							ProcessHeaders(req,buffer,recbytes);
+						} else {
+							ProcessData(req,buffer,recbytes);
+						}
+						
+					}
+					memset(buffer,0,datasize);
+					delete buffer;
+					buffer=NULL;
+					
+				}
+				
 				CloseRequest(req);
 				break;
 				
@@ -2650,7 +2720,10 @@ void httplayer::DestroyingConnectionObject(Connection *connection)
 		while (current!=NULL) {
 			if (current->conn==connection) {
 				printf("DestroyingConnectionObject, so I must clean up the request for it.\n");
-				delete current;
+//				CloseRequest(current);
+				
+				
+//				delete current;
 				break;
 			}
 			current=current->next;

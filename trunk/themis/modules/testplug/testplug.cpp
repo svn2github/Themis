@@ -152,8 +152,8 @@ status_t testplug::ReceiveBroadcast(BMessage *msg){
 					CacheSys=NULL;
 					
 				}break;
-				case ProtocolConnectionClosed:
-				case ReturnedData: {
+		//		case ProtocolConnectionClosed:
+				case ProtocolConnectionClosed: {
 					printf("[TESTPLUG] Returned data\n");
 					msg->PrintToStream();
 					bool request_done=false;
@@ -177,6 +177,8 @@ status_t testplug::ReceiveBroadcast(BMessage *msg){
 						ni->SetType(mime);
 						delete ni;
 						delete file;
+						printf("[Test Plug-in] Data:\n%s\n",data);
+						
 						memset(data,0,size+1);
 						delete data;
 						data=NULL;
