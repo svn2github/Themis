@@ -2371,13 +2371,13 @@ void HTMLParser	::	MessageReceived( BMessage * message )	{
 
 bool HTMLParser	::	IsHandler()	{
 	
-	return false;
+	return true;
 	
 }
 
 BHandler * HTMLParser	::	Handler()	{
 	
-	return NULL;
+	return this;
 	
 }
 
@@ -2447,6 +2447,14 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 		}	
 		case COMMAND_INFO:	{
 			printf( "COMMAND_INFO called\n" );
+			// Check if it is from the http protocol
+			int32 plugin;
+			message->FindInt32( "From", &plugin );
+			if ( plugin != 'http' )	{
+				printf( "Message not recognized\n" );
+				break;
+			}
+
 			// Get the pointer out
 			void * location = NULL;
 			message->FindPointer( "data_pointer", &location );
@@ -2476,6 +2484,21 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 					startParsing( document );
 					
 					showDocument();
+
+					if ( PlugMan )	{
+						BMessage * done = new BMessage( ReturnedData );
+						done->AddInt32( "command", COMMAND_INFO );
+						done->AddString( "type", "dom" );
+						done->AddPointer( "data_pointer", &mDocument );
+						
+						BMessage container;
+						container.AddMessage( "message", done );
+						delete done;
+						done = NULL;
+						
+						PlugMan->Broadcast( TARGET_PARSER, ALL_TARGETS, &container );
+					}
+
 				}
 				else	{
 					printf( "More data to come...\n" );
