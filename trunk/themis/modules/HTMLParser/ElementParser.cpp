@@ -24,8 +24,6 @@ ElementParser	::	ElementParser( SGMLTextPtr aDocText,
 												  TDocumentPtr aDTD )
 						:	BaseParser()	{
 
-	//printf( "Constructing ElementParser\n" );
-	
 	mDocText = aDocText;
 
 	setDTD( aDTD );	
@@ -41,8 +39,6 @@ ElementParser	::	ElementParser( SGMLTextPtr aDocText,
 
 ElementParser	::	~ElementParser()	{
 
-	//printf( "Destroying ElementParser\n" );
-	
 	delete commentParser;
 	
 }
@@ -67,9 +63,11 @@ void ElementParser	::	setDTD( TDocumentPtr aDTD )	{
 			mParEntities = element;
 		}
 		if ( element->getNodeName() == "charEntities" )	{
+			printf( "Char entities section found\n" );
 			mCharEntities = element;
 		}
 		if ( element->getNodeName() == "elements" )	{
+			printf( "Elements section found\n" );
 			mElements = element;
 		}
 	}
@@ -92,7 +90,7 @@ void ElementParser	::	parse( const string & aName )	{
 	mName = aName;
 	
 	TElementPtr elementDecl = getElementDecl( aName, mElements );
-	processElementContent( elementDecl, mDocument );
+	processElementContent( aName, elementDecl, mDocument );
 	
 }
 
@@ -102,7 +100,8 @@ TDocumentPtr ElementParser	::	getDocument() const	{
 	
 }
 
-void ElementParser	::	processElementContent( const TElementPtr & aElementDecl,
+void ElementParser	::	processElementContent( const TDOMString & aName,
+																	const TElementPtr & aElementDecl,
 																	TNodePtr aParent )	{
 
 	bool contentFound = true;
@@ -114,21 +113,13 @@ void ElementParser	::	processElementContent( const TElementPtr & aElementDecl,
 			if ( r.isFatal() )	{
 				throw r;
 			}
-			try	{
-				processS();
-			}
-			catch( ReadException r )	{
-				if ( r.isFatal() )	{
-					throw r;
-				}
-				else	{
-					contentFound = false;
-				}
+			if ( ! processS( false ) )	{
+				contentFound = false;
 			}
 		}
 	}
 
-	processElement( aElementDecl, aParent );
+	processElement( aName, aElementDecl, aParent );
 																		
 }
 
@@ -143,13 +134,7 @@ void ElementParser	::	processUnknownTags( TNodePtr aParent )	{
 			if ( r.isFatal() )	{
 				throw r;
 			}
-			try	{
-				processS();
-			}
-			catch( ReadException r )	{
-				if ( r.isFatal() )	{
-					throw r;
-				}
+			if ( ! processS( false ) )	{
 				try	{
 					processUnknownStartTag( aParent );
 				}
@@ -278,50 +263,41 @@ void ElementParser	::	processUnknownEndTag()	{
 	
 }
 
-void ElementParser	::	processElement( const TElementPtr & aElementDecl,
+void ElementParser	::	processElement( const TDOMString & aName,
+														const TElementPtr & aElementDecl,
 														 TNodePtr aParent )	{
 		
-	printf( "Trying to find: %s\n", aElementDecl->getNodeName().c_str() );
-	// Minimization
+	printf( "Trying to find: %s\n", aName.c_str() );
+	printf( "Declaration name: %s\n", aElementDecl->getTagName().c_str() );
+
+	// Setup the minimization
 	bool start = true;
 	bool end = true;
-
-	// See if this element declaration is part of a name group
-	TNodePtr parent = aElementDecl->getParentNode();
-	TElementPtr child = aElementDecl;
-	TElementPtr exceptions;
-	if ( parent->getNodeName() != "elements" )	{
-		// Is part of a name group
-		TNodePtr firstChild = parent->getFirstChild();
-		child = shared_static_cast<TElement>( firstChild );
-	}
-	// Get the start tag minimization
-	if ( child->getAttribute( "start" ) == "false" )	{
-		start = false;
-	}
-	// Get the end tag minimization
-	if ( child->getAttribute( "end" ) == "false" )	{
-		printf( "End tag not required\n" );
-		end = false;
-	}
-	// Get the exception list
-	TNodeListPtr list = child->getChildNodes();
-	for ( unsigned int i = 0; i < list->getLength(); i++ )	{
-		TNodePtr item = list->item( i );
-		if ( item->getNodeName() == "exceptions" )	{
-			exceptions = shared_static_cast<TElement>( item );
+	TNodeListPtr children = aElementDecl->getElementsByTagName( "minimization" );
+	if ( children->getLength() > 0 )	{
+		printf( "Has minimization\n" );
+		TNodePtr child = children->item( 0 );
+		TElementPtr minimization = shared_static_cast<TElement>( child );
+		// Get the start tag minimization
+		if ( minimization->getAttribute( "start" ) == "false" )	{
+			start = false;
+		}
+		// Get the end tag minimization
+		if ( minimization->getAttribute( "end" ) == "false" )	{
+			printf( "End tag not required\n" );
+			end = false;
 		}
 	}
 
 	TNodePtr tag;
 	State save = mDocText->saveState();
 	try	{
-		TElementPtr element = processStartTag( aElementDecl, aParent );
+		TElementPtr element = processStartTag( aName, aElementDecl, aParent );
 		// Cast it to a node
 		tag = shared_static_cast<TNode>( element );
 	}
 	catch( ReadException r )	{
-		printf( "Didn't find: %s\n", aElementDecl->getNodeName().c_str() );
+		printf( "Didn't find: %s\n", aName.c_str() );
 		mDocText->restoreState( save );
 		if ( start || r.isEndTag() )	{
 			throw r;
@@ -330,34 +306,45 @@ void ElementParser	::	processElement( const TElementPtr & aElementDecl,
 		// Should actually still add the element to the tree. Bit too complicated atm.
 		tag = shared_static_cast<TNode>( aParent );
 	}
-	
+
 	// Take out any unknown tags
 	processUnknownTags( aParent );
 
-	if ( child->hasChildNodes() )	{
-		TNodePtr node = child->getFirstChild();
-		TElementPtr content	= shared_static_cast<TElement>( node );
-		processContent( content, exceptions, tag );
+	// Get the content model
+	children = aElementDecl->getElementsByTagName( "content" );
+	if ( children->getLength() > 0 )	{
+		TNodePtr child = children->item( 0 );
+		TElementPtr content = shared_static_cast<TElement>( child );
+		TNodePtr childContent = content->getFirstChild();
+		TElementPtr baseContent = shared_static_cast<TElement>( childContent );
+		// Get the exceptions
+		TElementPtr exceptions;
+		children = content->getElementsByTagName( "exceptions" );
+		if ( children->getLength() > 0 )	{
+			child = children->item( 0 );
+			exceptions = shared_static_cast<TElement>( child );
+		}
+		processContent( baseContent, exceptions, tag );
 	}
 
 	// Take out any unknown tags
 	processUnknownTags( aParent );
 
-	printf( "Done with content. Trying to close up %s\n", aElementDecl->getNodeName().c_str() );
+	printf( "Done with content. Trying to close up %s\n", aName.c_str() );
 	
 	save = mDocText->saveState();
 	try	{
 		processSStar();
-		processEndTag( aElementDecl );
-		printf( "Closed up %s correctly\n", aElementDecl->getNodeName().c_str() );
+		processEndTag( aName );
+		printf( "Closed up %s correctly\n", aName.c_str() );
 	}
 	catch( ReadException r )	{
 		mDocText->restoreState( save );
 		if ( end )	{
-			printf( "Throwing exception on closing of %s\n", aElementDecl->getNodeName().c_str() );
+			printf( "Throwing exception on closing of %s\n", aName.c_str() );
 			throw r;
 		}
-		printf( "Closed up %s implicitly\n", aElementDecl->getNodeName().c_str() );
+		printf( "Closed up %s implicitly\n", aName.c_str() );
 	}
 
 	// Take out any unknown tags
@@ -365,7 +352,9 @@ void ElementParser	::	processElement( const TElementPtr & aElementDecl,
 	
 }
 
-TElementPtr ElementParser	::	processStartTag( const TElementPtr & elementDecl, TNodePtr aParent )	{
+TElementPtr ElementParser	::	processStartTag( const TDOMString & aName,
+																	  const TElementPtr & elementDecl,
+																	  TNodePtr aParent )	{
 	
 	try	{
 		process( mStago );
@@ -386,7 +375,7 @@ TElementPtr ElementParser	::	processStartTag( const TElementPtr & elementDecl, T
 	catch( ReadException r )	{
 		throw r;
 	}
-	if ( name == elementDecl->getNodeName() )	{
+	if ( name == aName )	{
 		printf( "Correct element start tag found: %s\n", name.c_str() );
 		element = mDocument->createElement( name );
 		aParent->appendChild( element );
@@ -424,7 +413,7 @@ TElementPtr ElementParser	::	processStartTag( const TElementPtr & elementDecl, T
 	
 }
 
-void ElementParser	::	processEndTag( const TElementPtr & elementDecl )	{
+void ElementParser	::	processEndTag( const TDOMString & aName )	{
 	
 	process( mEtago );
 	
@@ -438,12 +427,12 @@ void ElementParser	::	processEndTag( const TElementPtr & elementDecl )	{
 		r.setFatal();
 		throw r;
 	}
-	if ( name == elementDecl->getNodeName() )	{
+	if ( name == aName )	{
 		printf( "Correct element end tag found: %s\n", name.c_str() );
 	}
 	else	{
 		string error = "Expected closing tag ";
-		error += elementDecl->getNodeName();
+		error += aName;
 		ReadException exception( mDocText->getLineNr(), mDocText->getCharNr(),
 											  error, WRONG_TAG_FOUND, true );
 		exception.setWrongTag( name );
@@ -521,6 +510,66 @@ void ElementParser	::	processAttrSpec( TNodePtr aParent )	{
 	
 }
 
+void ElementParser	::	skipContent( const TElementPtr & aContent )	{
+
+	string contentName = aContent->getNodeName();
+	printf( "Trying to skip content: %s\n", contentName.c_str() );
+
+	// Using switch statement, by only looking at the first character.
+	switch( contentName[ 0 ] )	{
+		case '(':	{
+			throw ReadException( mDocText->getLineNr(),
+											mDocText->getCharNr(),
+											"Can't skip ()" );
+			break;
+		}
+		case '?':	{
+			break;
+		}
+		case '+':	{
+			throw ReadException( mDocText->getLineNr(),
+											mDocText->getCharNr(),
+											"Can't skip +" );
+			break;
+		}
+		case '*':	{
+			break;
+		}
+		case '|':	{
+			break;
+		}
+		case '&':	{
+			throw ReadException( mDocText->getLineNr(),
+											mDocText->getCharNr(),
+											"Can't skip &" );
+			break;
+		}
+		case ',':	{
+			throw ReadException( mDocText->getLineNr(),
+											mDocText->getCharNr(),
+											"Can't skip ," );
+			break;
+		}
+		case '#':	{
+			break;
+		}
+		default:	{
+			if ( contentName == "CDATA" )	{
+				printf( "Skipping cdata\n" );
+				break;
+			}
+			if ( contentName == "EMPTY" )	{
+				printf( "Skipping empty\n" );
+				break;
+			}
+			throw ReadException( mDocText->getLineNr(),
+											mDocText->getCharNr(),
+											"Can't skip tag" );
+		}
+	}
+	
+}
+
 void ElementParser	::	processContent( const TElementPtr & aContent,
 														 const TElementPtr & aExceptions,
 														 TNodePtr aParent )	{
@@ -529,6 +578,7 @@ void ElementParser	::	processContent( const TElementPtr & aContent,
 	//processExceptions( aExceptions, aParent );
 
 	string contentName = aContent->getNodeName();
+	printf( "Processing content: %s\n", contentName.c_str() );
 	
 	// Using switch statement, by only looking at the first character.
 	switch( contentName[ 0 ] )	{
@@ -581,7 +631,7 @@ void ElementParser	::	processContent( const TElementPtr & aContent,
 			}
 			printf( "At tag\n" );
 			TElementPtr elementDecl = getElementDecl( contentName, mElements );
-			processElementContent( elementDecl, aParent );
+			processElementContent( contentName, elementDecl, aParent );
 			printf( "Finished tag\n" );
 		}
 	}
@@ -613,6 +663,10 @@ void ElementParser	::	processOptional( const TElementPtr & aContent,
 	catch( ReadException r )	{
 		if ( ! r.isWrongTag() && r.isFatal() )	{
 			// Something went wrong here
+			throw r;
+		}
+		if ( r.isEndTag() )	{
+			// Let them know this.
 			throw r;
 		}
 	}
@@ -682,47 +736,56 @@ void ElementParser	::	processOr( const TElementPtr & aContent,
 	printf( "At or element\n" );
 
 	TNodeListPtr children = aContent->getChildNodes();
-	string token = "";
-	for ( unsigned int i = 0; i < children->getLength(); i++ )	{
+	unsigned int i = 0;
+	unsigned int length = children->getLength();
+	while ( i < length )	{
 		TNodePtr child = children->item( i );
 		TElementPtr element = shared_static_cast<TElement>( child );
-		if ( element->getTagName() == token || token == "" )	{
-			try	{
-				processContent( element, aExceptions, aParent );
-				printf( "Finished or element\n" );
-				return;
-			}
-			catch( ReadException r )	{
-				switch ( r.getReason() )	{
-					case WRONG_TAG_FOUND:	{
-						token = r.getWrongTag();
-						break;
+		try	{
+			processContent( element, aExceptions, aParent );
+			return;
+		}
+		catch( ReadException r )	{
+			TNodeListPtr results;
+			switch ( r.getReason() )	{
+				case WRONG_TAG_FOUND:	{
+					results = aContent->getElementsByTagName( r.getWrongTag() );
+					break;
+				}
+				case NO_TAG_FOUND:	{
+					results = aContent->getElementsByTagName( "#PCDATA" );
+					if ( results->getLength() == 0 )	{
+						results = aContent->getElementsByTagName( kCDATA );
 					}
-					case NO_TAG_FOUND:	{
-						printf( "NO TAG FOUND\n" );
-						TNodeListPtr results = aContent->getElementsByTagName( "#PCDATA" );
-						if ( results->getLength() != 0 )	{
-							token = "#PCDATA";
-						}
-						else	{
-							results = aContent->getElementsByTagName( "CDATA" );
-							if ( results->getLength() != 0 )	{
-								token = "CDATA";
-							}
-						}
-						break;
-					}
-					case END_TAG_FOUND:
-					case END_OF_FILE_REACHED:	{
+					break;
+				}
+				case NO_PCDATA_FOUND:	{
+					i++;
+					continue;
+				}
+				case END_TAG_FOUND:
+				case END_OF_FILE_REACHED:	{
+					throw r;
+					break;
+				}
+				default:	{
+					if ( r.isFatal() )	{
 						throw r;
-						break;
 					}
-					default:	{
-						if ( r.isFatal() )	{
-							throw r;
-						}
-						break;
-					}
+					break;
+				}
+			}
+			if ( results.get() != NULL )	{
+				if ( results->getLength() > 0 )	{
+					TNodePtr node = results->item( 0 );
+					element = shared_static_cast<TElement>( node );
+					processContent( element, aExceptions, aParent );
+					return;
+				}
+				else	{
+					throw ReadException( mDocText->getLineNr(),
+													mDocText->getCharNr(),
+													"No tag of or children found" );
 				}
 			}
 		}
@@ -739,10 +802,24 @@ void ElementParser	::	processAnd( const TElementPtr & aContent,
 
 	printf( "At seq element\n" );
 	TNodeListPtr children = aContent->getChildNodes();
+	bool skip = false;
 	for ( unsigned int i = 0; i < children->getLength(); i++ )	{
 		TNodePtr child = children->item( i );
 		TElementPtr element = shared_static_cast<TElement>( child );
-		processContent( element, aExceptions, aParent );
+		if ( skip )	{
+			skipContent( element );
+		}
+		else	{
+			try	{
+				processContent( element, aExceptions, aParent );
+			}
+			catch( ReadException r )	{
+				if ( r.isEndTag() && ! r.isFatal() )	{
+					// See if we can skip the rest of the tags.
+					skip = true;
+				}
+			}
+		}
 	}
 	printf( "Finished seq element\n" );
 
@@ -814,7 +891,7 @@ void ElementParser	::	processDataText( const TElementPtr & aContent,
 	}
 	if ( dataText == "" )	{
 		throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(),
-										"PCDATA expected" );
+										"PCDATA expected", NO_PCDATA_FOUND );
 	}
 	TTextPtr text = mDocument->createText( dataText );
 	aParent->appendChild( text );
@@ -835,6 +912,9 @@ void ElementParser	::	processExceptions( const TElementPtr & aExceptions,
 			if ( r.isFatal() )	{
 				throw r;
 			}
+			if ( r.isEndTag() )	{
+				throw r;
+			}
 			else	{
 				exceptionFound = false;
 			}
@@ -842,10 +922,11 @@ void ElementParser	::	processExceptions( const TElementPtr & aExceptions,
 	}
 
 }
+
 void ElementParser	::	processException( const TElementPtr & aExceptions,
 															TNodePtr aParent )	{
-	
-	if ( aExceptions.get() == 0 )	{
+
+	if ( aExceptions.get() == NULL )	{
 		throw ReadException( mDocText->getLineNr(),
 										mDocText->getCharNr(), "No exceptions" );
 	}
@@ -855,18 +936,19 @@ void ElementParser	::	processException( const TElementPtr & aExceptions,
 		throw ReadException( mDocText->getLineNr(),
 										mDocText->getCharNr(), "No plus exceptions" );
 	}
-	TNodePtr plusChild = plus->getFirstChild();
-	TNodePtr connectorNode = plusChild->getFirstChild();
-	TElementPtr connector = shared_static_cast<TElement>( connectorNode );
+	TNodePtr elementsNode = plus->getFirstChild();
+	TElementPtr elements = shared_static_cast<TElement>(elementsNode);
 
-	TNodeListPtr children = connector->getChildNodes();
+	TNodeListPtr children = elements->getChildNodes();
 	string token = "";
 	for ( unsigned int i = 0; i < children->getLength(); i++ )	{
 		TNodePtr child = children->item( i );
-		TElementPtr element = getElementDecl( child->getNodeName(), mElements );
-		if ( element->getTagName() == token || token == "" )	{
+		TDOMString name = child->getNodeName();
+		printf( "Looking at exception %s\n", name.c_str() );
+		TElementPtr element = getElementDecl( name, mElements );
+		if ( name == token || token == "" )	{
 			try	{
-				processElement( element, aParent );
+				processElement( name, element, aParent );
 				printf( "Finished exception\n" );
 				return;
 			}
@@ -874,16 +956,17 @@ void ElementParser	::	processException( const TElementPtr & aExceptions,
 				switch ( r.getReason() )	{
 					case WRONG_TAG_FOUND:	{
 						token = r.getWrongTag();
+						printf( "Token: %s\n", token.c_str() );
 						break;
 					}
 					case NO_TAG_FOUND:	{
 						printf( "NO TAG FOUND\n" );
-						TNodeListPtr results = connector->getElementsByTagName( "#PCDATA" );
+						TNodeListPtr results = elements->getElementsByTagName( "#PCDATA" );
 						if ( results->getLength() != 0 )	{
 							token = "#PCDATA";
 						}
 						else	{
-							results = connector->getElementsByTagName( "CDATA" );
+							results = elements->getElementsByTagName( "CDATA" );
 							if ( results->getLength() != 0 )	{
 								token = "CDATA";
 							}
@@ -939,34 +1022,26 @@ void ElementParser	::	processExceptionOtherContent()	{
 }
 
 TElementPtr ElementParser	::	getElementDecl( const string & aName,
-																			TElementPtr declarations ) const	{
+																	TElementPtr declarations ) const	{
 	
 	//printf( "Trying to get declaration: %s\n", aName.c_str() );
-	
-	TNodeListPtr children = declarations->getChildNodes();
-	for ( unsigned int i = 0; i < children->getLength(); i++ )	{
-		TNodePtr child = children->item( i );
-		if ( child->getNodeName() == aName )	{
-			return shared_static_cast<TElement>( child );
-		}
-		if ( child->getNodeName() == "()" )	{
-			TElementPtr declaration = shared_static_cast<TElement>( child );
-			try	{
-				return getElementDecl( aName, declaration );
-			}
-			catch( ElementDeclException e )	{
-				// Not found. Ah well.
-			}
-		}
-		if ( child->getNodeName() == "|" )	{
-			TElementPtr declaration = shared_static_cast<TElement>( child );
-			try	{
-				return getElementDecl( aName, declaration );
-			}
-			catch( ElementDeclException e )	{
-				// Not found. Ah well.
+
+	TNodeListPtr results = declarations->getElementsByTagName( aName );
+	unsigned int length = results->getLength();
+	unsigned int i = 0;
+	while ( i < length )	{
+		TNodePtr node = results->item( i );
+		TNodePtr parent = node->getParentNode();
+		if ( parent->getNodeName() == "elements" )	{
+			parent = parent->getParentNode();
+			if ( parent->getNodeName() == "declaration" )	{
+				// This is the one we want.
+				TElementPtr declaration =
+					shared_static_cast<TElement>( parent );
+				return declaration;
 			}
 		}
+		i++;
 	}
 
 	throw ElementDeclException();

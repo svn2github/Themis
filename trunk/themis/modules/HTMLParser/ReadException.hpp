@@ -53,7 +53,11 @@ enum ExceptionReason	{
 	/// An end tag was found, but not wanted.
 	END_TAG_FOUND,
 	/// A tag was wanted, but not found.
-	NO_TAG_FOUND
+	NO_TAG_FOUND,
+	/// PCDATA was wanted, but not found,
+	NO_PCDATA_FOUND,
+	/// Content had to be skipped, but was not possible.
+	NO_SKIP_CONTENT
 };
 
 /// Indicates a read error.

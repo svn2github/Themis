@@ -33,6 +33,7 @@ ElementDeclParser	::	~ElementDeclParser()	{
 void ElementDeclParser	::	processDeclaration()	{
 
 	// Define an element to store the element declaration
+	TElementPtr declaration = mDTD->createElement( "declaration" );
 	TElementPtr element;
 
 	//process( mMdo );
@@ -62,39 +63,44 @@ void ElementDeclParser	::	processDeclaration()	{
 		throw r;
 	}
 
-	// Find right element to put information in
-	TElementPtr infoElement = element;
 	if ( element->hasChildNodes() )	{
-		// Name group. Assuming has connector as child
-		TNodePtr connector = element->getFirstChild();
-		TNodePtr child = connector->getFirstChild();
-		infoElement = shared_static_cast<TElement>( child );
+		// Name group.
+		declaration->appendChild( element );
+	}
+	else	{
+		TElementPtr elements = mDTD->createElement( "elements" );
+		declaration->appendChild( elements );
+		elements->appendChild( element );
 	}
 
+	TElementPtr minimization = mDTD->createElement( "minimization" );
+	declaration->appendChild( minimization );
+
 	try	{
-		processTagMin( infoElement );
+		processTagMin( minimization );
 		processPsPlus();
 	}
 	catch( ReadException r )	{
 		r.setFatal();
 		throw r;
 	}
+
+	TElementPtr content = mDTD->createElement( "content" );
+	declaration->appendChild( content );
 	
 	try	{
-		processDeclContent( infoElement );
+		processDeclContent( content );
 	}
 	catch( ReadException r )	{
 		// Not declared content. Must be a content model
 		try	{
-			processContentModel( infoElement );
+			processContentModel( content );
 		}
 		catch( ReadException r )	{
 			r.setFatal();
 			throw r;
 		}
 	}
-
-	mElements->appendChild( element );
 
 	try	{
 		processPsStar();
@@ -113,15 +119,15 @@ void ElementDeclParser	::	processDeclaration()	{
 		throw r;
 	}
 
+	mElements->appendChild( declaration );
+
 }
 
 TElementPtr ElementDeclParser	::	processElementType()	{
 
-	string text = "";
-	
 	try	{
-		text = processGI();
-		TElementPtr element = mDTD->createElement( text );
+		string name = processGI();
+		TElementPtr element = mDTD->createElement( name );
 		return element;
 	}
 	catch( ReadException r )	{

@@ -519,14 +519,15 @@ TElementPtr BaseParser	::	processNameGroup()	{
 
 	process( mGrpo );
 
-	TElementPtr grpo = mDTD->createElement( "()" );
+	TElementPtr group = mDTD->createElement( "elements" );
 
 	processTsStar();
 	
 	string name = processName();
-	TElementPtr firstPart = mDTD->createElement( name );
+	TElementPtr element = mDTD->createElement( name );
+	group->appendChild( element );
 
-	TElementPtr subGroup;
+	//TElementPtr subGroup;
 	bool inGroup = true;
 	while ( inGroup )	{
 		try	{
@@ -534,15 +535,8 @@ TElementPtr BaseParser	::	processNameGroup()	{
 			TElementPtr connector = processConnector();
 			processTsStar();
 			name = processName();
-			TElementPtr element = mDTD->createElement( name );
-			if ( connector->getNodeName() == firstPart->getNodeName() )	{
-				firstPart->appendChild( element );
-			}
-			else	{
-				connector->appendChild( firstPart );
-				connector->appendChild( element );
-				firstPart = connector;
-			}
+			element = mDTD->createElement( name );
+			group->appendChild( element );
 		}
 		catch( ReadException r )	{
 			inGroup = false;
@@ -558,9 +552,7 @@ TElementPtr BaseParser	::	processNameGroup()	{
 		throw r;
 	}
 
-	grpo->appendChild( firstPart );
-	
-	return grpo;
+	return group;
 	
 }
 

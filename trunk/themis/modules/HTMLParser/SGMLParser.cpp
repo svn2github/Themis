@@ -29,8 +29,6 @@
 SGMLParser	::	SGMLParser( const char * aDtd, const char * aDocument )
 					:	BaseParser()	{
 	
-	//printf( "SGMLParser constructed\n" );
-
 	mDocText = SGMLTextPtr( new SGMLText() );
 	mDocText->loadText( aDocument );
 
@@ -42,8 +40,6 @@ SGMLParser	::	SGMLParser( const char * aDtd, const char * aDocument )
 SGMLParser	::	SGMLParser( const char * aDtd, SGMLTextPtr aDocument )
 					:	BaseParser()	{
 	
-	//printf( "SGMLParser constructed\n" );
-
 	// Load text
 	mDocText = aDocument;
 
@@ -201,6 +197,7 @@ void SGMLParser	::	processDocElement()	{
 TDocumentPtr SGMLParser	::	parse()	{
 	
 	parseDTD();
+	showTree( mDTD, 0 );
 
 	mDocText->reset();
 	
@@ -254,7 +251,7 @@ void SGMLParser	::	parseDTD()	{
 
 	if ( mDtds.count( mDefaultDtd ) == 0 )	{
 		printf( "Parsing DTD\n" );
-		createDTD();
+		//createDTD();
 		mCommentDecl->setDTD( mDTD );
 		mDtdParser->setDTD( mDTD );
 		mDocTypeDecl->setDTD( mDTD );

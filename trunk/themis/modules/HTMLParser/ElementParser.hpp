@@ -39,17 +39,23 @@ class ElementParser	:	public BaseParser	{
 		void parse( const map<string, Position> & aEntityTexts, const string & aName );
 		void parse( const string & aName );	// If you don't need entities
 		TDocumentPtr getDocument() const;
-		void processElementContent( const TElementPtr & aElementDecl,
+		void processElementContent( const TDOMString & aName,
+												   const TElementPtr & aElementDecl,
 												   TNodePtr aParent );
 		void processUnknownTags( TNodePtr aParent );
 		void processUnknownStartTag( TNodePtr aParent );
 		void processUnknownEndTag();
-		void processElement( const TElementPtr & aElementDecl, TNodePtr aParent );
-		TElementPtr processStartTag( const TElementPtr & elementDecl, TNodePtr aParent );
-		void processEndTag( const TElementPtr & elementDecl );
+		void processElement( const TDOMString & aName,
+										const TElementPtr & aElementDecl,
+										TNodePtr aParent );
+		TElementPtr processStartTag( const TDOMString & aName,
+													const TElementPtr & elementDecl,
+													TNodePtr aParent );
+		void processEndTag( const TDOMString & aName );
 		string processGenIdSpec();
 		void processAttrSpecList( TNodePtr aParent );
 		void processAttrSpec( TNodePtr aParent );
+		void skipContent( const TElementPtr & aContent );
 		void processContent( const TElementPtr & aContent,
 										const TElementPtr & aExceptions,
 										TNodePtr aParent );
@@ -80,10 +86,10 @@ class ElementParser	:	public BaseParser	{
 		void processExceptions( const TElementPtr & aExceptions, TNodePtr aParent );
 		void processException( const TElementPtr & aExceptions, TNodePtr aParent );
 		void processExceptionOtherContent();
-		void processComments();
-		void processComment();
 		TElementPtr getElementDecl( const string & aName,
 												   TElementPtr declarations ) const;
+		void processComments();
+		void processComment();
 
 };
 

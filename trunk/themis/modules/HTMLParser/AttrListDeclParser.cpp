@@ -19,22 +19,20 @@ AttrListDeclParser	::	AttrListDeclParser( SGMLTextPtr aDocText,
 															TDocumentPtr aDTD )
 							:	DeclarationParser( aDocText, aDTD )	{
 
-	//printf( "Constructing AttrListDeclParser\n" );
-	mAttrLists = mDTD->createElement( "attrlists" );
+	mAttrLists = mDTD->createElement( "attrLists" );
 	mDTD->appendChild( mAttrLists );
 	
 }
 
 AttrListDeclParser	::	~AttrListDeclParser()	{
 
-	//printf( "Destroying AttrListDeclParser\n" );
-	
 }
 
 void AttrListDeclParser	::	processDeclaration()	{
 
 	// Define an element to store the attribute list declaration
-	TElementPtr attrList = mDTD->createElement( "attrList" );
+	TElementPtr declaration = mDTD->createElement( "declaration" );
+	TElementPtr element;
 	
 	//process( mMdo );
 	process( kATTLIST );
@@ -48,12 +46,21 @@ void AttrListDeclParser	::	processDeclaration()	{
 	}
 	
 	try	{
-		TElementPtr assElementType = processAssElementType();
-		attrList->appendChild( assElementType );
+		element = processAssElementType();
 	}
 	catch( ReadException r )	{
 		r.setFatal();
 		throw r;
+	}
+
+	if ( element->hasChildNodes() )	{
+		// Name group.
+		declaration->appendChild( element );
+	}
+	else	{
+		TElementPtr elements = mDTD->createElement( "elements" );
+		declaration->appendChild( elements );
+		elements->appendChild( element );
 	}
 
 	try	{
@@ -66,7 +73,7 @@ void AttrListDeclParser	::	processDeclaration()	{
 
 	try	{
 		TElementPtr attrDefList = processAttrDefList();
-		attrList->appendChild( attrDefList );
+		declaration->appendChild( attrDefList );
 	}
 	catch( ReadException r )	{
 		r.setFatal();
@@ -89,37 +96,43 @@ void AttrListDeclParser	::	processDeclaration()	{
 		r.setFatal();
 		throw r;
 	}
-	
+
+	mAttrLists->appendChild( declaration );
+
 }
 
 TElementPtr AttrListDeclParser	::	processAssElementType()	{
 	
-	TElementPtr assElementType = mDTD->createElement( "assElementType" );
-
 	try	{
 		string name = processGI();
-		TElementPtr elementName = mDTD->createElement( name );
-		assElementType->appendChild( elementName );
-		//printf( "Element of attribute list: %s\n", name.c_str() );
+		TElementPtr element = mDTD->createElement( name );
+		return element;
 	}
 	catch( ReadException r )	{
-		// Not a generic identifier. Must be a name group
-		TElementPtr nameGroup = processNameGroup();
-		TNodeListPtr children = nameGroup->getChildNodes();
-		for ( unsigned int i = 0; i < children->getLength(); i++ )	{
-			TNodePtr child = children->item( i );
-			TElementPtr element = shared_static_cast<TElement>( child );
-			assElementType->appendChild( element );
+		if ( r.isFatal() )	{
+			throw r;
+		}
+	}
+
+	try	{
+		TElementPtr group = processNameGroup();
+		return group;
+	}
+	catch( ReadException r )	{
+		if ( r.isFatal() )	{
+			throw r;
 		}
 	}
 	
-	return assElementType;
+	throw ReadException( mDocText->getLineNr(),
+									mDocText->getCharNr(),
+									"Ass Element type expected" );
 	
 }
 
 TElementPtr AttrListDeclParser	::	processAttrDefList()	{
 
-	TElementPtr attrDefList = mDTD->createElement( "attrDefList" );
+	TElementPtr attrDefList = mDTD->createElement( "attributes" );
 
 	TElementPtr attrDef = processAttrDef();
 	attrDefList->appendChild( attrDef );
