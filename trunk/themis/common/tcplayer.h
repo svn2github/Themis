@@ -36,9 +36,12 @@ Include *both* plugclass.h *and* plugclass.cpp in your plugin!
 #define _http_main
 #include <sys/socket.h>
 #include <NetAddress.h>
+#ifdef USENETSERVER
+#include <NetKit.h>
+#endif
 #include <stdio.h>
 #include "commondefs.h"
-#include "plugman.h"
+//#include "plugman.h"
 #include <String.h>
 #include <errno.h>
 #include <File.h>
@@ -59,7 +62,8 @@ Include *both* plugclass.h *and* plugclass.cpp in your plugin!
 #endif
 #define TCP_DEFAULT_TIME_TO_LIVE 60
 #define BUFFER_SIZE 16384
-#ifdef BONE_VERSION
+#ifdef USEBONE
+#include <netdb.h>
 #define closesocket close
 #endif
 //#define CHK_NULL(x) if ((x)==NULL) {ERR_print_errors_fp(stdout); }
@@ -101,6 +105,8 @@ struct connection {
 	int result;
 	volatile int32 requests;
 	BNetAddress *address;
+	struct hostent *hptr;
+	in_addr **pptr;
 	BString addrstr;
 	connection() {
 #ifdef USEOPENSSL
@@ -118,6 +124,8 @@ struct connection {
 		requests=0;
 		addrstr="";
 		open=false;
+		hptr=NULL;
+		pptr=NULL;
 	}
 	~connection() {
 		printf("Connection going away, socket %ld",socket);
@@ -126,7 +134,9 @@ struct connection {
 		uint16 port;
 		memset(addr,0,200);
 		port=0;
-		
+		hptr=NULL;
+		pptr=NULL;
+/*		
 		if (address!=NULL) {
 			
 		address->GetAddr(addr,&port);
@@ -135,7 +145,7 @@ struct connection {
 		}
 		printf(" (%s)\n",open ? "open":"closed");
 		fflush(stdout);
-		
+*/		
 		if (address!=NULL)
 			delete address;
 		if (open)

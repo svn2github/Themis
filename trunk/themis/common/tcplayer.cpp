@@ -317,9 +317,13 @@ connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, b
 		connection *nu=new connection;
 		nu->proto_id=protoid;
 		nu->addrstr=host;
-		nu->address->SetTo(host,port);
-		nu->socket=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
+//		nu->address->SetTo(host,port);
+		nu->hptr=gethostbyname(host);
+		nu->pptr=(struct in_addr**)nu->hptr->h_addr_list;
 		sockaddr_in servaddr;
+		memcpy(&servaddr.sin_addr,*nu->pptr,sizeof(struct in_addr));
+		servaddr.sin_port=htons(port);
+		nu->socket=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
 		//mtx->lock();
 		nu->address->GetAddr(servaddr);
 		nu->result=connect(nu->socket,(sockaddr *)&servaddr,sizeof(servaddr));
@@ -450,7 +454,11 @@ connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, b
 		//mtx->lock();
 		current->socket=socket(AF_INET,SOCK_STREAM,sockproto);
 		sockaddr_in servaddr;
-		current->address->GetAddr(servaddr);
+//		current->address->GetAddr(servaddr);
+		current->hptr=gethostbyname(host);
+		current->pptr=(struct in_addr**)current->hptr->h_addr_list;
+		memcpy(&servaddr.sin_addr,*current->pptr,sizeof(struct in_addr));
+		servaddr.sin_port=htons(port);
 		current->result=connect(current->socket,(sockaddr *)&servaddr,sizeof(servaddr));
 		//mtx->unlock();
 		if (current->result==0) {
@@ -598,7 +606,11 @@ connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, b
 		if (!current->open) {
 //			if (!Connected(current)) {
 				sockaddr_in servaddr;
-				current->address->GetAddr(servaddr);
+//				current->address->GetAddr(servaddr);
+		current->hptr=gethostbyname(host);
+		current->pptr=(struct in_addr**)current->hptr->h_addr_list;
+		memcpy(&servaddr.sin_addr,*current->pptr,sizeof(struct in_addr));
+		servaddr.sin_port=htons(port);
 				current->socket=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
 //mtx->lock();
 				current->result=connect(current->socket,(sockaddr *)&servaddr,sizeof(servaddr));

@@ -53,7 +53,7 @@ class cacheman:public BHandler, public PlugClass
    float PlugVersion(){return PlugVersdef;};
    bool IsHandler();
    BHandler *Handler();
-   bool IsPersistant(){return true;}
+   bool IsPersistent(){return true;}
    status_t FindCacheDir();
    status_t CheckIndices();
    status_t CheckMIME();

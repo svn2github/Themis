@@ -31,11 +31,19 @@ http_protocol *HTTP_proto;
 #include "commondefs.h"
 #include "http_defines.h"
 #include <Menu.h>
+#include "plugman.h"
 tcplayer *TCP;
+BMessage *AppSettings;
+BMessage **AppSettings_p;
+//plugman *PlugMan;
+BMessage *HTTPSettings;
 
 status_t Initialize(void *info)
  {
   TCP=NULL;
+  AppSettings=NULL;
+	HTTPSettings=NULL;
+//	 PlugMan=NULL;
   if (info!=NULL) {
 	  
 	BMessage *imsg=(BMessage *)info;
@@ -45,10 +53,12 @@ status_t Initialize(void *info)
 	 if (imsg->HasPointer("tcp_layer_ptr"))
 	 	imsg->FindPointer("tcp_layer_ptr",(void**)&TCP);
 //	}
-	
+//	if (imsg->HasPointer("plug_manager"))
+//		imsg->FindPointer("plug_manager",(void**)&PlugMan);
 	printf("(http) TCP layer: %p\n",TCP);
   HTTP_proto=new http_protocol(imsg);
 	 
+
   }else 
   	HTTP_proto=new http_protocol(NULL);
   
@@ -56,6 +66,14 @@ status_t Initialize(void *info)
  }
 status_t Shutdown(bool now)
  {
+	printf("1234 HTTP Being Shutdown\n");
+	if (AppSettings_p!=NULL) {
+		if (!AppSettings->HasMessage("http_settings_message")) {
+			AppSettings->AddMessage("http_settings_message",HTTPSettings);
+		} else
+			AppSettings->ReplaceMessage("http_settings_message",HTTPSettings);
+	}
+	 
 //  if (now)
 	  if (HTTP_proto!=NULL)
 	   {
@@ -63,6 +81,7 @@ status_t Shutdown(bool now)
   		delete HTTP_proto;
   	   }
 	TCP=NULL;
+//	PlugMan=NULL;
   return B_OK;
  }
 protocol_plugin* GetObject(void)
@@ -82,39 +101,93 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 	if (msg->HasInt32("command"))
 		msg->FindInt32("command",&command);
  	BView *vw;
-	msg->FindPointer("window",(void**)&win);
-	 
-	msg->FindPointer("top_view",(void**)&vw);
+	if (msg->HasPointer("window"))
+		msg->FindPointer("window",(void**)&win);
+	if (msg->HasPointer("top_view"))
+		msg->FindPointer("top_view",(void**)&vw);
  	if (view==NULL) {
 		view=vw;
 			BMenu *v;
-			msg->FindPointer("options_menu",(void**)&v);
+			if (msg->HasPointer("options_menu"))
+				msg->FindPointer("options_menu",(void**)&v);
 //			HOH->AddMenu(v);
 //			win->AddHandler((BHandler*)HOH);
 		
 	} else {
 		if (vw!=view) {
 			BMenu *v;
-			msg->FindPointer("options_menu",(void**)&v);
+			if (msg->HasPointer("options_menu"))
+				msg->FindPointer("options_menu",(void**)&v);
 //			HOH->AddMenu(v);
 			
 			view=vw;
 		}
 		
 	}
-	
 	switch (command) {
 		case COMMAND_RETRIEVE: {
+			int32 action=0;
+			if (msg->HasInt32("action"))
+				msg->FindInt32("action",&action);
+			printf("http proto: action is %c%c%c%c\n",action>>24,action>>16,action>>8,action);
+			if (action==LoadingNewPage) {
+				printf("http proto: PlugMan %p\n",PlugMan);
+				if (PlugMan!=NULL) {
+					BMessage msg(GetSupportedMIMEType);
+					msg.AddInt32("ReplyTo",Type());
+					msg.AddInt32("command",COMMAND_INFO_REQUEST);
+					msg.AddBool("supportedmimetypes",true);
+					BMessage container;
+					container.AddMessage("message",&msg);
+					PlugMan->Broadcast(TARGET_PARSER|TARGET_HANDLER,&container);
+				}
+			}
+			
 			HTTP->Lock();
 			HTTP->AddRequest(msg);
 			HTTP->Unlock();
+		}break;
+		case COMMAND_INFO: {
+			switch(msg->what) {
+				case SupportedMIMEType: {
+					printf("Add types in following message to MIME Type list.\n");
+					msg->PrintToStream();
+					BString str;
+					int32 count=0;
+					type_code type;
+					msg->GetInfo("mimetype",&type,&count);
+					smt_st *cur,*cur2;
+					for (int32 i=0;i<count;i++) {
+						cur=new smt_st;
+						msg->FindString("mimetype",i,&str);
+						cur->type=new char[str.Length()+1];
+						str.CopyInto(cur->type);
+						if (smthead==NULL) {
+							smthead=cur;
+						} else {
+							cur2=smthead;
+							while (cur2->next!=NULL)
+								cur2=cur2->next;
+							cur2->next=cur;
+						}
+						
+					}
+					
+				}break;
+				default: {
+					msg->PrintToStream();
+					//display the message info, but otherwise ignore it
+				}
+			}
 		}break;
 		default:
 			return PLUG_DOESNT_HANDLE;
 	}
 	
 }
- 
+bool http_protocol::IsPersistant(){
+	return true;
+}
 char* http_protocol::PlugName(void)
  {
   return PlugNamedef;
@@ -135,7 +208,7 @@ http_protocol::http_protocol(BMessage *info)
               :protocol_plugin(info)
  {
  	Window=NULL;
-	 
+	 smthead=NULL;
 	Go();
 	if (TCP==NULL) {
 	 if (info->HasPointer("tcp_layer_ptr"))
@@ -154,6 +227,14 @@ http_protocol::~http_protocol()
  	HTTP->Quit();
 	printf("http: Window: %p\n",Window);
 	 
+	if (smthead!=NULL) {
+		smt_st *cur=smthead;
+		while (smthead!=NULL) {
+			cur=smthead->next;
+			delete smthead;
+			smthead=cur;
+		}
+	}
 	
   delete HTTP;
  }

@@ -32,6 +32,7 @@ Include *both* plugclass.h *and* plugclass.cpp in your plugin!
 */
 
 #include "plugclass.h"
+#include "plugman.h"
 #include <stdio.h>
 /*
  The strtoval function takes the first four characters of a string, and converts them to
@@ -74,6 +75,11 @@ PlugClass::PlugClass(BMessage *info) {
 	Window=NULL;
 	PlugMan=NULL;
 	uses_heartbeat=false;
+	if (InitInfo!=NULL) {
+		if (InitInfo->HasPointer("plug_manager"))
+			InitInfo->FindPointer("plug_manager",(void**)&PlugMan);
+	}
+	
 }
 
 PlugClass::~PlugClass() {
@@ -132,7 +138,7 @@ BHandler *PlugClass::Handler(){
 	return NULL;
 }
 
-bool PlugClass::IsPersistant(){
+bool PlugClass::IsPersistent(){
 	return false;
 }
 

@@ -38,15 +38,14 @@ Win::Win(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspa
   View=new winview(Bounds(),"mainview",B_FOLLOW_ALL,B_WILL_DRAW|B_FRAME_EVENTS|B_ASYNCHRONOUS_CONTROLS|B_NAVIGABLE|B_NAVIGABLE_JUMP);
 	startup=true;
 //  Parser=new HTMLParser;
-	View=new winview(Bounds(),"mainview",B_FOLLOW_ALL,B_WILL_DRAW|B_FRAME_EVENTS|B_ASYNCHRONOUS_CONTROLS|B_NAVIGABLE|B_NAVIGABLE_JUMP);
 //  Parser->View=View;
 //  View->Parser=Parser;
 	AddChild(View);
 }
 bool Win::QuitRequested() {
-//  BMessenger *msgr=new BMessenger(NULL,Parser,NULL);
-//  msgr->SendMessage(B_QUIT_REQUESTED);
-//  delete msgr;
+  BMessenger *msgr=new BMessenger(NULL,Parser,NULL);
+  msgr->SendMessage(B_QUIT_REQUESTED);
+  delete msgr;
 	return true;
 }
 void Win::MessageReceived(BMessage *msg) {

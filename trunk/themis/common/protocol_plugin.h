@@ -35,6 +35,7 @@ class ProtocolPlugClass: public PlugClass {
 	public:
 		ProtocolPlugClass(BMessage *info=NULL):PlugClass(info) {}
 		BString URL;
+	
 		virtual const char *SetURL(const char* url) {URL=url; return URL.String();}
 		virtual BMessage *SupportedTypes(void) {return NULL;}
 		virtual void Config(BMessage *msg) {}

@@ -226,7 +226,7 @@ struct http_request {
 };
 
 class authwin;
-
+class http_protocol;
 class httplayer {
 	private:
 		auth_req *Basic;
@@ -285,6 +285,7 @@ class httplayer {
 		int32 b64decode(char *encoded,unsigned char **decoded,int32 *size);
 		void FindURI(char **url,char **host,uint16 *port,char **uri,bool *secure);
 		friend class authwin;
+		friend class http_protocol;
 };
 
 #endif

@@ -246,8 +246,6 @@ status_t plugman::UnloadAllPlugins(bool clean) {
 		if (cur->inmemory) {
 			status_t (*Shutdown)(bool);
 				printf("Unloading plug-in: %s\n",cur->name);
-				if (get_image_symbol(cur->sysid,"Shutdown",B_SYMBOL_TYPE_TEXT,(void**)&Shutdown)==B_OK)
-					(*Shutdown)(true);
 				if (cur->pobj->IsHandler()) {
 					Lock();
 					RemoveHandler(cur->pobj->Handler());
@@ -264,6 +262,8 @@ status_t plugman::UnloadAllPlugins(bool clean) {
 					wait_for_thread(thread,&stat);
 					delete msgr;
 				}
+				if (get_image_symbol(cur->sysid,"Shutdown",B_SYMBOL_TYPE_TEXT,(void**)&Shutdown)==B_OK)
+					(*Shutdown)(true);
 				unload_add_on(cur->sysid);
 		} else {
 			printf("Unloading plug-in: %s\n",cur->name);
@@ -309,6 +309,7 @@ status_t plugman::Broadcast(int32 targets,BMessage *msg) {
 		} else {
 			if (!cur->inmemory)
 				LoadPlugin(cur->plugid);
+				printf("Broadcast sent to: %s\t%ld\n",cur->pobj->PlugName(),ret);
 			cur->pobj->ReceiveBroadcast(subm);
 		}
 		cur=cur->next; 
@@ -336,7 +337,7 @@ status_t plugman::LoadPlugin(uint32 which)
 				status_t (*Initialize)(void *info);
 				get_image_symbol(cur->sysid,"Initialize",B_SYMBOL_TYPE_TEXT,(void**)&Initialize);
 				get_image_symbol(cur->sysid,"GetObject",B_SYMBOL_TYPE_TEXT,(void**)&(cur->GetObject));
-				(*Initialize)(NULL);
+				(*Initialize)(InitInfo);
 				cur->pobj=(*cur->GetObject)();
 				cur->uses_heartbeat=cur->pobj->RequiresHeartbeat();
 				
@@ -451,8 +452,10 @@ void plugman::MessageReceived(BMessage *msg) {
 			printf("Heartbeat\n");
 			plugst *cur=head;
 			while (cur!=NULL) {
-				if (cur->uses_heartbeat)
-					cur->pobj->Heartbeat();
+				if (cur->uses_heartbeat) {
+					if (cur->pobj!=NULL)
+						cur->pobj->Heartbeat();
+				}
 				cur=cur->next;
 			}
 			
@@ -714,7 +717,7 @@ void plugman::MessageReceived(BMessage *msg) {
 					          nuplug->pobj->PlugVersion());
 					if (nuplug->pobj->SecondaryID()!=0)
 						printf("\tSecondary ID: %c%c%c%c\n",nuplug->pobj->SecondaryID()>>24,nuplug->pobj->SecondaryID()>>16,nuplug->pobj->SecondaryID()>>8,nuplug->pobj->SecondaryID());
-					if (!nuplug->pobj->IsPersistant()) {
+					if (!nuplug->pobj->IsPersistent()) {
 						status_t (*Shutdown)(bool);
 						if (get_image_symbol(nuplug->sysid,"Shutdown",B_SYMBOL_TYPE_TEXT,(void**)&Shutdown)==B_OK)
 							(*Shutdown)(true);
@@ -842,8 +845,6 @@ status_t plugman::UnloadPlugin(uint32 which,bool clean) {
 				}
 				if (cur->inmemory) {
 					status_t (*Shutdown)(bool);
-					if (get_image_symbol(cur->sysid,"Shutdown",B_SYMBOL_TYPE_TEXT,(void**)&Shutdown)==B_OK)
-						(*Shutdown)(true);
 					cur->inmemory=false;
 					if (cur->pobj->IsHandler()) {
 						Lock();
@@ -862,6 +863,8 @@ status_t plugman::UnloadPlugin(uint32 which,bool clean) {
 						delete msgr;
 					}
 					
+					if (get_image_symbol(cur->sysid,"Shutdown",B_SYMBOL_TYPE_TEXT,(void**)&Shutdown)==B_OK)
+						(*Shutdown)(true);
 					unload_add_on(cur->sysid);
 					if (cur->uses_heartbeat) {
 						atomic_add(&heartcount,-1);
@@ -873,8 +876,6 @@ status_t plugman::UnloadPlugin(uint32 which,bool clean) {
 			} else {
 				if (cur->inmemory) {
 					status_t (*Shutdown)(bool);
-					if (get_image_symbol(cur->sysid,"Shutdown",B_SYMBOL_TYPE_TEXT,(void**)&Shutdown)==B_OK)
-						(*Shutdown)(true);
 					cur->inmemory=false;
 					if (cur->pobj->IsHandler()) {
 						Lock();
@@ -892,12 +893,14 @@ status_t plugman::UnloadPlugin(uint32 which,bool clean) {
 						wait_for_thread(thread,&stat);
 						delete msgr;
 					}
+					if (get_image_symbol(cur->sysid,"Shutdown",B_SYMBOL_TYPE_TEXT,(void**)&Shutdown)==B_OK)
+						(*Shutdown)(true);
 					unload_add_on(cur->sysid);
 					if (cur->uses_heartbeat) {
 						atomic_add(&heartcount,-1);
 						cur->uses_heartbeat=false;
 					}
-					
+					cur->pobj=NULL;
 				}
 				
 			}
@@ -927,14 +930,15 @@ void plugman::AddPlug(plugst *plug) {
 		tmp->next=plug;
 		plug->prev=last;
 	}
-	BMessenger *msgr=new BMessenger(NULL,Window,NULL);
-//	if (msgr->IsValid())
-//		msgr->LockTarget();
 	BMessage *msg=new BMessage(PlugInLoaded);
-	msg->AddInt32("plugid",plug->pobj->PlugID());
-	msg->AddPointer("plugin",plug->pobj);
-	msgr->SendMessage(msg);
-	delete msgr;
+	msg->AddInt32("type",plug->type);
+	msg->AddInt32("command",COMMAND_INFO);
+	msg->AddInt32("plugid",plug->plugid);
+	if (plug->inmemory)
+		msg->AddPointer("plugin",plug->pobj);
+	BMessage container;
+	container.AddMessage("message",msg);
+	Broadcast(ALL_TARGETS,&container);
 	delete msg;
 	
 }

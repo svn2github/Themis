@@ -31,11 +31,22 @@ Project Start Date: October 18, 2000
 #include "commondefs.h"
 #include <stdio.h>
 #include "nuresource.h"
+#include "plugman.h"
+#include <DataIO.h>
+#include <File.h>
+#include <Entry.h>
 extern plugman *PluginManager;
 
 HTMLParser::HTMLParser()
-	:BLooper("html parser",B_DISPLAY_PRIORITY){{
+	:BLooper("html parser",B_DISPLAY_PRIORITY){
 	Run();
+	BMessenger *msgr=new BMessenger(PluginManager);
+		BMessage *msg=new BMessage(AddInitInfo);
+		msg->AddPointer("html_parser",this);
+		msgr->SendMessage(msg);
+		delete msgr;
+		delete msg;
+		
 }
 HTMLParser::~HTMLParser(){
 }
@@ -46,6 +57,43 @@ bool HTMLParser::QuitRequested(){
 void HTMLParser::MessageReceived(BMessage *msg){
 	switch(msg->what){
 		case ProtocolResponse: {
+			printf("HTML Parser!!!\n");
+			msg->PrintToStream();
+			BMessage cacheinfo;
+			if (msg->HasMessage("cache_info")) {
+				
+				msg->FindMessage("cache_info",&cacheinfo);
+				printf("Cache info BMessage\n");
+				cacheinfo.PrintToStream();
+			}
+			
+			BPositionIO *data=NULL;
+			if ((!cacheinfo.IsEmpty()) || (msg->HasPointer("data_posit_io_ptr"))) {
+				if (msg->HasPointer("data_posit_io_ptr")) {
+					
+					msg->FindPointer("data_posit_io_ptr",(void**)&data);
+				} 
+					if ((data==NULL) && (!cacheinfo.IsEmpty())) {
+						entry_ref ref;
+						cacheinfo.FindRef("ref",&ref);
+						data=new BFile(&ref,B_READ_ONLY);
+						
+					}
+					
+				
+				
+				printf("Data Pointer: %p\n",data);
+				data->Seek(0,SEEK_END);
+				off_t fsize=data->Position();
+				data->Seek(0,SEEK_SET);
+				unsigned char *buff=new unsigned char[fsize+1];
+				memset(buff,0,fsize+1);
+				data->Read(buff,fsize);
+				printf("data in buffer:\n%s\n",(char*)buff);
+				delete buff;
+			}
+			
+			
 		}break;
 		default:{
 			BLooper::MessageReceived(msg);

@@ -31,13 +31,16 @@ Project Start Date: October 18, 2000
 
 #define ThemisAppSig "application/x-vnd.becommunity-themis"
 #define ThemisCacheMIME "application/x-Themis-cache"
+#define ThemisCookieFile "application/x-Themis-cookie"
 
 
 #define HTTPPlugin 'http'
 #define HTTPSPlugin 'htps'
 #define CachePlugin 'cash'
+#define JavascriptPlugin 'jsct'
 //#define HTMLPlugin 'html'
-#define HTMLTagPlugin 'httg'
+//#define HTMLTagPlugin 'httg'
+#define CookiePlugin 'cook'
 
 #define FindCachedObject 'fcob'
 #define CreateCacheObject 'ccob'
@@ -59,6 +62,19 @@ Project Start Date: October 18, 2000
 #define CacheClearOnNewPage 8
 //clear out this item after a specific time limit
 #define CacheClearOnTimeLimit 16
+
+//Cookie Control identifiers
+#define FindCookie 'fcok'
+#define NoCookieFound 'nocf'
+#define FoundCookie 'fndc'
+#define SetCookie 'setc'
+
+#define DisableJavascript 'djvs'
+#define EnableJavascript 'ejvs'
+#define GetJavascriptStatus 'gjss'
+#define ProcessJSScript 'pjss'
+#define ClearJSScripts 'cjss'
+
 
 //general notification
 #define LoadingNewPage 'ldnp'
@@ -86,4 +102,6 @@ Project Start Date: October 18, 2000
 #define AppWideBroadcast 'awbc'
 #define PluginBroadcast 'plgb'
 
+#define GetSupportedMIMEType 'gsmt'
+#define SupportedMIMEType 'spmt'
 #endif

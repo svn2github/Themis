@@ -64,12 +64,14 @@ class http_protocol:public ProtocolPlugClass
      float PlugVersion(void);
      status_t Go(void);
      int32 SpawnThread(BMessage *info);
-     bool IsPersistant(){return true;}
+     bool IsPersistant();
      void Stop();
      int32 GetURL(BMessage *info);
      static int32 ThreadFunc(void *info);
 	 void AddMenuItems(BMenu *menu);
 	 void RemoveMenuItems();
+	 struct smt_st *smthead;
+	 friend httplayer;
   	 int32 Type();
  	 status_t ReceiveBroadcast(BMessage *msg);
    };

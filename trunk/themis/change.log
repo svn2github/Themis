@@ -1,4 +1,26 @@
 ========
+26 August 2002
+========
+All plug-ins
+Fixed an age old typo: IsPersistent() not IsPersistant(). Also added some more message Broadcast support.
+
+The Message Broadcast System
+IS STILL NOT COMPLETE. I've done a little more work, and ironed out a few more issues, but it is still far from finished. The HTTP protocol now broadcasts a COMMAND_INFO_REQUEST to handlers and parsers, looking for the various supported MIME types. See the newly added testplug for information on how to respond to this message. Even this functionality is not fully implemented or documented yet.
+
+modules/testplug/*
+This is a sample plug-in stripped pretty much to the bare bones. It does have a few unnecessary functions (MessageReceived, IsHandler, and Handler among them) but is pretty much empty. Feel free to modify this plug-in's code, copy it, or utilize it in any way that proves helpful. It's meant just for testing out code, and isn't in the standard build. To build it, simply type "make testplug".
+
+Javascript and Cookie plug-ins
+These are very much unfinished plug-ins that are included in the standard build now. The cookie plug-in, in fact, has barely been started, though it does build, get loaded, and process a "Heartbeat". The cookie plug-in is off to an excellent start if someone wants to work on it. Otherwise, I'll hop on it after I finish the broadcast system. The Javascript plug-in can process a simple script, but is very much incomplete as well. It needs to have a link to the DOM, window, and view, among other things, but I have some ideas on how to implement these links.
+
+IGNORE ALL CHANGES TO framework/htmlparser.*!! Much of the code being committed has been in an experimental directory for some time, and I made progress from this directory with the broadcast system. I was too lazy to tell cvs to ignore these files.
+
+The HTTP add-on still needs to be updated to send a broadcast when a file transfer has begun! So don't be surprised if you don't see many broadcasts yet.
+
+The cache plug-in likewise has not been properly updated. 
+
+
+========
 26 July 2002
 ========
 common/stripwhite.h

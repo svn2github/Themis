@@ -30,12 +30,12 @@ Project Start Date: October 18, 2000
 #define _winclass
 #include <Window.h>
 #include "winview.h"
-//#include "htmlparser.h"
+#include "htmlparser.h"
 class Win:public BWindow
  {
   private:
    bool startup;
-//   HTMLParser *Parser;
+   HTMLParser *Parser;
   public:
    winview *View;
    Win(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspace=B_CURRENT_WORKSPACE);

@@ -18,6 +18,7 @@ FRAMEWORK_DEPENDS_DIR=$(BASE_DEPENDS_DIR)framework/
 BASE_ADDONS_DEPENDS_DIR=$(BASE_DEPENDS_DIR)add-ons/
 COMMON_DEPENDS_DIR=$(BASE_DEPENDS_DIR)comon/
 DOMLIBRARY_DEPENDS_DIR=$(BASE_LIBRARY_DEPENDS_DIR)DOM/
+TESTPLUG_DEPENDS_DIR=$(BASE_DEPENDS_DIR)testplug/
 
 #object directories
 BASE_OBJECT_DIR=objects/
@@ -26,6 +27,7 @@ FRAMEWORK_OBJECT_DIR=$(BASE_OBJECT_DIR)framework/
 COMMON_OBJECT_DIR=$(BASE_OBJECT_DIR)common/
 BASE_ADDONS_OBJECT_DIR=$(BASE_OBJECT_DIR)add-ons/
 DOMLIBRARY_OBJECT_DIR=$(BASE_LIBRARY_OBJECT_DIR)DOM/
+TESTPLUG_OBJECT_DIR=$(BASE_OBJECT_DIR)testplug/
 
 #source files
 FRAMEWORKSOURCES= \
@@ -79,6 +81,8 @@ JAVASCRIPT_SUPPORT_LIBRARIES= \
 JSADDONSOURCES= \
 	js/jsmain.cpp \
 	js/jsman.cpp
+TESTPLUGSOURCES= \
+	testplug/testplug.cpp
 #make install directories as necessary
 ifeq "$(shell if [ -d $(BASE_ADDON_INSTALL_DIR) ] ; then echo 1 ; else mkdir -p $(BASE_ADDON_INSTALL_DIR) ; echo 0 ; fi)" "0"
 endif
@@ -109,6 +113,9 @@ endif
 #DOM Library object directory
 ifeq "$(shell if [ -d $(DOMLIBRARY_OBJECT_DIR) ] ; then echo 1 ; else mkdir -p $(DOMLIBRARY_OBJECT_DIR) ; echo 0 ; fi)" "0"
 endif
+#testplug add-on object directory
+ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)testplug/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)testplug/ ; echo 0 ; fi)" "0"
+endif
 
 #Make depends directories as necessary
 ifeq "$(shell if [ -d $(FRAMEWORK_DEPENDS_DIR) ] ; then echo 1 ; else mkdir -p $(FRAMEWORK_DEPENDS_DIR) ; echo 0 ; fi)" "0"
@@ -132,6 +139,9 @@ ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)js/ ] ; then echo 1 ; else mkdir
 endif
 #DOM Library depends directory
 ifeq "$(shell if [ -d $(DOMLIBRARY_DEPENDS_DIR) ] ; then echo 1 ; else mkdir -p $(DOMLIBRARY_DEPENDS_DIR) ; echo 0 ; fi)" "0"
+endif
+#testplug add-on depends directory
+ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)testplug/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)testplug/ ; echo 0 ; fi)" "0"
 endif
 
 #Detect whether net_server or BONE is installed, and set the appropriate flags
@@ -187,7 +197,7 @@ endif
 #			domloadtest
 all: framework addons domtest domloadtest
 	@echo "Themis application and add-ons built successfully."
-addons: httpaddon cacheaddon #cookieaddon jsaddon
+addons: httpaddon cacheaddon cookieaddon jsaddon
 	@echo "All add-ons built successfully."
 clean: 
 	@rm -rf objects depends Themis
@@ -285,8 +295,29 @@ $(BASE_ADDONS_DEPENDS_DIR)cache/%.d:  $(BASE_ADDON_SOURCE_DIR)cache/%.cpp $(BASE
 	@echo "Cache: Updating dependency file $(notdir $@)"
 	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)cache/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)cache/"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
 
-$(BASE_ADDONS_OBJECT_DIR)cache/%.o: $(BASE_ADDON_SOURCE_DIR)cache/%.cpp $(BASE_ADDONS_DEPENDS_DIR)cache/%.d
-	@echo "Cache: Updating object file $(notdir $@)"
+
+#testplug add-on
+testplug: testplugdepends testplugobjects
+	@echo "Linking testplug" 
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)testplug.so $(foreach file,$(notdir $(TESTPLUGSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)testplug/$(file)) $(COMMON_OBJECT_DIR)plugclass.o $(COMMON_OBJECT_DIR)plugman.o -nostart -Xlinker $(LDFLAGS) -soname=testplug.so -L ./ -L $(BELIBRARIES)  -lbe -ltextencoding -lroot
+	@echo "testplug add-on is now linked. Doing mimeset."
+	@mimeset -F $(BASE_ADDON_INSTALL_DIR)cache.so
+	@echo "Cache plug-in compiled and linked successfully."
+	
+testplugdepends: $(foreach file,$(TESTPLUGSOURCES),$(BASE_ADDON_SOURCE_DIR)$(file)) common/plugman.cpp common/plugclass.cpp $(COMMON_DEPENDS_DIR)plugman.d $(COMMON_DEPENDS_DIR)plugclass.d\
+					$(foreach file,$(BASE_ADDON_SOURCE_DIR)$(TESTPLUGSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)testplug/$(notdir $(file)))
+	@echo "testplug depends are done."
+	
+testplugobjects: $(COMMON_OBJECT_DIR)plugman.o $(COMMON_OBJECT_DIR)plugclass.o\
+					$(foreach file,$(BASE_ADDON_SOURCE_DIR)$(TESTPLUGSOURCES),$(BASE_ADDONS_OBJECT_DIR)testplug/$(notdir $(file:.cpp=.o)))
+	@echo "testplug objects are done."
+	
+$(BASE_ADDONS_DEPENDS_DIR)testplug/%.d:  $(BASE_ADDON_SOURCE_DIR)testplug/%.cpp $(BASE_ADDON_SOURCE_DIR)testplug/%.h
+	@echo "testplug: Updating dependency file $(notdir $@)"
+	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)testplug/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)testplug/"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
+
+$(BASE_ADDONS_OBJECT_DIR)testplug/%.o: $(BASE_ADDON_SOURCE_DIR)testplug/%.cpp $(BASE_ADDONS_DEPENDS_DIR)testplug/%.d
+	@echo "testplug: Updating object file $(notdir $@)"
 	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
 
 #http add-on
@@ -338,14 +369,14 @@ $(BASE_ADDONS_OBJECT_DIR)cookie/%.o: $(BASE_ADDON_SOURCE_DIR)cookie/%.cpp $(BASE
 
 #Javascript add-on
 jsaddon: domlib jsaddondepends jsaddonobjects
+	@echo "Copying Javscript library and supporting libraries to install directory."
+	@$(shell if [ "$(NETWORKING)" == "BONE" ] ; then /bin/unzip -uqd Themis/lib/ javascript/bone_jslibs.zip ; else /bin/unzip -uqd Themis/lib/ javascript/netserver_jslibs.zip ; fi )
 	@echo "Linking Javascript add-on"
 	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)js_plugin.so $(COMMON_OBJECT_DIR)plugman.o $(COMMON_OBJECT_DIR)plugclass.o $(foreach file,$(notdir $(JSADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)js/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=js_plugin.so -L ./ -L javascript/ -L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) -lbe -lroot -ltextencoding -ljs -ldom
 	@echo "Javascript add-on is now linked. Doing mimeset."
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)js_plugin.so
 	@echo "Javascript plug-in compiled and linked successfully."
-	@echo "Copying Javscript library and supporting libraries to install directory."
 #	@$(shell for file in $(JAVASCRIPT_SUPPORT_LIBRARIES); do if [ ! -f $(BASE_APP_LIB_INSTALL_DIR)`basename $$file` ] ; then cp $$file $(BASE_APP_LIB_INSTALL_DIR); fi ;  done)
-	@$(shell if [ "$(NETWORKING)" == "BONE" ] ; then /bin/unzip -uqd Themis/lib/ javascript/bone_jslibs.zip ; else /bin/unzip -uqd Themis/lib/ javascript/netserver_jslibs.zip ; fi )
 	@echo "Done with Javascript add-on."
 jsaddondepends: $(foreach file,$(JSADDONSOURCES),$(BASE_ADDON_SOURCE_DIR)$(file)) common/plugman.cpp common/plugclass.cpp $(COMMON_DEPENDS_DIR)plugman.d $(COMMON_DEPENDS_DIR)plugclass.d \
 					$(foreach file,$(BASE_ADDON_SOURCE_DIR)$(JSADDONSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)js/$(notdir $(file)))

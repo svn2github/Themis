@@ -10,6 +10,7 @@
 #define TNODELISTCONTAINER_H
 
 #include "DOMSupport.h"
+#include <List.h>
 
 #include <vector>
 

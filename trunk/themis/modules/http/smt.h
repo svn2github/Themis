@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2001 Z3R0 One. All Rights Reserved.
+Copyright (c) 2002 Raymond "Z3R0 One" Rodgers. All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -23,26 +23,31 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
+Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
 
-#ifndef _HTMLParser
-#define _HTMLParser
-
-#include <Looper.h>
-#include <View.h>
-//#include "plugman.h"
+#ifndef SMT_H
+#define SMT_H
 
 
-class HTMLParser:public BLooper
- {
-  public:
-   HTMLParser();
-   ~HTMLParser();
-   bool QuitRequested();
-   void MessageReceived(BMessage *msg);
-   BView *View;
- };
+#include <stdlib.h>
+#include <string.h>
+struct smt_st {
+	char *type;
+	smt_st *next;
+	smt_st() {
+		type=NULL;
+		next=NULL;
+	}
+	~smt_st() {
+		if (type!=NULL) {
+			memset(type,0,strlen(type));
+			delete type;
+			type=NULL;
+		}
+	}
+};
 
 #endif
+

@@ -50,6 +50,7 @@ cacheman::cacheman(BMessage *info)
   if (FindCacheDir()==B_OK)
    printf("Found or created the cache directory.\n");
   printf("cache path: %s\n",cachepath.Path());
+//  uses_heartbeat=true;
   CheckIndices();
   CheckMIME();
   BPath trashpath;

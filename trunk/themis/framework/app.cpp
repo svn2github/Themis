@@ -36,6 +36,8 @@ BMessage *AppSettings;
 
 App::App(const char *appsig)
 	:BApplication(appsig) {
+	AppSettings=new BMessage;
+	LoadSettings();
 	app_info ai;
 	GetAppInfo(&ai);
 	entry_ref appdirref;
@@ -64,6 +66,9 @@ App::App(const char *appsig)
 	PluginManager->BuildRoster(true);
 }
 App::~App(){
+	SaveSettings();
+	delete AppSettings;
+	AppSettings=NULL;
 }
 bool App::QuitRequested(){
 	printf("app destructor\n");

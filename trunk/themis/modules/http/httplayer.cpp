@@ -34,6 +34,7 @@ Project Start Date: October 18, 2000
 //#include <cmath.h>
 #include "stripwhite.h"
 #include "authvw.h"
+#include "http_proto.h"
 
 httplayer *meHTTP;
 tcplayer *__TCP;
@@ -1595,6 +1596,7 @@ status_t httplayer::Quit() {
 }
 //*
 char *httplayer::GetSupportedTypes() {
+	printf("httplayer::GetSupportedTypes()\n");
 	BString output("Content-Type: text/plain; text/html");
 	//insert code here to get content types from other plug-ins via the plug-in manager
 	output << "\r\n";

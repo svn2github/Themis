@@ -181,8 +181,16 @@ add a command to makelinks.sh to create this link in your plug-in's directory.
 	it should behave according to its own function. This message can be ignored, though
 	it probably won't always be.
 */
-int32 strtoval(char *proto); //plug-in identifier converter 4 char string to int32
+#define COMMAND_INFO_REQUEST 0x107
+/*
+	This command is a request for information by some part of the application and should
+	not be ignored. Responders should look for a "ReplyTo" Int32 target in the BMessage it
+	receives, and Broadcast a reply back to that target.
 
+	This command should always be replied to with a COMMAND_INFO command.
+*/
+int32 strtoval(char *proto); //plug-in identifier converter 4 char string to int32
+class plugman;
 class PlugClass {
 	private:
 	public:
@@ -217,7 +225,7 @@ class PlugClass {
 		thread_id thread;
 		
 		BWindow *Window;
-		BLooper *PlugMan;
+		plugman *PlugMan;
 		
 		virtual int32 TypePrimary();
 		virtual int32 TypeSecondary();
@@ -225,7 +233,7 @@ class PlugClass {
 		virtual bool IsHandler();//if the plugin has a BHandler object instead
 		virtual BHandler *Handler();
 		
-		virtual bool IsPersistant();//does the plugin load and unload based on page?
+		virtual bool IsPersistent();//does the plugin load and unload based on page?
 		
 		virtual bool IsLooper();
 		virtual BLooper *Looper();

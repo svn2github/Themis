@@ -48,6 +48,24 @@ winview::winview(BRect frame,const char *name,uint32 resizem,uint32 flags)
 	optionsmenu=new BMenu("Options");
 	menubar->AddItem(filemenu);
 	menubar->AddItem(optionsmenu);
+	BMessage *info=new BMessage(AddInitInfo);
+				info->AddPointer("main_menu_bar",menubar);
+				info->AddPointer("file_menu",filemenu);
+				info->AddPointer("options_menu",optionsmenu);
+				info->AddPointer("window",Window());
+//				info->AddPointer("parser",Parser);
+				BMessenger *iimsgr=new BMessenger(PluginManager,NULL,NULL);
+		{
+		BMessage reply;	
+		iimsgr->SendMessage(info,&reply);
+		printf("Window has tried to init: %ld\n",reply.what);
+			
+		reply.PrintToStream();
+			
+		}
+		
+		delete iimsgr;
+		delete info;
 	BRect r(Bounds());
 	r.top=20;
 	r.bottom=35;
@@ -151,7 +169,7 @@ void winview::MessageReceived(BMessage *msg) {
 			}
 //			if (pobj!=NULL) {
 				BMessage *info=new BMessage;
-				info->AddPointer("tcp_layer_ptr",TCP);
+//				info->AddPointer("tcp_layer_ptr",TCP);
 				info->AddPointer("top_view",this);
 				info->AddPointer("window",Window());
 //				info->AddPointer("parser",Parser);
