@@ -26,8 +26,7 @@ class ElementDeclParser	:	public DeclarationParser	{
 		TElementShared mElements;
 	
 	public:
-		ElementDeclParser( SGMLTextPtr aDocText, TDocumentShared aDTD,
-								 	 TElementShared aParEntities, TElementShared aCharEntities );
+		ElementDeclParser( SGMLTextPtr aDocText, TDocumentShared aDTD );
 		~ElementDeclParser();
 		virtual void processDeclaration();
 		TElementShared processElementType();

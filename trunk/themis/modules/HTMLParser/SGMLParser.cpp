@@ -73,21 +73,22 @@ SGMLParser	::	~SGMLParser()	{
 	delete mCommentDecl;
 	delete mDtdParser;
 	delete mDocTypeDecl;
+	delete mElementParser;
 	
 }
 
 void SGMLParser	::	setupParsers( const char * aDtd )	{
 
 	mCommentDecl =
-		new CommentDeclParser( mDocText, mDTD, mParEntities, mCharEntities );
+		new CommentDeclParser( mDocText, mDTD );
 	mDtdParser =
 		new DTDParser( aDtd, mDTD );
 	mDocTypeDecl =
-		new DocTypeDeclParser( mDocText, mDTD, mParEntities, mCharEntities );
+		new DocTypeDeclParser( mDocText, mDTD );
 	mElementParser =
-		new ElementParser( mDocText, mDTD, mParEntities, mCharEntities );
+		new ElementParser( mDocText, mDTD );
 
-	mDtdParsed = false;
+	mDefaultDtd = aDtd;
 
 }
 
@@ -215,6 +216,8 @@ TDocumentShared SGMLParser	::	parse()	{
 	
 	parseDTD();
 	
+	mDocText->reset();
+	
 	try	{
 		processSStar();
 		processProlog();
@@ -278,11 +281,28 @@ TDocumentShared SGMLParser	::	parse( SGMLTextPtr aDocument )	{
 
 void SGMLParser	::	parseDTD()	{
 
-	if ( ! mDtdParsed )	{
+	if ( mDtds.count( mDefaultDtd ) == 0 )	{
 		printf( "Parsing DTD\n" );
-		mDtdParser->parse();
-		mDtdParsed = true;
+		createDTD();
+		mCommentDecl->setDTD( mDTD );
+		mDtdParser->setDTD( mDTD );
+		mDocTypeDecl->setDTD( mDTD );
+		mElementParser->setDTD( mDTD );
+		printf( "Going to parse it\n" );
+		mDtdParser->parse( mDefaultDtd.c_str() );
+		mDtds.insert( map<string, TDocumentShared>::value_type( mDefaultDtd, mDTD ) );
 	}
+	else	{
+		map<string, TDocumentShared>::iterator i = mDtds.find( mDefaultDtd );
+		mDTD = (*i).second;
+	}
+	
+}
+
+void SGMLParser	::	parseDTD( const char * aDtd )	{
+
+	mDefaultDtd = aDtd;
+	parseDTD();
 	
 }
 
@@ -317,13 +337,14 @@ void SGMLParser	::	showTree( const TNodeShared aNode, int aSpacing )	{
 
 int main( int argc, char * argv[] )	{
 	
-	if ( argc < 3 )	{
-		cout << "Please supply a dtd and a document to load\n";
+	if ( argc < 4 )	{
+		cout << "Please supply a dtd and a document to load and a second dtd\n";
 		return 1;
 	}
 	
 	SGMLParser * sgmlParser = new SGMLParser( argv[ 1 ], argv[ 2 ] );
 	TDocumentShared dtd = sgmlParser->parse();
+	sgmlParser->parseDTD( argv[ 3 ] );
 
 	delete sgmlParser;
 	

@@ -27,8 +27,7 @@ class AttrListDeclParser	:	public DeclarationParser	{
 		TElementShared mAttrLists;
 		
 	public:
-		AttrListDeclParser( SGMLTextPtr aDocText, TDocumentShared aDTD,
-								 	TElementShared aParEntities, TElementShared aCharEntities );
+		AttrListDeclParser( SGMLTextPtr aDocText, TDocumentShared aDTD );
 		~AttrListDeclParser();
 		virtual void processDeclaration();
 		TElementShared processAssElementType();

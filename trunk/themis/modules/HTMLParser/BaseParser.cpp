@@ -24,17 +24,7 @@ BaseParser	::	BaseParser()	{
 	// SGMLText to store the text
 	mDocText = SGMLTextPtr( new SGMLText() );
 
-	// Document to store information about the dtd
-	mDTD = TDocumentShared( new TDocument() );
-	mDTD->setSmartPointer( mDTD );
-
-	// Element to store parameter entities
-	mParEntities = mDTD->createElement( "parEntities" );
-	mDTD->appendChild( mParEntities );
-
-	// Element to store character entities
-	mCharEntities = mDTD->createElement( "charEntities" );
-	mDTD->appendChild( mCharEntities );
+	createDTD();
 
 	setupSyntax();
 
@@ -49,6 +39,22 @@ BaseParser	::	~BaseParser()	{
 void BaseParser	::	setDocText( SGMLTextPtr aDocText )	{
 	
 	mDocText = aDocText;
+	
+}
+
+void BaseParser	::	createDTD()	{
+
+	// Document to store information about the dtd
+	mDTD = TDocumentShared( new TDocument() );
+	mDTD->setSmartPointer( mDTD );
+
+	// Element to store parameter entities
+	mParEntities = mDTD->createElement( "parEntities" );
+	mDTD->appendChild( mParEntities );
+
+	// Element to store character entities
+	mCharEntities = mDTD->createElement( "charEntities" );
+	mDTD->appendChild( mCharEntities );
 	
 }
 
@@ -450,6 +456,18 @@ void BaseParser	::	processPsPlus()	{
 
 void BaseParser	::	processTs()	{
 
+	if ( mDocText->getChar() == mPero[0] )	{
+		try	{
+			processParEntityReference();
+			return;
+		}
+		catch( ReadException r )	{
+			if ( r.isFatal() )	{
+				throw r;
+			}
+		}	
+	}
+
 	try	{
 		processS();
 		return;
@@ -464,15 +482,6 @@ void BaseParser	::	processTs()	{
 	catch( ReadException r )	{
 		// Do nothing
 	}
-	try	{
-		processParEntityReference();
-		return;
-	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
-		}
-	}	
 
 	throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(), "Ts expected" );
 	
@@ -609,7 +618,7 @@ string BaseParser	::	processNameTokenGroup()	{
 		r.setFatal();
 		throw r;
 	}
-	
+
 	return "";
 	
 }

@@ -11,10 +11,8 @@
 #include "SGMLSupport.hpp"
 
 MarkedSecDeclParser	::	MarkedSecDeclParser( SGMLTextPtr aDocText,
-																	 TDocumentShared aDTD,
-																	 TElementShared aParEntities,
-																	 TElementShared aCharEntities )
-								:	DeclarationParser( aDocText, aDTD, aParEntities, aCharEntities )	{
+																	 TDocumentShared aDTD )
+								:	DeclarationParser( aDocText, aDTD )	{
 
 	//printf( "Constructing MarkedSecDeclParser\n" );
 	

@@ -44,15 +44,15 @@ DTDParser	::	DTDParser( const char * aFileName, TDocumentShared aDTD )
 	
 	// Create declaration parsers
 	commentDecl =
-		new CommentDeclParser( mDocText, mDTD, mParEntities, mCharEntities );
+		new CommentDeclParser( mDocText, mDTD );
 	markedSecDecl =
-		new MarkedSecDeclParser( mDocText, mDTD, mParEntities, mCharEntities );
+		new MarkedSecDeclParser( mDocText, mDTD );
 	entityDecl =
-		new EntityDeclParser( mDocText, mDTD, mParEntities, mCharEntities );
+		new EntityDeclParser( mDocText, mDTD );
 	elementDecl =
-		new ElementDeclParser( mDocText, mDTD, mParEntities, mCharEntities );
+		new ElementDeclParser( mDocText, mDTD );
 	attrListDecl =
-		new AttrListDeclParser( mDocText, mDTD, mParEntities, mCharEntities );
+		new AttrListDeclParser( mDocText, mDTD );
 
 }
 
@@ -65,6 +65,33 @@ DTDParser	::	~DTDParser()	{
 	delete entityDecl;
 	delete elementDecl;
 	delete attrListDecl;
+	
+}
+
+void DTDParser	::	setDTD( TDocumentShared aDTD )	{
+	
+	mDTD = aDTD;
+
+	TNodeListShared list = mDTD->getChildNodes();
+	unsigned int length = list->getLength();
+	for ( unsigned int i = 0; i < length; i++ )	{
+		TNodeShared node = make_shared( list->item( i ) );
+		TElementShared element = shared_static_cast<TElement>( node );
+		if ( element->getNodeName() == "parEntities" )	{
+			mParEntities = element;
+		}
+		if ( element->getNodeName() == "charEntities" )	{
+			mCharEntities = element;
+		}
+	}
+	
+	commentDecl->setDTD( mDTD );
+	markedSecDecl->setDTD( mDTD );
+	entityDecl->setDTD( mDTD );
+	elementDecl->setDTD( mDTD );
+	attrListDecl->setDTD( mDTD );
+
+	mEntityTexts.clear();
 	
 }
 
@@ -197,7 +224,7 @@ void DTDParser	::	processDsStar()	{
 			}
 		}
 	}
-	
+
 }
 
 TDocumentShared DTDParser	::	parse()	{
@@ -220,5 +247,23 @@ TDocumentShared DTDParser	::	parse()	{
 	}
 
 	return mDocument;
+	
+}
+
+TDocumentShared DTDParser	::	parse( const char * aFileName )	{
+	
+	printf( "Loading new file\n" );
+
+	mDocText->reset( true );
+	printf( "Size after reset: %i\n", mDocText->getSize() );
+
+	ifstream file( aFileName );
+	
+	char ch;
+	while ( file.get( ch ) )	{
+		mDocText->addChar( ch );
+	};
+	
+	return parse();
 	
 }

@@ -15,10 +15,8 @@
 #include "TElement.h"
 
 EntityDeclParser	::	EntityDeclParser( SGMLTextPtr aDocText,
-													  TDocumentShared aDTD,
-													  TElementShared aParEntities,
-													  TElementShared aCharEntities )
-								:	DeclarationParser( aDocText, aDTD, aParEntities, aCharEntities )	{
+													  TDocumentShared aDTD )
+								:	DeclarationParser( aDocText, aDTD )	{
 
 	//printf( "Constructing EntityDeclParser\n" );
 	

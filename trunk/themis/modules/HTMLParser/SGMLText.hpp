@@ -27,6 +27,7 @@ class SGMLText	{
 	public:
 		SGMLText( const string & aText = "" );
 		~SGMLText();
+		void reset( bool clearText = false );
 		void addChar( char aChar );
 		char nextChar();
 		char getChar();

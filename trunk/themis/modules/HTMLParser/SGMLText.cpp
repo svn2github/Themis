@@ -14,12 +14,24 @@ SGMLText	::	SGMLText( const string & aText )	{
 	
 	mText = aText;
 	
-	Position textInfo( 0, mText.size(), 1, 1 );
-	mPositions.push_back( textInfo );
+	reset();
 	
 }
 
 SGMLText	::	~SGMLText()	{
+	
+}
+
+void SGMLText	::	reset( bool clearText )	{
+
+	if ( clearText )	{
+		mText.erase();
+	}
+
+	mPositions.clear();
+	
+	Position textInfo( 0, mText.size(), 1, 1 );
+	mPositions.push_back( textInfo );
 	
 }
 

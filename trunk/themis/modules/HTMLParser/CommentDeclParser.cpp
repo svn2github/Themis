@@ -11,10 +11,8 @@
 #include "SGMLSupport.hpp"
 
 CommentDeclParser	::	CommentDeclParser( SGMLTextPtr aDocText,
-																   TDocumentShared aDTD,
-																   TElementShared aParEntities,
-																   TElementShared aCharEntities )
-								:	DeclarationParser( aDocText, aDTD, aParEntities, aCharEntities )	{
+																   TDocumentShared aDTD )
+								:	DeclarationParser( aDocText, aDTD )	{
 
 	//printf( "Constructing CommentDeclParser\n" );
 	

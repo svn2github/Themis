@@ -189,6 +189,16 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 					}
 					break;
 				}
+				case DTD_CHANGED_PARSER:	{
+					printf( "Request to change parser\n" );
+					if ( appSettings != NULL )	{
+						const char * path;
+						appSettings->FindString( "DTDToUsePath", &path );
+						printf( "New path: %s\n", path );
+						parser->parseDTD( path );
+					}
+					break;
+				}
 				case ProtocolConnectionClosed:	{
 					printf( "Got data\n" );
 					

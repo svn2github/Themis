@@ -43,7 +43,8 @@ class SGMLParser	:	public BaseParser	{
 		DTDParser * mDtdParser;
 		DocTypeDeclParser * mDocTypeDecl;
 		ElementParser * mElementParser;
-		bool mDtdParsed;
+		map<string, TDocumentShared> mDtds;
+		string mDefaultDtd;
 		
 		// Functions
 		void setupParsers( const char * aDtd );
@@ -69,6 +70,7 @@ class SGMLParser	:	public BaseParser	{
 		TDocumentShared parse( const char * aDocument );
 		TDocumentShared parse( SGMLTextPtr aDocument );
 		void parseDTD();
+		void parseDTD( const char * aDtd );
 	
 };
 

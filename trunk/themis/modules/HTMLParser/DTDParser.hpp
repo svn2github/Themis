@@ -52,8 +52,11 @@ class DTDParser	:	public BaseParser	{
 		DTDParser( const char * aFileName, TDocumentShared aDTD );
 		// Destructor
 		~DTDParser();
+		// Setting a new DTD
+		void setDTD( TDocumentShared aDTD );
 		// Parsing function
 		TDocumentShared parse();
+		TDocumentShared parse( const char * aFileName );
 	
 };
 

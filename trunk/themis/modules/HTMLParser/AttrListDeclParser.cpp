@@ -19,10 +19,8 @@
 //#include <be/kernel/OS.h>
 
 AttrListDeclParser	::	AttrListDeclParser( SGMLTextPtr aDocText,
-															TDocumentShared aDTD,
-															TElementShared aParEntities,
-															TElementShared aCharEntities )
-							:	DeclarationParser( aDocText, aDTD, aParEntities, aCharEntities )	{
+															TDocumentShared aDTD )
+							:	DeclarationParser( aDocText, aDTD )	{
 
 	//printf( "Constructing AttrListDeclParser\n" );
 	mAttrLists = mDTD->createElement( "attrlists" );

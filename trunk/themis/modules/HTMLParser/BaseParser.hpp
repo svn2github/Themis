@@ -68,6 +68,7 @@ class BaseParser	{
 		string mVi;			// Equals sign for attribute specification
 		
 		// Functions
+		void createDTD();
 		void setupSyntax();
 		void process( const string & symbol );
 		void processS();

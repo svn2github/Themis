@@ -12,20 +12,17 @@
 
 // DOM headers
 #include "TElement.h"
+#include "TNodeList.h"
 
 DeclarationParser	::	DeclarationParser( SGMLTextPtr aDocText,
-															TDocumentShared aDTD,
-															TElementShared aParEntities,
-															TElementShared aCharEntities )
+															TDocumentShared aDTD )
 							:	BaseParser()	{
 
 	//printf( "Constructing DeclarationParser\n" );
 	
-	mDocText = aDocText;
-	mDTD = aDTD;
-	mParEntities = aParEntities;
-	mCharEntities = aCharEntities;
-	
+	setDocText( aDocText );
+
+	setDTD( aDTD );	
 }
 
 DeclarationParser	::	~DeclarationParser()	{
@@ -37,6 +34,27 @@ DeclarationParser	::	~DeclarationParser()	{
 void DeclarationParser	::	setDocText( SGMLTextPtr aDocText )	{
 	
 	mDocText = aDocText;
+	
+}
+
+void DeclarationParser	::	setDTD( TDocumentShared aDTD )	{
+
+	mDTD = aDTD;
+	
+	TNodeListShared list = mDTD->getChildNodes();
+	unsigned int length = list->getLength();
+	for ( unsigned int i = 0; i < length; i++ )	{
+		TNodeShared node = make_shared( list->item( i ) );
+		TElementShared element = shared_static_cast<TElement>( node );
+		if ( element->getNodeName() == "parEntities" )	{
+			mParEntities = element;
+		}
+		if ( element->getNodeName() == "charEntities" )	{
+			mCharEntities = element;
+		}
+	}
+	
+	mEntityTexts.clear();
 	
 }
 
