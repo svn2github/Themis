@@ -1,8 +1,4 @@
 #!/bin/sh
-rm ./modules/http/plugman.cpp
-ln -s ../../framework/plugman.cpp ./modules/http/plugman.cpp
-ln -s ../../common/plugclass.cpp ./modules/http/plugclass.cpp
-ln -s ../../common/plugclass.cpp ./modules/cache/plugclass.cpp
-
+@echo "This file is no longer necessary, but left here to update folks."
 
 

@@ -1,4 +1,20 @@
 ========
+18 February 2002
+========
+
+makelinks.sh
+All functionality removed.
+
+framework/win.h framework/win.cpp
+References to HTMLParser have been commented out. It has been causing compile errors for some strange reason.
+
+makefile
+Completely redone. See README.1ST for information. All other makefiles are to be removed.
+
+README.1ST
+Tasty tidbits added for flavoring.
+
+========
 17 June 2001
 ========
 
