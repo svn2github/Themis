@@ -64,7 +64,7 @@ BPositionIO *DFCacheObject::IOPointer()
 
 ssize_t DFCacheObject::Read(uint32 usertoken, void *buffer, size_t size) {
 	CacheUser *user=FindUser(usertoken);
-	ssize_t dsize=0;
+	ssize_t dsize=0L;
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
 		if (buffer==NULL)
@@ -74,9 +74,13 @@ ssize_t DFCacheObject::Read(uint32 usertoken, void *buffer, size_t size) {
 				file=new BFile(url,B_READ_WRITE|B_CREATE_FILE);
 			}
 			if (file!=NULL) {
+			printf("file init check: %ld\n",file->InitCheck());
+				
 				file->Lock();
 				file->Seek(user->ReadPosition(),SEEK_SET);
-				dsize=file->Read(buffer,size);
+				dsize=file->Read((unsigned char*)buffer,size);
+				printf("DFCacheObject: %ld bytes read\n",dsize);
+				
 				user->SetReadPosition(file->Position());
 				file->Unlock();
 			}

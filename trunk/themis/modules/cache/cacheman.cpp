@@ -1539,7 +1539,7 @@ off_t cacheman::SaveToDisk(uint32 usertoken, int32 objecttoken, entry_ref target
 				
 				while (bytes_read<file_size) {
 					memset(buff,0,65536);
-					chunk=object->Read(usertoken,buff,65536);
+					chunk=Read(usertoken,objecttoken,buff,65536);
 					bytes_read+=chunk;
 					bytes_written+=file->Write(buff,chunk);
 				}
@@ -1583,7 +1583,7 @@ off_t cacheman::SaveToDisk(uint32 usertoken, int32 objecttoken, BPositionIO *tar
 				
 				while (bytes_read<file_size) {
 					memset(buff,0,65536);
-					chunk=object->Read(usertoken,buff,65536);
+					chunk=Read(usertoken,objecttoken,buff,65536);
 					bytes_read+=chunk;
 					bytes_written+=target_obj->Write(buff,chunk);
 				}
@@ -1601,6 +1601,8 @@ off_t cacheman::SaveToDisk(uint32 usertoken, int32 objecttoken, BPositionIO *tar
 
 off_t cacheman::SaveToDisk(uint32 usertoken, int32 objecttoken, const char *filepath, bool overwrite)
 {
+	printf("CACHE MAN:: SAVE TO DISK 3!!!\n");
+	
 	off_t bytes_written=0L;
 	
 	BAutolock alock(lock);
@@ -1620,13 +1622,28 @@ off_t cacheman::SaveToDisk(uint32 usertoken, int32 objecttoken, const char *file
 				off_t file_size=0L;
 				file_size=object->Size();
 				ssize_t chunk=0L;
+				printf("CACHE MAN:: WRITING FILE!!\n");
 				
 				while (bytes_read<file_size) {
 					memset(buff,0,65536);
-					chunk=object->Read(usertoken,buff,65536);
+					printf("Reading data...\n");
+					chunk=0;
+					
+					chunk=Read(usertoken,objecttoken,buff,65536);
+					printf("%d bytes read.\n");
+					
+					if (chunk>0) {
+						
 					bytes_read+=chunk;
 					bytes_written+=file->Write(buff,chunk);
+					printf("\t%Ld bytes written\n",bytes_written);
+					} else
+						break;
+					
+					
 				}
+				printf("DONE WRITING FILE!\n");
+				
 				file->Sync();
 				delete file;
 				
