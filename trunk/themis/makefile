@@ -38,7 +38,6 @@ DOMLIBRARY_DEPENDS_DIR=$(BASE_LIBRARY_DEPENDS_DIR)DOM/
 TESTPLUG_DEPENDS_DIR=$(BASE_DEPENDS_DIR)testplug/
 HTMLPARSER_DEPENDS_DIR=$(BASE_DEPENDS_DIR)HTMLParser/
 IMAGEH_DEPENDS_DIR=$(BASE_ADDONS_DEPENDS_DIR)imageh/
-RENDERER_DEPENDS_DIR=$(BASE_ADDONS_DEPENDS_DIR)Renderer/
 
 #object directories
 BASE_OBJECT_DIR=objects/
@@ -50,8 +49,6 @@ DOMLIBRARY_OBJECT_DIR=$(BASE_LIBRARY_OBJECT_DIR)DOM/
 TESTPLUG_OBJECT_DIR=$(BASE_OBJECT_DIR)testplug/
 HTMLPARSER_OBJECT_DIR=$(BASE_OBJECT_DIR)HTMLParser/
 IMAGEH_OBJECT_DIR=$(BASE_ADDONS_OBJECT_DIR)imageh/
-RENDERER_OBJECT_DIR=$(BASE_ADDONS_OBJECT_DIR)Renderer/
-
 #source files
 FRAMEWORKSOURCES= \
 	framework/main.cpp \
@@ -76,10 +73,7 @@ FRAMEWORKSOURCES= \
 	framework/netbuffer.cpp \
 	framework/tcpmanager.cpp \
 	framework/base64.cpp
-RENDERERSOURCES= \
-	Renderer/UIElement.cpp \
-	Renderer/TRenderView.cpp \
-	Renderer/TextElement.cpp	
+#	framework/winview.cpp
 COMMONSOURCES= \
 	common/plugclass.cpp \
 	common/tcplayer.cpp \
@@ -174,9 +168,6 @@ endif
 ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR) ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR) ; echo 0 ; fi)" "0"
 endif
 #add a new line similar to those below for each plug-in/add-on
-#renderer add-on object directory
-ifeq "$(shell if [ -d $(RENDERER_OBJECT_DIR) ] ; then echo 1 ; else mkdir -p $(RENDERER_OBJECT_DIR) ; echo 0 ; fi)" "0"
-endif
 #http add-on object directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)http/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)http/ ; echo 0 ; fi)" "0"
 endif
@@ -216,9 +207,6 @@ endif
 ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR) ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR) ; echo 0 ; fi)" "0"
 endif
 #add a new line similar to those below for each plug-in/add-on
-#renderer add-on depends directory
-ifeq "$(shell if [ -d $(RENDERER_DEPENDS_DIR) ] ; then echo 1 ; else mkdir -p $(RENDERER_DEPENDS_DIR) ; echo 0 ; fi)" "0"
-endif
 #http add-on depends directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)http/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)http/ ; echo 0 ; fi)" "0"
 endif
@@ -327,7 +315,7 @@ endif
 #			testplug
 all: framework addons
 	@echo "Themis application and add-ons built successfully."
-addons: httpaddon cacheaddon htmlpaddon renderer
+addons: httpaddon cacheaddon htmlpaddon 
 	@echo "All add-ons built successfully."
 clean: 
 	@rm -rf objects depends Themis
@@ -431,23 +419,6 @@ $(COMMON_DEPENDS_DIR)%.d: common/%.cpp
 $(COMMON_OBJECT_DIR)%.o: common/%.cpp $(COMMON_DEPENDS_DIR)%.d
 	@echo "Common: Updating object file $(notdir $@)"
 	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
-
-#renderer
-renderer: $(BASE_ADDON_INSTALL_DIR)renderer.so
-$(BASE_ADDON_INSTALL_DIR)renderer.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(RENDERERSOURCES),$(BASE_ADDONS_OBJECT_DIR)Renderer/$(notdir $(file:.cpp=.o)))
-	@echo "Linking renderer..."
-	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)renderer.so $(foreach file,$(notdir $(RENDERERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)/Renderer/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=renderer.so -L ./ -L $(BELIBRARIES)  $(STDLIBS) -lstdc++.r4 _APP_
-	@mimeset -F $(BASE_ADDON_INSTALL_DIR)renderer.so
-	@echo "Renderer plug-in compiled and linked successfully."
-$(RENDERER_DEPENDS_DIR)%.d: $(BASE_ADDON_SOURCE_DIR)Renderer/%.cpp 
-	@echo "Renderer: Updating dependency file $(notdir $@)"
-	@set -e;VAR1=$(shell echo "$(RENDERER_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(RENDERER_DEPENDS_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/add-ons\/Renderer\/\1.o depends\/add-ons\/Renderer\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
-$(RENDERER_OBJECT_DIR)%.o: $(BASE_ADDON_SOURCE_DIR)Renderer/%.cpp $(BASE_ADDONS_DEPENDS_DIR)Renderer/%.d
-	@echo "Renderer: Updating object file $(notdir $@)"
-	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
-ifneq ($(MAKECMDGOALS),clean)
--include $(foreach file,$(BASE_ADDON_SOURCE_DIR)$(RENDERERSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)Renderer/$(notdir $(file)))
-endif
 
 #cache add-on
 cacheaddon: $(BASE_ADDON_INSTALL_DIR)cache.so
