@@ -4,6 +4,7 @@
 #define CLEAR_HISTORY			'clhi'
 #define COLOR_CHANGED			'clch'
 #define DTD_SELECTED			'dtds'
+#define FREEURLCOUNT_CHANGED	'fucc'
 #define GLOBALHISTDEPTH_CHANGED	'ghdc'
 #define HOMEPAGE_CHANGED		'hpch'
 #define IM_CHECKBOX				'imcb'
@@ -83,6 +84,7 @@ prefswin::prefswin(
 	fShadowColor = convert.rgb;
 	// privacy prefs
 	AppSettings->FindInt8( "GlobalHistoryDepthInDays", &fGlobalHistoryDepthInDays );
+	AppSettings->FindInt8( "GlobalHistoryFreeUrlCount", &fGlobalHistoryFreeUrlCount );
 	// HTML Parser prefs
 	AppSettings->FindString( "DTDToUsePath", &fDTDToUsePath );
 	
@@ -228,6 +230,33 @@ void prefswin::MessageReceived( BMessage* msg )
 			
 			// send a message to the app, which then sends a Broadcast to the HTMLParser
 			be_app_messenger.SendMessage( DTD_CHANGED );
+			break;
+		}
+		case FREEURLCOUNT_CHANGED :
+		{
+			printf( "FREEURLCOUNT_CHANGED\n" );
+
+			BTextControl* ctrl;
+			msg->FindPointer( "source", ( void** )&ctrl );
+			BString string( ctrl->Text() );
+			printf( "  %s [length: %ld]\n", string.String(), string.Length() );
+			
+			if( string.Length() == 0 )
+				break;
+			
+			int32 newcount = atoi( string.String() );
+			if( newcount > 127 || newcount == 0 )
+			{
+				printf( "  Correction.\n" );
+				fGlobalHistoryFreeUrlCount = 50;
+				ctrl->SetText( "50" );
+				ctrl->TextView()->Select( 2, 2 );
+			}
+			else
+				fGlobalHistoryFreeUrlCount = ( int8 )newcount;
+			
+			printf( "  new fGlobalHistoryFreeUrlCount: %d\n", fGlobalHistoryFreeUrlCount );
+					
 			break;
 		}
 		case GLOBALHISTDEPTH_CHANGED :
@@ -538,12 +567,13 @@ void prefswin::MessageReceived( BMessage* msg )
 					rect.left = box->Frame().left + 5;
 					rect.top = 15;
 					rect.right = box->Frame().right - 15;
-					rect.bottom = rect.top + 40;
+					rect.bottom = rect.top + 70;
 	
 					BBox* historybox = new BBox( rect, "HISTORYBOX" );
 					historybox->SetLabel( "History" );
 					box->AddChild( historybox );										
 					
+					// HistoryDepth
 					rect.top -= 2;
 					rect.right = rect.left + 210;
 										
@@ -551,13 +581,28 @@ void prefswin::MessageReceived( BMessage* msg )
 					ghistdepth->SetModificationMessage( new BMessage( GLOBALHISTDEPTH_CHANGED ) );
 					ghistdepth->SetDivider( be_plain_font->StringWidth( "History Depth in Days [1-127]:" ) + 5.0 );
 					
-					char* string;
+					char string[ 5 ];
 					sprintf( string, "%d", fGlobalHistoryDepthInDays );
 					ghistdepth->SetText( string );
 					ghistdepth->TextView()->AddFilter( new DigitOnlyMessageFilter() );
 					historybox->AddChild( ghistdepth );
 					
-					rect.top -= 3;
+					// FreeUrlCount
+					rect.top += 30;
+					rect.bottom = rect.top + 40;
+					
+					BTextControl* freeurlcount = new BTextControl( rect, "FREEURLCOUNT", "Number of free URLs [1-127]:", "", NULL );
+					freeurlcount->SetModificationMessage( new BMessage( FREEURLCOUNT_CHANGED ) );
+					freeurlcount->SetDivider( be_plain_font->StringWidth( "History Depth in Days [1-127]:" ) + 5.0 );
+					
+					char string2[ 5 ];
+					sprintf( string, "%d", fGlobalHistoryFreeUrlCount );
+					freeurlcount->SetText( string );
+					freeurlcount->TextView()->AddFilter( new DigitOnlyMessageFilter() );
+					historybox->AddChild( freeurlcount );
+					
+					// clear button					
+					rect.top -= 33;
 					rect.bottom = rect.top + 20;
 					rect.right = historybox->Bounds().right - 10;
 					rect.left = rect.right - 85;
@@ -844,6 +889,7 @@ prefswin::SaveSettings()
 
 	// privacy
 	AppSettings->ReplaceInt8( "GlobalHistoryDepthInDays", fGlobalHistoryDepthInDays );
+	AppSettings->ReplaceInt8( "GlobalHistoryFreeUrlCount", fGlobalHistoryFreeUrlCount );
 	// HTML Parser
 	AppSettings->ReplaceString( "DTDToUsePath", fDTDToUsePath );
 }

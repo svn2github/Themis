@@ -34,9 +34,11 @@ Project Start Date: October 18, 2000
 #include "app.h"
 
 GlobalHistory::GlobalHistory(
-	int8 depth )
+	int8 depth,
+	int8 count )
 {
-	fMaxDepthInDays = depth;
+	fHistoryDepthInDays = depth;
+	fFreeUrlCount = 0;
 	fList = new BList( 0 );
 }
 
@@ -68,6 +70,13 @@ GlobalHistory::~GlobalHistory()
 							
 			fList->RemoveItem( item );
 			delete item;
+		}
+		else
+		{
+			/* while() may loop eternally if the last item in the list is NULL.
+			 * allthough i suppose this is a rare scenario, and should not happen.
+			 */
+			fList->RemoveItem( fList->CountItems() - 1 );
 		}
 	}
 	delete fList;
@@ -102,7 +111,36 @@ GlobalHistory::AddEntry(
 	
 	if( CheckDoubleDay( newitem ) == false )
 	{
-		fList->AddItem( newitem, 0 );
+		/*
+		 * Check wether newitem is really younger then the first item in the
+		 * history. If not, cycle through the list to find a suitable place
+		 * for the entry.
+		 * If the history list is not built up chronologically, the
+		 * user may/will have some "missing urls" situations.
+		 */
+
+		int32 count = fList->CountItems();
+		
+		if( count == 0 )
+		{
+			fList->AddItem( newitem, 0 );
+		}
+		else
+		{
+			for( int32 i = 0; i < count; i++ )
+			{
+				GlobalHistoryItem* item = ( GlobalHistoryItem* )fList->ItemAt( i );
+				if( item != NULL )
+				{
+					if( item->Time() < newitem->Time() )
+					{
+						fList->AddItem( newitem, i );
+						break;
+					}
+				}
+			}
+		}
+		
 		CheckEntryExpiration();
 	}
 	else
@@ -117,10 +155,10 @@ GlobalHistory::CheckDoubleDay(
 {
 	printf( "GlobalHistory::CheckDoubleDay()\n" );
 
-	const time_t checktime_t = checkitem->Time();	
+	const time_t checkitem_time_t = checkitem->Time();	
 	struct tm checkitem_tm;
 	
-	if( localtime_r( &checktime_t, &checkitem_tm ) == NULL )
+	if( localtime_r( &checkitem_time_t, &checkitem_tm ) == NULL )
 	{
 		printf( "  checkitem_tm == NULL. aborting.\n" );
 		return true;
@@ -133,12 +171,12 @@ GlobalHistory::CheckDoubleDay(
 		GlobalHistoryItem* item = ( GlobalHistoryItem* )fList->ItemAt( i );
 		if( item != NULL )
 		{
-			const time_t itemtime_t = item->Time();
+			const time_t item_time_t = item->Time();
 			struct tm item_tm;
 						
-			if( localtime_r( &itemtime_t, &item_tm ) != NULL )
+			if( localtime_r( &item_time_t, &item_tm ) != NULL )
 			{
-				/* note: If we find an item from the day before, we can stop the check.
+				/* note: If we find an item from the day or year before, we can stop the check.
 				 * ( List is kept chronologically. Newest first. )
 				 */
 				
@@ -178,14 +216,12 @@ GlobalHistory::CheckEntryExpiration()
 	printf( "GlobalHistory::CheckEntryExpiration()\n" );
 	
 	int32 count = fList->CountItems();
+	int8 freecount = 0;
 	const time_t now = time( NULL );
 	struct tm today_tm;
 	localtime_r( &now, &today_tm );
 			
-	int8 depth = 0;
-	AppSettings->FindInt8( "GlobalHistoryDepthInDays", &depth );
-	
-	printf( "  GlobalHistoryDepthInDays: %d\n", depth );
+	printf( "  GlobalHistoryDepthInDays: %d\n", fHistoryDepthInDays );
 	printf( "  today_tm.tm_yday: %d\n", today_tm.tm_yday );
 	
 	/* Check the history list for expired entries from last to first item.
@@ -203,25 +239,25 @@ GlobalHistory::CheckEntryExpiration()
 		
 		int16 limit = 0;
 		
-		if( item_tm.tm_yday >= depth - 1 )
+		if( item_tm.tm_yday >= fHistoryDepthInDays - 1 )
 		{
 			printf( "  Item within this year.\n" );
-			limit = ( int16 )( today_tm.tm_yday - depth );
+			limit = ( int16 )( today_tm.tm_yday - fHistoryDepthInDays );
 		}
 		else
 		{
 			printf( "  Item from last year.\n" );
-			limit = ( int16 )( 365 - ( depth - ( item_tm.tm_yday + 1 ) ) );
+			limit = ( int16 )( 365 - ( fHistoryDepthInDays - ( item_tm.tm_yday + 1 ) ) );
 		}
 		
 		printf( "  limit: %d ( Entries <= this one are expired. )\n", limit ); 
 		
 		if( item_tm.tm_yday <= limit )
 		{
-			printf( "  The foloowing item is expired. (Will be removed now.):\n" );
+			printf( "  The following item is expired. (Will be marked as free url.):\n" );
 			item->Print();
-			fList->RemoveItem( item );
-			delete item;
+			item->SetFree();
+			freecount++;
 		}
 		else
 		{
@@ -229,6 +265,29 @@ GlobalHistory::CheckEntryExpiration()
 			break;
 		}
 	}
+	
+//	printf( "  Found %d free URLs.\n", freecount );
+	
+	// remove free urls when we are over GlobalHistoryFreeUrlCount
+	int8 ghfuc = 0;
+	AppSettings->FindInt8( "GlobalHistoryFreeUrlCount", &ghfuc );
+	if( freecount > ghfuc )
+	{
+//		printf( "  Removing expired free URLs.\n" );
+		
+		freecount -= ghfuc;
+		for( int8 i = 0; i < freecount; i++ )
+		{
+			GlobalHistoryItem* item = ( GlobalHistoryItem* )fList->ItemAt( fList->CountItems() -1 );
+			if( item != NULL )
+			{
+//				printf( "  Removing following expired free URL:\n" );
+//				item->Print();
+				fList->RemoveItem( item );
+				delete item;
+			}
+		}
+	}	
 }
 
 void
@@ -260,7 +319,7 @@ GlobalHistory::GetStrippedList()
 	 * they match ) to be at top of the list.
 	 */
 	
-	for( int32 i = count - 1; i >= 0; i-- )
+	for( int32 i = 0; i < count; i++ )
 	{
 //		printf( "  ==================\n" );
 		
@@ -342,6 +401,7 @@ GlobalHistory::Init(
 				newitem->Print();
 				fList->AddItem( newitem, 0 );
 			}
+			delete ghimsg;
 		}
 		
 		CheckEntryExpiration();
@@ -376,14 +436,14 @@ GlobalHistory::SetDepth(
 {
 //	printf( "GlobalHistory::SetDepth()\n" );
 	
-	if( newdepth < fMaxDepthInDays )
+	if( newdepth < fHistoryDepthInDays )
 	{
 		// remove entries if needed to suit fMaxDepth
-		fMaxDepthInDays = newdepth;
+		fHistoryDepthInDays = newdepth;
 		CheckEntryExpiration();
 	}
 	else
-		fMaxDepthInDays = newdepth;
+		fHistoryDepthInDays = newdepth;
 }
 
 
@@ -408,6 +468,12 @@ GlobalHistoryItem::Print()
 {
 //	printf( "GlobalHistoryItem::Print()\n" );
 	printf( "  %s @ %s", Text(), asctime( localtime( &fTime ) ) );
+}
+
+void
+GlobalHistoryItem::SetFree()
+{
+	fTime = 0;
 }
 
 //void

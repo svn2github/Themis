@@ -72,9 +72,10 @@ App::App(const char *appsig)
 
 	// init the GlobalHistory, and fill it with the settings data (if available)
 	printf( "APP Getting GlobalHistoryData\n" );
-	int8 ghdepth;
+	int8 ghdepth, freeurlcount;
 	AppSettings->FindInt8( "GlobalHistoryDepthInDays", &ghdepth );
-	fGlobalHistory = new GlobalHistory( ghdepth );
+	AppSettings->FindInt8( "GlobalHistoryFreeUrlCount", &freeurlcount );
+	fGlobalHistory = new GlobalHistory( ghdepth, freeurlcount );
 	if( AppSettings->HasMessage( "GlobalHistoryData" ) )
 	{
 		BMessage* datamsg = new BMessage;
@@ -601,6 +602,7 @@ void App::InitSettings(char *settings_path) {
 	
 	// privacy
 	AppSettings->AddInt8( "GlobalHistoryDepthInDays", 7 );
+	AppSettings->AddInt8( "GlobalHistoryFreeUrlCount", 50 );
 	
 	// HTML Parser
 	// set the DTDToUsePath to "none", as we may not find a DTD below
@@ -822,6 +824,8 @@ status_t App::LoadSettings() {
 					// privacy
 					if( !AppSettings->HasInt8( "GlobalHistoryDepthInDays" ) )
 						AppSettings->AddInt8( "GlobalHistoryDepthInDays", 7 );
+					if( !AppSettings->HasInt8( "GlobalHistoryFreeUrlCount" ) )
+						AppSettings->AddInt8( "GlobalHistoryFreeUrlCount", 50 );
 					
 					// HTML Parser
 					// if we have no DTDToUsePath, or the DTDToUsePath is "none"

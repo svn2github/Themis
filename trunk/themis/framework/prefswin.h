@@ -53,6 +53,7 @@ class prefswin : public BWindow
 		
 		// privacy prefs
 		int8						fGlobalHistoryDepthInDays;
+		int8						fGlobalHistoryFreeUrlCount;
 		
 		// HTML Parser prefs
 		BString						fDTDToUsePath;

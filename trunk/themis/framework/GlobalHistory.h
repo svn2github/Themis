@@ -39,7 +39,8 @@ class GlobalHistory
 {
 	public:
 									GlobalHistory(
-										int8 depth );
+										int8 depth,
+										int8 count );
 									~GlobalHistory();
 									
 		void						AddEntry(
@@ -57,7 +58,8 @@ class GlobalHistory
 										GlobalHistoryItem* checkitem );
 		void						CheckEntryExpiration();
 		
-		int8						fMaxDepthInDays;
+		int8						fHistoryDepthInDays;
+		int8						fFreeUrlCount;
 		BList*						fList;
 };
 
@@ -79,6 +81,7 @@ class GlobalHistoryItem : public BStringItem
 									~GlobalHistoryItem();
 		
 		void						Print();
+		void						SetFree();
 //		void						SetTime(
 //										time_t newtime );
 		time_t						Time();
