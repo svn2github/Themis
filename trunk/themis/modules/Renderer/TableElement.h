@@ -14,7 +14,7 @@
 class TableElement : public UIElement
 {
 	public:
-							TableElement(BRect frame, int cellpadding, 
+							TableElement(UIBox frame,  TNodePtr node, int cellpadding, 
 										 int cellspacing, rgb_color bgcolor, 
 										 rgb_color bordercolor);
 		virtual 			~TableElement();

@@ -6,7 +6,7 @@
 class TextLinkElement : public TextElement
 {
 	public:
-							TextLinkElement(BRect frame, const char *text, BFont *font,
+							TextLinkElement(UIBox frame,  TNodePtr node, const char *text, BFont *font,
 											rgb_color high, bool underlinedOnMouseOver = true, float size = 0);		
 		virtual				~TextLinkElement();
 		

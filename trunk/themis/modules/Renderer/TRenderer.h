@@ -52,14 +52,29 @@ class Renderer : public PlugClass
 		virtual	float		PlugVersion();
 		virtual	int32		Type();
 
+				//That's the resolution, by default 72dpi
+				int32			dpi;		
+
 	private:
 				BList		UITrees;
 				vector 		<TDocumentPtr> DOMTrees;
 				
-				void		BroadcastPointer(TDocumentPtr document);
-				void		PreProcess(int32 document_number, int32 view_number, 
-									   BRect view_frame, BMessenger userInterface);
-				void		Process( TNodePtr node, UIElement *view);				
+				void		BroadcastPointer(TRenderView *view);
+				
+				//Below spreads the dark land of Processing methods.
+				void		PreProcess(TDocumentPtr document);
+				void		Process(TNodePtr node, UIElement *view);
+				
+				int8		GetCSSDisplay(TElementPtr node);
+				int8		GetCSSLevel(TElementPtr node, int8 css_display = -1);	
+				int8 		GetCSSPosition(TElementPtr node); 
+				int8 		GetCSSDirection(TElementPtr node);
+
+				void		GetCSSMinMaxValues(TElementPtr node, UIElement *element);
+
+				BRect		GetContainingBlock(TElementPtr node, UIElement *parentElement);
+				void		GetBoxEdges(UIBox *box, TElementPtr element, UIBox parentBox, int32 dpi);
+			
 };
 
 #endif

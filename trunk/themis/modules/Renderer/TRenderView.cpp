@@ -12,7 +12,7 @@
 
 #define TEXT "Heya girls ! As you can see if you type enough text"
 
-TRenderView::TRenderView(BRect frame) : BView(frame,"God",B_FOLLOW_ALL_SIDES,B_WILL_DRAW | B_FRAME_EVENTS) , UIElement(frame)
+TRenderView::TRenderView(UIBox frame, TNodePtr node) : BView(frame.MarginRect(),"God",B_FOLLOW_ALL_SIDES,B_WILL_DRAW | B_FRAME_EVENTS) , UIElement(UIBox(frame.Width(),frame.Height()),node)
 {	
 	//The default High and Low Color for Themis
 	SetViewColor(T_DEFAULT_BACKGROUND);

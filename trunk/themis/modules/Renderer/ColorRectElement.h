@@ -12,7 +12,7 @@
 class ColorRectElement : public UIElement
 {
 	public:
-							ColorRectElement(BRect frame, rgb_color color);
+							ColorRectElement(UIBox frame,  TNodePtr node, rgb_color color);
 		virtual				~ColorRectElement();
 		virtual	void		EDraw();
 };

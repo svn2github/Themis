@@ -14,7 +14,7 @@
 class ButtonElement : public BButton , public UIElement
 {
 	public:
-						ButtonElement(BRect frame, const char *name, const char *label, 
+						ButtonElement(UIBox frame,  TNodePtr node, const char *name, const char *label, 
 								  	  BMessage *message, 
 								  	  uint32 resizingMode = B_FOLLOW_LEFT | B_FOLLOW_TOP, 
 								  	  uint32 flags = B_WILL_DRAW | B_NAVIGABLE);

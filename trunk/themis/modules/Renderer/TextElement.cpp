@@ -12,8 +12,8 @@
 
 #define DEBUG 0
 
-TextElement::TextElement(BRect frame, const char *text, BFont *font, rgb_color high,
-						 float size) : UIElement(frame)
+TextElement::TextElement(UIBox frame,  TNodePtr node, const char *text, BFont *font, rgb_color high,
+						 float size) : UIElement(frame,node)
 {
 	//General options
 	isZoomable 			  = false;

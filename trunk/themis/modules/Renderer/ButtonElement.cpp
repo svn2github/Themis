@@ -2,9 +2,9 @@
 
 #include "ButtonElement.h"
 
-ButtonElement::ButtonElement(BRect frame, const char *name, const char *label, 
+ButtonElement::ButtonElement(UIBox frame, TNodePtr node, const char *name, const char *label, 
 							 BMessage *message, uint32 resizingMode, uint32 flags) 
-			  : BButton(frame,name,label,message,resizingMode,flags) , UIElement(frame)
+			  : BButton(frame,name,label,message,resizingMode,flags) , UIElement(frame,node)
 {
 	//General options
 	isZoomable = false;

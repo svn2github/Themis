@@ -2,7 +2,7 @@
 
 #include "BitmapElement.h"
 
-BitmapElement::BitmapElement(BRect frame, BBitmap *bitmap) : UIElement(frame)
+BitmapElement::BitmapElement(UIBox frame,  TNodePtr node, BBitmap *bitmap) : UIElement(frame,node)
 {
 	isZoomable = false;
 	BitmapElement::bitmap = bitmap;

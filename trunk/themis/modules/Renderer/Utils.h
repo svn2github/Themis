@@ -25,7 +25,16 @@ inline rgb_color SetColorSelf(uchar red, uchar green, uchar blue)
 	return color;
 }
 
-inline char HexaToInt(char c);
+inline char HexaToInt(char c)
+{
+	if (c > 64 && c < 71)
+		return c - 55;
+	else if (c > 96 && c < 103)
+		return c - 87;
+		
+	return c - '0';
+}
+
 rgb_color 	MakeRgbFromHexa(const char *string);
 
 inline bool SameColor(rgb_color one, rgb_color two)

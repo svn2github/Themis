@@ -18,7 +18,7 @@
 class BitmapElement : public UIElement
 {
 	public:
-						BitmapElement(BRect frame, BBitmap *bitmap);
+						BitmapElement(UIBox frame,  TNodePtr node, BBitmap *bitmap);
 		virtual 		~BitmapElement();
 		
 		virtual	void	EDraw();

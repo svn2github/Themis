@@ -15,41 +15,8 @@ rgb_color MakeRgbFromHexa(const char *string)
 	return color;	
 }	
 
-char HexaToInt(char c)
-{
-	if (c > 64 && c < 71)
-		return c - 55;
-	else if (c > 96 && c < 103)
-		return c - 87;
-		
-	return c - '0';
-}
 
-BPoint GetRectCenter(BRect frame)
-{
-	BPoint center;
-	
-	center.x = frame.Width()/2;
-	center.y = frame.Height()/2;
-	
-	return center;
-}
 
-void CenterRectInRect(BRect *frame, BRect into, bool alignW, bool alignH)
-{	
-	BPoint center = GetRectCenter(into);
-	
-	float width  = frame->Width();
-	float height = frame->Height();
-	
-	if (alignW){
-		frame->left  	= center.x - width/2;
-		frame->right 	= center.x + width/2; 
-	}
-	if (alignH){
-		frame->top  	= center.y - height/2;
-		frame->bottom	= center.y + height/2;
-	}
-}
+
 
 

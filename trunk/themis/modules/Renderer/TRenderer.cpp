@@ -30,10 +30,13 @@ PlugClass *GetObject()
 Renderer::Renderer(BMessage *info) : PlugClass(info,"TRenderer") 
 {
 	cache = (CachePlug *) PlugMan->FindPlugin( CachePlugin );
+	
 	if (cache)
 		cacheUserToken = cache->Register( Type(), "Themis Renderer" );
 	else
 		cacheUserToken = 0;
+
+	dpi = 72;
 }
 
 Renderer::~Renderer()
@@ -75,10 +78,11 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 						TDocumentPtr *typer = (TDocumentPtr *)buffer;
 						document = *typer;
 						
-						BroadcastPointer(document);
+					//Start Processing
+					PreProcess(document);						
 					}
 					}break;
-				case R_WELCOME:{
+/*				case R_WELCOME:{
 					printf("RENDERER: R_WELCOME received\n");
 					BRect rect;
 					int32 doc_number, view_number;
@@ -92,7 +96,7 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 				
 					//Start Processing
 					PreProcess(doc_number,view_number,rect,userInterface);
-					}break;
+					}break; */
 				default:{
 					printf("Renderer doesn't handle this broadcast\n");
 					return PLUG_DOESNT_HANDLE;	

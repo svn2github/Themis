@@ -8,6 +8,10 @@
 #include <Rect.h>
 #include <View.h>
 
+#include "TNode.h"
+
+#include "UIBox.h"
+
 #ifndef _UIELEMENT_H_
 #define _UIELEMENT_H_
 
@@ -18,7 +22,7 @@
 class UIElement
 {
 	public:
-								UIElement(BRect frame);
+								UIElement(UIBox frame, TNodePtr node);
 		virtual 				~UIElement();
 
 				void			EAddChild(UIElement *element);
@@ -33,9 +37,13 @@ class UIElement
 								/*You keep the ownership of message
 								  arg: you must delete it yourself if needed.*/
 
-				BRect 			frame;
+				UIElement		*parentElement;
+				
+				UIBox 			frame;
 								//This should be in the TRenderView coordinate system
-								
+				
+				//The node from the DOM Tree				
+				TNodePtr		node;
 				
 				//Some options of the element
 				bool			isZoomable;
@@ -47,6 +55,9 @@ class UIElement
 				UIElement 		*FindElementFor(BPoint point);
 
 				BView			*parentView;
+				
+				double			minHeight, maxHeight;
+				double 			minWidth , maxWidth;
 
 	protected:
 				//Some UIElements call this on EFrameResized()

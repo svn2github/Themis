@@ -7,6 +7,7 @@
 #include <Messenger.h>
 #include <View.h>
 
+#include "UIBox.h"
 #include "UIElement.h"
 
 #ifndef _TRENDERVIEW_H_
@@ -17,7 +18,7 @@
 class TRenderView : public BView , public UIElement
 {
 	public:
-								TRenderView(BRect frame);
+								TRenderView(UIBox frame, TNodePtr node);
 		virtual					~TRenderView();
 		
 		virtual void			SetLowColor(rgb_color color);
@@ -32,6 +33,7 @@ class TRenderView : public BView , public UIElement
 		virtual	void			MessageReceived(BMessage *message);
 		
 				BMessenger		userInterface; 
+				
 	private:
 				//Pointer to the UIElement which has currently the mouse over it.
 				UIElement		*currentMouseOver;

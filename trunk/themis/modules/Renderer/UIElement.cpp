@@ -7,13 +7,21 @@
 #include "UIElement.h"
 #include "Utils.h"
 
-UIElement::UIElement(BRect frame)
+UIElement::UIElement(UIBox frame, TNodePtr node)
 {
 	UIElement::frame 	  = frame;
 	isZoomable 			  = true;
 	nextLayer			  = NULL;
 	parentView			  = NULL;
 	SetColor(&lowcolor,0,1,0);
+	
+	parentElement		  = NULL;
+	UIElement::node 	  = node;
+	
+	//The following values are UA dependants (we can choose them)
+	minHeight = minWidth = 0;
+	maxHeight = maxWidth = 3000;
+	
 }
 
 UIElement::~UIElement()
@@ -32,6 +40,7 @@ void UIElement::EAddChild(UIElement *element)
 	
 	//automatically forward some needed data
 	element->parentView = parentView;
+	element->parentElement = this;
 	
 	//We assume here that we will never meet a RGB(0,1,0)
 	//(I'd say it's fairly true.)
@@ -102,6 +111,23 @@ void UIElement::EFrameResized(float deltaWidth, float deltaHeight)
 {
 	//Do the calculus of the new frame for the element (for derivated classes)
 	
+	//Applies the min/max-height/width rules
+	/*TODO: SEE WHAT IT SHOULD CHANGE: content/margin/border/padding ??
+		TODO: Calculate the new height and width see visudet.html#min-height
+		//Where do apply rule number 2 ??? her or at computation of min/max
+		float width = 0, height = 0;
+		if (width < minWidth)
+			width = minWidth;
+		else if (width > maxWidth)
+			width = maxWidth;
+		
+		if (height < minHeight)
+			height = minHeight;
+		else if (height > maxHeight)
+			height = maxHeight;
+			
+		frame.SetContent(width,height);	
+	*/	
 	//Then forward to next layer
 	if (nextLayer) 
 		for (int32 i=0; i<nextLayer->CountItems(); i++)

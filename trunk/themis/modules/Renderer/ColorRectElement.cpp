@@ -1,6 +1,6 @@
 #include "ColorRectElement.h"
 
-ColorRectElement::ColorRectElement(BRect frame, rgb_color color) : UIElement(frame)
+ColorRectElement::ColorRectElement(UIBox frame,  TNodePtr node, rgb_color color) : UIElement(frame,node)
 {
 	UIElement::lowcolor = color;
 

@@ -6,9 +6,9 @@
 #include <String.h> //temporary
 #include <stdio.h>  //temporary
 
-TableElement::TableElement(BRect frame, int cellpadding, int cellspacing, 
+TableElement::TableElement(UIBox frame,  TNodePtr node, int cellpadding, int cellspacing, 
 						   rgb_color bgcolor, rgb_color bordercolor) 
-			 : UIElement(frame)
+			 : UIElement(frame,node)
 {
 	isZoomable = true;
 	

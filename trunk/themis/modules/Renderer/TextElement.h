@@ -16,7 +16,7 @@
 class TextElement : public UIElement
 {
 	public:
-						TextElement(BRect frame, const char *text, BFont *font,
+						TextElement(UIBox frame,  TNodePtr node, const char *text, BFont *font,
 									rgb_color high, float size = 0);
 									
 		virtual 		~TextElement();

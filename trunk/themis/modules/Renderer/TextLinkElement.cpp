@@ -4,8 +4,8 @@
 #include "TextLinkElement.h"
 #include "Utils.h"
 
-TextLinkElement::TextLinkElement( BRect frame, const char *text, BFont *font, rgb_color high, bool underlinedOnMouseOver = true, float size = 0)
-				   : TextElement(frame,text,font,high,size)
+TextLinkElement::TextLinkElement(UIBox frame,  TNodePtr node, const char *text, BFont *font, rgb_color high, bool underlinedOnMouseOver = true, float size = 0)
+				   : TextElement(frame,node,text,font,high,size)
 {
 	//Temporary
 	SetColor(&over,RGB_BLUE);
