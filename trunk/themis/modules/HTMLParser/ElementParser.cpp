@@ -60,6 +60,7 @@ ElementParser	::	~ElementParser()	{
 void ElementParser	::	setDocText( SGMLTextPtr aDocText )	{
 	
 	mDocText = aDocText;
+	commentParser->setDocText( aDocText );
 	
 }
 

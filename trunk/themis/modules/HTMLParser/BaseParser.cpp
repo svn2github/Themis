@@ -46,6 +46,12 @@ BaseParser	::	~BaseParser()	{
 	
 }
 
+void BaseParser	::	setDocText( SGMLTextPtr aDocText )	{
+	
+	mDocText = aDocText;
+	
+}
+
 void BaseParser	::	setupSyntax()	{
 	
 	// Reference syntax

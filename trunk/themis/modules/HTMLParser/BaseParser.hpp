@@ -101,7 +101,8 @@ class BaseParser	{
 		// Constructor
 		BaseParser();
 		// Destructor
-		~BaseParser();
+		virtual ~BaseParser();
+		virtual void setDocText( SGMLTextPtr aDocText );
 	
 };
 
