@@ -28,14 +28,6 @@
 	Class Start Date: April 11, 2003
 */
 
-/*	PositionException
-	This exception means that the end of a piece of text is reached.
-	
-	Mark Hellegers (M.H.Hellegers@stud.tue.nl)
-	11-04-2003
-	
-*/
-
 #ifndef POSITIONEXCEPTION_HPP
 #define POSITIONEXCEPTION_HPP
 

@@ -70,9 +70,8 @@ class State	{
 		/// Constructor of the State class.
 		/**
 			The constructor of the State class.
-			It keeps a copy of the positions.
+			It does nothing.
 			
-			@param	aPositions	The positions to store.
 		*/
 		State();
 		/// Destructor of the State class.

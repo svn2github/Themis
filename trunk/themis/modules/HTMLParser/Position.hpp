@@ -99,7 +99,8 @@ class Position	{
 			track of, it throws an exception. It keeps the line number and
 			character number up to date.
 			
-			@param	aText	The text to which the position belongs.
+			@param	aChar	The character by which to determine
+										what the next position is.
 			
 			@exception	PositionException	Thrown if going to the next index
 															will cause it to go past the end
