@@ -53,6 +53,7 @@ DOMLIBRARYSOURCES= \
 	framework/DOM/TNode.cpp \
 	framework/DOM/TDOMException.cpp \
 	framework/DOM/TNamedNodeMap.cpp \
+	framework/DOM/TNodeListContainer.cpp \
 	framework/DOM/TNodeList.cpp \
 	framework/DOM/TElement.cpp \
 	framework/DOM/TAttr.cpp \
