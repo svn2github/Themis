@@ -41,7 +41,6 @@
 // BeOS headers
 #include <Message.h>
 #include <Messenger.h>
-#include <Autolock.h>
 
 // MsgView headers
 #include "MsgViewer.hpp"
@@ -99,7 +98,6 @@ MsgViewer	::	MsgViewer( BMessage * aInfo )
 	for ( int32 i = 0; i < pluginCount; i++ )	{
 		MessageSystem * msgSystem = GetMember( i );
 		string name = msgSystem->MsgSysObjectName();
-		printf( "Adding %s to message viewer\n", name.c_str() );
 		mView->addPlugin( name );
 	}
 	mView->Show();
@@ -151,7 +149,7 @@ char * MsgViewer	::	PlugName()	{
 
 float MsgViewer	::	PlugVersion()	{
 	
-	return 0.3;
+	return 0.4;
 	
 }
 

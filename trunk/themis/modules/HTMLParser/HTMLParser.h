@@ -29,24 +29,24 @@
 // Namespaces used
 using namespace std;
 
-extern "C" __declspec( dllexport ) status_t Initialize( void * info = NULL );
-extern "C" __declspec( dllexport ) status_t Shutdown( bool now = false );
+extern "C" __declspec( dllexport ) status_t Initialize( void * aInfo = NULL );
+extern "C" __declspec( dllexport ) status_t Shutdown( bool aNow = false );
 extern "C" __declspec( dllexport ) PlugClass * GetObject();
 
 class HTMLParser	:	public BHandler, public PlugClass	{
 	
 	private:
 		// Plugin variables
-		CachePlug * cache;
-		uint32 userToken;
+		CachePlug * mCache;
+		uint32 mUserToken;
 
 		TDocumentPtr mDocument; // Stores the document to be build
-		SGMLParser * parser;
+		SGMLParser * mParser;
 	
 	public:
-		HTMLParser( BMessage * info = NULL );
+		HTMLParser( BMessage * aInfo = NULL );
 		~HTMLParser();
-		void MessageReceived( BMessage * message );
+		void MessageReceived( BMessage * aMessage );
 		bool IsHandler();
 		BHandler * Handler();
 		bool IsPersistent();
@@ -54,12 +54,11 @@ class HTMLParser	:	public BHandler, public PlugClass	{
 		char * PlugName();
 		float PlugVersion();
 		void Heartbeat();
-		status_t ReceiveBroadcast( BMessage * message );
-		status_t BroadcastReply(BMessage *message);
+		status_t ReceiveBroadcast( BMessage * aMessage );
+		status_t BroadcastReply( BMessage * aMessage );
 		uint32 BroadcastTarget();
-	
 		int32 Type();
-		
+
 };
 
 #endif
