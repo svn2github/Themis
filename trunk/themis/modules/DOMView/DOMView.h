@@ -15,6 +15,8 @@
 #include <OutlineListView.h>
 #include <ListView.h>
 #include <ScrollView.h>
+#include <PopUpMenu.h>
+#include <TextView.h>
 
 #include "plugclass.h"
 
@@ -26,7 +28,8 @@ class BStringItem;
 
 using namespace std;
 
-#define Selection 'slct'
+#define SELECTION 'slct'
+#define TEXT_MENU_CHANGED 'tmcd'
 
 extern "C" __declspec( dllexport ) status_t Initialize( void * info = NULL );
 extern "C" __declspec( dllexport ) status_t Shutdown( bool now = false );
@@ -41,8 +44,13 @@ class DOMWindow	:	public BWindow	{
 		BScrollView * scrollAttr;
 		BListView * values;
 		BScrollView * scrollValue;
+		BPopUpMenu * textMenu;
+		BTextView * text;
+
+		BList * items;
 
 		TDocumentShared doc;
+		TNodeShared selectedNode;
 	
 	public:
 		DOMWindow( TDocumentShared document );
@@ -50,7 +58,8 @@ class DOMWindow	:	public BWindow	{
 		void MessageReceived( BMessage * message );
 		bool QuitRequested();
 		void showTree( const TNodeShared aNode, BStringItem * parent );
-		void showDocument( TDocumentShared document );
+		void showDocument();
+		void setDocument( TDocumentShared document );
 		TNodeShared findNode( TNodeShared node, int32 target, int32 & current );
 		
 	

@@ -8,7 +8,8 @@
 #include <Rect.h>
 #include <ListItem.h>
 #include <Box.h>
-#include <TextView.h>
+#include <MenuField.h>
+#include <MenuItem.h>
 
 #include "DOMView.h"
 #include "commondefs.h"
@@ -77,34 +78,41 @@ DOMWindow	::	DOMWindow( TDocumentShared document )	:
 	tree = new BOutlineListView( treeRect, "DOMView", B_SINGLE_SELECTION_LIST,
 			B_FOLLOW_ALL_SIDES );
 	doc = document;
-	showDocument( document );
+	showDocument();
 
-	tree->SetSelectionMessage( new BMessage( Selection ) );
+	tree->SetSelectionMessage( new BMessage( SELECTION ) );
 
 	scrollTree = new BScrollView( "Scroll Tree", tree,
 			B_FOLLOW_TOP_BOTTOM | B_FOLLOW_LEFT,  0, true, true );
 
 	scrollTree->SetViewColor( ui_color( B_PANEL_BACKGROUND_COLOR ) );
 
-	listRect.left += 100;
+	listRect.left += 105;
 	
 	BRect textRect = listRect;
 	textRect.bottom -= 160;
 	textRect.InsetBy( 5, 5 );
 
 	BBox * textBox = new BBox( textRect, "TextBox", B_FOLLOW_LEFT_RIGHT | B_FOLLOW_TOP );
-	textBox->SetLabel( "Text" );
+
+	textMenu = new BPopUpMenu( "No text" );
+	textMenu->SetEnabled( false );
+	
+	BRect menuRect( 0, 0, 100, 50 );
+	BMenuField * textSelect = new BMenuField( menuRect, "TextPopUp", NULL, textMenu );
+
+	textBox->SetLabel( textSelect );
 	
 	textRect = textBox->Bounds();
 	textRect.InsetBy( 10, 20 );
+	textRect.top += 5;
 	textRect.bottom += 10;
 	textRect.bottom -= B_H_SCROLL_BAR_HEIGHT;
 	textRect.right -= B_V_SCROLL_BAR_WIDTH;
 
 	BRect textDisplay( 0, 0, textRect.Width(), textRect.Height() );
 
-	BTextView * text = new BTextView( textRect, "TextView", textDisplay,
-			B_FOLLOW_ALL_SIDES, 0 );
+	text = new BTextView( textRect, "TextView", textDisplay, B_FOLLOW_ALL_SIDES, B_WILL_DRAW );
 
 	BScrollView * scrollText = new BScrollView( "Scroll Text", text,
 			B_FOLLOW_TOP | B_FOLLOW_LEFT_RIGHT,  B_FRAME_EVENTS, true, true );
@@ -166,10 +174,9 @@ DOMWindow	::	~DOMWindow()	{
 void DOMWindow	::	MessageReceived( BMessage * message )	{
 
 	switch ( message->what )	{
-		case Selection:	{
+		case SELECTION:	{
 			int32 index = 0;
 			message->FindInt32( "index", &index );
-			printf( "Index %i selected\n", (int) index );
 			int32 current = 0;
 			TNodeShared found = findNode( doc, index, current );
 			attributes->RemoveItems( 0, attributes->CountItems() );
@@ -191,13 +198,41 @@ void DOMWindow	::	MessageReceived( BMessage * message )	{
 				values->AddItem( valueItem );
 			}
 			
+			int menuItems = textMenu->CountItems();
+			int32 markedIndex = 0;
+			if ( menuItems )	{
+				BMenuItem * marked = textMenu->FindMarked();
+				if ( marked )	{
+					markedIndex = textMenu->IndexOf( marked );
+				}
+			}
+			for ( int i = 0; i < menuItems; i++ )	{
+				delete textMenu->RemoveItem( (int32) 0 );
+				textMenu->SetEnabled( false );
+				text->SetText( "" );
+				textMenu->Invalidate();
+			}
+			
 			int textNr = 1;
 			if ( found->hasChildNodes() )	{
 				TNodeListShared children = found->getChildNodes();
+				selectedNode = found;
 				for ( unsigned int i = 0; i < children->getLength(); i++ )	{
 					TNodeShared child = make_shared( children->item( i ) );
 					if ( child->getNodeType() == TEXT_NODE )	{
-						printf( "Text part nr %i:\n%s\n", textNr, child->getNodeValue().c_str() );
+						textMenu->SetEnabled( true );
+						BString * itemText = new BString( "Text part " );
+						*itemText << textNr;
+						BMessage * menuChange = new BMessage( TEXT_MENU_CHANGED );
+						// Warning: Adding index of all children
+						// Makes it easier to find
+						menuChange->AddInt32( "index", i );
+						BMenuItem * item = new BMenuItem( itemText->String(), menuChange );
+						if ( (int32) i <= markedIndex )	{
+							item->SetMarked( true );
+							text->SetText( child->getNodeValue().c_str(), child->getNodeValue().size() );
+						}
+						textMenu->AddItem( item );
 						textNr++;
 					}
 				}
@@ -205,8 +240,17 @@ void DOMWindow	::	MessageReceived( BMessage * message )	{
 							
 			break;
 		}
+		case TEXT_MENU_CHANGED:	{
+			int32 index = 0;
+			message->FindInt32( "index", &index );
+			TNodeListShared children = selectedNode->getChildNodes();
+			TNodeShared child = make_shared( children->item( index ) );
+			text->SetText( child->getNodeValue().c_str(), child->getNodeValue().size() );
+		
+			break;	
+		}
 		default:	{
-			message->PrintToStream();
+			//message->PrintToStream();
 			break;
 		}
 	}
@@ -237,12 +281,24 @@ void DOMWindow	::	showTree( const TNodeShared aNode, BStringItem * parent )	{
 	}	
 }
 
-void DOMWindow	::	showDocument( TDocumentShared document )	{
+void DOMWindow	::	showDocument()	{
 	
-	BStringItem * root = new BStringItem( document->getNodeName().c_str() );
-	tree->AddItem( root );
-	showTree( document, root );
+	int32 items = tree->CountItems();
+	for ( int32 i = 0; i < items; i++ )	{
+		delete tree->RemoveItem( (int32) 0 );
+	}
 
+	BStringItem * root = new BStringItem( doc->getNodeName().c_str() );
+	tree->AddItem( root );
+	showTree( doc, root );
+
+}
+
+void DOMWindow	::	setDocument( TDocumentShared document )	{
+
+	doc = document;
+	showDocument();
+	
 }
 
 TNodeShared DOMWindow	::	findNode( TNodeShared node, int32 target, int32 & current )	{
@@ -293,17 +349,20 @@ TNodeShared DOMWindow	::	findNode( TNodeShared node, int32 target, int32 & curre
 
 DOMView	::	DOMView( BMessage * info )	:	BHandler( "DOMView" ), PlugClass( info )	{
 	
+	window = NULL;
+	
 }
 
 DOMView	::	~DOMView()	{
 	
+	window->Lock();
 	delete window;
 	
 }
 
 void DOMView	::	MessageReceived( BMessage * message )	{
 	
-	message->PrintToStream();
+	//message->PrintToStream();
 	
 }
 
@@ -369,11 +428,16 @@ status_t DOMView	::	ReceiveBroadcast( BMessage * message )	{
 			void * document = NULL;
 			message->FindPointer( "data_pointer", &document );
 			if ( document )	{
-				printf( "Got pointer\n" );
 				TDocumentShared * temp = (TDocumentShared *) document;
 				TDocumentShared copy = *temp;
-				printf( "Use count of document: %i\n", (int) copy.use_count() );
-				window = new DOMWindow( copy );
+				if ( !window )	{
+					window = new DOMWindow( copy );
+				}
+				else	{
+					window->Lock();
+					window->setDocument( copy );
+					window->Unlock();
+				}
 			}
 			break;
 		}
