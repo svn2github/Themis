@@ -30,6 +30,7 @@ Project Start Date: October 18, 2000
 #include "commondefs.h"
 #include "protocol_plugin.h"
 #include "AppDefs.h"
+
 int WinH=800;
 int WinW=600;
 
@@ -41,7 +42,7 @@ Win::Win(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspa
 //  Parser=new HTMLParser;
 //  Parser->View=View;
 //  View->Parser=Parser;
-	AddShortcut('a',B_SHIFT_KEY,(new BMessage(B_ABOUT_REQUESTED)));
+//	AddShortcut('a',B_SHIFT_KEY,(new BMessage(B_ABOUT_REQUESTED)));
 	AddChild(View);
 }
 bool Win::QuitRequested() {

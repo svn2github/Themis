@@ -34,6 +34,7 @@ Project Start Date: October 18, 2000
 #include <ctype.h>
 #include "protocol_plugin.h"
 #include "tcplayer.h"
+#include "AppDefs.h"
 extern tcplayer *TCP;
 
 extern plugman *PluginManager;
@@ -47,6 +48,7 @@ winview::winview(BRect frame,const char *name,uint32 resizem,uint32 flags)
 	filemenu=new BMenu("File");
 	optionsmenu=new BMenu("Options");
 	menubar->AddItem(filemenu);
+	filemenu->AddItem((new BMenuItem("About Themis",(new BMessage(B_ABOUT_REQUESTED)),'a',B_SHIFT_KEY)));
 	menubar->AddItem(optionsmenu);
 	BMessage *info=new BMessage(AddInitInfo);
 				info->AddPointer("main_menu_bar",menubar);
@@ -88,6 +90,7 @@ void winview::AttachedToWindow() {
 	stopbutton->SetTarget(this);
 	locline->SetTarget(this);
 	locline->MakeFocus(true);
+	filemenu->SetTargetForItems(this);
 	//Yuck, gonna haft to handle this better than this...!
 	//basically, we need to set the Window value for all plugins so they can
 	//add menu options before they are themselves used... but, that would mean
