@@ -46,7 +46,7 @@ class CacheUser {
 	private:
 		uint32 id; //cache assigned id number for the component using the cache
 		uint32 broadcast_id; //the broadcast system's target id number
-		off_t readpos,writepos;//offsets of the various file pointers.
+		volatile off_t readpos,writepos;//offsets of the various file pointers.
 		CacheUser *next, *prev; //these are used as part of the linked list system
 		char *name; //optional name of the component using the cache
 	public:

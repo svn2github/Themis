@@ -1504,7 +1504,7 @@ if (!lock->IsLocked()) {
 		}
 		
 	}
-//	printf("ProcessData done.\n");
+	printf("ProcessData done. Bytes Received: %ld\n",request->bytesreceived);
 	BMessage *msg=new BMessage(ReturnedData);
 	msg->AddInt32("command",COMMAND_INFO);
 	msg->AddInt32("cache_object_token",request->cache_object_token);
