@@ -311,409 +311,162 @@ uint32 tcplayer::Connections() {
 Danger! Danger! Ugly monstrosity that seems to work! Needs to be rewritten!!!
 */
 connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, bool forcenew) {
-//	if (acquire_sem(conn_sem)!=B_OK)
-//		return NULL;
+	printf("Requestor wants to connect to %s:%d\n",host,port);
+	connection *conn=NULL;
+	int32 sockproto=0;
+#if USEBONE
+		sockproto=IPPROTO_TCP;
+#endif
 	if (forcenew) {
-		connection *nu=new connection;
-		nu->proto_id=protoid;
-		nu->addrstr=host;
-		nu->port=port;
-//		nu->address->SetTo(host,port);
-		nu->hptr=gethostbyname(host);
-		nu->pptr=(struct in_addr**)nu->hptr->h_addr_list;
-		sockaddr_in servaddr;
-		memcpy(&servaddr.sin_addr,*nu->pptr,sizeof(struct in_addr));
-		servaddr.sin_port=htons(port);
-		nu->socket=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
-		//mtx->lock();
-//		nu->address->GetAddr(servaddr);
-		nu->result=connect(nu->socket,(sockaddr *)&servaddr,sizeof(servaddr));
-#ifdef USEOPENSSL
-		if (ssl){
-			int flags=fcntl(nu->socket,F_GETFL,0);
-			flags|=O_NONBLOCK;
-			fcntl(nu->socket,F_SETFL,flags);
-			nu->usessl=true;	
-			nu->ssl = SSL_new (sslctx);
-			if (nu->ssl==NULL)
-				printf("SSL creation error (nu)\n");
-			SSL_set_cipher_list(nu->ssl, SSL_TXT_ALL);
-			nu->sslbio=BIO_new_socket(nu->socket,BIO_NOCLOSE);
-			SSL_set_bio(nu->ssl,nu->sslbio,nu->sslbio);
-			SSL_set_connect_state(nu->ssl);
-			
-//			SSL_set_fd (nu->ssl, nu->socket);
-			TryConnectAgain1:
-			nu->result=SSL_connect (nu->ssl);
-			int err = nu->result;
-			if (SSL_get_error(nu->ssl,err)==SSL_ERROR_WANT_READ) {
-				
-				snooze(10000);
-				goto TryConnectAgain1;
-				
-			}
-			flags &= ~O_NONBLOCK;
-			fcntl(nu->socket,F_SETFL,flags);
-//			CHK_SSL(err);
-			SSL_CIPHER *cipher=SSL_get_current_cipher (nu->ssl);
-			printf ("SSL connection using %s\n",SSL_CIPHER_get_name(cipher) );
-			int usedbits=0,cipherbits=0;
-			usedbits=SSL_CIPHER_get_bits(cipher,&cipherbits);
-			printf("SSL Cipher is %d bits, %d bits used.\n",cipherbits,usedbits);
-			printf("Getting SSL certificate...");
-					fflush(stdout);
-					
-			nu->server_cert = SSL_get_peer_certificate (nu->ssl);
-				printf("done.\n");
-//			CHK_NULL(nu->server_cert);
-			char * str=NULL;
-			printf("certificate: %p\n",nu->server_cert);
-			if (nu->server_cert!=NULL) {
-				
-			printf("Getting SSL subject...");
-			fflush(stdout);
-			
-			  str = X509_NAME_oneline (X509_get_subject_name (nu->server_cert),0,0);
-			printf("done\n");
-//  CHK_NULL(str);
-  printf ("\t subject: %s\n", str);
-  free (str);
-  str = X509_NAME_oneline (X509_get_issuer_name  (nu->server_cert),0,0);
-//  CHK_NULL(str);
-  printf ("\t issuer: %s\n", str);
-  free (str);
-			}
-		//mtx->unlock();
-		}
-#endif			
-		if (nu->result<0) {
-			nu->result=errno;
-		}
-		else {
-			 nu->open=true;
-			 printf("[Forced] New connection is on socket: %ld\n",nu->socket);
-			
-		}
-		if (conn_head==NULL) {
-			conn_head=nu;
-			
-		}
-		else
-		{
-			connection *cur=conn_head;
-			while(cur->next!=NULL)
-				cur=cur->next;
-			cur->next=nu;
-			
-		}
-		nu->last_trans_time=real_time_clock();
-		
-//		release_sem(conn_sem);
-		return nu;
-	}
-	
-	connection *current=conn_head;
-	char curhost[250];
-	uint16 curport=80;
-	char host2[250];
-	struct hostent *hptr;
-	in_addr **haddr;
-	
-	{
-//		BNetAddress addr(host,port);
-//		uint16 tport;
-		
-//		addr.GetAddr(host2,&tport);
-		hptr=gethostbyname(host);
-		if (hptr!=NULL)
-			haddr=(struct in_addr**)hptr->h_addr_list;
-		
-/*
-		nu->hptr=gethostbyname(host);
-		nu->pptr=(struct in_addr**)nu->hptr->h_addr_list;
-		sockaddr_in servaddr;
-		memcpy(&servaddr.sin_addr,*nu->pptr,sizeof(struct in_addr));
-		servaddr.sin_port=htons(port);
-		nu->socket=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
-*/		
-	}
-	
-	while (current!=NULL){
-//		current->address->GetAddr(curhost,&curport);
-		if (/*(strcasecmp(curhost,host)==0)*/((*current->pptr)->s_addr==(*haddr)->s_addr) && (curport==port))
-			break;
-		current=current->next;		
-	}
-	if (current==NULL) {	
-		current=new connection;
-		current->proto_id=protoid;
-		current->addrstr=host;
-		current->port=port;
-		
-//		current->address->SetTo(host,port);
+		NewConnectStruct:
 		connection *cur=conn_head;
-		if (cur==NULL){
-			conn_head=current;
-			cur=conn_head;
-			
-		}
-		else {
-			
+		if (cur==NULL) {
+			conn=new connection;
+			conn_head=conn;
+			cur=conn;
+		} else {
 			while (cur->next!=NULL)
 				cur=cur->next;
-			cur->next=current;
+			cur->next=new connection;
+			conn=cur->next;
+			cur=cur->next;
 		}
-			printf("Adding new connection\n");
-		int32 sockproto=IPPROTO_TCP;
-#if USENETSERVER
-		sockproto=0;
-#endif
 		//mtx->lock();
-		current->socket=socket(AF_INET,SOCK_STREAM,sockproto);
+		conn->socket=socket(AF_INET,SOCK_STREAM,sockproto);
 		sockaddr_in servaddr;
 //		current->address->GetAddr(servaddr);
-		current->hptr=gethostbyname(host);
-		current->pptr=(struct in_addr**)current->hptr->h_addr_list;
-		memcpy(&servaddr.sin_addr,*current->pptr,sizeof(struct in_addr));
+		conn->hptr=gethostbyname(host);
+		conn->pptr=(struct in_addr**)conn->hptr->h_addr_list;
+		memcpy(&servaddr.sin_addr,*conn->pptr,sizeof(struct in_addr));
 		servaddr.sin_port=htons(port);
-		current->result=connect(current->socket,(sockaddr *)&servaddr,sizeof(servaddr));
+		conn->result=connect(conn->socket,(sockaddr *)&servaddr,sizeof(servaddr));
 		//mtx->unlock();
-		if (current->result==0) {
-			current->open=true;
-		} else {
-			current->open=false;
-			printf("error: %d\n",errno);
+		if (conn->result==0) 
+			conn->open=true;
+		else 
+			conn->open=false;
+			printf("Connected? %s\n",conn->open?"yes":"no");
+	} else {
+		connection *cur=conn_head;
+		while (cur!=NULL) {
+			if ((strcasecmp(host,cur->addrstr.String())==0) && (cur->port==port))
+				break;
+			cur=cur->next;
 		}
-		printf("Connected? %s\n",current->open?"yes":"no");
-/*		if (!Connected(current,true)) {
-			current->open=false;
-				
-			return current;
-		}
-*/		
-#ifdef USEOPENSSL
-		if (ssl){
-//mtx->lock();
-			int flags=fcntl(current->socket,F_GETFL,0);
-			flags|=O_NONBLOCK;
-			fcntl(current->socket,F_SETFL,flags);
-			printf("Uses SSL...\n");
-			current->usessl=true;	
-			printf("Creating new context...");
-			fflush(stdout);
-//			SSL_CTX_set_options(current->sslctx,SSL_OP_ALL);
-//			SSL_CTX_set_default_verify_paths(current->sslctx);
-			printf("done.\n");
-			printf("Creating new ssl object...");
-			fflush(stdout);
-			current->ssl = SSL_new (sslctx);
-			printf("done.\n");
-			SSL_set_cipher_list(current->ssl, SSL_TXT_ALL);
-			current->sslbio=BIO_new_socket(current->socket,BIO_NOCLOSE);
-			SSL_set_bio(current->ssl,current->sslbio,current->sslbio);
-/*
-		#ifndef BONE_VERSION
-		current->sslbio=BIO_new_socket(current->socket,BIO_NOCLOSE);
-		if (current->sslbio==0)
-			printf("bio creation error\n");
-		SSL_set_bio(current->ssl,current->sslbio,current->sslbio);
-		#else
-			printf("Setting ssl fd...");
-			fflush(stdout);
-			SSL_set_fd (current->ssl, current->socket);
-			printf("done.\n");
-		#endif
-
-*/
-		SSL_set_connect_state(current->ssl);
-			printf("SSL connecting...");
-			fflush(stdout);
-			current->result = SSL_connect (current->ssl);
-			TryConnectAgain2:
-			int err = SSL_connect (current->ssl);
-			if (SSL_get_error(current->ssl,err)==SSL_ERROR_WANT_READ) {
-				
-				snooze(10000);
-				goto TryConnectAgain2;
-				
-			}
-			flags &= ~O_NONBLOCK;
-			fcntl(current->socket,F_SETFL,flags);
-			printf("done.\n");
-//			CHK_SSL(err);
-			if (current->result==1) {
-			SSL_CIPHER *cipher=SSL_get_current_cipher (current->ssl);
-				
-			printf ("SSL connection using %s\n", SSL_CIPHER_get_name(cipher));
-			int usedbits=0,cipherbits=0;
-			usedbits=SSL_CIPHER_get_bits(cipher,&cipherbits);
-			printf("SSL Cipher is %d bits, %d bits used.\n",cipherbits,usedbits);
-			printf("Getting SSL certificate...");
-					fflush(stdout);
-					
-			current->server_cert = SSL_get_peer_certificate (current->ssl);
-				printf("done.\n");
-
-	const char *s;
-	SSL_CIPHER *c;
-
-	
-	c = SSL_get_current_cipher(current->ssl);
-	
-	s = (char *) SSL_get_version(current->ssl);
-	printf("SSL version: %s\n",s);
-//	free(s);
-	s = (char *) SSL_CIPHER_get_name(c);
-	
-	printf("SSL Cipher name: %s\n",s);
-//	free(s);	
-	int ssl_keylength=0;
-	SSL_CIPHER_get_bits(c, &ssl_keylength);
-	
-	/*
-	 * set to the secret key size for the export ciphers...
-	 * SSLeay returns the total key size
-	 */
-	if(strncmp(s, "EXP-", 4) == 0)
-		ssl_keylength = 40;
-		printf("key length: %d\n",ssl_keylength);
-			}
+		if (cur==NULL)
+			goto NewConnectStruct;
+		if (cur->requests!=0)
+			goto NewConnectStruct;
+		if (!Connected(cur,true)) {
+			cur->socket=socket(AF_INET,SOCK_STREAM,sockproto);
+			sockaddr_in servaddr;
+			memcpy(&servaddr.sin_addr,*cur->pptr,sizeof(struct in_addr));
+			servaddr.sin_port=htons(port);
+			cur->result=connect(cur->socket,(sockaddr *)&servaddr,sizeof(servaddr));
+			if (cur->result==0)
+				cur->open=true;
 			else
-			 {
-			 	current->result=SSL_get_error(current->ssl, current->result);
-			 	printf("SSL Error: %ld\n",current->result);
-			 }
-				if (current->server_cert!=NULL) {
-					
-//			CHK_NULL(current->server_cert);
-			char * str;
-			printf("certificate: %p\n",current->server_cert);
-			printf("Getting SSL subject...");
-			fflush(stdout);
-			  str = X509_NAME_oneline (X509_get_subject_name (current->server_cert),0,0);
-			printf("done\n");
-//  CHK_NULL(str);
-  printf ("\t subject: %s\n", str);
-  free (str);
-  str = X509_NAME_oneline (X509_get_issuer_name  (current->server_cert),0,0);
-//  CHK_NULL(str);
-  printf ("\t issuer: %s\n", str);
-  free (str);
-				}
-//mtx->unlock();				
+				cur->open=false;
+			printf("Connected? %s\n",cur->open?"yes":"no");
+			conn=cur;
 		}
-#endif
-		
-		if (current->result<0) {
-			current->result=errno;
-		}
-		else {
-			 current->open=true;
-			 printf("New connection is on socket: %ld\n",current->socket);
-			
-		}
-		
-		current->last_trans_time=real_time_clock();
-//		release_sem(conn_sem);
-		
-		return current;
 	}
-	else {
-		printf("Reusing existing connection\n");
-		if (!current->open) {
-//			if (!Connected(current)) {
-				sockaddr_in servaddr;
-//				current->address->GetAddr(servaddr);
-		current->hptr=gethostbyname(host);
-		current->pptr=(struct in_addr**)current->hptr->h_addr_list;
-		memcpy(&servaddr.sin_addr,*current->pptr,sizeof(struct in_addr));
-		servaddr.sin_port=htons(port);
-				current->socket=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
-//mtx->lock();
-				current->result=connect(current->socket,(sockaddr *)&servaddr,sizeof(servaddr));
-//mtx->unlock();
-/*			if (!Connected(current,true)) {
-				current->open=false;
-					
-				return current;
-			}
-*/			
+	if (conn!=NULL) {
+	conn->proto_id=protoid;
+		if (!conn->open)
+			return conn;
+		if (ssl) {
 #ifdef USEOPENSSL
-				if (ssl){
-				//mtx->lock();
-			int flags=fcntl(current->socket,F_GETFL,0);
-			flags|=O_NONBLOCK;
-			fcntl(current->socket,F_SETFL,flags);
-			current->usessl=true;	
-			current->ssl = SSL_new (sslctx);
-			SSL_set_cipher_list(current->ssl, SSL_TXT_ALL);
-			current->sslbio=BIO_new_socket(current->socket,BIO_NOCLOSE);
-			SSL_set_bio(current->ssl,current->sslbio,current->sslbio);
-			SSL_set_connect_state(current->ssl);
-			TryConnectAgain3:
-					current->result=SSL_connect (current->ssl);
-			int err = current->result;
-			if (SSL_get_error(current->ssl,err)==SSL_ERROR_WANT_READ) {
-				
-				snooze(10000);
-				goto TryConnectAgain3;
-				
-			}
-				
-			flags &= ~O_NONBLOCK;
-			fcntl(current->socket,F_SETFL,flags);
-
-//			CHK_ERR(err,current->ssl);
-			SSL_CIPHER *cipher=SSL_get_current_cipher (current->ssl);
-					
-			printf ("SSL connection using %s\n", SSL_CIPHER_get_name(cipher));
-			int usedbits=0,cipherbits=0;
-			usedbits=SSL_CIPHER_get_bits(cipher,&cipherbits);
-			printf("SSL Cipher is %d bits, %d bits used.\n",cipherbits,usedbits);
-			printf("Getting SSL certificate...");
-					fflush(stdout);
-					
-			current->server_cert = SSL_get_peer_certificate (current->ssl);
+				int flags=fcntl(conn->socket,F_GETFL,0);
+				flags|=O_NONBLOCK;
+				fcntl(conn->socket,F_SETFL,flags);
+				printf("Uses SSL...\n");
+				conn->usessl=true;	
+				printf("Creating new context...");
+				fflush(stdout);
 				printf("done.\n");
-					if (current->server_cert!=NULL) {
-						
-//			CHK_NULL(current->server_cert);
-			char * str;
-			printf("certificate: %p\n",current->server_cert);
-			printf("Getting SSL subject...");
-			fflush(stdout);
+				printf("Creating new ssl object...");
+				fflush(stdout);
+				conn->ssl = SSL_new (sslctx);
+				printf("done.\n");
+				SSL_set_cipher_list(conn->ssl, SSL_TXT_ALL);
+				conn->sslbio=BIO_new_socket(conn->socket,BIO_NOCLOSE);
+				SSL_set_bio(conn->ssl,conn->sslbio,conn->sslbio);
+			SSL_set_connect_state(conn->ssl);
+				printf("SSL connecting...");
+				fflush(stdout);
+				conn->result = SSL_connect (conn->ssl);
+				TryConnectAgain2:
+				int err = SSL_connect (conn->ssl);
+				if (SSL_get_error(conn->ssl,err)==SSL_ERROR_WANT_READ) {
 					
-			  str = X509_NAME_oneline (X509_get_subject_name (current->server_cert),0,0);
-			printf("done\n");
-//  CHK_NULL(str);
-  printf ("\t subject: %s\n", str);
-  free (str);
-  str = X509_NAME_oneline (X509_get_issuer_name  (current->server_cert),0,0);
-//  CHK_NULL(str);
-  printf ("\t issuer: %s\n", str);
-  free (str);
-
-		}
-//mtx->unlock();
+					snooze(10000);
+					goto TryConnectAgain2;
+					
 				}
-#endif
-				
-				
-//			}
-			
-			if (current->result<0) {
-				current->result=errno;
-			}
-			else {
-				 current->open=true;
-				 
-			}
-		}
+				flags &= ~O_NONBLOCK;
+				fcntl(conn->socket,F_SETFL,flags);
+				printf("done.\n");
+				if (conn->result==1) {
+				SSL_CIPHER *cipher=SSL_get_current_cipher (conn->ssl);
+					
+				printf ("SSL connection using %s\n", SSL_CIPHER_get_name(cipher));
+				int usedbits=0,cipherbits=0;
+				usedbits=SSL_CIPHER_get_bits(cipher,&cipherbits);
+				printf("SSL Cipher is %d bits, %d bits used.\n",cipherbits,usedbits);
+				printf("Getting SSL certificate...");
+						fflush(stdout);
+						
+				conn->server_cert = SSL_get_peer_certificate (conn->ssl);
+					printf("done.\n");
+	
+		const char *s;
+		SSL_CIPHER *c;
+	
 		
-		current->last_trans_time=real_time_clock();
-//		release_sem(conn_sem);
-		return current;
+		c = SSL_get_current_cipher(conn->ssl);
+		
+		s = (char *) SSL_get_version(conn->ssl);
+		printf("SSL version: %s\n",s);
+		s = (char *) SSL_CIPHER_get_name(c);
+		
+		printf("SSL Cipher name: %s\n",s);
+		int ssl_keylength=0;
+		SSL_CIPHER_get_bits(c, &ssl_keylength);
+		
+		/*
+		 * set to the secret key size for the export ciphers...
+		 * SSLeay returns the total key size
+		 */
+		if(strncmp(s, "EXP-", 4) == 0)
+			ssl_keylength = 40;
+			printf("key length: %d\n",ssl_keylength);
+				}
+				else
+				 {
+				 	conn->result=SSL_get_error(conn->ssl, conn->result);
+				 	printf("SSL Error: %ld\n",conn->result);
+				 }
+					if (conn->server_cert!=NULL) {
+						
+				char * str;
+				printf("certificate: %p\n",conn->server_cert);
+				printf("Getting SSL subject...");
+				fflush(stdout);
+				  str = X509_NAME_oneline (X509_get_subject_name (conn->server_cert),0,0);
+				printf("done\n");
+		  printf ("\t subject: %s\n", str);
+	  free (str);
+	  str = X509_NAME_oneline (X509_get_issuer_name  (conn->server_cert),0,0);
+	  printf ("\t issuer: %s\n", str);
+	  free (str);
+					}
+#else
+			printf("tcplayer.cpp: SSL support has not been included in this binary.\n");
+#endif
+		}
 	}
+	return conn;
 }
 
 /*
@@ -764,6 +517,7 @@ void tcplayer::CloseConnection(connection *target) {
 //		return;
 //mtx->lock();
 	closesocket(target->socket);
+	target->socket=-1;
 //mtx->unlock();
 	target->open=false;
 #ifdef USEOPENSSL
