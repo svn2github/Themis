@@ -15,6 +15,7 @@ TAttr	::	TAttr( const TDOMString aName, const bool aSpecified, const TDOMString 
 		mSpecified = aSpecified;
 	}
 	mValue = aValue;
+	mDefaultValue = aValue;
 	mOwnerElement = aOwnerElement;
 	
 }
@@ -56,5 +57,11 @@ void TAttr	::	setValue( const TDOMString aValue )	{
 TElement * TAttr	::	getOwnerElement() const	{
 	
 	return mOwnerElement;
+	
+}
+
+TDOMString TAttr	::	getDefaultValue() const	{
+	
+	return mDefaultValue;
 	
 }

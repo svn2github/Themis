@@ -23,7 +23,7 @@ TNode	::	TNode( const unsigned short aNodeType, const TDOMString aNodeName = "",
 		case ELEMENT_NODE:	{
 			mNodeName->SetTo( aNodeName );
 			mAttributeList = new BList();
-			mAttributes = new TNamedNodeMap( mAttributeList );
+			mAttributes = new TNamedNodeMap( mAttributeList, this );
 			mNodeTypeString.SetTo( "ELEMENT_NODE" );
 			break;
 		}

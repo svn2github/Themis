@@ -6,7 +6,7 @@
 #include "TNamedNodeMap.h"
 #include "TAttr.h"
 
-TElement	::	TElement( const TDOMString aTagName )	:	TNode( ELEMENT_NODE )	{
+TElement	::	TElement( const TDOMString aTagName )	:	TNode( ELEMENT_NODE, aTagName )	{
 	
 	mTagName.SetTo( aTagName );
 	
@@ -45,4 +45,39 @@ void TElement	::	setAttribute( const TDOMString aName, const TDOMString aValue )
 	else	{
 		attribute->setValue( aValue );
 	}
+}
+
+void TElement	::	removeAttribute( const TDOMString aName )	{
+
+	TAttr * attribute = (TAttr *) getAttributes()->getNamedItem( aName );
+	TDOMString defaultValue = attribute->getDefaultValue();
+	if ( defaultValue != "" )	{
+		attribute->setValue( defaultValue );
+	}		
+
+}
+
+TAttr * TElement	::	getAttributeNode( const TDOMString aName ) const	{
+	
+	return (TAttr *) getAttributes()->getNamedItem( aName );
+	
+}
+
+TAttr * TElement	::	setAttributeNode( TAttr * aNewAttr )	{
+	
+	return (TAttr *) getAttributes()->setNamedItem( aNewAttr );
+	
+}
+
+TAttr * TElement	::	removeAttributeNode( TAttr * aOldAttr )	{
+	
+	getAttributes()->removeNamedItem( *( aOldAttr->getNodeName() ) );
+	TDOMString defaultValue = aOldAttr->getDefaultValue();
+	if ( defaultValue != "" )	{
+		TAttr * newAttribute = new TAttr( aOldAttr->getName(), aOldAttr->getSpecified(), aOldAttr->getValue(), aOldAttr->getOwnerElement() );
+		getAttributes()->setNamedItem( newAttribute );
+	}
+
+	return aOldAttr;
+
 }

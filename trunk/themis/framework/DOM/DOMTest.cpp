@@ -3,6 +3,8 @@
 */
 
 #include "DOMTest.h"
+#include "TAttr.h"
+#include "TNamedNodeMap.h"
 
 DOMTest	::	DOMTest()	:	BApplication( "application/x-vnd.Themis-DOMTest" )	{
 	
@@ -36,6 +38,9 @@ DOMTest	::	DOMTest()	:	BApplication( "application/x-vnd.Themis-DOMTest" )	{
 	
 	printf( "Retrieve the attribute that was just created\n" );
 	printf( "Attribute me has value: %s\n", element->getAttribute( "me" ).String() );
+
+	TAttr * attr = (TAttr *) element->getAttributes()->getNamedItem( "me" );
+	printf( "Attribute is attached to: %s\n", attr->getOwnerElement()->getNodeName()->String() );
 
 	printf( "Remove attribute me through NamedNodeMap\n" );
 	element->getAttributes()->removeNamedItem( "me" );

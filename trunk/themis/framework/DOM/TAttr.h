@@ -21,6 +21,9 @@ class TAttr		:	public TNode	{
 		TDOMString mValue;
 		TElement * mOwnerElement;
 		
+		// Support variable
+		TDOMString mDefaultValue;
+		
 	public:
 		TAttr( const TDOMString aName, const bool aSpecified, const TDOMString aValue, TElement * aOwnerElement );
 		~TAttr();
@@ -29,6 +32,11 @@ class TAttr		:	public TNode	{
 		TDOMString getValue() const ;
 		void setValue( const TDOMString aValue );
 		TElement * getOwnerElement() const;
+		friend class TNamedNodeMap;
+
+		// Suuport function
+		TDOMString getDefaultValue() const;
+
 };
 
 #endif

@@ -50,18 +50,21 @@ TNode * TNamedNodeMap	::	getNamedItem( const TDOMString aName )	{
 TNode * TNamedNodeMap	::	setNamedItem( TNode * aArg )	{
 	
 	// Check to see if it can be added to this element
-	if ( aArg->getNodeType() == ATTRIBUTE_NODE )	{
-		TAttr * arg = (TAttr *) aArg;
-		if ( arg->getOwnerElement() != NULL && arg->getOwnerElement() != (const TElement *) mMappedNode && mMappedNode )	{
-			printf( "Err, oops\n" );
-			throw TDOMException( INUSE_ATTRIBUTE_ERR );
-		}
-	}
-
 	if ( mMappedNode )	{
 		if ( !( mMappedNode->getNodeType() == ELEMENT_NODE && aArg->getNodeType() == ATTRIBUTE_NODE ) )	{
 			throw TDOMException( HIERARCHY_REQUEST_ERR );
 		}
+	}
+
+	if ( aArg->getNodeType() == ATTRIBUTE_NODE )	{
+		TAttr * arg = (TAttr *) aArg;
+		if ( arg->getOwnerElement() != NULL && arg->getOwnerElement() != (const TElement *) mMappedNode && mMappedNode )	{
+			throw TDOMException( INUSE_ATTRIBUTE_ERR );
+		}
+		else	{
+			// Set the ownerElement of the attribute to the mapped node
+			arg->mOwnerElement = (TElement *) mMappedNode;
+		}			
 	}
 
 	TNode * node = getNamedItem( *( aArg->getNodeName() ) );

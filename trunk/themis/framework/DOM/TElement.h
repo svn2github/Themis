@@ -11,6 +11,8 @@
 #include "DOMSupport.h"
 #include "TNode.h"
 
+class TAttr;
+
 class TElement	:	public TNode	{
 	
 	private:
@@ -23,6 +25,10 @@ class TElement	:	public TNode	{
 		
 		TDOMString getAttribute( const TDOMString aName ) const;
 		void setAttribute( const TDOMString aName, const TDOMString aValue );
+		void removeAttribute( const TDOMString aName );
+		TAttr * getAttributeNode( const TDOMString aName ) const;
+		TAttr * setAttributeNode( TAttr * aNewAttr );
+		TAttr * removeAttributeNode( TAttr * aOldAttr );
 		
 };
 
