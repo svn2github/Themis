@@ -346,13 +346,13 @@ ThemisTabView::MouseDown( BPoint point )
 				/* Generate a broadcast to tell the UrlHandler that it can remove
 				 * the UrlEntry for the given ID. */
 				
-				if( remtab->GetViewID() > 0 );
+				if( remtab->GetSiteID() > 0 );
 				{
-					BMessage* msg = new BMessage( UH_DOC_CLOSED );
-					msg->AddInt32( "view_id", remtab->GetViewID() );
+					BMessage* msg = new BMessage( SH_DOC_CLOSED );
+					msg->AddInt32( "view_id", remtab->GetSiteID() );
 					msg->AddInt32( "command", COMMAND_INFO );
 				
-					( ( Win* )Window() )->Broadcast( MS_TARGET_URLHANDLER, msg );
+					( ( Win* )Window() )->Broadcast( MS_TARGET_SITEHANDLER, msg );
 					delete msg;
 				}
 				
@@ -397,12 +397,11 @@ ThemisTabView::Select( int32 tabindex )
 	if( !tab )
 		return;	
 	
-	int32 view_id;
-	view_id = tab->GetViewID();
-//	printf( "  view_id: %ld\n", view_id );
+	int32 site_id;
+	site_id = tab->GetSiteID();
 	
-	UrlHandler* uh = ( ( App* )be_app )->GetUrlHandler();
-	if( uh )
+	SiteHandler* sh = ( ( App* )be_app )->GetSiteHandler();
+	if( sh )
 	{
 		BString wtitle( "Themis" );
 		BString ttitle( "" );
@@ -410,23 +409,23 @@ ThemisTabView::Select( int32 tabindex )
 		BString stext( "" );
 		int lprog = 100;
 		
-		if( uh->EntryValid( view_id ) )
+		if( sh->EntryValid( site_id ) )
 		{
 //			printf( "  Entry valid.\n" );	
 			
 			/* Tab title */
-			ttitle.Append( uh->GetTitleFor( view_id ) );
+			ttitle.Append( sh->GetTitleFor( site_id ) );
 			
 			/* Window title */
 			wtitle.Append( " - " );
 			wtitle.Append( ttitle.String() );
 			
 			/* NavView URL */
-			url.SetTo( uh->GetUrlFor( view_id ) );
+			url.SetTo( sh->GetUrlFor( site_id ) );
 			
 			/* StatusText and loading progress */
-			stext.SetTo( uh->GetStatusTextFor( view_id ) );
-			lprog = uh->GetLoadingProgressFor( view_id );
+			stext.SetTo( sh->GetStatusTextFor( site_id ) );
+			lprog = sh->GetLoadingProgressFor( site_id );
 		}
 		else	// no UrlEntry
 		{

@@ -17,9 +17,9 @@ class UrlEntry
 									
 									~UrlEntry();
 		
-		bool						GetCookiesDisabled();
+//		bool						GetCookiesDisabled();
 		
-		BBitmap*					GetFavIcon();
+//		BBitmap*					GetFavIcon();
 		
 		int32						GetID();
 
@@ -27,7 +27,7 @@ class UrlEntry
 		
 		bool						GetSecureConnection();
 		
-		const char*					GetStatusText();
+//		const char*					GetStatusText();
 		
 		const char*					GetTitle();
 		
@@ -35,11 +35,11 @@ class UrlEntry
 		
 		void						Print();
 		
-		void						SetCookiesDisabled(
-										bool value );
+//		void						SetCookiesDisabled(
+//										bool value );
 		
-		void						SetFavIcon(
-										BBitmap* bmp );
+//		void						SetFavIcon(
+//										BBitmap* bmp );
 		
 		void						SetLoadingProgress(
 										int8 loadingprogress );
@@ -47,8 +47,8 @@ class UrlEntry
 		void						SetSecureConnection(
 										bool value );		
 		
-		void						SetStatusText(
-										const char* text );
+//		void						SetStatusText(
+//										const char* text );
 				
 		void						SetTitle(
 										const char* title );
@@ -60,12 +60,12 @@ class UrlEntry
 		
 		BString*					fUrl;
 		BString*					fTitle;
-		BString*					fStatusText;
+//		BString*					fStatusText;
 		
-		bool						fCookiesDisabled;
+//		bool						fCookiesDisabled;
 		bool						fSecureConnection;
 		
-		BBitmap*					fFavIcon;
+//		BBitmap*					fFavIcon;
 };
 
 #endif

@@ -150,17 +150,29 @@ to allow interoperability in some parts of the application.
 #define WINDOW_NEW				'winn'
 
 // UrlHandler message constants
-#define UH_DOC_CLOSED			'udcl'	// sent by tab to UH (removes UrlEntry)
-#define UH_LOAD_NEW_PAGE		'ulnp'	// sent by win to UH/all interested
-#define UH_LOADING_FINISHED		'ulfi'	// sent by network to UH
-#define UH_LOADING_PROGRESS		'ulpg'	// sent by network to UH
-#define UH_PARSE_DOC_FINISHED	'updf'	// sent by HTML parser to UH
-#define UH_PARSE_DOC_START		'upds'	// sent by UH to HTML parser
-#define UH_RELOAD_PAGE			'urel'	// sent by win to UH/all interested
-#define UH_RENDER_START			'urst'	// sent by UH to renderer
-#define UH_RENDER_FINISHED		'urfi'	// snet by renderer to UH
-#define UH_WIN_LOADING_PROGRESS	'uwlp'	// sent by UH to windows
+//#define UH_DOC_CLOSED			'udcl'	// sent by tab to UH (removes UrlEntry)
+//#define UH_LOAD_NEW_PAGE		'ulnp'	// sent by win to UH/all interested
+//#define UH_LOADING_FINISHED		'ulfi'	// sent by network to UH
+//#define UH_LOADING_PROGRESS		'ulpg'	// sent by network to UH
+//#define UH_PARSE_DOC_FINISHED	'updf'	// sent by HTML parser to UH
+//#define UH_PARSE_DOC_START		'upds'	// sent by UH to HTML parser
+//#define UH_RELOAD_PAGE			'urel'	// sent by win to UH/all interested
+//#define UH_RENDER_START			'urst'	// sent by UH to renderer
+//#define UH_RENDER_FINISHED		'urfi'	// snet by renderer to UH
+//#define UH_WIN_LOADING_PROGRESS	'uwlp'	// sent by UH to windows
 
+// SiteHandler message constants
+#define SH_DOC_CLOSED			'sdcl'	// sent by win to SH
+#define SH_LOAD_NEW_PAGE		'slnp'	// sent by win to SH
+#define SH_LOADING_PROGRESS		'slpg'	// sent by network to SH
+#define SH_PARSE_DOC_FINISHED	'spdf'	// sent by parser(s) to SH
+#define SH_PARSE_DOC_START		'spds'	// sent by SH to parser(s)
+#define SH_RELOAD_PAGE			'srel'	// sent by win to SH
+#define SH_RENDER_FINISHED		'srfi'	// sent by renderer to SH
+#define SH_RENDER_START			'srst'	// sent by SH to renderer
+#define SH_RETRIEVE_START		'srst'	// sent by SH to protocol(s)
+#define SH_RETRIEVE_STOP		'srsp'	// sent by SH to protocol(s)
+#define SH_WIN_LOADING_PROGRESS	'swlp'	// sent by SH to win
 
 //ImageHandler message constants
 #define IH_LOAD_IMAGE			'ihli'

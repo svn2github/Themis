@@ -52,7 +52,7 @@ App::App(
 	fAboutWin = NULL;
 	fPrefsWin = NULL;
 	fIDCounter = 0;
-	fUrlHandler = NULL;
+	fSiteHandler = NULL;
 	fLocker = new BLocker();
 	
 #ifndef NEWNET
@@ -209,10 +209,10 @@ bool App::QuitRequested(){
 	}
 	printf( "done closing windows\n" );
 	
-	// Delete the UrlHandler here, as it is unregistering from the cache system in its
+	// Delete the SiteHandler here, as it is unregistering from the cache system in its
 	// destructor. This needs to be done before the PluginManager unloads all plugins.
-	if( fUrlHandler != NULL )
-		delete fUrlHandler;	
+	if( fSiteHandler != NULL )
+		delete fSiteHandler;	
 	
 	if (PluginManager!=NULL) {
 		msgr=new BMessenger(NULL,PluginManager,NULL);
@@ -540,7 +540,7 @@ void App::RefsReceived(BMessage *refs){
 void App::ReadyToRun(){
 	printf( "APP READYTORUN\n" );
 
-	fUrlHandler = new UrlHandler();
+	fSiteHandler = new SiteHandler();
 
 	PluginManager->BuildRoster(true);
 	fFirstWindow->Show();
@@ -743,11 +743,11 @@ App::GetNewID()
 //	return NULL;
 //}
 
-UrlHandler*
-App::GetUrlHandler()
+SiteHandler*
+App::GetSiteHandler()
 {
-	if( fUrlHandler )
-		return fUrlHandler;
+	if( fSiteHandler )
+		return fSiteHandler;
 	else
 		return NULL;
 }

@@ -203,12 +203,12 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * aMessage )	{
 					break;
 				}
 				//case ProtocolConnectionClosed:	{
-				case UH_PARSE_DOC_START :	{
+				case SH_PARSE_DOC_START :	{
 					
-					printf( "HTMLPARSER: UH_PARSE_DOC_START.\n" );
+					printf( "HTMLPARSER: SH_PARSE_DOC_START.\n" );
 					
-					bool requestDone = false;
-					aMessage->FindBool( "request_done", &requestDone );
+					//bool requestDone = false;
+					//aMessage->FindBool( "request_done", &requestDone );
 					
 //					if ( !requestDone )	{
 //						// I'll wait
@@ -217,9 +217,11 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * aMessage )	{
 //					}
 					
 					/* temporarily added by emwe */
-					int32 view_id = 0;
-					aMessage->FindInt32( "view_id", &view_id );
-
+					int32 site_id = 0;
+					int32 url_id = 0;
+					aMessage->FindInt32( "site_id", &site_id );
+					aMessage->FindInt32( "url_id", &url_id );
+					
 					const char * mimetype = NULL;
 					aMessage->FindString( "mimetype", &mimetype );
 					
@@ -273,12 +275,13 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * aMessage )	{
 						string urlString( url );
 						mDocument->setDocumentURI( urlString );
 						
-						BMessage * done = new BMessage( UH_PARSE_DOC_FINISHED );
+						BMessage * done = new BMessage( SH_PARSE_DOC_FINISHED );
 						done->AddInt32( "command", COMMAND_INFO );
 						done->AddString( "type", "dom" );
 						done->AddPointer( "dom_tree_pointer", &mDocument );
 						/* added by emwe */
-						done->AddInt32( "view_id", view_id );
+						done->AddInt32( "site_id", site_id );
+						done->AddInt32( "url_id", url_id );
 						/**/
 						Broadcast( MS_TARGET_ALL, done );
 						

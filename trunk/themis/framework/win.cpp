@@ -416,13 +416,13 @@ void Win::MessageReceived(BMessage *msg) {
 				break;
 			
 			uint32 selection = tabview->Selection();
-			int32 view_id = ( ( App* )be_app )->GetNewID();
+			int32 site_id = ( ( App* )be_app )->GetNewID();
 						
 			if( msg->HasInt32( "tab_to_open_in" ) )
 			{
 				int32 tab_index = msg->FindInt32( "tab_to_open_in" );
 				
-				( ( ThemisTab* )tabview->TabAt( tab_index ) )->SetViewID( view_id );
+				( ( ThemisTab* )tabview->TabAt( tab_index ) )->SetSiteID( site_id );
 				
 				// add history entry for tab
 				if( msg->HasBool( "no_history_add" ) == false )
@@ -430,7 +430,7 @@ void Win::MessageReceived(BMessage *msg) {
 			}
 			else
 			{
-				( ( ThemisTab* )tabview->TabAt( selection ) )->SetViewID( view_id );
+				( ( ThemisTab* )tabview->TabAt( selection ) )->SetSiteID( site_id );
 				
 				// add history entry for tab
 				if( msg->HasBool( "no_history_add" ) == false )
@@ -448,143 +448,143 @@ void Win::MessageReceived(BMessage *msg) {
 			
 			/* get this out of here */
 			
-			char *usepass=NULL;
-			char *workurl=NULL;
-			BString urlS=url.String();
-			int len=strlen(url.String());
-			char *url_=new char[len+1];
-			workurl=new char[len+1];
-			memset(url_,0,len+1);
-			memset(workurl,0,len+1);
-			strcpy(url_,url.String());
-			strcpy(workurl,url_);
-			protocol=HTTPPlugin;
-			urlS=url;
+//			char *usepass=NULL;
+//			char *workurl=NULL;
+//			BString urlS=url.String();
+//			int len=strlen(url.String());
+//			char *url_=new char[len+1];
+//			workurl=new char[len+1];
+//			memset(url_,0,len+1);
+//			memset(workurl,0,len+1);
+//			strcpy(url_,url.String());
+//			strcpy(workurl,url_);
+//			protocol=HTTPPlugin;
+//			urlS=url;
+//			
+//			if (urlS.Length()>0) {
+//				int32 pos=urlS.FindFirst("://");
+//				int32 atpos=urlS.FindFirst('@');
+//				int32 firstslash=urlS.FindFirst('/',7);
+//				printf("pos: %ld\tat: %ld\tfs: %ld\n",pos,atpos,firstslash);
+//				
+//				if (atpos>0) {
+//					int32 secondat=urlS.FindFirst('@',atpos+1);
+//					if (((secondat!=B_ERROR) && (firstslash!=B_ERROR) && (secondat<firstslash)) 
+//						||  ((firstslash==B_ERROR) && (secondat!=B_ERROR))) {
+//							
+//						atpos=secondat;
+//					}			
+//					printf("second at: %ld\n",secondat);
+//					if (atpos<firstslash) {
+//						if (pos!=B_ERROR) {
+//							int32 plen=atpos-(pos+3);
+//							usepass=new char[plen+1];
+//							memset(usepass,0,plen+1);
+//							urlS.MoveInto(usepass,pos+3,plen);
+//							printf("usepass: %s\tlen: %ld\n",usepass,plen);
+//							
+//						} else {
+//							usepass=new char[atpos+1];
+//							memset(usepass,0,atpos+1);
+//							urlS.MoveInto(usepass,0,atpos);
+//							printf("usepass: %s\tlen: %ld\n",usepass,atpos);
+//							
+//						}
+//						urlS.RemoveFirst("@");
+//						
+//					} else {
+//						if (firstslash==B_ERROR) {
+//							usepass=new char[atpos+1];
+//							memset(usepass,0,atpos+1);
+//							urlS.MoveInto(usepass,0,atpos);
+//							urlS.RemoveFirst("@");
+//						}
+//					}
+//				}
+//				
+//				printf("urlS: %s\n",urlS.String());
+//				if (pos!=B_ERROR) {
+//					char *protostr=new char[pos+1];
+//					memset(protostr,0,pos+1);
+//					strncpy(protostr,url_,pos);
+//					for (int i=0; i<pos;i++)
+//						protostr[i]=tolower(protostr[i]);
+//					protocol=strtoval(protostr);
+//					delete protostr;
+//				}
+//			}
+//			delete url_;
+//			ProtocolPlugClass *pobj=(ProtocolPlugClass*)PluginManager->FindPlugin(protocol);
+//			printf("protocol: %ld\npobj: %p\n",protocol,pobj);
+//			if (urlS.Length()==0) {
+//				return;
+//			}
+//			if ((urlS.FindFirst("://")==B_ERROR) || (urlS.FindFirst("://")>=6)) {
+//				urlS.Prepend("http://");
+//				printf("url: %s\n",urlS.String());
+//				printf("workurl: %s\n",workurl);
+//				delete workurl;
+//				workurl=new char[urlS.Length()+1];
+//				memset(workurl,0,urlS.Length()+1);
+//				urlS.CopyInto(workurl,0,urlS.Length());
+//			} else {
+//				memset(workurl,0,strlen(workurl)+1);
+//				delete workurl;
+//				workurl=new char[urlS.Length()+1];
+//				memset(workurl,0,urlS.Length()+1);
+//				urlS.CopyInto(workurl,0,urlS.Length());
+//				
+//			}
+//			
+//			// ok, lets make a copy of url.
+//			BString target_url( url );
 			
-			if (urlS.Length()>0) {
-				int32 pos=urlS.FindFirst("://");
-				int32 atpos=urlS.FindFirst('@');
-				int32 firstslash=urlS.FindFirst('/',7);
-				printf("pos: %ld\tat: %ld\tfs: %ld\n",pos,atpos,firstslash);
+//			url=workurl;
+
+
+//			printf( "Win: creating info message\n" );			
+//
+//			BMessage *info=new BMessage;
+//			info->AddInt32( "view_id", view_id );
+//			info->AddPointer("plug_manager",PluginManager);
+//			info->AddPointer("main_menu_bar",menubar);
+//			info->AddPointer("file_menu",filemenu);
+//			info->AddPointer("options_menu",optionsmenu);
+//			info->AddString("target_url",workurl);
+//			
+//			if( msg->what == URL_OPEN )
+//				info->AddInt32("action",LoadingNewPage);
+//			else
+//				info->AddInt32("action",ReloadData);
+//
+//			delete workurl;
+//			
+//			if (usepass!=NULL) {
+//					info->AddString("username:password",usepass);
+//					memset(usepass,0,strlen(usepass)+1);
+//					delete usepass;
+//			}
 				
-				if (atpos>0) {
-					int32 secondat=urlS.FindFirst('@',atpos+1);
-					if (((secondat!=B_ERROR) && (firstslash!=B_ERROR) && (secondat<firstslash)) 
-						||  ((firstslash==B_ERROR) && (secondat!=B_ERROR))) {
-							
-						atpos=secondat;
-					}			
-					printf("second at: %ld\n",secondat);
-					if (atpos<firstslash) {
-						if (pos!=B_ERROR) {
-							int32 plen=atpos-(pos+3);
-							usepass=new char[plen+1];
-							memset(usepass,0,plen+1);
-							urlS.MoveInto(usepass,pos+3,plen);
-							printf("usepass: %s\tlen: %ld\n",usepass,plen);
-							
-						} else {
-							usepass=new char[atpos+1];
-							memset(usepass,0,atpos+1);
-							urlS.MoveInto(usepass,0,atpos);
-							printf("usepass: %s\tlen: %ld\n",usepass,atpos);
-							
-						}
-						urlS.RemoveFirst("@");
-						
-					} else {
-						if (firstslash==B_ERROR) {
-							usepass=new char[atpos+1];
-							memset(usepass,0,atpos+1);
-							urlS.MoveInto(usepass,0,atpos);
-							urlS.RemoveFirst("@");
-						}
-					}
-				}
-				
-				printf("urlS: %s\n",urlS.String());
-				if (pos!=B_ERROR) {
-					char *protostr=new char[pos+1];
-					memset(protostr,0,pos+1);
-					strncpy(protostr,url_,pos);
-					for (int i=0; i<pos;i++)
-						protostr[i]=tolower(protostr[i]);
-					protocol=strtoval(protostr);
-					delete protostr;
-				}
-			}
-			delete url_;
-			ProtocolPlugClass *pobj=(ProtocolPlugClass*)PluginManager->FindPlugin(protocol);
-			printf("protocol: %ld\npobj: %p\n",protocol,pobj);
-			if (urlS.Length()==0) {
-				return;
-			}
-			if ((urlS.FindFirst("://")==B_ERROR) || (urlS.FindFirst("://")>=6)) {
-				urlS.Prepend("http://");
-				printf("url: %s\n",urlS.String());
-				printf("workurl: %s\n",workurl);
-				delete workurl;
-				workurl=new char[urlS.Length()+1];
-				memset(workurl,0,urlS.Length()+1);
-				urlS.CopyInto(workurl,0,urlS.Length());
-			} else {
-				memset(workurl,0,strlen(workurl)+1);
-				delete workurl;
-				workurl=new char[urlS.Length()+1];
-				memset(workurl,0,urlS.Length()+1);
-				urlS.CopyInto(workurl,0,urlS.Length());
-				
-			}
-			
-			// ok, lets make a copy of url.
-			BString target_url( url );
-			
-			url=workurl;
-
-
-			printf( "Win: creating info message\n" );			
-
-			BMessage *info=new BMessage;
-			info->AddInt32( "view_id", view_id );
-			info->AddPointer("plug_manager",PluginManager);
-			info->AddPointer("main_menu_bar",menubar);
-			info->AddPointer("file_menu",filemenu);
-			info->AddPointer("options_menu",optionsmenu);
-			info->AddString("target_url",workurl);
-			
-			if( msg->what == URL_OPEN )
-				info->AddInt32("action",LoadingNewPage);
-			else
-				info->AddInt32("action",ReloadData);
-
-			delete workurl;
-			
-			if (usepass!=NULL) {
-					info->AddString("username:password",usepass);
-					memset(usepass,0,strlen(usepass)+1);
-					delete usepass;
-			}
-				
-			if( msg->what == URL_OPEN )
-			{
-				printf("WIN: telling MS_TARGET_ALL that a new page is being loaded.\n");
-		
-				BMessage *lnp=new BMessage(LoadingNewPage);
-				lnp->AddInt32("command",COMMAND_INFO);
-				Broadcast(MS_TARGET_ALL,lnp);
-				delete lnp;
-			}
-
-			info->AddInt32("command",COMMAND_RETRIEVE);
-			info->AddInt32("targets",TARGET_PROTOCOL);
-			info->AddInt32("source",TARGET_VIEW);
+//			if( msg->what == URL_OPEN )
+//			{
+//				printf("WIN: telling MS_TARGET_ALL that a new page is being loaded.\n");
+//		
+//				BMessage *lnp=new BMessage(LoadingNewPage);
+//				lnp->AddInt32("command",COMMAND_INFO);
+//				Broadcast(MS_TARGET_ALL,lnp);
+//				delete lnp;
+//			}
+//
+//			info->AddInt32("command",COMMAND_RETRIEVE);
+//			info->AddInt32("targets",TARGET_PROTOCOL);
+//			info->AddInt32("source",TARGET_VIEW);
 			
 //			info->PrintToStream();
 			
-			printf("WIN: Sending request broadcast to MS_TARGET_PROTOCOL.\n");
-			Broadcast(MS_TARGET_PROTOCOL,info);
-			delete info;
-			printf("WIN: Done with request broadcast.\n");
+//			printf("WIN: Sending request broadcast to MS_TARGET_PROTOCOL.\n");
+//			Broadcast(MS_TARGET_PROTOCOL,info);
+//			delete info;
+//			printf("WIN: Done with request broadcast.\n");
 			
 			/*********/
 			
@@ -592,20 +592,20 @@ void Win::MessageReceived(BMessage *msg) {
 			// I don't want to destroy anything working right now. So let's just
 			// get something new in.
 			
-			BMessage* uh = NULL;
+			BMessage* load = NULL;
 			if( msg->what == URL_OPEN )
-				uh = new BMessage( UH_LOAD_NEW_PAGE );
+				load = new BMessage( SH_LOAD_NEW_PAGE );
 			else
-				uh = new BMessage( UH_RELOAD_PAGE );
+				load = new BMessage( SH_RELOAD_PAGE );
 			
-			uh->AddInt32( "command", COMMAND_INFO );
-			uh->AddInt32( "view_id", view_id );
-			uh->AddString( "target_url", target_url.String() );
+			load->AddInt32( "command", COMMAND_INFO );
+			load->AddInt32( "site_id", site_id );
+			load->AddString( "url", url.String() );
 			
-			//Broadcast( MS_TARGET_URLHANDLER, uh );
-			( ( App* )be_app )->GetUrlHandler()->ReceiveBroadcast( uh );
+			/* We need to directly trigger the SiteHandler. Yap, bad. */
+			( ( App* )be_app )->GetSiteHandler()->ReceiveBroadcast( load );
 			
-			delete uh;
+			delete load;
 
 			/*
 			 * Trigger this after the UrlHandler knows about the URL.
@@ -877,7 +877,7 @@ Win::FindTabFor(
 		ThemisTab* tab = ( ThemisTab* )tabview->TabAt( i );
 		if( tab )
 		{
-			if( tab->GetViewID() == id )
+			if( tab->GetSiteID() == id )
 			{
 				if( tabindex )
 					*tabindex = i;
@@ -1224,29 +1224,29 @@ status_t Win::ReceiveBroadcast(BMessage *message)
 					
 					break;
 				}
-				case UH_WIN_LOADING_PROGRESS :
+				case SH_WIN_LOADING_PROGRESS :
 				{
 					printf( "WIN: UH_WIN_LOADING_PROGRESS\n" );
 					
 					int32 id = 0;
-					message->FindInt32( "view_id", &id );
+					message->FindInt32( "site_id", &id );
 					
 					int32 tabindex;
 					ThemisTab* tab = FindTabFor( id, &tabindex );
 					if( !tab )
 						break;
 					
-					UrlHandler* uh = ( ( App* )be_app )->GetUrlHandler();
-					if( !uh )
+					SiteHandler* sh = ( ( App* )be_app )->GetSiteHandler();
+					if( !sh )
 						break;
 					
-					if( uh->EntryValid( id ) )
+					if( sh->EntryValid( id ) )
 					{
 						Lock();					
 
 						/* Update the tabs label and icon */
-						tab->SetLabel( uh->GetTitleFor( id ) );
-						tab->SetFavIcon( uh->GetFavIconFor( id ) );
+						tab->SetLabel( sh->GetTitleFor( id ) );
+						tab->SetFavIcon( sh->GetFavIconFor( id ) );
 						tabview->DrawTabs();
 						
 						if( tabindex == tabview->Selection() )
@@ -1258,17 +1258,17 @@ status_t Win::ReceiveBroadcast(BMessage *message)
 							
 							/* Update the window title */
 							BString wtitle( "Themis - " );
-							wtitle.Append( uh->GetTitleFor( id ) );
+							wtitle.Append( sh->GetTitleFor( id ) );
 							SetTitle( wtitle.String() );
 							
 							/* Update the FavIcon and Text in the NavView */
-							navview->urlview->SetText( uh->GetUrlFor( id ) );
-							navview->urlview->SetFavIcon( uh->GetFavIconFor( id ) );
+							navview->urlview->SetText( sh->GetUrlFor( id ) );
+							navview->urlview->SetFavIcon( sh->GetFavIconFor( id ) );
 							
 							/* Update the StatusView */
 							statusview->SetLoadingInfo(
-								uh->GetLoadingProgressFor( id ),
-								uh->GetStatusTextFor( id ) );
+								sh->GetLoadingProgressFor( id ),
+								sh->GetStatusTextFor( id ) );
 						}
 
 						Unlock();

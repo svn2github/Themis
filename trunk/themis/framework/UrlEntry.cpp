@@ -17,9 +17,9 @@ UrlEntry::UrlEntry(
 	
 	fUrl = new BString( url );
 	
-	fStatusText = new BString( "Transfering data from " );
-	fStatusText->Append( url );
-	fStatusText->Append( " ..." );
+//	fStatusText = new BString( "Transfering data from " );
+//	fStatusText->Append( url );
+//	fStatusText->Append( " ..." );
 	
 	/*
 	 * The page title is set to "loading..." now.
@@ -31,10 +31,10 @@ UrlEntry::UrlEntry(
 	 */
 	fTitle = new BString( "loading..." );
 	
-	fCookiesDisabled = false;
+//	fCookiesDisabled = false;
 	fSecureConnection = false;
 	
-	fFavIcon = NULL;
+//	fFavIcon = NULL;
 }
 
 UrlEntry::~UrlEntry()
@@ -43,23 +43,23 @@ UrlEntry::~UrlEntry()
 	
 	if( fUrl != NULL )
 		delete fUrl;
-	if( fStatusText != NULL )
-		delete fStatusText;
+//	if( fStatusText != NULL )
+//		delete fStatusText;
 	if( fTitle != NULL )
 		delete fTitle;
 }
 
-bool
-UrlEntry::GetCookiesDisabled()
-{
-	return fCookiesDisabled;
-}
+//bool
+//UrlEntry::GetCookiesDisabled()
+//{
+//	return fCookiesDisabled;
+//}
 
-BBitmap*
-UrlEntry::GetFavIcon()
-{
-	return fFavIcon;
-}
+//BBitmap*
+//UrlEntry::GetFavIcon()
+//{
+//	return fFavIcon;
+//}
 
 int32
 UrlEntry::GetID()
@@ -79,11 +79,11 @@ UrlEntry::GetSecureConnection()
 	return fSecureConnection;
 }
 
-const char*
-UrlEntry::GetStatusText()
-{
-	return fStatusText ? fStatusText->String() : "";
-}
+//const char*
+//UrlEntry::GetStatusText()
+//{
+//	return fStatusText ? fStatusText->String() : "";
+//}
 
 const char*
 UrlEntry::GetTitle()
@@ -102,32 +102,36 @@ void
 UrlEntry::Print()
 {
 	printf( "URLENTRY: ID[%ld] URL[%s] TITLE[%s]\n", fID, fUrl->String(), fTitle->String() );
-	printf( "          LoadingProgess[%d] CookiesDisabled[%s], SecureConnection[%s]\n",
+	printf( "          LoadingProgess[%d] SecureConnection[%s]\n",
 		fLoadingProgress,
-		fCookiesDisabled ? "true" : "false",
 		fSecureConnection ? "true" : "false" );
+
+//	printf( "          LoadingProgess[%d] CookiesDisabled[%s], SecureConnection[%s]\n",
+//		fLoadingProgress,
+//		fCookiesDisabled ? "true" : "false",
+//		fSecureConnection ? "true" : "false" );
 }
 
-void
-UrlEntry::SetCookiesDisabled(
-	bool value )
-{
-	fCookiesDisabled = value;
-}
+//void
+//UrlEntry::SetCookiesDisabled(
+//	bool value )
+//{
+//	fCookiesDisabled = value;
+//}
 
-void
-UrlEntry::SetFavIcon(
-	BBitmap* bmp )
-{
-	if( bmp )
-	{
-		if( !fFavIcon )
-			fFavIcon = new BBitmap(
-				BRect( 0, 0, 15, 15 ), B_RGB32 );
-		
-		memcpy( fFavIcon->Bits(), bmp->Bits(), 1024 );
-	}
-}
+//void
+//UrlEntry::SetFavIcon(
+//	BBitmap* bmp )
+//{
+//	if( bmp )
+//	{
+//		if( !fFavIcon )
+//			fFavIcon = new BBitmap(
+//				BRect( 0, 0, 15, 15 ), B_RGB32 );
+//		
+//		memcpy( fFavIcon->Bits(), bmp->Bits(), 1024 );
+//	}
+//}
 
 void
 UrlEntry::SetLoadingProgress(
@@ -137,7 +141,7 @@ UrlEntry::SetLoadingProgress(
 	
 	if( fLoadingProgress == 100 )
 	{
-		fStatusText->SetTo( "Done." );
+//		fStatusText->SetTo( "Done." );
 		fTitle->SetTo( fUrl->String() );
 	}
 }

@@ -22,7 +22,7 @@
 ThemisTab::ThemisTab( BView* view )
 	: BTab( view )
 {
-	fViewID = 0;
+	fSiteID = 0;
 	
 	fLabel = new BString( "(untitled)" );
 		
@@ -267,9 +267,9 @@ ThemisTab::GetHistory()
 }
 
 int32
-ThemisTab::GetViewID()
+ThemisTab::GetSiteID()
 {
-	return fViewID;
+	return fSiteID;
 }
 
 void
@@ -290,8 +290,8 @@ ThemisTab::SetLabel(
 }
 
 void
-ThemisTab::SetViewID(
+ThemisTab::SetSiteID(
 	int32 id )
 {
-	fViewID = id;
+	fSiteID = id;
 }

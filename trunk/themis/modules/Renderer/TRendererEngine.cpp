@@ -76,7 +76,7 @@ int32 Renderer::PreProcess(void *data)
 	printf("RENDERER: DONE PROCESSING in %g microseconds.\n",real_time_clock_usecs() - time);
 
 	//Do the Broadcasting to say we are done rendering
-	message->what = UH_RENDER_FINISHED;
+	message->what = SH_RENDER_FINISHED;
 	message->RemoveName("renderview_pointer");
 
 //Commented as make the thread crash. Might need some fixing or may be moved elsewhere

@@ -158,41 +158,47 @@ status_t FileProtocol	::	ReceiveBroadcast( BMessage * message )	{
 			break;
 		}
 		case COMMAND_RETRIEVE:	{
-			const char * url;
-			message->FindString( "target_url", &url );
-			printf( "FILE_PROTO: Requesting url: %s\n", url );
-			string urlString( url );
-			string protocolString( urlString.substr( 0, 7 ) );
-			string fileLocation( urlString.substr( 7, urlString.size() - 7 ) );
-			if ( ! protocolString.compare( "file://" ) )	{
-				printf( "FILE_PROTO: Is a file\n" );
-				printf( "FILE_PROTO: File location: %s\n", fileLocation.c_str() );
-				ifstream file( fileLocation.c_str(), ios::binary | ios::in );
-				if ( ! file )	{
-					printf( "FILE_PROTO: Error loading file\n" );
+			switch( message->what )
+			{
+				case SH_RETRIEVE_START :
+				{
+					const char * url;
+					message->FindString( "url", &url );
+					printf( "FILE_PROTO: Requesting url: %s\n", url );
+					string urlString( url );
+					string protocolString( urlString.substr( 0, 7 ) );
+					string fileLocation( urlString.substr( 7, urlString.size() - 7 ) );
+					if ( ! protocolString.compare( "file://" ) )	{
+						printf( "FILE_PROTO: Is a file\n" );
+						printf( "FILE_PROTO: File location: %s\n", fileLocation.c_str() );
+						ifstream file( fileLocation.c_str(), ios::binary | ios::in );
+						if ( ! file )	{
+							printf( "FILE_PROTO: Error loading file\n" );
+							break;
+						}
+		
+						// Put the file contents in the cache
+						int32 objectToken =
+							cache->CreateObject( userToken, fileLocation.c_str(), TYPE_DISK_FILE );
+						
+						BMessage * fileMessage = new BMessage( SH_LOADING_PROGRESS );
+						int32 id=0;
+						message->FindInt32("view_id",&id);
+						fileMessage->AddInt32("view_id",id);
+						fileMessage->AddInt32( "command", COMMAND_INFO );
+						fileMessage->AddBool( "request_done", true );
+						fileMessage->AddString( "url", fileLocation.c_str() );
+						fileMessage->AddInt32( "cache_object_token", objectToken );
+						fileMessage->AddInt64( "bytes_received", cache->GetObjectSize(userToken,objectToken) );
+						Broadcast( MS_TARGET_ALL, fileMessage );
+						delete fileMessage;
+					}
+					else	{
+						printf( "FILE_PROTO: Not a file\n" );
+					}
 					break;
 				}
-
-				// Put the file contents in the cache
-				int32 objectToken =
-					cache->CreateObject( userToken, fileLocation.c_str(), TYPE_DISK_FILE );
-				
-				BMessage * fileMessage = new BMessage( UH_LOADING_PROGRESS );
-				int32 id=0;
-				message->FindInt32("view_id",&id);
-				fileMessage->AddInt32("view_id",id);
-				fileMessage->AddInt32( "command", COMMAND_INFO );
-				fileMessage->AddBool( "request_done", true );
-				fileMessage->AddString( "url", fileLocation.c_str() );
-				fileMessage->AddInt32( "cache_object_token", objectToken );
-				fileMessage->AddInt64( "bytes_received", cache->GetObjectSize(userToken,objectToken) );
-				Broadcast( MS_TARGET_ALL, fileMessage );
-				delete fileMessage;
 			}
-			else	{
-				printf( "FILE_PROTO: Not a file\n" );
-			}
-			break;
 		}
 		default:	{
 			return PLUG_DOESNT_HANDLE;

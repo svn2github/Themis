@@ -41,7 +41,7 @@ Project Start Date: October 18, 2000
 #ifdef NEWNET
 #include "tcpmanager.h"
 #endif
-#include "UrlHandler.h"
+#include "SiteHandler.h"
 #include "win.h"
 #include "../modules/Renderer/TRenderView.h"
 
@@ -98,7 +98,7 @@ class App : public BApplication, public MessageSystem
 //										int32 id );
 		
 		//! Returns a pointer to the UrlHandler object.
-		UrlHandler*					GetUrlHandler();
+		SiteHandler*				GetSiteHandler();
 		
 		//! Loads the settings from disk.
 		status_t					LoadSettings();
@@ -165,8 +165,8 @@ class App : public BApplication, public MessageSystem
 		//! A counter for the generated unique IDs.
 		int32						fIDCounter;
 
-		//! The UrlHandler object.
-		UrlHandler*					fUrlHandler;
+		//! The SiteHandler object.
+		SiteHandler*				fSiteHandler;
 };
 
 #endif

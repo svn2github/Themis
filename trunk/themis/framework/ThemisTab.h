@@ -34,7 +34,7 @@ class ThemisTab : public BTab
 		
 		TabHistory*					GetHistory();
 										
-		int32						GetViewID();
+		int32						GetSiteID();
 		
 		void						SetFavIcon(
 										BBitmap* bmp );
@@ -42,11 +42,11 @@ class ThemisTab : public BTab
 		void						SetLabel(
 										const char* label );
 		
-		void						SetViewID(
+		void						SetSiteID(
 										int32 id );
 		
 	private:
-		int32						fViewID;
+		int32						fSiteID;
 		
 		TabHistory*					fHistory;
 		
