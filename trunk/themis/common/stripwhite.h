@@ -9,55 +9,14 @@
 These functions strip white space from the entirety, beginning, or end of a string, 
 respectively.
 */
-void stripwhite(const char *orig,char *result) {
-	int32 len=strlen(orig), pos=0;
-	//  memset(result,0,strlen(orig));
-	for (int32 i=0;i<len;i++) {
-		if (isspace(orig[i]))
-			continue;
-		result[pos]=orig[i];
-		pos++;
-	}
-}
-void stripfrontwhite(const char *orig,char *result) {
-	int32 len=strlen(orig),pos=0,pos2=0;
-	while(isspace(orig[pos]))
-		pos++;
-	for (int32 i=pos;i<len;i++) {
-		result[pos2]=orig[i];
-		pos2++;
-	}
-}
-void stripendwhite(const char *orig,char *result) {
-	int32 len=strlen(orig),pos=0;
-	pos=len;
-	while(isspace(orig[pos]))
-		pos--;
-	strncpy(result,orig,pos);
-}
+void stripwhite(const char *orig,char *result);
+void stripfrontwhite(const char *orig,char *result);
+void stripendwhite(const char *orig,char *result);
+
 /*!
 This function trims the white space off the beginning and end of a passed in character string
 and returns a brand new string (allocated with the "new" function) as the result.
 */
-char *trim(char *target) 
-{
-	char *result=NULL;
-	char *f=target,*t=target+(strlen(target)-1);
-	while (isspace(*f))
-		f++;
-	while (isspace(*t)) {
-		t--;
-	}
-	t++;
-	int size=t-f;
-	if (size>0) {
-		result=new char[size+1];
-		memset(result,0,size+1);
-		strncpy(result,f,size);
-		return result;
-	}
-	
-	return NULL;
-}
+char *trim(char *target);
 
 #endif
