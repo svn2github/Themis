@@ -49,6 +49,9 @@ HTTPADDONSOURCES= \
 CACHEADDONSOURCES= \
 	cache/cache_main.cpp \
 	cache/cacheman.cpp
+COOKIEADDONSOURCES= \
+	cookie/cookiemain.cpp \
+	cookie/cookieman.cpp
 DOMLIBRARYSOURCES= \
 	framework/DOM/TNode.cpp \
 	framework/DOM/TDOMException.cpp \
@@ -60,6 +63,16 @@ DOMLIBRARYSOURCES= \
 	framework/DOM/TCharacterData.cpp 
 DOMTESTSOURCES= \
 	framework/DOM/DOMTest.cpp
+JAVASCRIPT_LIBRARY= \
+	js
+JAVASCRIPT_SUPPORT_LIBRARIES= \
+	javascript/libjs.so \
+	javascript/libnspr4.so \
+	javascript/libplc4.so \
+	javascript/libplds4.so
+JSADDONSOURCES= \
+	js/jsmain.cpp \
+	js/jsman.cpp
 #make install directories as necessary
 ifeq "$(shell if [ -d $(BASE_ADDON_INSTALL_DIR) ] ; then echo 1 ; else mkdir -p $(BASE_ADDON_INSTALL_DIR) ; echo 0 ; fi)" "0"
 endif
@@ -75,13 +88,19 @@ endif
 ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR) ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR) ; echo 0 ; fi)" "0"
 endif
 #add a new line similar to those below for each plug-in/add-on
-#http add-on depends directory
+#http add-on object directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)http/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)http/ ; echo 0 ; fi)" "0"
 endif
-#cache add-on depends directory
+#cache add-on object directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)cache/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)cache/ ; echo 0 ; fi)" "0"
 endif
-#DOM Library depends directory
+#cookie add-on object directory
+ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)cookie/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)cookie/ ; echo 0 ; fi)" "0"
+endif
+#js add-on object directory
+ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)js/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)js/ ; echo 0 ; fi)" "0"
+endif
+#DOM Library object directory
 ifeq "$(shell if [ -d $(DOMLIBRARY_OBJECT_DIR) ] ; then echo 1 ; else mkdir -p $(DOMLIBRARY_OBJECT_DIR) ; echo 0 ; fi)" "0"
 endif
 
@@ -99,6 +118,12 @@ endif
 #cache add-on depends directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)cache/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)cache/ ; echo 0 ; fi)" "0"
 endif
+#cookie add-on depends directory
+ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)cookie/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)cookie/ ; echo 0 ; fi)" "0"
+endif
+#javascript add-on depends directory
+ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)js/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)js/ ; echo 0 ; fi)" "0"
+endif
 #DOM Library depends directory
 ifeq "$(shell if [ -d $(DOMLIBRARY_DEPENDS_DIR) ] ; then echo 1 ; else mkdir -p $(DOMLIBRARY_DEPENDS_DIR) ; echo 0 ; fi)" "0"
 endif
@@ -114,14 +139,17 @@ endif
 #While this doesn't have a major effect on current code, the new
 #networking support will utilize it.
 NETWORKLIBS=-lsocket -lbind -lbnetapi -lopenssl
+NETWORKING=NONE
 # by default, debugging information will be included. to turn it off, remove or comment out (#) the -g
 # on the next line 
 COMPILE_FLAGS=-g
 ifeq "$(shell if [ -f /system/lib/libsocket.so ] ; then echo 1 ; else echo 0 ; fi)" "1"
 	NETWORKLIBS=-lsocket -lbind -lbnetapi
+	NETWORKING=BONE
 	COMPILE_FLAGS+= -DUSEBONE
 else
 	NETWORKLIBS=-lnet -lnetapi
+	NETWORKING=net_server
 	COMPILE_FLAGS+= -DUSENETSERVER
 endif
 ifeq "$(shell if [ -f /boot/develop/lib/x86/libopenssl.so ] ; then echo 1 ; else echo 0 ; fi)" "1"
@@ -142,31 +170,50 @@ endif
 #			clean
 #			framework
 #			cacheaddon
+#			cookieaddon
+#			jsaddon
 #			httpaddon
 #			help
 #			dist
 #			domlib
 #			libs
 #			domtest
-all: framework httpaddon cacheaddon domtest
+all: framework addons domtest
 	@echo "Themis application and add-ons built successfully."
-addons: httpaddon cacheaddon
+addons: httpaddon cacheaddon #cookieaddon jsaddon
 	@echo "All add-ons built successfully."
 clean: 
-	rm -rf objects depends Themis
+	@rm -rf objects depends Themis
+	@echo Done.
+cleanframe:
+	@rm -rf objects/framework objects/common depends/framework depends/common Themis/Themis
+	@echo Done.
+cleanlibs:
+	@rm -rf objects/lib depends/lib Themis/lib
+	@echo Done.
+cleanaddon:
+	@rm -rf objects/add-ons objects/common depends/add-ons depends/common Themis/add-ons
+	@echo Done.
 help:
-	@echo "To compile, type \"make <target>\", where \"<target>\" is one of the following:"
+	@echo "To compile, type \"make <target>\", where \"<target>\" is one or more of the following:"
 	@echo "	all		All of Themis"
 	@echo "	addons		Just the add-ons"
 	@echo "	clean		Remove the dependency, object, and binary files"
+	@echo "	cleanframe	Remove the dependency, object, and binary files for the framework"
+	@echo "	cleanaddon	Remove the dependency, object, and binary files for the add-ons"
+	@echo "	cleanlibs	Remove the dependency, object, and binary files for the libraries"
 	@echo "	framework	Just the Themis framework"
 	@echo "	cacheaddon	Just the cache addon"
+#	@echo "	cookieaddon	Just the cookie addon"
+#	@echo "	jsaddon		Javascript addon"
 	@echo "	httpaddon	Just the HTTP addon"
 	@echo "	help		This message"
 	@echo "	dist		Distribution ready zip file"
 	@echo "	domlib		DOM library"
 	@echo "	libs		Just the ibraries"
 	@echo "	domtest		DOM test application"
+	@echo "*** NOTE ***"
+	@echo "You will get errors if you use any of the \"clean\" targets in combination with any of the build targets."
 libs: domlib
 dist: all
 	@zip -ry9D Themis.zip Themis/
@@ -186,12 +233,12 @@ frameworkdepends: $(FRAMEWORKSOURCES) $(foreach file,$(FRAMEWORKSOURCES:.cpp=.d)
 frameworkobjects: $(foreach file,$(FRAMEWORKSOURCES),$(FRAMEWORK_OBJECT_DIR)$(notdir $(file:.cpp=.o)))
 	@echo "Framework object files are done."
 
-$(FRAMEWORK_DEPENDS_DIR)%.d: $(FRAMEWORKSOURCES)
-	@echo "Framework: Updating dependency file $@"
+$(FRAMEWORK_DEPENDS_DIR)%.d: framework/%.cpp
+	@echo "Framework: Updating dependency file $(notdir $@)"
 	@set -e;VAR1=$(shell echo "$(FRAMEWORK_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(FRAMEWORK_OBJECT_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
 
-$(FRAMEWORK_OBJECT_DIR)%.o: framework/%.cpp $(FRAMEWORK_DEPENDS_DIR)$(notdir %.d)
-	@echo "Updating object file $@"
+$(FRAMEWORK_OBJECT_DIR)%.o: framework/%.cpp $(FRAMEWORK_DEPENDS_DIR)%.d
+	@echo "Framework: Updating object file $(notdir $@)"
 	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
 
 
@@ -202,12 +249,12 @@ commondepends: $(COMMONSOURCES) $(foreach file,$(COMMONSOURCES:.cpp=.d),$(COMMON
 commonobjects: $(foreach file,$(COMMONSOURCES),$(COMMON_OBJECT_DIR)$(notdir $(file:.cpp=.o)))
 	@echo "Common object files are done."
 
-$(COMMON_DEPENDS_DIR)%.d: $(COMMONSOURCES)
-	@echo "Common: Updating dependency file $@"
+$(COMMON_DEPENDS_DIR)%.d: common/%.cpp
+	@echo "Common: Updating dependency file $(notdir $@)"
 	@set -e;VAR1=$(shell echo "$(COMMON_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(COMMON_OBJECT_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
 
 $(COMMON_OBJECT_DIR)%.o: common/%.cpp $(COMMON_DEPENDS_DIR)%.d
-	@echo "Updating object file $@"
+	@echo "Common: Updating object file $(notdir $@)"
 	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
 
 #cache add-on
@@ -226,12 +273,12 @@ cacheaddonobjects: $(FRAMEWORK_OBJECT_DIR)plugman.o $(COMMON_OBJECT_DIR)plugclas
 					$(foreach file,$(BASE_ADDON_SOURCE_DIR)$(CACHEADDONSOURCES),$(BASE_ADDONS_OBJECT_DIR)cache/$(notdir $(file:.cpp=.o)))
 	@echo "Cache add-on objects are done."
 	
-$(BASE_ADDONS_DEPENDS_DIR)cache/%.d: $(foreach file,$(CACHEADDONSOURCES),$(BASE_ADDON_SOURCE_DIR)$(file))
-	@echo "Cache: Updating dependency file $@"
+$(BASE_ADDONS_DEPENDS_DIR)cache/%.d:  $(BASE_ADDON_SOURCE_DIR)cache/%.cpp #$(foreach file,$(CACHEADDONSOURCES),$(BASE_ADDON_SOURCE_DIR)$(file))
+	@echo "Cache: Updating dependency file $(notdir $@)"
 	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)cache/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)cache/"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
 
 $(BASE_ADDONS_OBJECT_DIR)cache/%.o: $(BASE_ADDON_SOURCE_DIR)cache/%.cpp $(BASE_ADDONS_DEPENDS_DIR)cache/%.d
-	@echo "Updating object file $@"
+	@echo "Cache: Updating object file $(notdir $@)"
 	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
 
 #http add-on
@@ -253,12 +300,58 @@ httpaddonobjects: $(FRAMEWORK_OBJECT_DIR)plugman.o $(COMMON_OBJECT_DIR)plugclass
 	@echo "HTTP add-on objects are done."
 	
 $(BASE_ADDONS_DEPENDS_DIR)http/%.d:  $(BASE_ADDON_SOURCE_DIR)http/%.cpp  #$(foreach file,$(HTTPADDONSOURCES),$(BASE_ADDON_SOURCE_DIR)$(file))
-	@echo "HTTP: Updating dependency file $@"
+	@echo "HTTP: Updating dependency file $(notdir $@)"
 	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)http/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)http/"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
 
 $(BASE_ADDONS_OBJECT_DIR)http/%.o: $(BASE_ADDON_SOURCE_DIR)http/%.cpp $(BASE_ADDONS_DEPENDS_DIR)http/%.d
-	@echo "Updating object file $@"
+	@echo "HTTP: Updating object file $(notdir $@)"
 	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
+
+#cookie add-on
+cookieaddon: cookieaddondepends cookieaddonobjects
+	@echo "Linking cookie add-on"
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)cookie_plugin.so $(FRAMEWORK_OBJECT_DIR)plugman.o $(COMMON_OBJECT_DIR)plugclass.o $(foreach file,$(notdir $(COOKIEADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)cookie/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=cookie_plugin.so -L ./ -L $(BELIBRARIES) -lbe -lroot -ltextencoding
+	@echo "Cookie add-on is now linked. Doing mimeset."
+	@mimeset -F $(BASE_ADDON_INSTALL_DIR)cookie_plugin.so
+	@echo "Cookie plug-in compiled and linked successfully."
+cookieaddondepends: $(foreach file,$(COOKIEADDONSOURCES),$(BASE_ADDON_SOURCE_DIR)$(file)) framework/plugman.cpp common/plugclass.cpp $(FRAMEWORK_DEPENDS_DIR)plugman.d $(COMMON_DEPENDS_DIR)plugclass.d \
+					$(foreach file,$(BASE_ADDON_SOURCE_DIR)$(COOKIEADDONSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)cookie/$(notdir $(file)))
+	@echo "Cookie add-on depends are done."
+cookieaddonobjects: $(FRAMEWORK_OBJECT_DIR)plugman.o $(COMMON_OBJECT_DIR)plugclass.o  \
+					$(foreach file,$(BASE_ADDON_SOURCE_DIR)$(COOKIEADDONSOURCES),$(BASE_ADDONS_OBJECT_DIR)cookie/$(notdir $(file:.cpp=.o)))
+	@echo "Cookie add-on objects are done."
+$(BASE_ADDONS_DEPENDS_DIR)cookie/%.d:  $(BASE_ADDON_SOURCE_DIR)cookie/%.cpp 
+	@echo "Cookie: Updating dependency file $(notdir $@)"
+	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)cookie/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)cookie/"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
+
+$(BASE_ADDONS_OBJECT_DIR)cookie/%.o: $(BASE_ADDON_SOURCE_DIR)cookie/%.cpp $(BASE_ADDONS_DEPENDS_DIR)cookie/%.d
+	@echo "Cookie: Updating object file $(notdir $@)"
+	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
+
+#Javascript add-on
+jsaddon: domlib jsaddondepends jsaddonobjects
+	@echo "Linking Javascript add-on"
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)js_plugin.so $(FRAMEWORK_OBJECT_DIR)plugman.o $(COMMON_OBJECT_DIR)plugclass.o $(foreach file,$(notdir $(JSADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)js/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=js_plugin.so -L ./ -L javascript/ -L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) -lbe -lroot -ltextencoding -ljs -ldom
+	@echo "Javascript add-on is now linked. Doing mimeset."
+	@mimeset -F $(BASE_ADDON_INSTALL_DIR)js_plugin.so
+	@echo "Javascript plug-in compiled and linked successfully."
+	@echo "Copying Javscript library and supporting libraries to install directory."
+#	@$(shell for file in $(JAVASCRIPT_SUPPORT_LIBRARIES); do if [ ! -f $(BASE_APP_LIB_INSTALL_DIR)`basename $$file` ] ; then cp $$file $(BASE_APP_LIB_INSTALL_DIR); fi ;  done)
+	@$(shell if [ "$(NETWORKING)" == "BONE" ] ; then /bin/unzip -uqd Themis/lib/ javascript/bone_jslibs.zip ; else /bin/unzip -uqd Themis/lib/ javascript/netserver_jslibs.zip ; fi )
+	@echo "Done with Javascript add-on."
+jsaddondepends: $(foreach file,$(JSADDONSOURCES),$(BASE_ADDON_SOURCE_DIR)$(file)) framework/plugman.cpp common/plugclass.cpp $(FRAMEWORK_DEPENDS_DIR)plugman.d $(COMMON_DEPENDS_DIR)plugclass.d \
+					$(foreach file,$(BASE_ADDON_SOURCE_DIR)$(JSADDONSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)js/$(notdir $(file)))
+	@echo "Javascript add-on depends are done."
+jsaddonobjects: $(FRAMEWORK_OBJECT_DIR)plugman.o $(COMMON_OBJECT_DIR)plugclass.o  \
+					$(foreach file,$(BASE_ADDON_SOURCE_DIR)$(JSADDONSOURCES),$(BASE_ADDONS_OBJECT_DIR)js/$(notdir $(file:.cpp=.o)))
+	@echo "Javascript add-on objects are done."
+$(BASE_ADDONS_DEPENDS_DIR)js/%.d:  $(BASE_ADDON_SOURCE_DIR)js/%.cpp 
+	@echo "Javascript: Updating dependency file $(notdir $@)"
+	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)js/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)js/"|sed 's/\//\\\//g'); $(CC) -DXP_UNIX -Icommon -Ijavascript -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
+
+$(BASE_ADDONS_OBJECT_DIR)js/%.o: $(BASE_ADDON_SOURCE_DIR)js/%.cpp $(BASE_ADDONS_DEPENDS_DIR)js/%.d
+	@echo "Javascript: Updating object file $(notdir $@)"
+	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -DXP_UNIX -D_BEOS_ -Icommon -Ijavascript -c $< -o $@
 
 #DOM Library
 domlib: domlibdepends domlibobjects
@@ -275,11 +368,11 @@ domlibobjects: $(foreach file,$(DOMLIBRARYSOURCES),$(DOMLIBRARY_OBJECT_DIR)$(not
 	@echo "DOM Library objects are done."
 	
 $(DOMLIBRARY_DEPENDS_DIR)%.d: $(DOMLIBRARYSOURCES)
-	@echo "DOM: Updating dependency file $@"
+	@echo "DOM: Updating dependency file $(notdir $@)"
 	@set -e;VAR1=$(shell echo "$(DOMLIBRARY_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(DOMLIBRARY_OBJECT_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
 
 $(DOMLIBRARY_OBJECT_DIR)%.o: framework/DOM/%.cpp $(DOMLIBRARY_DEPENDS_DIR)%.d
-	@echo "Updating object file $@"
+	@echo "DOM: Updating object file $(notdir $@)"
 	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@ -Wall -Wno-multichar -Wno-ctor-dtor-privacy -Woverloaded-virtual -O3
 
 #DOM Test application
