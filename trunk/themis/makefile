@@ -84,7 +84,17 @@ FRAMEWORKSOURCES= \
 RENDERERSOURCES= \
 	Renderer/UIElement.cpp \
 	Renderer/TRenderView.cpp \
-	Renderer/TextElement.cpp	
+	Renderer/TextElement.cpp \
+	Renderer/ColorRectElement.cpp \
+	Renderer/TableElement.cpp \
+	Renderer/TextControlElement.cpp \
+	Renderer/BitmapLinkElement.cpp \
+	Renderer/ButtonElement.cpp \
+	Renderer/TRendererEngine.cpp \
+	Renderer/TextLinkElement.cpp \
+	Renderer/TRenderWindow.cpp \
+	Renderer/BitmapElement.cpp \
+	Renderer/Utils.cpp
 COMMONSOURCES= \
 	common/plugclass.cpp \
 	common/tcplayer.cpp \
@@ -481,10 +491,10 @@ $(BASE_ADDON_INSTALL_DIR)renderer.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$
 	@echo "Renderer plug-in compiled and linked successfully."
 $(RENDERER_DEPENDS_DIR)%.d: $(BASE_ADDON_SOURCE_DIR)Renderer/%.cpp 
 	@echo "Renderer: Updating dependency file $(notdir $@)"
-	@set -e;VAR1=$(shell echo "$(RENDERER_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(RENDERER_DEPENDS_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/add-ons\/Renderer\/\1.o depends\/add-ons\/Renderer\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
+	@set -e;VAR1=$(shell echo "$(RENDERER_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(RENDERER_DEPENDS_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -Iframework/DOM -I./ -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/add-ons\/Renderer\/\1.o depends\/add-ons\/Renderer\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
 $(RENDERER_OBJECT_DIR)%.o: $(BASE_ADDON_SOURCE_DIR)Renderer/%.cpp $(BASE_ADDONS_DEPENDS_DIR)Renderer/%.d
 	@echo "Renderer: Updating object file $(notdir $@)"
-	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
+	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -Iframework/DOM -I./ -c $< -o $@
 ifneq ($(MAKECMDGOALS),clean)
 -include $(foreach file,$(BASE_ADDON_SOURCE_DIR)$(RENDERERSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)Renderer/$(notdir $(file)))
 endif
