@@ -128,7 +128,7 @@ ssize_t RAMCacheObject::Write(uint32 usertoken, void *buffer, size_t size)
 			writelockowner->SetWritePosition(writelockowner->WritePosition()+bytes);
 		}
 	}
-	printf("RAM Cache: URL: %s\tSize: %ld\n",url,Size());
+	printf("RAM Cache: URL: %s\tSize: %Ld\n",url,Size());
 	return bytes;
 }
 ssize_t RAMCacheObject::SetLength(uint32 usertoken, int32 objecttoken, size_t length) 
@@ -258,7 +258,7 @@ ssize_t RAMCacheObject::ReadAttr(uint32 usertoken,  const char *attrname, type_c
 	UpdateAccessTime();
 	if (strcasecmp(attrname,"Themis:URL")==0) {
 		actualsize=strlen(url);
-		if (actualsize>size)
+		if (actualsize>(ssize_t)size)
 			actualsize=size;
 		memcpy(data,url,actualsize);
 	}
@@ -267,7 +267,7 @@ ssize_t RAMCacheObject::ReadAttr(uint32 usertoken,  const char *attrname, type_c
 			actualsize=0L;
 		} else {
 			actualsize=strlen(name);
-			if (actualsize>size)
+			if (actualsize>(ssize_t)size)
 				actualsize=size;
 			memcpy(data,name,actualsize);
 		}
@@ -277,7 +277,7 @@ ssize_t RAMCacheObject::ReadAttr(uint32 usertoken,  const char *attrname, type_c
 			actualsize=0L;
 		} else {
 			actualsize=strlen(host);
-			if (actualsize>size)
+			if (actualsize>(ssize_t)size)
 				actualsize=size;
 			memcpy(data,host,actualsize);
 		}
@@ -287,7 +287,7 @@ ssize_t RAMCacheObject::ReadAttr(uint32 usertoken,  const char *attrname, type_c
 			actualsize=0L;
 		} else {
 			actualsize=strlen(mimetype);
-			if (actualsize>size)
+			if (actualsize>(ssize_t)size)
 				actualsize=size;
 			memcpy(data,mimetype,actualsize);
 		}
@@ -297,7 +297,7 @@ ssize_t RAMCacheObject::ReadAttr(uint32 usertoken,  const char *attrname, type_c
 			actualsize=0L;
 		} else {
 			actualsize=strlen(path);
-			if (actualsize>size)
+			if (actualsize>(ssize_t)size)
 				actualsize=size;
 			memcpy(data,path,actualsize);
 		}
@@ -307,7 +307,7 @@ ssize_t RAMCacheObject::ReadAttr(uint32 usertoken,  const char *attrname, type_c
 			actualsize=0L;
 		} else {
 			actualsize=strlen(etag);
-			if (actualsize>size)
+			if (actualsize>(ssize_t)size)
 				actualsize=size;
 			memcpy(data,etag,actualsize);
 		}
@@ -317,7 +317,7 @@ ssize_t RAMCacheObject::ReadAttr(uint32 usertoken,  const char *attrname, type_c
 			actualsize=0L;
 		} else {
 			actualsize=strlen(lastmodified);
-			if (actualsize>size)
+			if (actualsize>(ssize_t)size)
 				actualsize=size;
 			memcpy(data,lastmodified,actualsize);
 		}
@@ -327,7 +327,7 @@ ssize_t RAMCacheObject::ReadAttr(uint32 usertoken,  const char *attrname, type_c
 			actualsize=0L;
 		} else {
 			actualsize=strlen(expires);
-			if (actualsize>size)
+			if (actualsize>(ssize_t)size)
 				actualsize=size;
 			memcpy(data,expires,actualsize);
 		}
@@ -337,7 +337,7 @@ ssize_t RAMCacheObject::ReadAttr(uint32 usertoken,  const char *attrname, type_c
 			actualsize=0L;
 		} else {
 			actualsize=strlen(contentmd5);
-			if (actualsize>size)
+			if (actualsize>(ssize_t)size)
 				actualsize=size;
 			memcpy(data,contentmd5,actualsize);
 		}

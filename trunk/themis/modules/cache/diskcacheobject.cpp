@@ -287,7 +287,7 @@ BMessage *DiskCacheObject::GetInfo()
 					if (strcasecmp(attname,"Themis:content-md5")==0) {
 						aname="content-md5";
 					}
-					printf("reading attribute %s (%ld)\n",attname,ai.size);
+					printf("reading attribute %s (%Ld)\n",attname,ai.size);
 					node.ReadAttr(attname,B_STRING_TYPE,0,data,ai.size);
 					attributes->AddString(aname.String(),(char*)data);
 				}break;

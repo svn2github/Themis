@@ -169,7 +169,7 @@ void cacheman::Heartbeat()
 //		if (current_time%10==0)
 //			printf("Total items in cache memory:\t%ld\n\tDisk:\t%ld\n\tRAM:\t%ld\n\tFile:\t%ld\n",CountCacheItems(),CountCacheItems(TYPE_DISK),CountCacheItems(TYPE_RAM),CountCacheItems(TYPE_DISK_FILE));
 		double time_diff;
-		/*
+		/ *
 			Cache Usage Aging.
 		
 			This function attempts to minimize memory usage by removing cache items from memory
@@ -237,7 +237,7 @@ void cacheman::Heartbeat()
 			prev=cur;
 			cur=cur->Next();
 		}
-		/*
+		/ *
 			Cache Capacity Cull
 		
 			This code should remove files from the cache based on the set cache limits and current
@@ -340,6 +340,7 @@ int32 cacheman::CountCacheItems(uint32 which)
 
 status_t cacheman::BroadcastReply(BMessage *msg) 
 {
+	return B_OK;
 }
 
 CacheObject *cacheman::FindObject(int32 objecttoken) 
@@ -647,7 +648,7 @@ int32 cacheman::FindObject(uint32 usertoken, const char *URL)
 	query.Fetch();
 	ent.Unset();
 	entry_ref ref;
-	bool found=false;
+//	bool found=false;
 	int32 count=0;
 	while (query.GetNextEntry(&ent,false)==B_OK) {
 		if (trashdir->Contains(&ent))
@@ -747,6 +748,7 @@ int32 cacheman::CreateObject(uint32 usertoken, const char *URL, uint32 type)
 }
 status_t cacheman::UpdateAttr(uint32 usertoken, int32 objecttoken, const char *name, type_code type, void *data, size_t size) 
 {
+	return B_ERROR;
 }
 status_t cacheman::WriteAttr(uint32 usertoken, int32 objecttoken, const char *attrname, type_code type,void *data,size_t size)
 {
@@ -805,7 +807,7 @@ status_t cacheman::RemoveObject(uint32 usertoken, int32 objecttoken)
 		if (object!=NULL) {
 			if (object->HasWriteLock(usertoken)) {
 				CacheUser *user=NULL;
-				int32 users=object->CountUsers();
+//				int32 users=object->CountUsers();
 				BMessage msg(CACHE_OBJECT_REMOVED);
 				msg.AddInt32("command",COMMAND_INFO);
 				msg.AddInt32("cache_object_token",objecttoken);
@@ -835,6 +837,7 @@ status_t cacheman::RemoveObject(uint32 usertoken, int32 objecttoken)
 
 bool cacheman::HasAttr(uint32 usertoken, int32 objecttoken, const char *name, type_code *type, size_t *size)
 {
+	return false;
 }
 
 
@@ -1458,7 +1461,7 @@ status_t cacheman::FindCacheDir()
 					goto FindCache_SetEntry2;
 				}
 			} else {
-				FindCache_CreateDirectory:
+//				FindCache_CreateDirectory:
 				stat=create_directory(path.Path(),0700);
 				FindCache_SetPath:
 				cachepath=path;
@@ -1515,6 +1518,7 @@ ssize_t cacheman::GetObjectSize(uint32 usertoken, int32 objecttoken){
 	CacheObject *object=FindObject(objecttoken);
 	if (object!=NULL)
 		return object->Size();
+	return 0L;
 }
 
 ssize_t cacheman::GetCacheSize(uint32 which){
@@ -1801,7 +1805,7 @@ off_t cacheman::SaveToDisk(uint32 usertoken, int32 objecttoken, const char *file
 					chunk=0;
 					
 					chunk=Read(usertoken,objecttoken,buff,65536);
-					printf("%d bytes read.\n");
+					printf("%d bytes read.\n",chunk);
 					
 					if (chunk>0) {
 						

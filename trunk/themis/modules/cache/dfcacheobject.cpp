@@ -183,7 +183,7 @@ BMessage *DFCacheObject::GetInfo()
 					if (strcasecmp(attname,"last_modified")==0) {
 						aname="last-modified";
 					}
-					printf("reading attribute %s (%ld)\n",attname,ai.size);
+					printf("reading attribute %s (%Ld)\n",attname,ai.size);
 					node.ReadAttr(attname,B_STRING_TYPE,0,data,ai.size);
 					attributes->AddString(aname.String(),(char*)data);
 				}break;
@@ -203,8 +203,10 @@ BMessage *DFCacheObject::GetInfo()
 ssize_t DFCacheObject::WriteAttr(uint32 usertoken, const char *attrname, type_code type,void *data,size_t size)
 {
 	UpdateAccessTime();
+	return B_OK;
 }
 ssize_t DFCacheObject::ReadAttr(uint32 usertoken,  const char *attrname, type_code type, void *data, size_t size)
 {
 	UpdateAccessTime();
+	return B_OK;
 }
