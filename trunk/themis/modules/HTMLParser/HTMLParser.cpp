@@ -226,6 +226,10 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 				case ProtocolConnectionClosed:	{
 					printf( "Got data\n" );
 					
+					message->PrintToStream();
+					fflush( stdout );
+					printf( "----------------\n" );
+					
 					bool requestDone = false;
 					message->FindBool( "request_done", &requestDone );
 					
@@ -233,6 +237,11 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 						// I'll wait
 						break;
 					}
+					
+					/* temporarily added by emwe */
+					int32 view_id = 0;
+					message->FindInt32( "view_id", &view_id );
+					
 					
 					const char * mimetype = NULL;
 					message->FindString( "mimetype", &mimetype );
@@ -302,10 +311,14 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 						printf( "Data parsed\n" );
 
 						if ( PlugMan )	{
-							BMessage * done = new BMessage( ReturnedData );
+//							BMessage * done = new BMessage( ReturnedData );
+							BMessage * done = new BMessage( UH_PARSE_DOC_FINISHED );
 							done->AddInt32( "command", COMMAND_INFO );
 							done->AddString( "type", "dom" );
-							done->AddPointer( "data_pointer", &mDocument );
+							done->AddPointer( "dom_tree_pointer", &mDocument );
+							/* added by emwe */
+							done->AddInt32( "view_id", view_id );
+							/**/
 							Broadcast( MS_TARGET_ALL, done );
 							
 							BMessage * messages = new BMessage( ReturnedData );
