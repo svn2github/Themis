@@ -80,7 +80,7 @@ FRAMEWORKSOURCES= \
 RENDERERSOURCES= \
 	Renderer/UIElement.cpp		\
 	Renderer/TRenderView.cpp	\
-	Renderer/TextElement.cpp	\
+	Renderer/TextElement.cpp	
 COMMONSOURCES= \
 	common/plugclass.cpp \
 	common/tcplayer.cpp \
