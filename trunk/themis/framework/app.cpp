@@ -52,12 +52,16 @@ void App::MessageReceived(BMessage *msg)
    {
     case 'http':
      {
-      protocol_plugin *proto=NULL;
-      msg->FindPointer("http",(void**)&proto);
-      if (proto!=NULL)
-       {
-        fprintf(stdout,"webpage:\n%s\n.end\n",(char*)proto->GetURL("http://127.0.0.1/"));
-       }
+     /*
+      This was put in place as an initial way to test both plugins and plugin
+      manager. It is no longer necessary.
+     */
+//      protocol_plugin *proto=NULL;
+//      msg->FindPointer("http",(void**)&proto);
+//      if (proto!=NULL)
+//       {
+//        fprintf(stdout,"webpage:\n%s\n.end\n",(char*)proto->GetURL("http://127.0.0.1/"));
+//       }
      }break;
     default:
      {
