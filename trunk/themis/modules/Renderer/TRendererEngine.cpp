@@ -67,6 +67,7 @@ int32 Renderer::PreProcess(void *data)
 	BMessage message(RENDERVIEW_POINTER);
 	message.AddInt32("command",COMMAND_INFO);
 	message.AddInt32("view_id",cdata->viewID);
+	message.AddPointer("renderview_pointer",(void *)view);
 	cdata->renderer->Broadcast(MS_TARGET_ALL,&message);
 						
 	//Start processing the DOM Tree
@@ -149,7 +150,7 @@ void Renderer::Process( TNodePtr node, UIElement *element)
 					//Is it possible to have children here ?
 					if (uiChild){
 						element->EAddChild(uiChild);			
-						printf("RENDERER: Element Added to tree\n");
+						printf("RENDERER: Text Element Added to tree\n");
 						Process(child,uiChild);
 					}
 					else //THIS MIGHT ONLY BE TEMPORARY

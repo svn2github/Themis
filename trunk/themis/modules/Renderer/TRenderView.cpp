@@ -55,7 +55,9 @@ void TRenderView::Draw(BRect updateRect)
 		for (int32 i=0; i<nextLayer->CountItems(); i++)
 			if (((UIElement *)nextLayer->ItemAt(i))->frame.Intersects(updateRect))
 				((UIElement *)nextLayer->ItemAt(i))->EDraw();
-
+	
+	printf("TRENDERVIEW HAS %d ITEMS IN IT'S BLIST\n",nextLayer->CountItems());
+	
 	/*Many drawing above (mostly when drawing BBitmaps) are done asynchronously for speed
 	 (DrawBitmapAsync() for instance) so we got to Sync() for safety. */
 	Sync();
