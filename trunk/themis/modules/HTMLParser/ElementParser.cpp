@@ -118,6 +118,152 @@ void ElementParser	::	processElementContent( const TElementShared & aElementDecl
 																		
 }
 
+void ElementParser	::	processUnknownTags()	{
+
+	bool contentFound = true;
+	while ( contentFound )	{
+		try	{
+			processComment();
+		}
+		catch( ReadException r )	{
+			if ( r.isFatal() )	{
+				throw r;
+			}
+			try	{
+				processS();
+			}
+			catch( ReadException r )	{
+				if ( r.isFatal() )	{
+					throw r;
+				}
+				try	{
+					processUnknownStartTag();
+				}
+				catch( ReadException r )	{
+					if ( r.isFatal() )	{
+						throw r;
+					}
+					try	{
+						processUnknownEndTag();
+					}
+					catch( ReadException r )	{
+						if ( r.isFatal() )	{
+							throw r;
+						}
+						else	{
+							contentFound = false;
+						}
+					}
+				}
+			}
+		}
+	}
+	
+}
+
+void ElementParser	::	processUnknownStartTag()	{
+
+	State save = mDocText->saveState();
+
+	try	{
+		process( mStago );
+	}
+	catch( ReadException r )	{
+		r.setReason( NO_TAG_FOUND );
+		mDocText->restoreState( save );
+		throw r;
+	}
+	
+	// Skipping the document type specification for now
+	
+	string name = "";
+	try	{
+		name = processGenIdSpec();
+	}
+	catch( ReadException r )	{
+		mDocText->restoreState( save );
+		throw r;
+	}
+	
+	try	{
+		getElementDecl( name, mElements );
+		ReadException exception( mDocText->getLineNr(), mDocText->getCharNr(),
+											  "Found valid tag", WRONG_TAG_FOUND );
+		exception.setWrongTag( name );
+		mDocText->restoreState( save );
+		throw exception;
+	}
+	catch( ElementDeclException e )	{
+		// Element does not exist in DTD. Skip it
+		printf( "WARNING: Found element that does not exist in DTD: %s.", name.c_str() );
+		printf( " Check the HTML source or make sure this is the right DTD for this file\n" );
+		try	{
+			printf( "Processing AttrSpecList\n" );
+			processAttrSpecList();
+		}
+		catch( ReadException r )	{
+			r.setFatal();
+			throw r;
+		}
+	
+		processSStar();
+		
+		try	{
+			process( mTagc );
+		}
+		catch( ReadException r )	{
+			r.setFatal();
+			throw r;
+		}
+		
+	}
+
+}
+
+void ElementParser	::	processUnknownEndTag()	{
+	
+	State save = mDocText->saveState();
+	
+	process( mEtago );
+	
+	// Skipping the document type specification for now
+	
+	string name = "";
+	try	{
+		name = processGenIdSpec();
+	}
+	catch( ReadException r )	{
+		r.setFatal();
+		throw r;
+	}
+
+	try	{
+		getElementDecl( name, mElements );
+		ReadException exception( mDocText->getLineNr(), mDocText->getCharNr(),
+											  "Found valid tag", WRONG_TAG_FOUND );
+		exception.setWrongTag( name );
+		mDocText->restoreState( save );
+		throw exception;
+	}
+	catch( ElementDeclException e )	{
+		// Element does not exist in DTD. Skip it
+		printf( "WARNING: Found element that does not exist in DTD: %s.", name.c_str() );
+		printf( " Check the HTML source or make sure this is the right DTD for this file\n" );
+
+		processSStar();
+		
+		try	{
+			process( mTagc );
+		}
+		catch( ReadException r )	{
+			r.setFatal();
+			throw r;
+		}
+		
+	}
+	
+}
+
 void ElementParser	::	processElement( const TElementShared & aElementDecl,
 														 TNodeShared aParent )	{
 		
@@ -174,11 +320,17 @@ void ElementParser	::	processElement( const TElementShared & aElementDecl,
 		tag = shared_static_cast<TNode>( aParent );
 	}
 	
+	// Take out any unknown tags
+	processUnknownTags();
+
 	if ( child->hasChildNodes() )	{
 		TNodeShared node = make_shared( child->getFirstChild() );
 		TElementShared content	= shared_static_cast<TElement>( node );
 		processContent( content, exceptions, tag );
 	}
+
+	// Take out any unknown tags
+	processUnknownTags();
 
 	printf( "Done with content. Trying to close up %s\n", aElementDecl->getNodeName().c_str() );
 	

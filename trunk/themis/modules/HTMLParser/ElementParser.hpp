@@ -41,6 +41,9 @@ class ElementParser	:	public BaseParser	{
 		TDocumentShared getDocument() const;
 		void processElementContent( const TElementShared & aElementDecl,
 												   TNodeShared aParent );
+		void processUnknownTags();
+		void processUnknownStartTag();
+		void processUnknownEndTag();
 		void processElement( const TElementShared & aElementDecl, TNodeShared aParent );
 		void processStartTag( const TElementShared & elementDecl );
 		void processEndTag( const TElementShared & elementDecl );

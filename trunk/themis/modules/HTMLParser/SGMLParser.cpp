@@ -279,6 +279,7 @@ TDocumentShared SGMLParser	::	parse( SGMLTextPtr aDocument )	{
 void SGMLParser	::	parseDTD()	{
 
 	if ( ! mDtdParsed )	{
+		printf( "Parsing DTD\n" );
 		mDtdParser->parse();
 		mDtdParsed = true;
 	}

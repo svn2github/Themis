@@ -30,6 +30,29 @@ void CommentDeclParser	::	processDeclaration()	{
 	
 	process( mMdo );
 	processComment();
+	bool moreData = true;
+	while ( moreData )	{
+		try	{
+			processS();
+			continue;
+		}
+		catch( ReadException r )	{
+			if ( r.isFatal() )	{
+				throw r;
+			}
+		}
+		try	{
+			processComment();
+		}
+		catch( ReadException r )	{
+			if ( r.isFatal() )	{
+				throw r;
+			}
+			else	{
+				moreData = false;
+			}
+		}
+	}
 
 	try	{
 		process( mMdc );
