@@ -77,10 +77,10 @@ int32 Renderer::PreProcess(void *data)
 	printf("RENDERER: DONE PROCESSING in %g microseconds.\n",real_time_clock_usecs() - time);
 
 	//Do the Broadcasting to say we are done rendering
-	BMessage message(UH_RENDER_FINISHED);
-	message.AddInt32("command",COMMAND_INFO);
-	message.AddInt32("view_id",cdata->viewID);
-	cdata->renderer->Broadcast(MS_TARGET_URLHANDLER,&message);
+	BMessage message2(UH_RENDER_FINISHED);
+	message2.AddInt32("command",COMMAND_INFO);
+	message2.AddInt32("view_id",cdata->viewID);
+	cdata->renderer->Broadcast(MS_TARGET_URLHANDLER,&message2);
 	
 	//cdata->view->UnlockLooper();
 	//Update the view
