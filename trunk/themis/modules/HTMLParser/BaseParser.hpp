@@ -159,10 +159,24 @@ class BaseParser	{
 		char processDataChar();
 
 	public:
-		// Constructor
+		/// Constructor of the BaseParser class.
+		/**
+			The constructor of the BaseParser class. It creates a new sgml text
+			and a DTD and sets up the syntax.
+		*/
 		BaseParser();
-		// Destructor
+		/// Destructor of the BaseParser class.
+		/**
+			The destructor of the BaseParser class does nothing.
+			Everything is cleaned up	automatically.
+		*/
 		virtual ~BaseParser();
+		/// Set the document text to the argument.
+		/**
+			Set the document text to the text provided in the argument.
+			
+			@param	aDocText	The document text to set the parser to.
+		*/
 		virtual void setDocText( SGMLTextPtr aDocText );
 	
 };

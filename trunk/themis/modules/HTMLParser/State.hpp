@@ -50,9 +50,6 @@ using namespace std;
 	
 	@todo @li Have to figure out how to return references in functions.
 			   That should make life a bit easier.
-			   @li Have to figure out how to derive from template classes.
-			   Should be able to derive from a vector instead of containing one.
-			   Doesn't make too much of a difference, though.
 */
 
 class State	{
