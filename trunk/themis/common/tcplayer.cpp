@@ -340,10 +340,20 @@ connection* tcplayer::ConnectTo(connection *target) {
 			printf("found existing connection:\t%s:%d\t%s:%d\n",cur->addrstr.String(),cur->port,conn->addrstr.String(),conn->port);
 			conn->socket=cur->socket;
 			conn->open=cur->open;
+//			conn->result=cur->result;
 			if (conn->socket==-1) {
 				conn->socket=socket(AF_INET,SOCK_STREAM,sockproto);
 				conn->open=false;
 				conn->result=-2;
+			} else {
+/*
+				if (!Connected(conn,true)) {
+					conn->socket=socket(AF_INET,SOCK_STREAM,sockproto);
+					conn->hptr=gethostbyname(conn->addrstr.String());
+					conn->open=false;
+					goto LetsTryThatAgain;
+				}
+*/
 			}
 			conn->hptr=cur->hptr;
 		} else {
@@ -377,11 +387,13 @@ connection* tcplayer::ConnectTo(connection *target) {
 				}
 			}
 		} else {
+			if (conn->open!=true) {
 			sockaddr_in servaddr;
 			conn->pptr=(struct in_addr**)conn->hptr->h_addr_list;
 			memcpy(&servaddr.sin_addr,*conn->pptr,sizeof(struct in_addr));
 			servaddr.sin_port=htons(conn->port);
 			conn->result=connect(conn->socket,(sockaddr *)&servaddr,sizeof(servaddr));
+			}
 		}
 		if (conn->result==0) 
 			conn->open=true;
