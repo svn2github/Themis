@@ -34,17 +34,27 @@ Project Start Date: October 18, 2000
 #include "plugman.h"
 #include "aboutwin.h"
 
+//! The application framework version number. 
 #define THEMIS_FRAMEWORK_APP_VERSION 0.40
 
+/*!
+\brief The application object of the Themis application framework.
 
+This is the heart of the entire application.
+*/
 class App:public BApplication {
 	private:
 		Win *win;
+		//! Create the default settings.
 		void InitSettings(char *settings_path=NULL);
+		//! Checks to see if the QuitRequested function has been called.
 		volatile int32 qr_called;
 	public:
+		//! The About window.
 		aboutwin *AWin;
+		//! Loads the settings from disk.
 		status_t LoadSettings();
+		//! Saves the settings to disk.
 		status_t SaveSettings();
 		void AboutRequested();
 		App(const char *appsig);

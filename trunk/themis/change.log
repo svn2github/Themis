@@ -6,6 +6,10 @@ The most significant change in this commit is the addition and initial integrati
 
 There is more to come, but this is just part 1.
 
+*PART 2*
+This set of changes includes a few deadlock fixes and the initial unfinished cookie management system. While cookie support works to some extent, it is not perfect, nor have the security checks been put in place. Oh, and cookies that are received are not currently saved to disk; once you quit Themis at the moment, those cookies are gone.  I'll be fixing this in the not too distant future.
+
+There are still some deadlocks in Themis, but I think I've fixed most of the ones you're likely to hit. As of this commit, the tabbed view system and cookies should be working in Themis, but probably are no where close to being perfect.
 
 ========
 18 September 2002

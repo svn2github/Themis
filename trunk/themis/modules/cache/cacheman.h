@@ -34,10 +34,12 @@ Project Start Date: October 18, 2000
 #include <Message.h>
 #include "plugclass.h"
 #include "cache_defines.h"
+#include <Locker.h>
 #include "cacheplug.h"
 #include "diskcacheobject.h"
 class cacheman: public CachePlug {
 	private:
+		BLocker *lock;
 		int32 max_disk_cache_kb,max_ram_cache_kb;
 		BPath cachepath;
 		BDirectory *trashdir;

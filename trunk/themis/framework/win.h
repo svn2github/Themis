@@ -32,6 +32,11 @@ Project Start Date: October 18, 2000
 #include "winview.h"
 #include "htmlparser.h"
 
+/*!
+\brief The main browser window.
+
+This is the main browser window.
+*/
 #include "ThemisNavView.h"
 #include "ThemisStatusView.h"
 #include "ThemisTabView.h"
@@ -49,9 +54,11 @@ class Win:public BWindow
    Win(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspace=B_CURRENT_WORKSPACE);
    bool QuitRequested();
    void MessageReceived(BMessage *msg);
+   //! Detects when the window is brought to the forefront, for utilization.
    void WindowActivated(bool active);
 		virtual void				FrameMoved( BPoint origin );
 		virtual void				FrameResized( float width, float height );
+   //! Detects when the workspace that the application is located in is changed.
    void WorkspacesChanged(uint32 oldws, uint32 newws);
 		void								AddNewTab( bool hidden );
 		void								CreateTabView();

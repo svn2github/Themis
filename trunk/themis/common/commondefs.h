@@ -26,11 +26,20 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
+/*!
+\file
+\brief Definitions that can and/or should be utilized in multiple locations.
+
+This file contains definitions that can be used in one or more places in the application,
+to allow interoperability in some parts of the application.
+*/
 #ifndef common_defines
 #define common_defines
-
+//! The MIME application signature of the framework.
 #define ThemisAppSig "application/x-vnd.becommunity-themis"
+//! The MIME type of Themis' cache files.
 #define ThemisCacheMIME "application/x-Themis-cache"
+//! The MIME type of the 
 #define ThemisCookieFile "application/x-Themis-cookie"
 
 
@@ -64,10 +73,10 @@ Project Start Date: October 18, 2000
 #define CacheClearOnTimeLimit 16
 
 //Cookie Control identifiers
-#define FindCookie 'fcok'
-#define NoCookieFound 'nocf'
-#define FoundCookie 'fndc'
-#define SetCookie 'setc'
+//#define FindCookie 'fcok'
+//#define NoCookieFound 'nocf'
+//#define FoundCookie 'fndc'
+//#define SetCookie 'setc'
 
 #define DisableJavascript 'djvs'
 #define EnableJavascript 'ejvs'

@@ -40,19 +40,32 @@ Project Start Date: October 18, 2000
 #include "plugman.h"
 #include "plugclass.h"
 //#include "htmlparser.h"
+
+/*!
+\brief Currently, the top level view for any window.
+
+\note At this time, February 9, 2003, this class is the top level view for the Themis
+main window. With the eventual integration of the new tabbed browsing system, and adapting
+Themis to utilize multiple windows in a single execution of the application, this view
+may be reimplemented to be the top view of any given tab.
+*/
 class winview:public BView {
 	public:
 		winview(BRect frame,const char *name,uint32 resizem,uint32 flags);
 		~winview();
 		void AttachedToWindow();
 		void MessageReceived(BMessage *msg);
+		//! The location line in the browser window.
 		BTextControl *locline;
 		BButton *stopbutton;
 		uint32 protocol;
 //		HTMLParser *Parser;
 		sem_id proto_sem;
+		//! The menu bar in the browser window.
 		BMenuBar *menubar;
+		//! The file menu.
 		BMenu *filemenu;
+		//! The options menu.
 		BMenu *optionsmenu;
 	
 };

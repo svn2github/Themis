@@ -85,8 +85,8 @@ HTTPADDONSOURCES= \
 	http/http_proto.cpp \
 	http/httplayer.cpp \
 	http/optionshandler.cpp \
-	http/authvw.cpp 
-#	http/cookieman.cpp
+	http/authvw.cpp \
+	http/cookieman.cpp
 #the above lines are commented out in part or whole because the new sources are not yet ready to go into the repository
 CACHEADDONSOURCES= \
 	cache/cacheman.cpp \

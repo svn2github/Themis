@@ -26,7 +26,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
-
+/*!
+\file
+\brief Contains the base class for any and all cache systems.
+*/
 #ifndef _cache_plug_base_class_
 #define _cache_plug_base_class_
 
@@ -50,13 +53,27 @@ class CachePlug:public PlugClass {
 		uint32 user_token_value; //!< the current user token value; increments with each call to Register
 		int32 object_token_value; //!< the current cache object token value; increments when requested URLs are found or cache items are created
 		CacheUser *userlist;//!< the linked list of registered cache users
-		BLocker *lock;
-		BAutolock *autolock;
+		BLocker *lock; //!< This object is the locking mechanism used by the autolock.
+		BAutolock *autolock; //!< This object automatically locks the cache system when a new thread attempts to access it.
 	public:
 		CachePlug(BMessage *info=NULL);
 		virtual ~CachePlug();
-		// the register and unregister functions; which keep track of users and resources.
+/*!
+
+The Register function creates a user token for any given portion of the application that might
+wish to use the cache system, and returns that value back to the caller. The caller can then use
+that user token to access the cache system.
+*/
 		virtual uint32 Register(uint32 broadcast_target,const char *name=NULL);
+		/*!
+		\brief Stop using the cache system.
+		
+		This function notifies the cache system that the caller no longer intends to use the cache system.
+		At this point, the cache system releases any resources that might have been in use by that user,
+		by whatever means is appropriate. For instance, if the user was the only one accessing a particular
+		item in the disk cache, the in memory record of the item would be removed while the disk version
+		would be left intact.
+		*/
 		virtual void Unregister(uint32 usertoken);
 		
 		//these three functions find, create, and destroy cache items.

@@ -30,6 +30,7 @@ Project Start Date: October 18, 2000
 #define _appdefines
 #include "../common/commondefs.h"
 
+//! An alias for the application signature. The real application signature is now in ThemisAppSig.
 #define AppSig ThemisAppSig
 
 

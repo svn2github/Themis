@@ -213,11 +213,16 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 			rmsg->FindString("target_url",&targ);
 			printf("http proto: target url: %s\n",targ.String());
 			
-			HTTP->Lock();
+//			HTTP->Lock();
 			printf("http proto: http locked\n");
-			HTTP->AddRequest(rmsg);
+			http_request *request=NULL;
+			while (request==NULL) {
+				request=HTTP->AddRequest(rmsg);
+				if (request==NULL)
+					snooze(25000);
+			}
 			printf("http proto: add request done\n");
-			HTTP->Unlock();
+//			HTTP->Unlock();
 			//we're already deleting rmsg (as info) int he HTTP->AddRequest() call.
 //			delete rmsg;
 			rmsg=NULL;
@@ -225,11 +230,11 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 		case COMMAND_INFO: {
 			switch(msg->what) {
 				case B_QUIT_REQUESTED: {
-					HTTP->Lock();
+//					HTTP->Lock();
 					 if (HTTP->CacheSys!=NULL)
 					 	HTTP->CacheSys->Unregister(HTTP->CacheToken);
 					HTTP->CacheSys=NULL;
-					HTTP->Unlock();
+//					HTTP->Unlock();
 				}break;
 				case LoadingNewPage: {
 					printf("Do something useful when winview says we're loading a new page.\n");
@@ -239,10 +244,10 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 					type=msg->FindInt32("type");
 					switch(type) {
 						case (TARGET_CACHE|TYPE_RAM|TYPE_DISK): {
-							HTTP->Lock();
+//							HTTP->Lock();
 							HTTP->CacheToken=0;
 							HTTP->CacheSys=NULL;
-							HTTP->Unlock();
+//							HTTP->Unlock();
 							printf("Cache system unloaded.\n");
 						}break;
 						default: {
@@ -261,11 +266,11 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 						msg->FindPointer("plugin",(void**)&pobj);
 						if (pobj!=NULL) {
 							if ((pobj->Type()&TARGET_CACHE)!=0) {
-								HTTP->Lock();
+//								HTTP->Lock();
 										HTTP->CacheSys=(CachePlug*)pobj;
 										HTTP->CacheToken=HTTP->CacheSys->Register(Type(),"HTTP Protocol Add-on");
 										printf("*** Loaded CacheToken & object: %lu %p\n",HTTP->CacheToken,HTTP->CacheSys);
-								HTTP->Unlock();
+//								HTTP->Unlock();
 							}
 							
 							if (((pobj->Type()&TARGET_HANDLER)!=0) || ((pobj->Type()&TARGET_PARSER)!=0)) {
@@ -316,9 +321,14 @@ status_t http_protocol::Go(void)
  {
   return B_OK;
  }
+void http_protocol::Heartbeat() {
+	HTTP->CookieMonster->ClearExpiredCookies();
+//	HTTP->CookieMonster->PrintCookies();
+}
 http_protocol::http_protocol(BMessage *info)
               :protocol_plugin(info)
  {
+ 	uses_heartbeat=false;
  	Window=NULL;
 	 smthead=NULL;
 	 /*
@@ -351,7 +361,7 @@ http_protocol::~http_protocol() {
 	printf("http_protocol destructor\n");
 //	Stop();
 	printf("Locking HTTP Layer.\n");
-	HTTP->Lock();
+//	HTTP->Lock();
 	printf("Stopping HTTP Layer.\n");
  	HTTP->Quit();
 	delete HTTP;
@@ -372,7 +382,7 @@ int32 http_protocol::SpawnThread(BMessage *info)
  }
 void http_protocol::Stop()
  {
- 	HTTP->Lock();
+// 	HTTP->Lock();
 	 if (HTTP->CacheSys!=NULL) {
 	 	printf("Unregistering from cache system.\n");
 		 
@@ -444,7 +454,7 @@ int32 http_protocol::GetURL(BMessage *info)
 */
 		printf("trying to lock HTTP\n");
 	 
-		HTTP->Lock();
+//		HTTP->Lock();
 		printf("lock successful\n");
 	 
 	 printf("TCP %p\n HTTP::TCP %p\n",TCP,HTTP->TCP);
@@ -461,7 +471,7 @@ int32 http_protocol::GetURL(BMessage *info)
 	  
 	printf("(http) TCP layer: %p\n",HTTP->TCP);
 	HTTP->AddRequest(info);
-	 HTTP->Unlock();
+//	 HTTP->Unlock();
 	 
 //	BString url,host,uri;
 //	 uint16 port;

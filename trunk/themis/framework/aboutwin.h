@@ -31,6 +31,12 @@ Project Start Date: October 18, 2000
 #include <Window.h>
 #include "aboutview.h"
 
+
+/*!
+\brief The actual about window.
+
+This is the actual "About" window for the application.
+*/
 class aboutwin:public BWindow {
 	private:
 		aboutview *view;

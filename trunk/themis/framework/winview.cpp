@@ -212,6 +212,16 @@ void winview::MessageReceived(BMessage *msg) {
 					BMessage *bcast=new BMessage;
 					BMessage *lnp=new BMessage(LoadingNewPage);
 					lnp->AddInt32("command",COMMAND_INFO);
+					/*
+					Once tabbed browsing is integrated (based on emwe's work), and
+					multiple window support is officially added, we will need to know
+					which window and possibly tab is loading a new document to properly
+					halt on going processes, and/or clear appropriate buffers. In preparation
+					for this process, I'm adding new fields to the LoadingNewPage message.
+					-1 is more a place holder than any intentional data at this point, 
+					*/
+					lnp->AddInt32("source_window",-1);
+					lnp->AddInt32("source_tab",-1);
 					bcast->AddMessage("message",lnp);
 					delete lnp;
 					PluginManager->Broadcast(TARGET_VIEW,ALL_TARGETS,bcast);

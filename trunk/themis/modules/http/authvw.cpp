@@ -134,9 +134,9 @@ printf("authwin MessageReceived:\n");
 	switch(msg->what) {
 		case B_OK: {
 //			meHTTP->Lock();
-			meHTTP->TCP->Lock();
+//			meHTTP->TCP->Lock();
 			meHTTP->TCP->RequestDone(request->conn);
-			meHTTP->TCP->Unlock();
+//			meHTTP->TCP->Unlock();
 			meHTTP->Done(request);
 			atomic_add(&request->conn_released,1);
 			request->conn=NULL;

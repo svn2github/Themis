@@ -31,6 +31,7 @@ Project Start Date: October 18, 2000
 #include "plugman.h"
 #include "ramcacheobject.h"
 #include <kernel/fs_index.h>
+#include <Autolock.h>
 #include <stdio.h>
 #include <kernel/OS.h>
 #include <string.h>
@@ -50,6 +51,7 @@ Project Start Date: October 18, 2000
 
 cacheman::cacheman(BMessage *info)
 	:CachePlug(info) {
+	lock=new BLocker(true);
 	ASp=NULL;
 	AppSettings=NULL;
 	CSettings=NULL;
@@ -129,6 +131,7 @@ cacheman::~cacheman()
 	}
  	if (trashdir!=NULL)
  		delete trashdir;
+ 	delete lock;
 	
 }
 void cacheman::Unregister(uint32 usertoken) 
@@ -267,19 +270,25 @@ BMessage *cacheman::GetInfo(uint32 usertoken, int32 objecttoken){
 
 
 ssize_t cacheman::Write(uint32 usertoken, int32 objecttoken, void *data, size_t size){
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
 	CacheObject *object=FindObject(objecttoken);
 	if (object!=NULL) {
 		return object->Write(usertoken,data,size);
+	}
 	}
 	return B_ERROR;
 }
 
 ssize_t cacheman::Read(uint32 usertoken, int32 objecttoken, void *data, size_t size){
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
 	CacheObject *object=FindObject(objecttoken);
 	if (object!=NULL) {
 		if (!object->IsUsedBy(usertoken))
 			object->AddUser(FindUser(usertoken));
 		return object->Read(usertoken,data,size);
+	}
 	}
 	return B_ERROR;
 }
@@ -533,6 +542,8 @@ status_t cacheman::UpdateAttr(uint32 usertoken, int32 objecttoken, const char *n
 }
 status_t cacheman::WriteAttr(uint32 usertoken, int32 objecttoken, const char *attrname, type_code type,void *data,size_t size)
 {
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
 	CacheObject *object=FindObject(objecttoken);
 	if (object!=NULL) {
 		if (!object->IsUsedBy(usertoken))
@@ -540,19 +551,21 @@ status_t cacheman::WriteAttr(uint32 usertoken, int32 objecttoken, const char *at
 		if (object->HasWriteLock(usertoken))	
 			return object->WriteAttr(usertoken,attrname,type,data,size);
 	}
-	
+	}
 	return B_ERROR;
 }
 
 status_t cacheman::ReadAttr(uint32 usertoken, int32 objecttoken, const char *attrname, type_code type, void *data, size_t size)
 {
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
 	CacheObject *object=FindObject(objecttoken);
 	if (object!=NULL) {
 		if (!object->IsUsedBy(usertoken))
 			object->AddUser(FindUser(usertoken));
 		return object->ReadAttr(usertoken,attrname,type,data,size);
 	}
-	
+	}
 	return B_ERROR;
 }
 

@@ -26,6 +26,11 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
+/*!
+\file
+\brief Contains much of the implementation and interface code for integrating the JavaScript engine.
+*/
+
 #include "jsman.h"
 #include "jsdefs.h"
 #include "commondefs.h"
@@ -65,6 +70,7 @@ jsman::jsman(BMessage *info)
 	printf("Javascript Implementation Version: %s\n",JS_GetImplementationVersion());
 		
 	printf("performing simple Javascript test\n");
+	//! A very simple Javascript example.
 	char *script="var today=Date();today.toString();\0";
 	jsval rval;
 		uintN lineno=0;
@@ -152,9 +158,12 @@ status_t jsman::ReceiveBroadcast(BMessage *msg){
 	int32 command=0;
 	msg->FindInt32("command",&command);
 	switch(command) {
+		case COMMAND_INFO: {
+		
+		}break;
 		case COMMAND_INFO_REQUEST: {
 			if (msg->HasBool("supportedscripttypes")) {
-				//reply with javascript as the supported type.
+				//reply with javascript as the supported type. JAVASCRIPT_HANDLER
 			}
 			
 		}break;

@@ -29,10 +29,12 @@ Project Start Date: October 18, 2000
 
 #include "tcplayer.h"
 #include <signal.h>
+#include <Autolock.h>
 tcplayer *meTCP;
 int32 TL;
 int32 TU;
 bool tcplayer::SSLSupported() {
+	//BAutolock alock(lock);
 	bool supported=false;
 #ifdef USEOPENSSL
 	supported=true;
@@ -40,6 +42,7 @@ bool tcplayer::SSLSupported() {
 	return supported;
 }
 char *tcplayer::SSLAboutString() {
+	//BAutolock alock(lock);
 	char *str=NULL;
 #ifdef USEOPENSSL
 	str="This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit (http://www.openssl.org/)\nCopyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.\nThis product includes cryptographic software written by Eric Young (eay@cryptsoft.com)\nCopyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)\nAll rights reserved.\n";
@@ -52,19 +55,15 @@ tcplayer::tcplayer() {
 	TL=TU=0;
 	
 	meTCP=this;
-	lock=new BLocker("tcp lock",false);
-//	mtx=new mutex;
+	lock=new BLocker("tcp lock",true);
 	quit=0;
 	tcp_mgr_sem=create_sem(1,"tcp_layer_manager_sem");
-//	conn_sem=create_sem(1,"connection_handling_sem");
-//	cb_sem=create_sem(1,"callback_sem");
 	tcplayer_sem=create_sem(1,"tcplayer_sem");
-//	acquire_sem(cb_sem);
 	callback_head=NULL;	
 	firstcb=0;
 	atomic_add(&firstcb,1);
-//	release_sem(cb_sem);
 	conn_head=NULL;
+	conn_queue=NULL;
 	prev_conn=NULL;
 #ifdef USEOPENSSL
 	//required copyright notices and ego boosters
@@ -72,30 +71,52 @@ tcplayer::tcplayer() {
 	printf("tcplayer constructor\n");
 	static int32 initcount = 0;
 	static bool initialized = false;
+	
 	if (atomic_or(&initcount, 1) == 0) {
+		
+	printf("Initializing SSL Library\n");
 		SSL_library_init();
+		printf("loading error strings.\n");
+		
 		SSL_load_error_strings();
 		initialized = true;
 	} else {
 		while (!initialized) snooze(50000);
 	}
-
+printf("loading ssl algorithms\n");
+	
 	SSLeay_add_ssl_algorithms();
-	sslmeth = SSLv23_client_method();
-	sslctx=SSL_CTX_new (sslmeth);
+printf("creating ssl client method\n");
+	
+		sslmeth = SSLv23_client_method();
+printf("creating ssl context\n");
+	
+		sslctx=SSL_CTX_new (sslmeth);
+		printf("setting ssl context options\n");
+	
 	SSL_CTX_set_options(sslctx, SSL_OP_ALL);
+	printf("setting default verify paths\n");
+	
 	SSL_CTX_set_default_verify_paths(sslctx);
 	if (sslctx==NULL)
 		printf("SSL Context creation error\n");
 	unsigned char buf[17];
 	memset(buf,0,17);
-	while(RAND_status()!=1) {
+	printf("doing rand stuff...\n");
+	RAND_egd("/tmp/test.rnd");
+	
+	 do{
+		printf("rand while loop\n");
+		
 		for (int i=0;i<16;i++) {
+			printf("rand for loop\n");
+			
 			srand(real_time_clock());
 			buf[i]=(real_time_clock_usecs()/system_time())%128+(rand()%128);
 		}
 		RAND_seed(buf,16);
-	}
+	}while(RAND_status()!=1);
+	
 	printf("RAND status: %d\n",RAND_status());
 #endif
 }
@@ -112,7 +133,6 @@ tcplayer::~tcplayer() {
 			conn_head=cur;
 		}
 	}
-//	acquire_sem(cb_sem);
 printf("clearing out callbacks.\n");
 	if (callback_head!=NULL) {
 		DRCallback_st *cur=callback_head;
@@ -128,35 +148,15 @@ printf("done clearing callbacks.\n");
 	if (sslctx!=NULL)
 		SSL_CTX_free (sslctx);
 #endif	
-//	delete_sem(conn_sem);
 	delete_sem(tcp_mgr_sem);
-//	delete mtx;
-//	release_sem(cb_sem);
-//	delete_sem(cb_sem);
-//	release_sem(tcplayer_sem);
 	delete_sem(tcplayer_sem);
-	lock->Unlock();
 	delete lock;
 	printf("~tcplayer end\n");
 }
+/*
 int32 tcplayer::Lock(int32 timeout) 
 {
 	
-/*
-	sem_id targetsem=0;
-	sem_info info;
-	int32 cookie=0;
-	while (get_next_sem_info(0,&cookie,&info)==B_OK) {
-		if (strcasecmp(info.name,"tcplayer_sem")==0) {
-			targetsem=info.sem;
-		}
-		
-	}
-	if (targetsem==0)
-		return B_ERROR;
-	int32 result=B_ERROR;
-*/
-//	printf("tcp::Lock %ld\n",TL);
 	thread_id callingthread=find_thread(NULL),lockingthread=lock->LockingThread();
 	if (lockingthread!=B_ERROR) {
 		if (callingthread==lockingthread)
@@ -166,41 +166,20 @@ int32 tcplayer::Lock(int32 timeout)
 	if (timeout==-1) {
 		if (lock->Lock()){
 			
-//	TL++;
 			return B_OK;
 		}
 		
 		return B_ERROR;
-//		result=acquire_sem(targetsem);
 	} else {
 		return lock->LockWithTimeout(timeout);
 		
-		//result=acquire_sem_etc(targetsem,1,B_ABSOLUTE_TIMEOUT,timeout);
 	}
-//	return result;
 }
 void tcplayer::Unlock() 
 {
-//printf("tcp::Unlock %ld\n",TU);
-//	TU++;
 lock->Unlock();
-	
-/*
-	sem_id targetsem=0;
-	sem_info info;
-	int32 cookie=0;
-	while (get_next_sem_info(0,&cookie,&info)==B_OK) {
-		if (strcasecmp(info.name,"tcplayer_sem")==0) {
-			targetsem=info.sem;
-		}
-		
-	}
-	if (targetsem==0)
-		return;
-	release_sem(targetsem);
-*/
 }
-
+*/
 void tcplayer::Start() {
 	if (acquire_sem_etc(tcp_mgr_sem,1,B_ABSOLUTE_TIMEOUT,100000)==B_OK) {
 		thread=spawn_thread(StartManager,"tcp_layer_manager",B_LOW_PRIORITY,this);
@@ -223,97 +202,74 @@ int32 tcplayer::Manager() {
 	DRCallback_st *cur;
 	status_t stat;
 	while(!quit) {
-		stat=Lock(20000);//lock->LockWithTimeout(20000);
-		if (stat!=B_OK) {
-			snooze(10000);
-			continue;
-		}
-		
+//		lock->Lock();
 		connections=Connections();
 		if (connections>0) {
 			current=NextConnection();
 			curtime=real_time_clock();
 			if (current==NULL) {
-				lock->Unlock();
 				continue;
 			}
-//			if (acquire_sem_etc(conn_sem,1,B_ABSOLUTE_TIMEOUT,100000)!=B_OK)
-//				continue;
 			timeout=current->last_trans_time+current->time_to_live;
 			if (Connected(current)) {
-				//delete these lines if this doesn't work
-//				if (current->usessl) {
-//					char *stateinfo=(char*)SSL_state_string_long(current->ssl);
-//					printf("SSL State: %s\n",stateinfo);
-					//free(stateinfo);
-//					stateinfo=NULL;
-					
-//				}
 				
 				if (DataWaiting(current)) {
 					if (!current->callbackdone) {
-//						acquire_sem(cb_sem);
-//									printf("[TCP Manager] DataWaiting on connection %p\n",current);
 						
 						cur=callback_head;
 						while (cur!=NULL) {
 							if (cur->protocol==current->proto_id) {
-								if (cur->Lock(100000)==B_OK) {
+//								if (cur->Lock(100000)==B_OK) {
 									atomic_add(&current->callbackdone,1);
 									cur->callback(current);
-									cur->Unlock();
-								}
+//									cur->Unlock();
+//								}
 								
 								break;
 							}
 							cur=cur->next;
 						}
-//						release_sem(cb_sem);
 						
 					}
-					Unlock();
-					snooze(80000);
 					continue;
 				}
 				//delete above lines			
 				if ((curtime>=timeout) && (curtime<(timeout+current->time_to_live))) {
 					CloseConnection(current);
-					lock->Unlock();
-					snooze(10000);
 					continue;
 				} else {
 					if ((curtime>=timeout) && (curtime>=(timeout+current->time_to_live))) {
 						KillConnection(current);
-						lock->Unlock();
-						snooze(10000);
 						continue;
 					}
 				}
 			} else {
 				if ((curtime>=timeout) && (curtime>=(timeout+current->time_to_live))) {
 					KillConnection(current);
-					lock->Unlock();
-					snooze(10000);
 					continue;
 				}
 			}
-//			release_sem(conn_sem);
-//cut back on processor time a bit... has little impact on performance						
-		lock->Unlock();
-		snooze(30000);
-		} else	{
-			lock->Unlock();
-			snooze(30000);
-			
 		}
-
+//		lock->Unlock();
+		if (conn_queue!=NULL) {
+			printf("Processing queued connections...\n");
+			connection *qcur=conn_queue,*next;
+			conn_queue=NULL;
+			while (qcur!=NULL) {
+				next=qcur->next;
+				ConnectTo(qcur);
+				qcur=next;
+			}
+			printf("Done with queued connections.\n");
+		}
+//		snooze(15000);
 	}
 	exit_thread(B_OK);
 	return 0;
 }
 uint32 tcplayer::Connections() {
-//	if (acquire_sem_etc(conn_sem,1,B_ABSOLUTE_TIMEOUT,100000)!=B_OK)
-//		return 1;
+	//BAutolock alock(lock);
+//	if (alock.IsLocked()) {
 	if (conn_head!=NULL) {
 		uint32 count=0;
 		connection *current=conn_head;
@@ -321,42 +277,50 @@ uint32 tcplayer::Connections() {
 			count++;
 			current=current->next;
 		}
-//		release_sem(conn_sem);
 		return count;
 	}
-//	release_sem(conn_sem);
+//	}
 	return 0;
 }
-/*
-Danger! Danger! Ugly monstrosity that seems to work! Needs to be rewritten!!!
-*/
-connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, bool forcenew) {
-	if (host==NULL)
-		return NULL;
-	if (strlen(host)<4)
-		return NULL;
-	bool ilocked=false;
-		if (!lock->IsLocked()) {
-			ilocked=true;
-			lock->Lock();
-			
-		}
-		
-
-	printf("Requestor wants to connect to %s:%d\n",host,port);
+connection* tcplayer::QueueConnect(int32 protoid,char *host,int16 port, bool ssl, bool forcenew) {
+	BAutolock alock(lock);
+	printf("QueueConnect\n");
+//	while (!alock.IsLocked()) {
+//		snooze(10000);
+//	}
 	connection *conn=NULL;
+	if (alock.IsLocked()) {
+		conn=new connection;
+		conn->proto_id=protoid;
+		conn->addrstr=host;
+		conn->port=port;
+		conn->open=false;
+		conn->result=-2;
+#ifdef USEOPENSSL
+		conn->usessl=ssl;
+#endif
+		if (conn_queue==NULL) {
+			conn_queue=conn;
+		} else {
+			connection *cur=conn_queue;
+			while (cur->next!=NULL)
+				cur=cur->next;
+			cur->next=conn;
+		}
+	}
+	printf("QueueConnect done.\n");
+	return conn;
+}
+connection* tcplayer::ConnectTo(connection *target) {
+	BAutolock alock(lock);
+	printf("Attempting to connect to %s:%d from queue.\n",target->addrstr.String(),target->port);
+	connection *conn=target;
+	if (alock.IsLocked()) {
 	int32 sockproto=0;
 #if USEBONE
-		sockproto=IPPROTO_TCP;
+	sockproto=IPPROTO_TCP;
 #endif
-	if (forcenew) {
-		printf("[forcenew]");
-		
-		NewConnectStruct:
-		printf("\tNew Connection\n");
-		
 		connection *cur=conn_head;
-			conn=new connection;
 		if (cur==NULL) {
 			conn_head=conn;
 			cur=conn;
@@ -366,13 +330,242 @@ connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, b
 			cur->next=conn;
 			cur=cur->next;
 		}
-		//mtx->lock();
+		cur=conn_head;
+		while (cur!=NULL) {
+			if ((strcasecmp(conn->addrstr.String(),cur->addrstr.String())==0) && (cur->port==conn->port))
+				break;
+			cur=cur->next;
+		}
+		if ((cur!=NULL) && (cur!=conn)) {
+			printf("found existing connection\n");
+			conn->socket=cur->socket;
+			conn->open=cur->open;
+			if (conn->socket==-1) {
+				conn->socket=socket(AF_INET,SOCK_STREAM,sockproto);
+				conn->open=false;
+				conn->result=-2;
+			}
+			conn->hptr=cur->hptr;
+		} else {
+			conn->socket=socket(AF_INET,SOCK_STREAM,sockproto);
+			conn->hptr=gethostbyname(conn->addrstr.String());
+		}
+		if (conn->hptr==NULL) {
+			//the name can't be found...
+			printf("\t*** THE HOST NAME CAN'T BE FOUND!!! ***\n");
+			KillConnection(conn);
+			return NULL;
+		}
+		if ((cur!=NULL) && (cur!=conn)) {
+			conn->pptr=cur->pptr;
+	//		conn->result=cur->result;
+			if (conn->open!=true) {
+				LetsTryThatAgain:
+				sockaddr_in servaddr;
+				memcpy(&servaddr.sin_addr,*conn->pptr,sizeof(struct in_addr));
+				servaddr.sin_port=htons(conn->port);
+				printf("[QC] reconnecting. (%s:%ld)\n",conn->addrstr.String(),conn->port);
+				conn->result=connect(conn->socket,(sockaddr *)&servaddr,sizeof(servaddr));
+				printf("[QC] connect result: %ld\n",conn->result);
+				if (conn->result!=0) {
+					int32 err=errno;
+					printf("error: %ld - %s\n",errno,strerror(errno));
+					if (err==-2147459072) {
+						conn->socket=socket(AF_INET,SOCK_STREAM,sockproto);
+						goto LetsTryThatAgain;
+					}
+				}
+			}
+		} else {
+			sockaddr_in servaddr;
+			conn->pptr=(struct in_addr**)conn->hptr->h_addr_list;
+			memcpy(&servaddr.sin_addr,*conn->pptr,sizeof(struct in_addr));
+			servaddr.sin_port=htons(conn->port);
+			conn->result=connect(conn->socket,(sockaddr *)&servaddr,sizeof(servaddr));
+		}
+		if (conn->result==0) 
+			conn->open=true;
+		else 
+			conn->open=false;
+		printf("[QC]Connected? %s\n",conn->open?"yes":"no");
+	if (conn!=NULL) {
+//		conn->proto_id=protoid;
+//		conn->addrstr=host;
+//		conn->port=port;
+//#ifdef USEOPENSSL
+//		conn->usessl=ssl;
+//#endif		
+		if (!conn->open) {
+			return conn;
+		}
+		
+		if (conn->ssl) {
+#ifdef USEOPENSSL
+			int flags=fcntl(conn->socket,F_GETFL,0);
+			flags|=O_NONBLOCK;
+			fcntl(conn->socket,F_SETFL,flags);
+			printf("Uses SSL...\n");
+			conn->usessl=true;	
+			printf("Creating new context...");
+			fflush(stdout);
+			printf("done.\n");
+			printf("Creating new ssl object...");
+			fflush(stdout);
+			conn->ssl = SSL_new (sslctx);
+			printf("done.\n");
+			SSL_set_cipher_list(conn->ssl, SSL_TXT_ALL);
+			conn->sslbio=BIO_new_socket(conn->socket,BIO_NOCLOSE);
+			SSL_set_bio(conn->ssl,conn->sslbio,conn->sslbio);
+			SSL_set_connect_state(conn->ssl);
+			printf("SSL connecting...");
+			fflush(stdout);
+			TryConnectAgain2TheSequel:
+			conn->result = SSL_connect (conn->ssl);
+//			int err = SSL_connect (conn->ssl);
+			if (SSL_get_error(conn->ssl,conn->result)==SSL_ERROR_WANT_READ) {
+				snooze(10000);
+				goto TryConnectAgain2TheSequel;
+			}
+			flags &= ~O_NONBLOCK;
+			fcntl(conn->socket,F_SETFL,flags);
+			printf("done.\n");
+			if (conn->result==1) {
+				SSL_CIPHER *cipher=SSL_get_current_cipher (conn->ssl);
+				
+				printf ("SSL connection using %s\n", SSL_CIPHER_get_name(cipher));
+				int usedbits=0,cipherbits=0;
+				usedbits=SSL_CIPHER_get_bits(cipher,&cipherbits);
+				printf("SSL Cipher is %d bits, %d bits used.\n",cipherbits,usedbits);
+				printf("Getting SSL certificate...");
+				fflush(stdout);
+				
+				conn->server_cert = SSL_get_peer_certificate (conn->ssl);
+				printf("done.\n");
+				
+				const char *s;
+				SSL_CIPHER *c;
+				
+				
+				c = SSL_get_current_cipher(conn->ssl);
+				
+				s = (char *) SSL_get_version(conn->ssl);
+				printf("SSL version: %s\n",s);
+				s = (char *) SSL_CIPHER_get_name(c);
+				
+				printf("SSL Cipher name: %s\n",s);
+				int ssl_keylength=0;
+				SSL_CIPHER_get_bits(c, &ssl_keylength);
+				
+				/*
+				* set to the secret key size for the export ciphers...
+				* SSLeay returns the total key size
+				*/
+				if(strncmp(s, "EXP-", 4) == 0)
+					ssl_keylength = 40;
+				printf("key length: %d\n",ssl_keylength);
+			} else {
+				conn->result=SSL_get_error(conn->ssl, conn->result);
+				printf("SSL Error: %ld\n",conn->result);
+				char errormsg[2000];
+				memset(errormsg,0,2000);
+				ERR_error_string(conn->result,errormsg);
+				
+				printf("Error Message: %s\n",errormsg);
+				SSL_CIPHER *cipher=SSL_get_current_cipher (conn->ssl);
+				
+				printf ("SSL connection using %s\n", SSL_CIPHER_get_name(cipher));
+				int usedbits=0,cipherbits=0;
+				usedbits=SSL_CIPHER_get_bits(cipher,&cipherbits);
+				printf("SSL Cipher is %d bits, %d bits used.\n",cipherbits,usedbits);
+				printf("Getting SSL certificate...");
+				fflush(stdout);
+				
+				conn->server_cert = SSL_get_peer_certificate (conn->ssl);
+				printf("done.\n");
+				
+				const char *s;
+				SSL_CIPHER *c;
+				
+				
+				c = SSL_get_current_cipher(conn->ssl);
+				
+				s = (char *) SSL_get_version(conn->ssl);
+				printf("SSL version: %s\n",s);
+				s = (char *) SSL_CIPHER_get_name(c);
+				
+				printf("SSL Cipher name: %s\n",s);
+				int ssl_keylength=0;
+				SSL_CIPHER_get_bits(c, &ssl_keylength);
+				
+				/*
+				* set to the secret key size for the export ciphers...
+				* SSLeay returns the total key size
+				*/
+				if(strncmp(s, "EXP-", 4) == 0)
+					ssl_keylength = 40;
+				printf("key length: %d\n",ssl_keylength);
+				
+			}
+			if (conn->server_cert!=NULL) {
+				
+				char * str;
+				printf("certificate: %p\n",conn->server_cert);
+				printf("Getting SSL subject...");
+				fflush(stdout);
+				str = X509_NAME_oneline (X509_get_subject_name (conn->server_cert),0,0);
+				printf("done\n");
+				printf ("\t subject: %s\n", str);
+				free (str);
+				str = X509_NAME_oneline (X509_get_issuer_name  (conn->server_cert),0,0);
+				printf ("\t issuer: %s\n", str);
+				free (str);
+			} else {
+				printf("Unable to get server SSL certificate.\n");
+				
+			}
+			
+#else
+			printf("tcplayer.cpp: SSL support has not been included in this binary.\n");
+#endif
+		}
+	}
+}	
+	return conn;
+}
+connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, bool forcenew) {
+	//BAutolock alock(lock);
+	if (host==NULL)
+		return NULL;
+	if (strlen(host)<4)
+		return NULL;
+	printf("Requestor wants to connect to %s:%d\n",host,port);
+	connection *conn=NULL;
+//	if (alock.IsLocked()) {
+	int32 sockproto=0;
+#if USEBONE
+	sockproto=IPPROTO_TCP;
+#endif
+	if (forcenew) {
+		printf("[forcenew]");
+		NewConnectStruct:
+		printf("\tNew Connection\n");
+		connection *cur=conn_head;
+		conn=new connection;
+		if (cur==NULL) {
+			conn_head=conn;
+			cur=conn;
+		} else {
+			while (cur->next!=NULL)
+				cur=cur->next;
+			cur->next=conn;
+			cur=cur->next;
+		}
 		conn->socket=socket(AF_INET,SOCK_STREAM,sockproto);
 		sockaddr_in servaddr;
-//		current->address->GetAddr(servaddr);
 		conn->hptr=gethostbyname(host);
 		if (conn->hptr==NULL) {
 			//the name can't be found...
+			printf("\t*** THE HOST NAME CAN'T BE FOUND!!! ***\n");
 			KillConnection(conn);
 			return NULL;
 		}
@@ -381,12 +574,11 @@ connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, b
 		memcpy(&servaddr.sin_addr,*conn->pptr,sizeof(struct in_addr));
 		servaddr.sin_port=htons(port);
 		conn->result=connect(conn->socket,(sockaddr *)&servaddr,sizeof(servaddr));
-		//mtx->unlock();
 		if (conn->result==0) 
 			conn->open=true;
 		else 
 			conn->open=false;
-			printf("Connected? %s\n",conn->open?"yes":"no");
+		printf("Connected? %s\n",conn->open?"yes":"no");
 	} else {
 		connection *cur=conn_head;
 		while (cur!=NULL) {
@@ -405,7 +597,7 @@ connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, b
 			goto NewConnectStruct;
 		}
 		printf("found existing connection, it's available.\n");
-			printf("Connected? %s\n",cur->open?"yes":"no");
+		printf("Connected? %s\n",cur->open?"yes":"no");
 		
 		if (!Connected(cur,true)) {
 			printf("Connecting...\n");
@@ -424,113 +616,147 @@ connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, b
 		
 	}
 	if (conn!=NULL) {
-	conn->proto_id=protoid;
-	conn->addrstr=host;
+		conn->proto_id=protoid;
+		conn->addrstr=host;
 		conn->port=port;
 #ifdef USEOPENSSL
 		conn->usessl=ssl;
 #endif		
 		if (!conn->open) {
-			if (ilocked)
-				lock->Unlock();
-			
 			return conn;
 		}
 		
 		if (ssl) {
 #ifdef USEOPENSSL
-				int flags=fcntl(conn->socket,F_GETFL,0);
-				flags|=O_NONBLOCK;
-				fcntl(conn->socket,F_SETFL,flags);
-				printf("Uses SSL...\n");
-				conn->usessl=true;	
-				printf("Creating new context...");
-				fflush(stdout);
-				printf("done.\n");
-				printf("Creating new ssl object...");
-				fflush(stdout);
-				conn->ssl = SSL_new (sslctx);
-				printf("done.\n");
-				SSL_set_cipher_list(conn->ssl, SSL_TXT_ALL);
-				conn->sslbio=BIO_new_socket(conn->socket,BIO_NOCLOSE);
-				SSL_set_bio(conn->ssl,conn->sslbio,conn->sslbio);
+			int flags=fcntl(conn->socket,F_GETFL,0);
+			flags|=O_NONBLOCK;
+			fcntl(conn->socket,F_SETFL,flags);
+			printf("Uses SSL...\n");
+			conn->usessl=true;	
+			printf("Creating new context...");
+			fflush(stdout);
+			printf("done.\n");
+			printf("Creating new ssl object...");
+			fflush(stdout);
+			conn->ssl = SSL_new (sslctx);
+			printf("done.\n");
+			SSL_set_cipher_list(conn->ssl, SSL_TXT_ALL);
+			conn->sslbio=BIO_new_socket(conn->socket,BIO_NOCLOSE);
+			SSL_set_bio(conn->ssl,conn->sslbio,conn->sslbio);
 			SSL_set_connect_state(conn->ssl);
-				printf("SSL connecting...");
-				fflush(stdout);
-				conn->result = SSL_connect (conn->ssl);
-				TryConnectAgain2:
-				int err = SSL_connect (conn->ssl);
-				if (SSL_get_error(conn->ssl,err)==SSL_ERROR_WANT_READ) {
-					
-					snooze(10000);
-					goto TryConnectAgain2;
-					
-				}
-				flags &= ~O_NONBLOCK;
-				fcntl(conn->socket,F_SETFL,flags);
-				printf("done.\n");
-				if (conn->result==1) {
+			printf("SSL connecting...");
+			fflush(stdout);
+			TryConnectAgain2:
+			conn->result = SSL_connect (conn->ssl);
+//			int err = SSL_connect (conn->ssl);
+			if (SSL_get_error(conn->ssl,conn->result)==SSL_ERROR_WANT_READ) {
+				snooze(10000);
+				goto TryConnectAgain2;
+			}
+			flags &= ~O_NONBLOCK;
+			fcntl(conn->socket,F_SETFL,flags);
+			printf("done.\n");
+			if (conn->result==1) {
 				SSL_CIPHER *cipher=SSL_get_current_cipher (conn->ssl);
-					
+				
 				printf ("SSL connection using %s\n", SSL_CIPHER_get_name(cipher));
 				int usedbits=0,cipherbits=0;
 				usedbits=SSL_CIPHER_get_bits(cipher,&cipherbits);
 				printf("SSL Cipher is %d bits, %d bits used.\n",cipherbits,usedbits);
 				printf("Getting SSL certificate...");
-						fflush(stdout);
-						
+				fflush(stdout);
+				
 				conn->server_cert = SSL_get_peer_certificate (conn->ssl);
-					printf("done.\n");
-	
-		const char *s;
-		SSL_CIPHER *c;
-	
-		
-		c = SSL_get_current_cipher(conn->ssl);
-		
-		s = (char *) SSL_get_version(conn->ssl);
-		printf("SSL version: %s\n",s);
-		s = (char *) SSL_CIPHER_get_name(c);
-		
-		printf("SSL Cipher name: %s\n",s);
-		int ssl_keylength=0;
-		SSL_CIPHER_get_bits(c, &ssl_keylength);
-		
-		/*
-		 * set to the secret key size for the export ciphers...
-		 * SSLeay returns the total key size
-		 */
-		if(strncmp(s, "EXP-", 4) == 0)
-			ssl_keylength = 40;
-			printf("key length: %d\n",ssl_keylength);
-				}
-				else
-				 {
-				 	conn->result=SSL_get_error(conn->ssl, conn->result);
-				 	printf("SSL Error: %ld\n",conn->result);
-				 }
-					if (conn->server_cert!=NULL) {
-						
+				printf("done.\n");
+				
+				const char *s;
+				SSL_CIPHER *c;
+				
+				
+				c = SSL_get_current_cipher(conn->ssl);
+				
+				s = (char *) SSL_get_version(conn->ssl);
+				printf("SSL version: %s\n",s);
+				s = (char *) SSL_CIPHER_get_name(c);
+				
+				printf("SSL Cipher name: %s\n",s);
+				int ssl_keylength=0;
+				SSL_CIPHER_get_bits(c, &ssl_keylength);
+				
+				/*
+				* set to the secret key size for the export ciphers...
+				* SSLeay returns the total key size
+				*/
+				if(strncmp(s, "EXP-", 4) == 0)
+					ssl_keylength = 40;
+				printf("key length: %d\n",ssl_keylength);
+			} else {
+				conn->result=SSL_get_error(conn->ssl, conn->result);
+				printf("SSL Error: %ld\n",conn->result);
+				char errormsg[2000];
+				memset(errormsg,0,2000);
+				ERR_error_string(conn->result,errormsg);
+				
+				printf("Error Message: %s\n",errormsg);
+				SSL_CIPHER *cipher=SSL_get_current_cipher (conn->ssl);
+				
+				printf ("SSL connection using %s\n", SSL_CIPHER_get_name(cipher));
+				int usedbits=0,cipherbits=0;
+				usedbits=SSL_CIPHER_get_bits(cipher,&cipherbits);
+				printf("SSL Cipher is %d bits, %d bits used.\n",cipherbits,usedbits);
+				printf("Getting SSL certificate...");
+				fflush(stdout);
+				
+				conn->server_cert = SSL_get_peer_certificate (conn->ssl);
+				printf("done.\n");
+				
+				const char *s;
+				SSL_CIPHER *c;
+				
+				
+				c = SSL_get_current_cipher(conn->ssl);
+				
+				s = (char *) SSL_get_version(conn->ssl);
+				printf("SSL version: %s\n",s);
+				s = (char *) SSL_CIPHER_get_name(c);
+				
+				printf("SSL Cipher name: %s\n",s);
+				int ssl_keylength=0;
+				SSL_CIPHER_get_bits(c, &ssl_keylength);
+				
+				/*
+				* set to the secret key size for the export ciphers...
+				* SSLeay returns the total key size
+				*/
+				if(strncmp(s, "EXP-", 4) == 0)
+					ssl_keylength = 40;
+				printf("key length: %d\n",ssl_keylength);
+				
+			}
+			if (conn->server_cert!=NULL) {
+				
 				char * str;
 				printf("certificate: %p\n",conn->server_cert);
 				printf("Getting SSL subject...");
 				fflush(stdout);
-				  str = X509_NAME_oneline (X509_get_subject_name (conn->server_cert),0,0);
+				str = X509_NAME_oneline (X509_get_subject_name (conn->server_cert),0,0);
 				printf("done\n");
-		  printf ("\t subject: %s\n", str);
-	  free (str);
-	  str = X509_NAME_oneline (X509_get_issuer_name  (conn->server_cert),0,0);
-	  printf ("\t issuer: %s\n", str);
-	  free (str);
-					}
+				printf ("\t subject: %s\n", str);
+				free (str);
+				str = X509_NAME_oneline (X509_get_issuer_name  (conn->server_cert),0,0);
+				printf ("\t issuer: %s\n", str);
+				free (str);
+			} else {
+				printf("Unable to get server SSL certificate.\n");
+				
+			}
+			
 #else
 			printf("tcplayer.cpp: SSL support has not been included in this binary.\n");
 #endif
 		}
 	}
-	if (ilocked)
-		lock->Unlock();
-	
+//}	
 	return conn;
 }
 
@@ -539,13 +765,12 @@ tcplayer::NextConnection cycles through all connection structures that are under
 tcplayer's command; primarily for processing purposes.
 */
 connection *tcplayer::NextConnection() {
-//	if (acquire_sem_etc(conn_sem,1,B_ABSOLUTE_TIMEOUT,100000)!=B_OK)
-//		return NULL;
 	connection *current=prev_conn;
+	//BAutolock alock(lock);
+	//if (alock.IsLocked()) {
 	if (current==NULL) {
 		current=conn_head;
 		prev_conn=current;
-//		release_sem(conn_sem);
 		return current;
 	} else {
 		bool truth=false;
@@ -573,26 +798,26 @@ connection *tcplayer::NextConnection() {
 				current=conn_head;
 		} else
 			current=conn_head;
-//		release_sem(conn_sem);
+		}
 		return current;		 
-	}
+//	}
 }
 void tcplayer::CloseConnection(connection *target) {
-//	if (acquire_sem(conn_sem)!=B_OK)
-//		return;
-//mtx->lock();
+//	BAutolock alock(lock);
+//	if (alock.IsLocked()) {
 printf("tcplayer closeconnection\n");
 if (target->open) {
-	
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
 	closesocket(target->socket);
 	target->socket=-1;
 	target->open=false;
+	}
 	
 }
 if (target->socket!=-1)
 	target->socket=-1;
 	
-//mtx->unlock();
 	target->open=false;
 #ifdef USEOPENSSL
 	if (target->usessl){
@@ -618,23 +843,20 @@ printf("about to call connection closed callback %ld\n",target->closedcbdone);
 		}
 		cur=cur->next;
 	}
-	
-//	release_sem(conn_sem);
+//	}
 }
 
 void tcplayer::KillConnection(connection *target) {
-//	if (acquire_sem_etc(conn_sem,1,B_ABSOLUTE_TIMEOUT,100000)!=B_OK)
-//		return;
+	//BAutolock alock(lock);
+	//if (alock.IsLocked()) {
 	if (target==NULL)
 		return;
 	
 	printf("Killing connection %p\n",target);
 	
 		if (target->open) {
-//mtx->lock();
 		closesocket(target->socket);
 		target->socket=-1;
-//mtx->unlock();
 		target->open=false;
 #ifdef USEOPENSSL
 		if (target->usessl){
@@ -664,15 +886,17 @@ void tcplayer::KillConnection(connection *target) {
 			cur=cur->next;
 		}
 	}
-//	release_sem(conn_sem);
+	//}
 }
 int32 tcplayer::Send(connection **conn,unsigned char *data, int32 size) {
-printf("Send\n");
+	BAutolock alock(lock);
+	ssize_t sent=0;
+	if (alock.IsLocked()) {
+	printf("Send\n");
 
 	if ((*conn)->requests>0) {
 			char host[250];
 			int16 port;
-//			(*conn)->address->GetAddr(host,(unsigned short*)&port);
 #ifdef USEOPENSSL
 			*conn=ConnectTo((*conn)->proto_id,(char*)(*conn)->addrstr.String(),(*conn)->port,(*conn)->usessl,true);
 #else
@@ -685,33 +909,24 @@ printf("Send\n");
 
 	 atomic_add(&(*conn)->requests,1);
 	
-//	printf("Checking connection status.\n");
 	if (!Connected((*conn))) {
-printf("Not connected (send)\n");
+		printf("Not connected (send)\n");
 		
 			char host[250];
 			int16 port;
-//			(*conn)->address->GetAddr(host,(unsigned short*)&port);
 #ifdef USEOPENSSL
 			*conn=ConnectTo((*conn)->proto_id,(char*)(*conn)->addrstr.String(),port,(*conn)->usessl);
 #else
 			*conn=ConnectTo((*conn)->proto_id,(char*)(*conn)->addrstr.String(),port,false);
 #endif
 	}
-//	printf("post connection status check.\n");
-	ssize_t sent=0;
 #ifdef USEOPENSSL
 	if ((*conn)->usessl) {
-		//mtx->lock();
 		sent=SSL_write((*conn)->ssl,(const char*)data,size);
-		//mtx->unlock();
-//		CHK_SSL(sent);
 	}
 	else {
 #endif
-		//mtx->lock();
 		sent=send((*conn)->socket,data,size,0);
-		//mtx->unlock();
 #ifdef USEOPENSSL
 	}
 #endif	 
@@ -721,16 +936,11 @@ printf("Not connected (send)\n");
 	else {
 		(*conn)->last_trans_time=real_time_clock();
 	}
-//	atomic_add(&(*conn)->requests,-1);
-//	if (sent==-1)
-//		printf("Error condition: %ld\n",errno);
 #ifdef USENETSERVER
 	if (sent<=0) {
-//		printf("connection terminated.\n");
 		(*conn)->open=false;
 			char host[250];
 			int16 port=(*conn)->port;
-//			(*conn)->address->GetAddr(host,(unsigned short*)&port);
 #ifdef USEOPENSSL
 			*conn=ConnectTo((*conn)->proto_id,(char*)(*conn)->addrstr.String(),port,(*conn)->usessl,true);
 #else
@@ -739,125 +949,96 @@ printf("Not connected (send)\n");
 			atomic_add(&(*conn)->requests,1);
 #ifdef USEOPENSSL
 	if ((*conn)->usessl) {
-		//mtx->lock();
 		sent=SSL_write((*conn)->ssl,(const char*)data,size);
-		//mtx->unlock();
-//		CHK_SSL(sent);
 	}
 	else {
 #endif
-		//mtx->lock();
 		sent=send((*conn)->socket,data,size,0);
-		//mtx->unlock();
 #ifdef USEOPENSSL
 	}
 #endif	 
 	}
 #endif
+	}
 	return sent;
 }
 int32 tcplayer::Receive(connection **conn, unsigned char *data, int32 size) {
-/*	if ((*conn)->requests>5) {
-			char host[250];
-			int16 port;
-			(*conn)->address->GetAddr(host,(unsigned short*)&port);
-			*conn=ConnectTo(host,port,(*conn)->usessl,true);
-			atomic_add(&(*conn)->requests,1);
-		
-	}
-	else*/
-//	 atomic_add(&(*conn)->requests,1);
-//	printf("TCP layer Receive\n");
-	int option=1;
-	//mtx->lock();
-	setsockopt((*conn)->socket,SOL_SOCKET,SO_NONBLOCK,&option,sizeof(option));
-	//mtx->unlock();
+	BAutolock alock(lock);
 	ssize_t got=0;
-	if (Connected((*conn))) {
+	int option=1;
+	if (alock.IsLocked()) {
+		setsockopt((*conn)->socket,SOL_SOCKET,SO_NONBLOCK,&option,sizeof(option));
+		if (Connected((*conn))) {
 #ifdef USEOPENSSL
-		if ((*conn)->usessl) {
-			//mtx->lock();
-			got=SSL_read ((*conn)->ssl,(char*)data,size);
-			//mtx->unlock();
-//			CHK_SSL(got);
-		} else {
+			if ((*conn)->usessl) {
+				got=SSL_read ((*conn)->ssl,(char*)data,size);
+			} else {
 #endif
-			//mtx->lock();
-			got=recv((*conn)->socket,data,size,0);
-//			printf("%ld bytes received\n",got);
-			//mtx->unlock();
+				got=recv((*conn)->socket,data,size,0);
 #ifdef USEOPENSSL
-		}	
+			}	
 #endif
-		if (got<0) {
-			(*conn)->result=errno;
+			if (got<0) {
+				(*conn)->result=errno;
+			} else {
+				if (got>0)
+					(*conn)->last_trans_time=real_time_clock();
+			}
 		} else {
-			if (got>0)
-				(*conn)->last_trans_time=real_time_clock();
+#ifdef USEOPENSSL
+			if ((*conn)->usessl) {
+				got=SSL_read((*conn)->ssl,(char*)data,size);
+			} else {
+#endif
+				got=recv((*conn)->socket,data,size,0);
+#ifdef USEOPENSSL
+			}
+#endif
+			if (got<0) {
+				(*conn)->result=errno;
+			} else {
+				if (got>0)
+					(*conn)->last_trans_time=real_time_clock();
+			}
 		}
-	} else {
-#ifdef USEOPENSSL
-		if ((*conn)->usessl) {
-			//mtx->lock();
-			got=SSL_read((*conn)->ssl,(char*)data,size);
-			//mtx->unlock();
-//			CHK_SSL(got);
-		} else {
-#endif
-			//mtx->lock();
-			got=recv((*conn)->socket,data,size,0);
-			//mtx->unlock();
-#ifdef USEOPENSSL
+		
+		if ((*conn)->callbackdone) {
+			atomic_add(&(*conn)->callbackdone,-1);
 		}
-#endif
-		if (got<0) {
-			(*conn)->result=errno;
-		} else {
-			if (got>0)
-				(*conn)->last_trans_time=real_time_clock();
-		}
-//		got=-1;
-	}
-	
-	if ((*conn)->callbackdone) {
-		atomic_add(&(*conn)->callbackdone,-1);
-	}
-//	if ((*conn)->requests==1)
-//		atomic_add(&(*conn)->requests,-1);
-	option=0;
-	//mtx->lock();
-	setsockopt((*conn)->socket,SOL_SOCKET,SO_NONBLOCK,&option,sizeof(option));
-	//mtx->unlock();
-//	if (got==-1)
-//		printf("Error condition: %ld\n",errno);
+		option=0;
+		setsockopt((*conn)->socket,SOL_SOCKET,SO_NONBLOCK,&option,sizeof(option));
 #ifdef USENETSERVER
-	if (got<=0) {
-//		printf("connection terminated.\n");
-		CloseConnection((*conn));
-//		 (*conn)->open=false;
-	}
+		if (got<=0) {
+			CloseConnection((*conn));
+		}
 #endif
+	}
 	return got;
 }
 
 void tcplayer::RequestDone(connection *conn,bool close) {
-	if (conn!=NULL) {
-		atomic_add(&conn->requests,-1);
-		if (conn->closedcbdone==0) {
-			
-			if (conn->requests>0)
-				conn->requests=0;
-			if ((close) && (!conn->closedcbdone)) {
-				atomic_add(&conn->closedcbdone,1);
-				CloseConnection(conn);
+//	BAutolock alock(lock);
+//	if (alock.IsLocked()) {
+		if (conn!=NULL) {
+			atomic_add(&conn->requests,-1);
+			if (conn->closedcbdone==0) {
+				
+				if (conn->requests>0)
+					conn->requests=0;
+				if ((close) && (!conn->closedcbdone)) {
+					atomic_add(&conn->closedcbdone,1);
+					CloseConnection(conn);
+				}
+				
 			}
 			
 		}
-		
-	}
+//	}
 }
 
 bool tcplayer::DataWaiting(connection *conn) {
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
 	if (IsValid(conn)) {
 //	bool open=false;
 		
@@ -867,8 +1048,8 @@ bool tcplayer::DataWaiting(connection *conn) {
 	
 	int option=1;
 	//mtx->lock();
-	setsockopt(conn->socket,SOL_SOCKET,SO_NONBLOCK,&option,sizeof(option));
-		
+	try {
+		setsockopt(conn->socket,SOL_SOCKET,SO_NONBLOCK,&option,sizeof(option));
 	struct timeval tv;
 	tv.tv_sec=2;
 	tv.tv_usec=0;
@@ -892,14 +1073,20 @@ bool tcplayer::DataWaiting(connection *conn) {
 	}
 	//mtx->unlock();
 	return answer;
+	}
+	catch(...)
+	{
+		return false;
+	}
 		
 	}
 	else {
 		return false;
 	}
-	
+	}
 }
 bool tcplayer::IsValid(connection *conn) {
+//	BAutolock alock(lock);
 //	if (acquire_sem(conn_sem)!=B_OK)
 //		return false;
 	bool truth=false;
@@ -911,10 +1098,14 @@ bool tcplayer::IsValid(connection *conn) {
 		}
 		cur=cur->next;
 	}
+	if (cur->socket==-1)
+		truth=false;
 //	release_sem(conn_sem);
 	return truth;
 }
 bool tcplayer::Connected(connection *conn,bool skipvalid) {
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
 	if (conn!=NULL) {
 		if (skipvalid) {//no need to check validation
 			CheckConnectStatus://connection status checking starts here.
@@ -925,14 +1116,21 @@ bool tcplayer::Connected(connection *conn,bool skipvalid) {
 			bool bOK=true;
 			int option=1;
 			setsockopt(conn->socket,SOL_SOCKET,SO_NONBLOCK,&option,sizeof(option));
-			struct timeval timeout={0,10000};
-			fd_set readsocketset;
+			struct timeval timeout={0,1000000};
+			fd_set readsocketset, exceptsocketset;
 			FD_ZERO(&readsocketset);
+			FD_ZERO(&exceptsocketset);
 			FD_SET(conn->socket,&readsocketset);
-			iret=select(32,&readsocketset,NULL,NULL,&timeout);
+			FD_SET(conn->socket,&exceptsocketset);
+			iret=select(32,&readsocketset,NULL,&exceptsocketset,&timeout);
 			bOK=(iret>0);
 			if (bOK){
-				bOK = FD_ISSET(conn->socket, &readsocketset );
+//				bOK = FD_ISSET(conn->socket, &readsocketset );
+				if (FD_ISSET(conn->socket,&exceptsocketset)) {
+					//we've disconnected
+//					Disconnect();
+					conn->open=false;
+				}
 			}
 #ifndef USENETSERVER
 /*
@@ -970,6 +1168,7 @@ bool tcplayer::Connected(connection *conn,bool skipvalid) {
 		return conn->open;
 	}
 	//conn is NULL, so this is obviously invalid
+	}
 	return false;
 }
 /*
@@ -1014,16 +1213,18 @@ BOOL CClientSocket::HasConnectionDropped( void )
 }
 */
 status_t tcplayer::Quit() {
-	Lock();
+//	BAutolock alock(lock);
+//	lock->Lock();
 	printf("tcp_layer stopping\n");
 	atomic_add(&quit,1);
 	status_t status=B_OK;
-	wait_for_thread(thread,&status);
 	release_sem(tcp_mgr_sem);
+	wait_for_thread(thread,&status);
 	return status;
 }
 void tcplayer::SetConnectionClosedCB(int32 proto, void (*connclosedcb)(connection *conn)) 
 {
+	//BAutolock alock(lock);
 	if ((callback_head==NULL) || (firstcb==1)) {
 		callback_head=new DRCallback_st;
 		callback_head->connclosedcb=connclosedcb;
@@ -1055,6 +1256,7 @@ void tcplayer::SetConnectionClosedCB(int32 proto, void (*connclosedcb)(connectio
 
 void tcplayer::SetDRCallback(int32 proto,void (*DataReceived)(connection *conn),int32 (*Lock)(int32 timeout),void(*Unlock)(void)) {
 //	acquire_sem(cb_sem);
+	//BAutolock alock(lock);
 	printf("SetDRCallback: %p\n",callback_head);
 	if ((callback_head==NULL) || (firstcb==1)) {
 		callback_head=new DRCallback_st;

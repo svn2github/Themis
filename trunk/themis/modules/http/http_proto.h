@@ -77,5 +77,7 @@ class http_protocol:public ProtocolPlugClass
  	 status_t ReceiveBroadcast(BMessage *msg);
 	 status_t BroadcastReply(BMessage *msg);
 	 BMessage *cache_reply;
+//	 bool RequiresHeartbeat(){return true;}
+	 void Heartbeat();
    };
 #endif

@@ -69,23 +69,6 @@ Include *both* plugclass.h *and* plugclass.cpp in your plugin!
 
 //#define CHK_ERR(err,s) if ((err)==-1) { ERR_print_errors_fp(stdout);  }
 //#define CHK_SSL(err) if ((err)==-1) { ERR_print_errors_fp(stdout);  }
-/*
-class mutex {
-	public:
-		mutex(){
-		}
-		~mutex(){
-		}
-		status_t lock() const {
-			return _locker.Lock() ? B_NO_ERROR : B_ERROR;
-		}
-		status_t unlock() const {
-			_locker.Unlock();
-			return B_NO_ERROR;
-		}
-		mutable BLocker _locker;
-};
-*/
 struct connection {
 	int32 proto_id;
 	uint16 port;
@@ -103,7 +86,7 @@ struct connection {
 	SSL* ssl;
 	X509* server_cert;
 #endif
-	int result;
+	volatile int32 result;
 	volatile int32 requests;
 //	BNetAddress *address;
 	struct hostent *hptr;
@@ -209,9 +192,9 @@ class tcplayer {
 		sem_id conn_sem;
 		sem_id cb_sem;
 		sem_id tcplayer_sem;
-		int32 Lock(int32 timeout=-1);
+//		int32 Lock(int32 timeout=-1);
 		BLocker *lock;
-		void Unlock();
+//		void Unlock();
 		volatile int32 firstcb;
 		thread_id thread;
 		volatile int32 quit;
@@ -226,9 +209,12 @@ class tcplayer {
 	
 		bool IsValid(connection *conn);
 		connection *conn_head;//first connection
+		connection *conn_queue;
 		connection *prev_conn;
 		DRCallback_st *callback_head; //first callback pointer
 		connection* ConnectTo(int32 protoid, char *host, int16 port=80, bool ssl=false, bool forcenew=false);
+		connection* QueueConnect(int32 protoid, char *host, int16 port=80, bool ssl=false, bool forcenew=false);
+		connection* ConnectTo(connection *target);
 		uint32 Connections();
 		bool Connected(connection *conn,bool skipvaild=false);
 		connection *NextConnection();

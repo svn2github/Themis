@@ -42,6 +42,7 @@ Project Start Date: October 18, 2000
 #include "plugclass.h"
 #include "plugman.h"
 #include "commondefs.h"
+#include "cookieman.h"
 #include <TranslatorRoster.h>
 int32 LockHTTP(int32 timeout=-1);
 
@@ -250,7 +251,8 @@ class httplayer {
 		auth_realm *FindAuthRealm(http_request *request);
 		void UpdateAuthRealm(auth_realm *realm,char *user,char *pass);
 		char *FindEndOfHeader(char *buffer, char **eohc=NULL);
-		char *FindHeader(http_request *request,char *attribute);
+		char *FindHeader(http_request *request,char *attribute,int32 which=0);
+		int32 CountHeaderOccurances(http_request *request,char *attribute);
 		header_st *AddHeader(http_request *request, char *attribute, char* value);
 		void ClearHeaders(http_request *request);	
 		sem_id connhandle_sem;
@@ -261,10 +263,11 @@ class httplayer {
 		char *BuildRequest(http_request *request);
 		void Done(http_request *request);
 		BTranslatorRoster *TRoster;
+		CookieManager *CookieMonster;
 	public:
-		int32 Lock(int32 timeout=-1);
+//		int32 Lock(int32 timeout=-1);
 		BLocker *lock;
-		void Unlock();
+//		void Unlock();
 		auth_realm *AddAuthRealm(http_request *request,char *realm, char *user, char *password);
 		int32 use_useragent;
 		char * UserAgent();
@@ -288,7 +291,7 @@ class httplayer {
 		status_t Quit();
 		char * GetSupportedTypes();
 		http_request *AddRequest(BMessage *info);
-		void DoneWithHeaders(http_request *request);
+		void DoneWithHeaders(http_request *request,bool nocaching=false);
 		void ProcessHeaders(http_request *request,void *buffer,int size);
 		void ProcessData(http_request *request,void *buffer, int size);
 		void ProcessChunkedData(http_request *request, void *buffer, int size);

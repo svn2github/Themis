@@ -26,6 +26,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
+/*!
+\file
+\brief Contains the declarations for the JavaScript Manager plug-in class.
+*/
 #ifndef javascript_manager
 #define javascript_manager
 
@@ -35,10 +39,20 @@ Project Start Date: October 18, 2000
 #include <Message.h>
 #include <SupportDefs.h>
 #include <StorageKit.h>
+#include "TDocument.h"
+#include "TNode.h"
+#include "TNodeList.h"
+#include "TNamedNodeMap.h"
 
 #include "jsapi.h"
+/*!
+\brief A linked list structure to track JavaScript contexts and scripts.
 
+*/
 struct jsscripts_st {
+	int32 window;
+	int32 tab;
+	
 	JSContext *context;
 	jsscripts_st *next;
 	jsscripts_st() {
@@ -48,11 +62,19 @@ struct jsscripts_st {
 };
 
 
+/*!
+\brief The JavaScript plug-in class.
 
+This class provides the interface between Themis, and the Mozilla SpiderMonkey
+JavaScript Engine http://www.mozilla.org/js/spidermonkey/ . 
+*/
 class jsman: public BHandler, public PlugClass {
 	private:
+		//! This variable holds the JavaScript version information.
 		JSVersion version;
+		//! This variable points to the JavaScript runtime object.
 		JSRuntime *rt;
+		
 		JSObject *glob, *it;
 		JSBool builtins;
 		JSContext *cx;
@@ -69,6 +91,11 @@ class jsman: public BHandler, public PlugClass {
 		char *PlugName(){return PlugNamedef;};
 		float PlugVersion(){return PlugVersdef;};
 		void Heartbeat();
+/*! \fn status_t jsman::ReceiveBroadcast(BMessage *msg)
+This function receives broadcasts sent to the plug-in system.
+
+This function receives and processes information sent to the plug-in system.
+*/
 		status_t ReceiveBroadcast(BMessage *msg);
 		int32 Type();
 };

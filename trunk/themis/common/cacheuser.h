@@ -26,6 +26,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
+/*!
+\file
+\brief Contains a support class (CacheUser) for the cache system.
+*/
 #ifndef _cache_user_class_
 #define _cache_user_class_
 

@@ -26,6 +26,21 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
+/*!
+\file
+\brief The start of the application.
+
+This is the where Themis begins execution.
+*/
+
+/*!
+\mainpage The Themis Project
+
+\section intro Introduction
+*
+* What is Themis? The Themis project is an effort by a handfull of developers to bring a modern
+* web browser to the BeOS platform.
+*/
 #include "app.h"
 #define DEBUG 1
 #include <SupportKit.h>
