@@ -66,7 +66,9 @@ COMMONSOURCES= \
 	common/plugman.cpp \
 	common/cacheplug.cpp \
 	common/cacheuser.cpp \
-	common/cacheobject.cpp
+	common/cacheobject.cpp \
+	common/stripwhite.cpp
+#	common/tnetobject.cpp \
 #	common/lockres.cpp
 #add similar lines for new plugins, libraries, etc.
 HTTPADDONSOURCES= \
@@ -74,7 +76,8 @@ HTTPADDONSOURCES= \
 	http/http_proto.cpp \
 	http/httplayer.cpp \
 	http/optionshandler.cpp \
-	http/authvw.cpp
+	http/authvw.cpp 
+#	http/cookieman.cpp
 #the above lines are commented out in part or whole because the new sources are not yet ready to go into the repository
 CACHEADDONSOURCES= \
 	cache/cacheman.cpp \
@@ -576,7 +579,7 @@ $(BASE_ADDONS_OBJECT_DIR)cookie/%.o: $(BASE_ADDON_SOURCE_DIR)cookie/%.cpp $(BASE
 	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
 
 #Javascript add-on
-jsaddon: $(BASE_ADDON_INSTALL_DIR)js_plugin.so
+jsaddon: domlib $(BASE_ADDON_INSTALL_DIR)js_plugin.so
 $(BASE_ADDON_INSTALL_DIR)js_plugin.so: $(COMMONOBJ) $(foreach file,$(notdir $(JSADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)js/$(file)) #domlib commondepends jsaddondepends commonobjects jsaddonobjects
 	@echo "Copying Javscript library and supporting libraries to install directory."
 	@$(shell if [ "$(NETWORKING)" == "BONE" ] ; then /bin/unzip -uqd Themis/lib/ javascript/bone_jslibs.zip ; else /bin/unzip -uqd Themis/lib/ javascript/netserver_jslibs.zip ; fi )
@@ -598,11 +601,11 @@ jsaddonobjects: $(COMMON_OBJECT_DIR)plugman.o $(COMMON_OBJECT_DIR)plugclass.o  \
 	@echo "Javascript add-on objects are done."
 $(BASE_ADDONS_DEPENDS_DIR)js/%.d:  $(BASE_ADDON_SOURCE_DIR)js/%.cpp $(BASE_ADDON_SOURCE_DIR)js/%.h
 	@echo "Javascript: Updating dependency file $(notdir $@)"
-	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)js/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)js/"|sed 's/\//\\\//g'); $(CC) -DXP_UNIX -Icommon -Ijavascript -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/add-ons\/js\/\1.o depends\/add-ons\/js\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
+	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)js/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)js/"|sed 's/\//\\\//g'); $(CC) -DXP_UNIX -Icommon -Ijavascript -Iframework/DOM -I./ -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/add-ons\/js\/\1.o depends\/add-ons\/js\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
 
 $(BASE_ADDONS_OBJECT_DIR)js/%.o: $(BASE_ADDON_SOURCE_DIR)js/%.cpp $(BASE_ADDONS_DEPENDS_DIR)js/%.d
 	@echo "Javascript: Updating object file $(notdir $@)"
-	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -DXP_UNIX -D_BEOS_ -Icommon -Ijavascript -c $< -o $@
+	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -DXP_UNIX -D_BEOS_ -Icommon -Ijavascript  -Iframework/DOM -I./ -c $< -o $@
 
 #DOM Library
 domlib: $(BASE_APP_LIB_INSTALL_DIR)libdom.so
