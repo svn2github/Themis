@@ -121,16 +121,6 @@ ThemisStatusView::Draw( BRect updaterect )
 			updaterect.bottom ),
 		B_SOLID_LOW );
 	
-	// the left part
-	
-	TruncateString( &fStatusText, B_TRUNCATE_END, Bounds().right / 2 );
-	SetFont( be_plain_font );
-	SetFontSize( 10.0 );
-	DrawString(
-		fStatusText.String(),
-		BPoint( updaterect.left + 5, updaterect.bottom - 2 ) );
-	
-	
 	// the right part
 	
 	DrawBitmap( fDocBmp, BPoint( fDocumentBar->Frame().left - 10, updaterect.top + 3 ) );
@@ -177,6 +167,16 @@ ThemisStatusView::Draw( BRect updaterect )
 	sep_pt_bot.x +=1;
 	StrokeLine( sep_pt_top, sep_pt_bot, B_SOLID_LOW );
 	
+	// the left part
+	
+	TruncateString( &fStatusText, B_TRUNCATE_END, sep_pt_top.x - 10 );
+	SetFont( be_plain_font );
+	SetFontSize( 10.0 );
+	DrawString(
+		fStatusText.String(),
+		BPoint( updaterect.left + 5, updaterect.bottom - 2 ) );
+	
+	// redraw everything else	
 	if( CountChildren() > 0 )
 	{
 		BView* child = NULL;
