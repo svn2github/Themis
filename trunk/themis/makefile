@@ -34,7 +34,8 @@ FRAMEWORKSOURCES= \
 	framework/win.cpp \
 	framework/winview.cpp \
 	framework/plugman.cpp \
-	framework/infowin.cpp 
+	framework/infowin.cpp \
+	framework/htmlparser.cpp
 COMMONSOURCES= \
 	common/plugclass.cpp \
 	common/tcplayer.cpp
@@ -181,7 +182,7 @@ endif
 #			domtest
 all: framework addons domtest
 	@echo "Themis application and add-ons built successfully."
-addons: httpaddon cacheaddon #cookieaddon jsaddon
+addons: httpaddon cacheaddon cookieaddon jsaddon
 	@echo "All add-ons built successfully."
 clean: 
 	@rm -rf objects depends Themis
@@ -357,7 +358,7 @@ $(BASE_ADDONS_OBJECT_DIR)js/%.o: $(BASE_ADDON_SOURCE_DIR)js/%.cpp $(BASE_ADDONS_
 #DOM Library
 domlib: domlibdepends domlibobjects
 	@echo "Linking DOM Library"
-	@$(CC) -o $(BASE_APP_LIB_INSTALL_DIR)libdom.so $(foreach file,$(notdir $(DOMLIBRARYSOURCES:.cpp=.o)),$(DOMLIBRARY_OBJECT_DIR)$(file)) -nostart -Xlinker $(LDFLAGS) -shared -Xlinker -soname=libdom.so -L ./ -L $(BELIBRARIES) -L $(DOMLIBRARY_OBJECT_DIR) -lbe
+	@$(CC) -o $(BASE_APP_LIB_INSTALL_DIR)libdom.so $(foreach file,$(notdir $(DOMLIBRARYSOURCES:.cpp=.o)),$(DOMLIBRARY_OBJECT_DIR)$(file)) -nostart -Xlinker $(LDFLAGS) -shared -Xlinker -soname=libdom.so -L ./ -L $(BELIBRARIES) -L $(DOMLIBRARY_OBJECT_DIR) -lstdc++.r4
 	@echo "DOM Library is now linked. Doing mimeset."
 	@mimeset -F $(BASE_APP_LIB_INSTALL_DIR)libdom.so
 	@echo "DOM Library compiled and linked successfully."
