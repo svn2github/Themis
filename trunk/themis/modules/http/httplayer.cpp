@@ -37,6 +37,7 @@ Project Start Date: October 18, 2000
 #include "http_proto.h"
 #include <stdexcept>
 #include <time.h>
+#include "base64.h"
 httplayer *meHTTP;
 #ifdef NEWNET
 using namespace _Themis_Networking_;
