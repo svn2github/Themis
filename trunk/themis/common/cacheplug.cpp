@@ -32,8 +32,8 @@ Project Start Date: October 18, 2000
 CachePlug::CachePlug(BMessage *info)
 	:PlugClass(info) 
 {
-	lock=new BLocker(true);
-	autolock=new BAutolock(lock);
+	lock=new BLocker(true); //!< set up the locking support
+	autolock=new BAutolock(lock);//!< automatically lock when a thread takes control
 	user_token_value=0;
 	object_token_value=0;
 	userlist=NULL;
@@ -52,7 +52,11 @@ CachePlug::~CachePlug()
 	delete autolock;
 	delete lock;
 }
-
+/*! \fn uint32 CachePlug::Register(uint32 broadcast_target,const char* name)
+The Register function creates a user token for any given portion of the application that might
+wish to use the cache system, and returns that value back to the caller. The caller can then use
+that user token to access the cache system.
+*/
 uint32 CachePlug::Register(uint32 broadcast_target,const char* name) 
 {
 	if (userlist==NULL) {

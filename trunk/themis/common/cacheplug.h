@@ -37,7 +37,9 @@ Project Start Date: October 18, 2000
 #include <Locker.h>
 #include <Autolock.h>
 
-/*
+
+//!The basis for any and all of Themis' cache systems.
+/*!
 	CachePlug is the basis for any and all cache plug-ins to be added to the system. This
 base class, when compiled and included (by linking) in any component, can give generic
 access to any and all cache systems based on it, without needing to link against any
@@ -45,16 +47,15 @@ particular system.
 */
 class CachePlug:public PlugClass {
 	protected:
-		uint32 user_token_value; //the current user token value; increments with each call to Register
-		int32 object_token_value; //the current cache object token value; increments when requested URLs are found or cache items are created
-		CacheUser *userlist;//the linked list of registered cache users
+		uint32 user_token_value; //!< the current user token value; increments with each call to Register
+		int32 object_token_value; //!< the current cache object token value; increments when requested URLs are found or cache items are created
+		CacheUser *userlist;//!< the linked list of registered cache users
 		BLocker *lock;
 		BAutolock *autolock;
 	public:
 		CachePlug(BMessage *info=NULL);
 		virtual ~CachePlug();
-		
-		//the register and unregister functions; which keep track of users and resources.
+		// the register and unregister functions; which keep track of users and resources.
 		virtual uint32 Register(uint32 broadcast_target,const char *name=NULL);
 		virtual void Unregister(uint32 usertoken);
 		
@@ -62,7 +63,7 @@ class CachePlug:public PlugClass {
 		virtual int32 FindObject(uint32 usertoken, const char *URL);
 		virtual int32 CreateObject(uint32 usertoken, const char *URL, uint32 type=TYPE_DISK);
 		virtual void ClearCache(uint32 which=TYPE_ALL); //clear cache should not be touched by anything other than the settings view.
-
+		
 		//These six functions deal with the cache object's attributes: reading and writing an individual attribute in the middle two functions,
 		//setting and retrieving all attributes simultaneously in the next two. The UpdateAttribute function will likely be removed
 		//before the cache system is added to the cvs repository. Currently, only SetObjectAttr and GetInfo are implemented.
@@ -77,10 +78,10 @@ class CachePlug:public PlugClass {
 		virtual ssize_t Write(uint32 usertoken, int32 objecttoken, void *data, size_t size);
 		virtual ssize_t Read(uint32 usertoken, int32 objecttoken, void *data, size_t size);
 
-		//returns the current object size, not counting its attributes
+		//!returns the current object size, not counting its attributes
 		virtual ssize_t GetObjectSize(uint32 usertoken, int32 objecttoken)=0;
 		
-		//removes the contents (the data) of the file, setting its file size to zero.
+		//!removes the contents (the data) of the file, setting its file size to zero.
 		virtual void ClearContent(uint32 usertoken, int32 objecttoken)=0;
 		
 		//removes the CacheUser object for the specified user from one or all CacheObjects.
@@ -88,7 +89,7 @@ class CachePlug:public PlugClass {
 		virtual void ClearRequests(uint32 usertoken, int32 objecttoken);
 		virtual void ClearAllRequests(uint32 usertoken);
 		
-		//get the total size of the files in the cache system specified.
+		//!get the total size of the files in the cache system specified.
 		virtual ssize_t GetCacheSize(uint32 which=TYPE_ALL)=0;
 
 		//manipulation of the write lock privilleges for any given object.

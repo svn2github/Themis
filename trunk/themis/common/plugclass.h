@@ -232,14 +232,32 @@ add a command to makelinks.sh to create this link in your plug-in's directory.
 */
 int32 strtoval(char *proto); //plug-in identifier converter 4 char string to int32
 class plugman;
+//!The base class for all plug-ins.
+/*!
+PlugClass is the base class for all of the plug-ins that Themis can and will utilize.
+Some plug-ins will use this class directly, others will probably use a derived verison.
+*/
 class PlugClass {
 	private:
 	public:
+	//!PlugClass constructor.
+	/*!
+	This constructor takes a BMessage object that contains various tidbits that are
+	useful to all plug-ins, including pointers to the settings BMessage.
+	*/
 		PlugClass(BMessage *info=NULL);
+		//!Initialization information container.
 		BMessage *InitInfo;
+		//!The destructor.
 		virtual ~PlugClass();
 		
 		volatile int32 Cancel;
+		//!The plug-in's unique 32-bit idenitfier.
+		/*!
+		The PlugID() function should return a unique 32-bit identifier that identifies
+		the plug-in. The identifier, or value, can be either a pure integer value or
+		it could be done as a character constant such as 'abcd' or '_hlo'.
+		*/
 		virtual uint32 PlugID();
 		virtual uint32 SecondaryID();
 		/*
@@ -255,6 +273,12 @@ class PlugClass {
 		  for each tag; the "<HTML>" tag plugin might return 'html' for both, while
 		  the "<TITLE>" tag plugin might return 'html' and 'titl'.
 		*/
+		//!Returns the plug-in's descriptive name.
+		/*!
+		This function should return the name of the plug-in as the author specified.
+		Although it is not it is only meant for descriptive purposes, it's a good idea
+		to keep this name to 20-30 characters or less.
+		*/
 		virtual char *PlugName();//returns a pointer to a string constant in each plugin
 		virtual float PlugVersion();//returns the plugin version, if applicable
 		
@@ -266,26 +290,62 @@ class PlugClass {
 		thread_id thread;
 		
 		BWindow *Window;
+		//!This is a reference to the Plug-in Manager. 
 		plugman *PlugMan;
 		
 		virtual int32 TypePrimary();
 		virtual int32 TypeSecondary();
 		
+		//!Is the plug-in a BHandler derived plug-in?
+		/*!
+		\retval true Your plug-in is also derived from BHandler.
+		\retval false Your plug-in does not derive from BHandler.
+		
+		Plug-ins by default do not derive from BHandler, and so the default value
+		is false. If you derive from BHandler, be sure to override this function
+		and return true; otherwise your function will not be added as a handler
+		to the Plug-in Manager.
+		
+		This is also applicable if your plug-in simply creates a BHandler object
+		that needs to be added to the Plug-in Manager.
+		*/
 		virtual bool IsHandler();//if the plugin has a BHandler object instead
+		//!Returns a pointer to this plug-in's BHandler object.
+		/*!
+		If your plug-in has a BHandler object that needs to be added to the Plug-in
+		Manager, or if its PlugClass derived class also inherits from BHandler, you
+		will need to return a pointer to it here.
+		\retval NULL The default return value.
+		\retval "BHandler *" A pointer to a BHandler object. ("this" is valid if the class is derived from BHandler.)
+		*/
 		virtual BHandler *Handler();
 		
+		//!Should the plug-in stay in memory when not needed or be unloaded?
+		/*!
+		\retval true The plug-in is persistant and should stay in RAM even when not needed.
+		\retval false The plug-in should be unloaded when not needed. (default)
+		*/
 		virtual bool IsPersistent();//does the plugin load and unload based on page?
 		
+		//!Is the plug-in derived from BLooper?
+		/*!
+		\retval true The plug-in is derived from or utilizes a BLooper that is accessible via the PlugClass.
+		\retval false The plug-in is not derived from BLooper or does not have an accessible BLooper.
+		*/
 		virtual bool IsLooper();
+		//!Returns a pointer to the BLooper object if applicable.
 		virtual BLooper *Looper();
+		//!Starts a BLooper if applicable.
 		virtual void Run();
 		
 		virtual bool IsView();
 		virtual BView *View();
 		virtual BView *Parent();
-		
+		//!Sets the entry_ref for the plug-in.
 		entry_ref SetRef(entry_ref nuref);
+		//!Returns the entry_ref for the plug-in.
 		entry_ref Ref();
+		//!Internal entry_ref structure that points to the plug-in.
 		entry_ref plug_ref;//an entry for the plugin
 		
 		virtual void AddMenuItems(BMenu *menu);//this is a signal for plug-ins to add any menus or items
