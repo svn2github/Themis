@@ -62,6 +62,7 @@ App::App(const char *appsig)
 	ent->GetRef(&appdirref);
 	delete ent;
 	PluginManager=new plugman(appdirref);
+	fUrlHandler = NULL;
 #ifndef NEWNET
 	TCP=new tcplayer;
 	TCP->Start();
@@ -122,6 +123,9 @@ App::~App(){
 	MsgSysUnregister(this);
 	if (!qr_called)
 		QuitRequested();
+	// delete the UrlHandler
+	if( fUrlHandler != NULL )
+		delete fUrlHandler;	
 	// delete GlobalHistory before AppSettings gets deleted
 	delete fGlobalHistory;
 	SaveSettings();
@@ -523,6 +527,9 @@ void App::RefsReceived(BMessage *refs){
 
 void App::ReadyToRun(){
 	printf( "APP READYTORUN\n" );
+
+	fUrlHandler = new UrlHandler();
+
 	PluginManager->BuildRoster(true);
 	fFirstWindow->Show();
 	//SetPulseRate(2000000);

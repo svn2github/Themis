@@ -37,6 +37,7 @@ Project Start Date: October 18, 2000
 #include "prefswin.h"
 #include "msgsystem.h"
 #include "msgdaemon.h"
+#include "UrlHandler.h"
 #ifdef NEWNET
 #include "tcpmanager.h"
 #endif
@@ -73,6 +74,8 @@ class App:public BApplication, public MessageSystem {
 		aboutwin *AWin;
 		//! The Preferences window.
 		prefswin *PWin;
+		//! The UrlHandler object.
+		UrlHandler*					fUrlHandler;
 		//! Loads the settings from disk.
 		status_t LoadSettings();
 		//! Saves the settings to disk.
