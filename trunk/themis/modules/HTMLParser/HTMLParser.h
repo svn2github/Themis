@@ -12,6 +12,7 @@
 #include <SupportDefs.h>
 #include <Handler.h>
 #include "plugclass.h"
+#include "cacheplug.h"
 
 #include <string>
 
@@ -33,6 +34,11 @@ extern "C" __declspec( dllexport ) PlugClass * GetObject();
 class HTMLParser	:	public BHandler, public PlugClass	{
 	
 	private:
+		// Plugin variables
+		CachePlug * cache;
+		uint32 userToken;
+
+		// Parsing variables
 		unsigned int mPos;
 		unsigned int mOldPos; // Position in string before last read.
 		unsigned int mLineNr;

@@ -15,6 +15,7 @@
 #include "commondefs.h"
 #include "plugman.h"
 
+
 #include "TDocument.h"
 #include "TElement.h"
 #include "TNode.h"
@@ -64,6 +65,13 @@ PlugClass * GetObject()	{
 }
 
 HTMLParser	::	HTMLParser( BMessage * info )	:	BHandler( "HTMLParser" ), PlugClass( info )	{
+	
+	cache = (CachePlug *) PlugMan->FindPlugin( CachePlugin );
+	userToken = 0;
+	
+	if ( cache != NULL )	{
+		userToken = cache->Register( Type(), "HTML Parser" );
+	}
 	
 	reset();
 	
@@ -2416,32 +2424,76 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 			}
 		}	
 		case COMMAND_INFO:	{
-			printf( "COMMAND_INFO called\n" );
-			// Check if it is from the http protocol
-			int32 plugin;
-			message->FindInt32( "From", &plugin );
-			if ( plugin != 'http' )	{
-				printf( "Message not recognized\n" );
-				break;
-			}
-
-			// Get the pointer out
-			void * location = NULL;
-			message->FindPointer( "data_pointer", &location );
-			if ( location )	{
-				printf( "Got pointer\n" );
-				bool finished = false;
-				message->FindBool( "request_done", &finished );
-				if ( finished )	{
-					BPositionIO * pointer = (BPositionIO *) location;
-					pointer->Seek( 0, SEEK_SET );
-					char * buffer = new char[1000];
-					memset( buffer, 0, 1000 );
-					string content;
-					while ( pointer->Read( buffer, 999 ) )	{
-						content += buffer;
+			switch ( message->what )	{
+				case PlugInLoaded:	{
+					PlugClass * plug = NULL;
+					message->FindPointer(  "plugin", (void **) &plug );
+					if ( plug != NULL )	{
+							printf( "A plugin has been loaded\n" );
+							if ( ( plug->Type() & TARGET_CACHE ) != 0 )	{
+								cache = (CachePlug *) plug;
+								userToken = cache->Register( Type(), "HTML Parser" );
+							}
 					}
-	
+					break;
+				}
+				case PlugInUnLoaded:	{
+					uint32 type = 0;
+					type = message->FindInt32( "type" );
+					if ( ( type & TARGET_CACHE ) != 0 )	{
+						printf( "Cache unloaded\n" );
+						cache = NULL;
+					}
+					break;
+				}
+				case ProtocolConnectionClosed:	{
+					printf( "Got data\n" );
+					
+					bool requestDone = false;
+					message->FindBool( "request_done", &requestDone );
+					
+					if ( !requestDone )	{
+						// I'll wait
+						break;
+					}
+					
+					const char * url = NULL;
+					message->FindString( "url", &url );
+					
+					if ( url != NULL )	{
+						printf( "Getting data of url: %s\n", url );
+					}
+					else	{
+						// What the heck
+						break;
+					}
+			
+					int32 fileToken = cache->FindObject( userToken, url );
+					ssize_t fileSize = cache->GetObjectSize( userToken, fileToken );
+					
+					printf( "File size: %i\n", (int) fileSize );
+					
+					string content;
+					char * buffer = new char[ 2000 ];
+					ssize_t bytesRead = 0;
+					int totalBytes = 0;
+					bytesRead = cache->Read( userToken, fileToken, buffer, 2000 );
+					while (  bytesRead > 0 )	{
+						totalBytes += bytesRead;
+						if ( totalBytes > fileSize )	{
+							printf( "Ahem. Whose bug is this ?\n" );
+							printf( "Complete text gotten:\n%s", content.c_str() );
+							break;
+						}
+						printf( "Got part of data: %i\n", totalBytes  );
+						content += buffer;
+						memset( buffer, 0, 1000 );
+						bytesRead = cache->Read( userToken, fileToken, buffer, 2000 );
+					}
+					delete[] buffer;
+
+					printf( "Put all data in content\n" );
+			
 					// Create a DOM document
 					TDocumentShared document( new TDocument() );
 					document->setSmartPointer( document );
@@ -2453,6 +2505,8 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 					setContent( content );
 					startParsing( document );
 					
+					printf( "Data parsed\n" );
+			
 					//showDocument();
 
 					if ( PlugMan )	{
@@ -2468,14 +2522,8 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 						
 						PlugMan->Broadcast( TARGET_PARSER, ALL_TARGETS, &container );
 					}
-
+					break;
 				}
-				else	{
-					printf( "More data to come...\n" );
-				}
-	
-				message->PrintToStream();
-				
 			}
 			break;
 		}
