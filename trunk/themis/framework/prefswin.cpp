@@ -31,6 +31,7 @@
 
 #include <iostream>
 #include <ctype.h>
+#include <stdlib.h>
 
 #include "prefswin.h"
 #include "app.h"
