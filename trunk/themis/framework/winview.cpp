@@ -31,118 +31,113 @@ Project Start Date: October 18, 2000
 #include <Handler.h>
 #include <stdio.h>
 #include <Button.h>
+#include <ctype.h>
 #include "protocol_plugin.h"
 extern plugman *PluginManager;
 
 winview::winview(BRect frame,const char *name,uint32 resizem,uint32 flags)
-        :BView(frame,name,resizem,flags)
- {
-  SetViewColor(216,216,216);
-  BRect r(Bounds());
-  r.bottom=19;
-  BMessage *msg=new BMessage(OpenLocation);
-  locline=new BTextControl(r,"locationline","Location:",NULL,msg,B_FOLLOW_TOP|B_FOLLOW_LEFT_RIGHT,B_WILL_DRAW|B_FRAME_EVENTS|B_NAVIGABLE);
-  locline->SetDivider(50);
-  r=Bounds();
-  r.top=r.bottom-15;
-  r.right=r.left+30;
-  msg=new BMessage(B_CANCEL);
-  AddChild(locline);
-  stopbutton=new BButton(r,"cancelbutton","Stop",msg);
-  stopbutton->SetEnabled(false);
-  AddChild(stopbutton);
-  
- }
+	:BView(frame,name,resizem,flags)
+	{
+	SetViewColor(216,216,216);
+	BRect r(Bounds());
+	r.bottom=19;
+	BMessage *msg=new BMessage(OpenLocation);
+	locline=new BTextControl(r,"locationline","Location:",NULL,msg,B_FOLLOW_TOP|B_FOLLOW_LEFT_RIGHT,B_WILL_DRAW|B_FRAME_EVENTS|B_NAVIGABLE);
+	locline->SetDivider(50);
+	r=Bounds();
+	r.top=r.bottom-15;
+	r.right=r.left+30;
+	msg=new BMessage(B_CANCEL);
+	AddChild(locline);
+	stopbutton=new BButton(r,"cancelbutton","Stop",msg);
+	stopbutton->SetEnabled(false);
+	AddChild(stopbutton);	
+	}
 void winview::AttachedToWindow()
- {
-  stopbutton->SetTarget(this);
-  locline->SetTarget(this);
- }
+	{
+	stopbutton->SetTarget(this);
+	locline->SetTarget(this);
+	}
 void winview::MessageReceived(BMessage *msg)
- {
-  switch(msg->what)
-   {
-    case B_CANCEL:
-     {
-      printf("Ordering protocol to stop\n");
-      protocol_plugin *pobj=(protocol_plugin*)PluginManager->FindPlugin(protocol);
-      if (pobj!=NULL)
-       pobj->Stop();
-       status_t stat;
-      wait_for_thread(pobj->Thread(),&stat);
-      stopbutton->SetEnabled(false);
-     }break;
-    case OpenLocation:
-     {
-      stopbutton->SetEnabled(true);
-      msg->PrintToStream();
-      BString url=locline->Text();
-      protocol=HTTPPlugin;
-      if (url.Length()>0)
-       {
-        int32 pos=url.FindFirst("://");
-        if ((pos>0) && (pos<6))
-         {
-           if (url.IFindFirst("https://")==0)
-            {
-             protocol=HTTPSPlugin;
-             goto ContOpenLocation;
-            }
-           if (url.IFindFirst("http://")==0)
-            {
-             protocol=HTTPPlugin;
-             goto ContOpenLocation;
-            }
-         }
-        else
-         {
-          if (pos==-1)
-           {
-            BString tmp;
-            tmp << "http://" << url.String();
-            url=tmp;
-            locline->SetText(url.String());
-           }
-         }
-       }
-      ContOpenLocation:
-      ProtocolPlugClass *pobj=(ProtocolPlugClass*)PluginManager->FindPlugin(protocol);
-      printf("pobj: %p\n",pobj);
-      if (url.Length()==0)
-       {
-        return;
-       }
-      if (pobj!=NULL)
-       {
-        BMessage *info=new BMessage;
-        info->AddPointer("top_view",this);
-        info->AddPointer("window",Window());
-        info->AddPointer("parser",Parser);
-        info->AddPointer("plug_manager",PluginManager);
-        info->AddString("target_url",url.String());
-        printf("info: %p\n",info);
-        info->PrintToStream();
-        pobj->SpawnThread(info);
-        pobj->StartThread();
-//        delete info;
-//    snooze(5000000);
-//  port_id httpport=find_port("http_protocol_port");
-//  BMessage *msg=new BMessage(FetchItem);
-//  msg->AddString("target_url","http://127.0.0.1");
-//  size_t size=msg->FlattenedSize();
-//  char *data=new char[size+1];
-//  memset(data,0,size+1);
-//  msg->Flatten(data,size);
-//  delete msg;
-//  for (int32 i=0; i<1000;i++)
-//   {
-//    printf("writing message #%ld to port.\n",i);
-//    write_port(httpport,FetchItem,data,size);
-//   }
-//  delete data;
-       }
-     }break;
-    default:
-     BView::MessageReceived(msg);
-   }
- }
+	{
+	switch(msg->what)
+		{
+		case B_CANCEL:
+			{
+			printf("Ordering protocol to stop\n");
+			protocol_plugin *pobj=(protocol_plugin*)PluginManager->FindPlugin(protocol);
+			if (pobj!=NULL)
+				pobj->Stop();
+			status_t stat;
+			wait_for_thread(pobj->Thread(),&stat);
+			stopbutton->SetEnabled(false);
+			}break;
+		case OpenLocation:
+			{
+			stopbutton->SetEnabled(true);
+			msg->PrintToStream();
+			BString url=locline->Text();
+			protocol=HTTPPlugin;
+			if (url.Length()>0)
+				{
+				int32 pos=url.FindFirst("://");
+				if (pos>0)
+					{
+					char *u=url.LockBuffer(0);
+					char *protostr= new char[pos+1];
+					memset(protostr,0,pos+1);
+					strncpy(protostr,u,pos);
+					url.UnlockBuffer(-1);
+					u=NULL;
+					for (int i=0;i<pos;i++)
+						protostr[i]=tolower(protostr[i]);
+					if (strcmp(protostr,"https")==0)
+						protocol=HTTPSPlugin;
+					else
+						protocol=strtoval(protostr);
+					delete protostr;
+					protostr=NULL;
+					printf("Looking for \"%c%c%c%c\" protocol add-on.\n",protocol>>24,protocol>>16,protocol>>8,protocol);
+					}
+				}
+			ProtocolPlugClass *pobj=(ProtocolPlugClass*)PluginManager->FindPlugin(protocol);
+			printf("pobj: %p\n",pobj);
+			if (url.Length()==0)
+				{
+				return;
+				}
+			if (pobj!=NULL)
+				{
+				BMessage *info=new BMessage;
+				info->AddPointer("top_view",this);
+				info->AddPointer("window",Window());
+				info->AddPointer("parser",Parser);
+				info->AddPointer("plug_manager",PluginManager);
+				info->AddString("target_url",url.String());
+				printf("info: %p\n",info);
+				info->PrintToStream();
+				pobj->SpawnThread(info);
+				pobj->StartThread();
+				//        delete info;
+				//    snooze(5000000);
+				//  port_id httpport=find_port("http_protocol_port");
+				//  BMessage *msg=new BMessage(FetchItem);
+				//  msg->AddString("target_url","http://127.0.0.1");
+				//  size_t size=msg->FlattenedSize();
+				//  char *data=new char[size+1];
+				//  memset(data,0,size+1);
+				//  msg->Flatten(data,size);
+				//  delete msg;
+				//  for (int32 i=0; i<1000;i++)
+				//   {
+				//    printf("writing message #%ld to port.\n",i);
+				//    write_port(httpport,FetchItem,data,size);
+				//   }
+				//  delete data;
+				}
+			}break;
+		default:
+		BView::MessageReceived(msg);
+		}
+	}
+
