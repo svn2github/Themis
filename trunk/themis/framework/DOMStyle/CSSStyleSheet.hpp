@@ -37,10 +37,13 @@
 // Declarations used
 class CSSRule;
 class CSSRuleList;
+class CSSStyleSheet;
 
 // Typedefs used
 typedef boost::shared_ptr<CSSRule> CSSRulePtr;
+typedef boost::weak_ptr<CSSRule> CSSRuleWeak;
 typedef boost::shared_ptr<CSSRuleList> CSSRuleListPtr;
+typedef boost::shared_ptr<CSSStyleSheet> CSSStyleSheetPtr;
 
 // DOM Style headers
 #include "StyleSheet.hpp"
@@ -58,7 +61,7 @@ class CSSStyleSheet	:	public StyleSheet	{
 
 	private:
 		/// The owner rule.
-		CSSRulePtr mOwnerRule;
+		CSSRuleWeak mOwnerRule;
 		vector<CSSRulePtr> mCssRuleList;
 		CSSRuleListPtr mCssRules;
 
@@ -71,7 +74,7 @@ class CSSStyleSheet	:	public StyleSheet	{
 			
 			@param aOwnerRule	The owner rule of the style sheet.
 		*/
-		CSSStyleSheet( CSSRulePtr aOwnerRule );
+		CSSStyleSheet( CSSRulePtr aOwnerRule = CSSRulePtr() );
 		
 		/// Destructor of the CSSStyleSheet class.
 		/**

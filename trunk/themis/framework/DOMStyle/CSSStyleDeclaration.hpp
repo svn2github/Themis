@@ -41,10 +41,12 @@
 // Declarations
 class CSSValue;
 class CSSRule;
+class CSSStyleDeclaration;
 
 // Typedefs
 typedef boost::shared_ptr<CSSValue> CSSValuePtr;
 typedef boost::shared_ptr<CSSRule> CSSRulePtr;
+typedef boost::shared_ptr<CSSStyleDeclaration> CSSStyleDeclarationPtr;
 
 // Namespaces used
 using namespace std;

@@ -63,7 +63,7 @@ CSSStyleSheet	::	~CSSStyleSheet()	{
 
 CSSRulePtr CSSStyleSheet	::	getOwnerRule() const	{
 
-	return mOwnerRule;
+	return make_shared( mOwnerRule );
 	
 }
 
