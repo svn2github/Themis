@@ -94,7 +94,8 @@ RENDERERSOURCES= \
 	Renderer/TextLinkElement.cpp \
 	Renderer/TRenderWindow.cpp \
 	Renderer/BitmapElement.cpp \
-	Renderer/Utils.cpp
+	Renderer/Utils.cpp \
+	Renderer/TRenderer.cpp
 COMMONSOURCES= \
 	common/plugclass.cpp \
 	common/tcplayer.cpp \
