@@ -352,11 +352,13 @@ SiteHandler::ReceiveBroadcast(
 					msg->FindInt32( "url_id", &url_id );
 					
 					SiteEntry* site_entry = GetEntry( site_id );
-					UrlEntry* url_entry = site_entry->GetEntry( url_id );
+					UrlEntry* url_entry = NULL;
+					if ( site_entry != NULL )
+						site_entry->GetEntry( url_id );
 					
 					if( !site_entry || !url_entry )
 					{
-						printf( "SITEHANDLER: SiteEntry [&ld] and/or UrlEntry [%ld] not found! Aborting!\n", site_id, url_id );
+						printf( "SITEHANDLER: SiteEntry [%ld] and/or UrlEntry [%ld] not found! Aborting!\n", site_id, url_id );
 						break;
 					}
 					
