@@ -34,8 +34,8 @@ FRAMEWORKSOURCES= \
 	framework/win.cpp \
 	framework/winview.cpp \
 	framework/plugman.cpp \
-	framework/infowin.cpp \
-	framework/htmlparser.cpp
+	framework/infowin.cpp 
+#	framework/htmlparser.cpp
 COMMONSOURCES= \
 	common/plugclass.cpp \
 	common/tcplayer.cpp
@@ -182,7 +182,7 @@ endif
 #			domtest
 all: framework addons domtest
 	@echo "Themis application and add-ons built successfully."
-addons: httpaddon cacheaddon cookieaddon jsaddon
+addons: httpaddon cacheaddon #cookieaddon jsaddon
 	@echo "All add-ons built successfully."
 clean: 
 	@rm -rf objects depends Themis
