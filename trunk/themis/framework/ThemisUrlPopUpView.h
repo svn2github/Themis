@@ -7,6 +7,7 @@
 #include <View.h>
 #include <ListView.h>
 #include <MessageFilter.h>
+#include <GraphicsDefs.h>
 
 // C/C++ headers
 
@@ -18,15 +19,15 @@ class ThemisUrlListView;
 class ThemisUrlPopUpView : public BView
 {
 	public:
-												ThemisUrlPopUpView(
-													BRect frame );
+									ThemisUrlPopUpView(
+										BRect frame,
+										rgb_color gray );
 													 	 
 		virtual void				Draw( BRect updaterect );
 		
-		//void								ListToDisplay( BList* list );
-		//void								ResizeMe();
+		ThemisUrlListView*			ulv;
 		
-		ThemisUrlListView*	ulv;
+		rgb_color					fDarkGrayColor;
 };
 
 #endif
@@ -43,8 +44,8 @@ class ThemisUrlPopUpView : public BView
 class ThemisUrlListView : public BListView
 {
 	public:
-												ThemisUrlListView(
-													BRect frame );
+									ThemisUrlListView(
+										BRect frame );
 };
 
 #endif
@@ -59,11 +60,11 @@ class ThemisUrlListView : public BListView
 class ThemisUrlPopUpViewMessageFilter : public BMessageFilter
 {
 	public:
-												ThemisUrlPopUpViewMessageFilter( BWindow* win );
+									ThemisUrlPopUpViewMessageFilter( BWindow* win );
 		virtual filter_result		Filter( BMessage *msg, BHandler **target );
 		
-		BWindow*							window;
-		int32									lastbutton;
+		BWindow*					window;
+		int32						lastbutton;
 };
 
 #endif

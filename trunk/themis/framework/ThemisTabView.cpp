@@ -268,11 +268,13 @@ ThemisTabView::MouseDown( BPoint point )
 				break;
 						
 			BMenuItem* selected = NULL;
+			BMessage* cotmsg = new BMessage( CLOSE_OTHER_TABS );
+			cotmsg->AddInt32( "tabindex", tabindex );
 			
 			BPopUpMenu* popupmenu = new BPopUpMenu( "TABPOPUPMENU", true, false, B_ITEMS_IN_COLUMN );
 			BMenuItem* addtab = new BMenuItem( "Add new Tab", new BMessage( TAB_ADD ), 0, 0 );
 			BMenuItem* closethistab = new BMenuItem( "Close this Tab", new BMessage( TAB_CLOSE ), 0, 0 );
-			BMenuItem* closeothertabs = new BMenuItem( "Close other Tabs", new BMessage( CLOSE_OTHER_TABS ), 0, 0 );
+			BMenuItem* closeothertabs = new BMenuItem( "Close other Tabs", cotmsg, 0, 0 );
 					
 			popupmenu->AddItem( addtab );
 			popupmenu->AddSeparatorItem();

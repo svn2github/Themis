@@ -312,10 +312,9 @@ void Win::MessageReceived(BMessage *msg) {
 			}
 			cout << "URL_OPEN: url_to_open: " << url.String() << endl;
 			
-			// taken out for now
-			// ( too lazy to type in a url for testing everytime )
-			//if( url.Length() == 0 )
-			//	break;
+			// stop, if there is no url
+			if( url.Length() == 0 )
+				break;
 			
 			// create the fakesite ( later the renderview )
 			FakeSite* fakesite = new FakeSite(
@@ -466,8 +465,13 @@ void Win::MessageReceived(BMessage *msg) {
 			// imaginary prefs
 			bool prefs_open_type_ahead = true;
 			
-			if( prefs_open_type_ahead == true || msg->FindBool( "open" ) == true )
-				UrlTypedHandler();
+			if( prefs_open_type_ahead == true || msg->FindBool( "show_all" ) == true )
+			{
+				if( msg->FindBool( "show_all" ) == true )
+					UrlTypedHandler( true );
+				else
+					UrlTypedHandler( false );
+			}
 			
 			
 		}break;
@@ -748,15 +752,15 @@ Win::LoadInterfaceGraphics()
 }
 
 void
-Win::UrlTypedHandler()
+Win::UrlTypedHandler( bool show_all )
 {
 	
 	/////////////////
 	// get the urls from somewhere .. i dunno from where :D
-	// ( i have a const char* array set up here for convenience )
+	// ( i have set up a const char* array here for convenience )
 	////////////////
 	
-	const char* urls[15];
+	const char* urls[18];
 	urls[0] = "foo.foo.bar";
 	urls[1] = "http://foo.foo.bar";
 	urls[2] = "foo.foo.com";
@@ -772,37 +776,94 @@ Win::UrlTypedHandler()
 	urls[12] = "www.xentronix.com";
 	urls[13] = "http://www.xentronix.com";
 	urls[14] = "ftp://ftp.be.com";
-	
+	urls[15] = "bebits.com";
+	urls[16] = "beosjournal.org";
+	urls[17] = "bewicked.tk";
 			
 	// create the BList with the matching urls
 	BList* list = new BList();
 	
-	////////////////
-	// need to refine some things here for example if i type a protocol and stuff
-	// but i am tired of coding for today
-	// its far from being complete imho
-	// but enough for now..think i'll send you the code right now raymond
-	////////////////
-		
 	int i = 0;
-	BString url;
-	//BString proto;
-	BString typedurl( navview->urlview->Text() );
-	//cout << "typedurl: " << typedurl.String() << " length: " << typedurl.Length() << endl;
-	while( i < 15 )
+	BString typed_url;					// the typed url
+	BString cached_url;					// the cached url
+	BString cached_url_proto( "" );		// protocol of the cached url
+	
+	if( show_all == true )
+		typed_url.SetTo( "" );
+	else
 	{
-		url.SetTo( urls[i] );
-		if( typedurl.Length() != 0 )
+		typed_url.SetTo( navview->urlview->Text() );
+		typed_url.ToLower();
+	}
+	
+	cout << "type_durl: " << typed_url.String() << " length: " << typed_url.Length() << endl;
+	
+	while( i < 18 )
+	{
+		cached_url.SetTo( urls[i] );
+		cout << "-----------" << cached_url.String() << "--------" << endl;
+		
+		if( typed_url.Length() != 0 )
 		{
-			if( strncmp( url.String(), typedurl.String(), typedurl.Length() ) == 0 )
+			cout << "compare strings: " << cached_url.String() << " <> " << typed_url.String() << endl;
+			// if the typed url matches beginning of cached url, add it
+			if( strncmp( cached_url.String(), typed_url.String(), typed_url.Length() ) == 0 )
 			{
-				if( url.Length() > typedurl.Length() )
-					list->AddItem( new BStringItem( url.String() ) );
+				cout << "both urls fit -> adding url to list" << endl;
+				list->AddItem( new BStringItem( cached_url.String() ) );
+			}
+			else
+			{
+				cout << "urls don't fit" << endl;
+				// if the urls dont match, take away the protocol of the cached url
+				if( cached_url.FindFirst( "://" ) > 0 )
+				{
+					cout << "removing proto of cached url" << endl;
+					cached_url.MoveInto( cached_url_proto, 0, cached_url.FindFirst( "://" ) + 3 );
+					cout << "cached_url_proto: " << cached_url_proto.String() << endl;
+					cout << "cached_url: " << cached_url.String() << endl;
+				}
+				
+				// if the urls fit now
+				if( strncmp( cached_url.String(), typed_url.String(), typed_url.Length() ) == 0 )
+				{
+					cout << "urls fit after removing protocol -> adding url to list" << endl;
+					// add the missing proto again
+					if( cached_url_proto.Length() != 0 )
+						cached_url.Prepend( cached_url_proto );
+						
+					list->AddItem( new BStringItem( cached_url.String() ) );
+				}
+				else
+				{
+					cout << "urls don't fit after removing protocol" << endl;
+					// if they still don't fit, remove 'www.' from cached url
+					if( cached_url.FindFirst( "www." ) == 0 )
+					{
+						cout << "removing 'www.' from cached url" << endl;
+						cached_url.Remove( 0, 4 );
+						cout << "cached_url: " << cached_url.String() << endl;
+					}
+					
+					// check if they finally fit
+					if( strncmp( cached_url.String(), typed_url.String(), typed_url.Length() ) == 0 )
+					{
+						cout << "urls finally match without proto and 'www.' -> adding to url to list" << endl;
+						// add missing 'www.' and proto
+						cached_url.Prepend( "www." );
+						
+						if( cached_url_proto.Length() != 0 )
+						cached_url.Prepend( cached_url_proto );
+												
+						list->AddItem( new BStringItem( cached_url.String() ) );
+					}
+				}
+				cached_url_proto.SetTo( "" );
 			}
 		}
 		else
 		{
-			list->AddItem( new BStringItem( url.String() ) );
+			list->AddItem( new BStringItem( cached_url.String() ) );
 		}
 		i++;
 	}
@@ -825,13 +886,4 @@ Win::UrlTypedHandler()
 			urlpopupwindow = NULL;
 		}
 	}
-	
-	// add the list
-	/*
-	if( list->CountItems() > 0 )
-	{
-		urlpopupwindow->Lock();
-		urlpopupwindow->ListToDisplay( list );
-		urlpopupwindow->Unlock();
-	}*/
 }

@@ -27,8 +27,10 @@ ThemisUrlPopUpWindow::ThemisUrlPopUpWindow( BWindow* parent, BRect frame )
 	vscroll = NULL;
 	url_list = NULL;
 	trunc_list = NULL;
-		
-	urlpopupview = new ThemisUrlPopUpView( Bounds() );
+	
+	urlpopupview = new ThemisUrlPopUpView(
+		Bounds(),
+		( ( Win* )parentwindow )->fColorArray[4] );
 	AddChild( urlpopupview );
 }
 

@@ -68,7 +68,7 @@ class Win : public BWindow
 		void						CreateUrlPopUpWindow();
 		void						DefineInterfaceColors();
 		void						LoadInterfaceGraphics();
-		void						UrlTypedHandler();
+		void						UrlTypedHandler( bool show_all );
 	
 		BMenu*						optionsmenu;
 		BMenu*						filemenu;

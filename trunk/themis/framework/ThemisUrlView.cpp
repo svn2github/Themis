@@ -102,7 +102,7 @@ ThemisUrlView::MouseDown( BPoint point )
 		if( win->urlpopupwindow == NULL )
 		{
 			BMessage* open = new BMessage( URL_TYPED );
-			open->AddBool( "open", true );
+			open->AddBool( "show_all", true );
 			win->PostMessage( open );
 		}
 		else

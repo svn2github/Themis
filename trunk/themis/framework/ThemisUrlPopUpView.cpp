@@ -12,14 +12,17 @@
 #include "win.h"
 
 ThemisUrlPopUpView::ThemisUrlPopUpView(
-	BRect frame )
+	BRect frame,
+	rgb_color gray )
 	: BView(
-			frame,
-			"THEMISURLPOPUPVIEW",
-			B_FOLLOW_ALL,
-			B_WILL_DRAW | B_FULL_UPDATE_ON_RESIZE )
+		frame,
+		"THEMISURLPOPUPVIEW",
+		B_FOLLOW_ALL,
+		B_WILL_DRAW | B_FULL_UPDATE_ON_RESIZE )
 {
 	BRect rect = Bounds();
+	
+	fDarkGrayColor = gray;
 	
 	ulv = new ThemisUrlListView(
 		BRect(
@@ -40,9 +43,8 @@ ThemisUrlPopUpView::Draw( BRect updaterect )
 	
 	SetHighColor( 255,255,255 );
 	FillRect( updaterect, B_SOLID_HIGH );
-	//FillRect( updaterect, B_SOLID_LOW );
 	
-	SetHighColor( 190,190,190 );
+	SetHighColor( fDarkGrayColor );
 	StrokeRect( updaterect, B_SOLID_HIGH );
 	
 	
@@ -57,11 +59,11 @@ ThemisUrlPopUpView::Draw( BRect updaterect )
 ThemisUrlListView::ThemisUrlListView(
 	BRect frame )
 	: BListView(
-			frame,
-			"THEMISURLLISTVIEW",
-			B_SINGLE_SELECTION_LIST,
-			B_FOLLOW_ALL,
-			B_WILL_DRAW | B_FULL_UPDATE_ON_RESIZE )
+		frame,
+		"THEMISURLLISTVIEW",
+		B_SINGLE_SELECTION_LIST,
+		B_FOLLOW_ALL,
+		B_WILL_DRAW | B_FULL_UPDATE_ON_RESIZE )
 {
 	SetFontSize( 10.0 );
 }

@@ -16,22 +16,22 @@
 class ThemisUrlPopUpWindow : public BWindow
 {
 	public:
-												ThemisUrlPopUpWindow( BWindow* parent, BRect frame );
+									ThemisUrlPopUpWindow( BWindow* parent, BRect frame );
 		virtual void				MessageReceived( BMessage *msg );
 		
-		void								ListToDisplay( BList* list );
-		void								ResizeToPrefered();
-		void								TruncateUrlStrings();
+		void						ListToDisplay( BList* list );
+		void						ResizeToPrefered();
+		void						TruncateUrlStrings();
 		
-		ThemisUrlPopUpView*	urlpopupview;
-		BScrollBar*	vscroll;
+		ThemisUrlPopUpView*			urlpopupview;
+		BScrollBar*					vscroll;
 		
 	private:
 		BWindow*					parentwindow;
 		
-		uint32							lastitem;
-		BList*							url_list;
-		BList*							trunc_list;
+		uint32						lastitem;
+		BList*						url_list;
+		BList*						trunc_list;
 };
 
 #endif
