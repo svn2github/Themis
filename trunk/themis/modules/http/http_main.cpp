@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <NetworkKit.h>
 #include "stripwhite.h"
+#include <stdio.h>
 //using namespace Themis_Networking;
 http_protocol *HTTP;
 http_protocol *ME;
@@ -54,10 +55,15 @@ http_protocol::~http_protocol()
  {
   delete buffer;
   delete RawBuffer;
+  if (InitInfo!=NULL)
+    delete InitInfo;
  }
 int32 http_protocol::SpawnThread(BMessage *info)
  {
-  thread=spawn_thread(ThreadFunc,"http thread",B_LOW_PRIORITY,info);
+  if (InitInfo!=NULL)
+    delete InitInfo;
+  InitInfo=new BMessage(*((BMessage *)info));
+  thread=spawn_thread(ThreadFunc,"http thread",B_LOW_PRIORITY,InitInfo);
   return thread;
  }
 /*
@@ -70,9 +76,11 @@ int32 http_protocol::GetURL(BMessage *info)
  {
   if (info!=NULL)
    {
+    printf("http_protocol::GetURL info: %p\n",info);
     info->PrintToStream();
-    BMessage *infocp=new BMessage(*info);
-    delete infocp;
+    BString url;
+    info->FindString("target_url",&url);
+    printf("output:\n%s\n**** done***\n",GetURL(url.String()));
    }
   exit_thread(B_OK);
   return 0;
@@ -80,7 +88,6 @@ int32 http_protocol::GetURL(BMessage *info)
 
 int32 http_protocol::ThreadFunc(void *info)
  {
-  
   return (HTTP->GetURL((BMessage *)info));
  }
 

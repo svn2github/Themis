@@ -110,7 +110,9 @@ void winview::MessageReceived(BMessage *msg)
         info->AddPointer("top_view",this);
         info->AddPointer("window",Window());
         info->AddPointer("parser",Parser);
-        info->AddPointer("target_url",url.String());
+        info->AddString("target_url",url.String());
+        printf("info: %p\n",info);
+        info->PrintToStream();
         pobj->SpawnThread(info);
         pobj->StartThread();
         delete info;

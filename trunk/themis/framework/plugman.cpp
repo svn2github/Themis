@@ -338,7 +338,7 @@ void *plugman::FindPlugin(uint32 which)
    {
     if (tmp->pobj->PlugID()==which)
      {
-      printf("found it\n");
+      printf("plugman::FindPlugin: found it\n");
       break;
      }
     tmp=tmp->next;
