@@ -69,19 +69,18 @@ int32 Renderer::PreProcess(void *data)
 	cdata->renderer->Broadcast(MS_TARGET_ALL,&message);
 						
 	//Start processing the DOM Tree
-	//cdata->view->LockLooper();
 	printf("RENDERER: START PROCESSING...\n");
 	bigtime_t time = real_time_clock_usecs();
 	cdata->renderer->Process(cdata->document,view); 
 	printf("RENDERER: DONE PROCESSING in %g microseconds.\n",real_time_clock_usecs() - time);
 
 	//Do the Broadcasting to say we are done rendering
-	BMessage message2(UH_RENDER_FINISHED);
-	message2.AddInt32("command",COMMAND_INFO);
-	message2.AddInt32("view_id",view->viewID);
-	cdata->renderer->Broadcast(MS_TARGET_URLHANDLER,&message2);
+	message.what = UH_RENDER_FINISHED;
+	message.RemoveName("renderview_pointer");
+
+//Commented as make the thread crash. Might need some fixing or may be moved elsewhere
+//	cdata->renderer->Broadcast(MS_TARGET_URLHANDLER,&message);	
 	
-	//cdata->view->UnlockLooper();
 	//Update the view
 	//cdata->view->Invalidate();
 		
@@ -100,11 +99,11 @@ void Renderer::Process( TNodePtr node, UIElement *element)
 		UIBox	above_element_frame;
 		if (element->nextLayer == NULL)
 			element->nextLayer = new BList(length);
-		printf("LENGTH = %d\n",length);
-		printf("CREATING BList %d, attached to element %d\n",element->nextLayer,element); 
+//		printf("LENGTH = %d\n",length);
+//		printf("CREATING BList %d, attached to element %d\n",element->nextLayer,element); 
 		for ( int i = length - 1; i >= 0; i--){
 			TNodePtr child = children->item(i);
-			printf("I = %d\n",i);
+//			printf("I = %d\n",i);
 			//a switch of around a trillion line. That's all. ;-]
 			switch(child->getNodeType()){
 				case ELEMENT_NODE:{
@@ -139,6 +138,28 @@ void Renderer::Process( TNodePtr node, UIElement *element)
 					if (!(/*non-replaced-inline-element and */css_display_v > 6))
 						GetCSSMinMaxValues(elementChild,uiChild);
 					
+/*****TITLE******/	if (strcmp(tagName,"TITLE") == 0){
+						TNodeListPtr    loc_children = node->getChildNodes();
+						int 			loc_length	 = loc_children->getLength();
+						
+						if (loc_length > 1)	 //Just for debug in case
+							printf("RENDERER: WOOPS HEADER HAS MORE THAN 1 CHILD\n");
+							
+						TNodePtr loc_child = children->item(0);
+						
+						if (loc_child->getNodeType() == TEXT_NODE){
+							TTextPtr loc_textChild = shared_static_cast <TText> (loc_child);	
+							element->parentView->SetName(loc_textChild->getWholeText().c_str());
+						}
+						else { // just for debug in case
+							printf("RENDERER: WOOPS TITLE CHILD IS NOT A TEXT_NODE\n");
+							printf("RENDERER: TYPE IS %s\n",(loc_child->getNodeType() == ELEMENT_NODE) ? "ELEMENT_NODE" : "OTHER");
+						}
+						
+						//We should jump that whole part I think by now
+						Process(node->getNextSibling(),element);					
+					}
+					
 					//Add the element to the UI Tree and go down the tree.
 					if (uiChild){
 						element->EAddChild(uiChild);
@@ -154,6 +175,7 @@ void Renderer::Process( TNodePtr node, UIElement *element)
 					UIElement		*uiChild 	 	= NULL ;
 					uiChild = new TextElement(frame,child,textChild->getWholeText().c_str(), 
 							    (BFont *)be_plain_font,SetColorSelf(RGB_BLACK),12.0);
+					
 					
 					//Is it possible to have children here ?
 					if (uiChild){
