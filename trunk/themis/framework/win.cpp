@@ -567,7 +567,7 @@ void Win::MessageReceived(BMessage *msg) {
 				
 			if( msg->what == URL_OPEN )
 			{
-				printf("Win: telling MS_TARGET_ALL that a new page is being loaded.\n");
+				printf("WIN: telling MS_TARGET_ALL that a new page is being loaded.\n");
 		
 				BMessage *lnp=new BMessage(LoadingNewPage);
 				lnp->AddInt32("command",COMMAND_INFO);
@@ -579,12 +579,12 @@ void Win::MessageReceived(BMessage *msg) {
 			info->AddInt32("targets",TARGET_PROTOCOL);
 			info->AddInt32("source",TARGET_VIEW);
 			
-			info->PrintToStream();
+//			info->PrintToStream();
 			
-			printf("Win: Sending request broadcast to MS_TARGET_PROTOCOL.\n");
+			printf("WIN: Sending request broadcast to MS_TARGET_PROTOCOL.\n");
 			Broadcast(MS_TARGET_PROTOCOL,info);
 			delete info;
-			printf("Win: Done with request broadcast.\n");
+			printf("WIN: Done with request broadcast.\n");
 			
 			/*********/
 			

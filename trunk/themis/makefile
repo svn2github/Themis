@@ -326,7 +326,7 @@ COMPILE_FLAGS=-g -D_Themis_ -DDEBUG -DNEWNET #-Wall -DNEWNET
 ifeq "$(shell if [ -f /boot/develop/headers/be/bone/sys/socket.h ] ; then echo 1 ; else echo 0 ; fi)" "1"
 	NETWORKLIBS=-lsocket -lbind -lbnetapi -I/boot/develop/headers/be/bone/ 
 	NETWORKING=BONE
-	COMPILE_FLAGS+= -DUSEBONE
+	COMPILE_FLAGS+= -DUSEBONE -D_ZETA_USING_DEPRECATED_API_
 else
 	NETWORKLIBS=-lnet -lnetapi
 	NETWORKING=net_server

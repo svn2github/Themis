@@ -359,6 +359,21 @@ UrlHandler::ReceiveBroadcast(
 							memcpy( bmp->Bits(), icon_document_hex, 1024 );
 							entry->SetFavIcon( bmp );
 							delete bmp;
+							
+							/*
+							 * Now set up the UH_PARSE_DOC_START message.
+							 */
+							printf( "URLHANDLER: sending UH_PARSE_DOC_START\n" );
+							
+							const char * url = NULL;
+							msg->FindString( "url", &url );
+
+							BMessage* parse = new BMessage( UH_PARSE_DOC_START );
+							parse->AddInt32( "command", COMMAND_INFO );
+							parse->AddInt32( "view_id", id );
+							parse->AddString( "url", url );
+							Broadcast( MS_TARGET_HTML_PARSER, parse );
+							delete parse;
 						}
 
 						entry->Print();

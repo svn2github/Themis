@@ -399,7 +399,7 @@ ThemisTabView::Select( int32 tabindex )
 	
 	int32 view_id;
 	view_id = tab->GetViewID();
-	printf( "  view_id: %ld\n", view_id );
+//	printf( "  view_id: %ld\n", view_id );
 	
 	UrlHandler* uh = ( ( App* )be_app )->GetUrlHandler();
 	if( uh )
@@ -412,7 +412,7 @@ ThemisTabView::Select( int32 tabindex )
 		
 		if( uh->EntryValid( view_id ) )
 		{
-			printf( "  Entry valid.\n" );	
+//			printf( "  Entry valid.\n" );	
 			
 			/* Tab title */
 			ttitle.Append( uh->GetTitleFor( view_id ) );
