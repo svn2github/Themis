@@ -163,7 +163,11 @@ void App::InitSettings(char *settings_path) {
 
 status_t App::LoadSettings() {
 	if (AppSettings!=NULL) {
-			
+		{
+			BEntry ent("/boot/home/config/settings/Themis/dtd/",true);
+			if (!ent.Exists())
+				create_directory("/boot/home/config/settings/Themis/dtd/",0555);
+		}
 		status_t ret=B_OK;
 		BPath path;
 		if (find_directory(B_USER_SETTINGS_DIRECTORY,&path)==B_OK) {
@@ -201,6 +205,7 @@ status_t App::LoadSettings() {
 				create_directory(path.Path(),0777);
 				InitSettings((char*)path.Path());
 				SaveSettings();
+				
 				return B_OK;
 				
 			}
