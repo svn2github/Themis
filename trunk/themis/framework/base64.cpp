@@ -139,14 +139,14 @@ void base64::encode(void *in, uint32 ilen,void *out,uint32 *olen)
 		memcpy(ibuff,(unsigned char*)in+ioff,q);
 		e2s(ibuff,obuff);
 		if (q==1) {
-			memcpy(output+ooff,obuff,2);
-			ooff+=2;
-			memcpy(output+ooff,"==",2);
-			ooff+=2;
-		} else {
 			memcpy(output+ooff,obuff,3);
 			ooff+=3;
-			memcpy(output+ooff,"=",1);
+			memcpy(output+ooff,"==\0",3);
+			ooff+=2;
+		} else {
+			memcpy(output+ooff,obuff,4);
+			ooff+=4;
+			memcpy(output+ooff,"=\0",1);
 			ooff+=1;
 		}
 	}
@@ -156,7 +156,7 @@ void base64::encode(void *in, uint32 ilen,void *out,uint32 *olen)
 uint32 base64::expectedencodedsize(uint32 in_size)
 {
 	uint32 size=0;
-	size=(uint32)ceil(in_size*(4.0/3.0));
+	size=(uint32)ceil(in_size*(4.0/3.0))+10;
 	return size;
 }
 

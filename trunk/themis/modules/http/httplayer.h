@@ -352,9 +352,6 @@ class httplayer {
 		void ProcessData(http_request *request,void *buffer, int size);
 		void ProcessChunkedData(http_request *request, void *buffer, int size);
 		BMessage *CheckCacheStatus(http_request *request);
-		int find_lcd(int fact1,int fact2,int start);
-		int32 b64encode(void *unencoded,int32 in_size,char *encoded,int32 maxsize);
-		int32 b64decode(char *encoded,unsigned char **decoded,int32 *size);
 		void FindURI(char **url,char **host,uint16 *port,char **uri,bool *secure);
 		friend class authwin;
 		friend class http_protocol;

@@ -81,6 +81,8 @@ class cacheman: public CachePlug {
 		virtual BMessage *GetInfo(uint32 usertoken, int32 objecttoken);
 		virtual ssize_t Write(uint32 usertoken, int32 objecttoken, void *data, size_t size);
 		virtual ssize_t Read(uint32 usertoken, int32 objecttoken, void *data, size_t size);
+		status_t RemoveObject(uint32 usertoken, int32 objecttoken);
+	
 		ssize_t SetLength(uint32 usertoken, int32 objecttoken, size_t length);
 	
 		virtual status_t WriteAttr(uint32 usertoken, int32 objecttoken, const char *attrname, type_code type,void *data,size_t size);

@@ -458,7 +458,7 @@ void RAMCacheObject::ClearContent(uint32 usertoken)
 {
 	if (writelockowner!=NULL) {
 		if (writelockowner->Token()==usertoken)	
-			ClearFile();
+			databuffer->SetSize(0);
 	}
 	
 }

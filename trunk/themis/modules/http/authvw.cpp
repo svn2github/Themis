@@ -30,6 +30,7 @@ Project Start Date: October 18, 2000
 #include <stdio.h>
 #include <string.h>
 #include <String.h>
+#include "base64.h"
 extern httplayer *meHTTP;
 #ifndef NEWNET
 extern tcplayer *__TCP;
@@ -94,10 +95,13 @@ authwin::authwin(const char *title,http_request *req,char *rlm,bool upd)
 		info << "You have been requested to provide a user name\n and password for \""<<realm<<"\".";
 	} else {
 		info << "You have been requested to provide a user name\n and password for \""<<realm<<"\".\nIncorrect user name or password.";
-		unsigned char *dstr1=NULL;
+		char *dstr1=NULL;
 		char *dstr2=NULL;
-		long size=0;
-		meHTTP->b64decode(req->a_realm->auth,&dstr1,&size);
+		uint32 size=base64::expecteddecodedsize(strlen(req->a_realm->auth));
+		dstr1=new char[size+1];
+		memset(dstr1,0,size+1);
+		
+		base64::decode(req->a_realm->auth,strlen(req->a_realm->auth),dstr1,&size);
 		if (dstr1!=NULL) {
 			dstr2=new char[size+1];
 			memset(dstr2,0,size+1);
@@ -135,16 +139,6 @@ printf("authwin MessageReceived:\n");
 	
 	switch(msg->what) {
 		case B_OK: {
-//			meHTTP->Lock();
-//			meHTTP->TCP->Lock();
-#ifndef NEWNET
-			meHTTP->TCP->RequestDone(request->conn);
-#endif
-//			meHTTP->TCP->Unlock();
-			meHTTP->Done(request);
-			atomic_add(&request->conn_released,1);
-			request->conn=NULL;
-			request->conn_released=0;
 			printf("Entered username: %s\nEntered password: %s\n",view->user->Text(),view->pass->Text());
 			if (!update) {
 				
@@ -159,11 +153,11 @@ printf("authwin MessageReceived:\n");
 //			request->awin=NULL;
 //			meHTTP->Unlock();
 			Quit();
-//			PostMessage(B_QUIT_REQUESTED);
+			PostMessage(B_QUIT_REQUESTED,this);
 		}break;
 		case B_CANCEL: {
-			Quit();
-//			PostMessage(B_QUIT_REQUESTED);
+//			Quit();
+			PostMessage(B_QUIT_REQUESTED,this);
 		}break;
 		default:
 			BWindow::MessageReceived(msg);

@@ -210,6 +210,17 @@ int32 CacheObject::CountUsers()
 	}
 	return count;
 }
+CacheUser *CacheObject::GetUser(int32 which) 
+{
+	if (which>=CountUsers())
+		return NULL;
+	CacheUser *user=userlist;
+	for (int32 i=0; i<which; i++)
+		user=user->Next();
+	return user;
+	
+}
+
 CacheUser *CacheObject::FindUser(uint32 usertoken) 
 {
 	CacheUser *cur=userlist;

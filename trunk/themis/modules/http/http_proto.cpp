@@ -249,15 +249,15 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 //			if (msg->HasInt32("action"))
 //				msg->FindInt32("action",&action);
 //			printf("http proto: action is %c%c%c%c\n",action>>24,action>>16,action>>8,action);
-			BString targ;
-			rmsg->FindString("target_url",&targ);
+//			BString targ;
+//			rmsg->FindString("target_url",&targ);
 //			printf("http proto: target url: %s\n",targ.String());
 			
 //			HTTP->Lock();
 //			printf("http proto: http locked\n");
-			http_request *request=NULL;
+//			http_request *request=NULL;
 //			while (request==NULL) {
-				request=HTTP->AddRequest(rmsg);
+				HTTP->AddRequest(rmsg);
 //				if (request==NULL)
 //					snooze(25000);
 //			}
@@ -265,7 +265,7 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 //			HTTP->Unlock();
 			//we're already deleting rmsg (as info) int he HTTP->AddRequest() call.
 //			delete rmsg;
-			rmsg=NULL;
+			//rmsg=NULL;
 		}break;
 		case COMMAND_INFO: {
 			printf("HTTP Info what: %ld\n",msg->what);

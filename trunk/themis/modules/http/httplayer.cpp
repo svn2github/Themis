@@ -228,131 +228,6 @@ void httplayer::SetTCP(TCPManager *_TCP) {
 
 #endif
 
-
-//the following three functions probably can be rewritten to be much more
-//efficient and faster. my priority, however, was getting something to work.
-int httplayer::find_lcd(int fact1,int fact2,int start) {
-//	BAutolock alock(lock);
-	int i=-1;
-//	if (alock.IsLocked()) {
-		i=start;
-		bool found=false;
-		while (!found) {
-			if ((i%fact1)==0) {
-				if ((i%fact2)==0) {
-					found=true;
-					break;
-				}	
-			}
-			i++;	
-			if (quit)
-				break;	
-		}
-//	}
-	return i;
-}
-long httplayer::b64encode(void *unencoded,long in_size,char *encoded,long maxsize) {
-	BAutolock alock(lock);
-	char BASE[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-	unsigned char *data=(unsigned char*)unencoded;
-	int base2[8]={1,2,4,8,16,32,64,128};
-	long realsize=find_lcd(6,8,in_size);
-	if (realsize>maxsize)
-		return -1;
-	uint8 *buff=new uint8[(realsize*8)];
-	memset(buff,0,realsize);
-	long pos=0;
-	for (long i=0;i<in_size;i++) {
-		for (int j=7;j>-1;j--) {
-			buff[pos]= ((data[i] & base2[j])>0) ? 1:0;
-			fflush(stdout);
-			pos++;
-			if (quit)
-			break;
-		}
-		if (quit)
-			break;	
-	}
-	long i=0;
-	int chr=0;
-	int final_offset=0;
-	memset(encoded,'=',realsize);
-	do
-	{
-		chr=0;
-		for (int j=5; j>-1;j--){
-			chr|=(buff[i]==1)?base2[j]:0;				
-			i++;
-			if (quit)
-			break;
-		}
-		*(encoded+final_offset)=BASE[chr];
-		final_offset++;
-		//		if (final_offset>realsize)
-		//			break;
-		if (quit)
-		break;
-	} while(i<(in_size*8));
-#ifdef DEBUG
-	printf("encoded auth: %s\n",(char*)encoded);
-#endif
-	delete []buff;
-	return realsize;	
-}
-long httplayer::b64decode(char *encoded,unsigned char **decoded,long *size) {
-	BAutolock alock(lock);
-	char BASE[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-	long in_size=strlen(encoded);
-	char *buff=new char[find_lcd(6,8,in_size)*8];
-	*size=find_lcd(6,8,in_size);//by finding the lowest common denominator above the size of the data being decoded
-				//we can get a good idea about the largest amount of data that will be generated. Likely,
-				//the actual amount will be smaller.
-	*decoded=new unsigned char[*size];
-	memset((*decoded),0,*size);
-	int pos=0; //position of character [in question] in the BASE64 string.
-	long buff_pos=0;
-	int base2[8]={1,2,4,8,16,32,64,128};
-	memset(buff,0,in_size*8);
-	for (int i=0;i<in_size;i++) {
-		if (encoded[i]=='=')//ignore equal signs; they're just filler
-			continue;		
-		for (int j=0;j<64;j++) {
-			if (encoded[i]==BASE[j]) {
-				pos=j;
-				break;
-			}
-			if (quit)
-				break;
-		}
-		for (int j=5;j>-1;j--) {
-			*(buff+buff_pos)=((pos & base2[j]) > 0) ? 1:0;
-			buff_pos++;
-			if (quit)
-				break;
-		}
-		if (quit)
-			break;
-	}
-	int final_offset=0;//off set from beginning of the final reconstituted data
-	int bit_counter=7; //which bit
-	int chr=0; //character being reconstituted
-	for (long i=0;i<buff_pos;i++) {
-	if (bit_counter==-1) {
-	*(*decoded+final_offset)=(unsigned char)chr;
-	chr=0;
-	bit_counter=7;
-	final_offset++;
-	}
-	chr|=(*(buff+i)==1)?base2[bit_counter]:0;
-	bit_counter--;
-	if (quit)
-		break;
-		
-	}
-	*size=final_offset;
-	delete buff;
-	return *size;
-}
 auth_realm *httplayer::FindAuthRealm(char *realm,char *host) {
 //	BAutolock alock(lock);
 //	if (alock.IsLocked()) {
@@ -360,14 +235,30 @@ auth_realm *httplayer::FindAuthRealm(char *realm,char *host) {
 			auth_realm *cur=Basic->realms_head;
 			auth_realm *target=NULL;
 			while (cur!=NULL) {
-				if ((strcasecmp(cur->realm,realm)==0) && (strcasecmp(host,cur->host)==0)){
-					target=cur;
-					break;
-				}
+				if (cur->realm!=NULL)
+					if ((strcasecmp(cur->realm,realm)==0) && (strcasecmp(host,cur->host)==0)){
+						target=cur;
+						break;
+					}
 				cur=cur->next;
 				if (quit)
 					break;
 			}
+			if (target==NULL) {
+				cur=Basic->realms_head;
+				while (cur!=NULL) {
+					if (cur->realm==NULL)
+						if (strcasecmp(host,cur->host)==0) {
+							target=cur;
+							break;
+						}
+						
+					cur=cur->next;
+					
+				}
+				
+			}
+			
 			return target;
 		}
 //	}
@@ -382,15 +273,7 @@ auth_realm *httplayer::FindAuthRealm(http_request *request) {
 		if (Basic!=NULL) {
 			auth_realm *cur=Basic->realms_head;
 			while (cur!=NULL) {
-#ifdef DEBUG
-				printf("FAR: target host: %s\tcurrent: %s\n",request->host,cur->host);
-#endif
-				
 				if (strcasecmp(request->host,cur->host)==0) {
-#ifdef DEBUG
-					printf("FAR: target uri: %s\tcurrent: %s\n",request->uri,cur->baseuri);
-#endif
-					
 					char *uriloc=NULL;
 					if (strncasecmp(cur->baseuri,request->uri,strlen(cur->baseuri))==0) {
 						realm=cur;
@@ -420,14 +303,23 @@ auth_realm *httplayer::AddAuthRealm(http_request *request,char *realm, char *use
 //	if (alock.IsLocked()) {
 	BString authinfo;
 	authinfo<<user<<":"<<password;
-	int size=(strlen(user)+strlen(password)+1)*2;//make sure that we have plenty of room.
+	printf("auth info: %s\n",authinfo.String());
+	
+	int32 size=base64::expectedencodedsize(authinfo.Length());
+	printf("expected base-64 size: %ld\n",size);
+	
 	rlm=new auth_realm;
+	printf("setting up auth memory\n");
+	
 	rlm->auth=new char[size+1];
 	memset(rlm->auth,0,size+1);
+	printf("base 64 encoding auth\n");
 	
-	size=b64encode((char*)authinfo.String(),authinfo.Length(),rlm->auth,size);
+	base64::encode((void*)authinfo.String(),(uint32)authinfo.Length(),(void *)rlm->auth,(uint32*)&size);
+	
 	authinfo="nothing";
 //	memset(rlm->auth+size,0,strlen(rlm->auth)-size);
+	printf("copying host info\n");
 	
 	rlm->host=new char[strlen(request->host)+1];
 	memset(rlm->host,0,strlen(request->host)+1);
@@ -448,11 +340,14 @@ auth_realm *httplayer::AddAuthRealm(http_request *request,char *realm, char *use
 #ifdef DEBUG
 	printf("base authentication path: %s\n",rlm->baseuri);
 #endif
+	if (realm!=NULL) {
+		
+		size=strlen(realm);
+		rlm->realm=new char[size+1];
+		memset(rlm->realm,0,size+1);
+		strcpy(rlm->realm,realm);
+	}
 	
-	size=strlen(realm);
-	rlm->realm=new char[size+1];
-	memset(rlm->realm,0,size+1);
-	strcpy(rlm->realm,realm);
 	if (Basic==NULL) {
 		Basic=new auth_req;
 		Basic->realms_head=rlm;
@@ -473,9 +368,9 @@ void httplayer::UpdateAuthRealm(auth_realm *realm,char *user,char *pass) {
 	realm->auth=NULL;
 	BString authinfo;
 	authinfo<<user<<":"<<pass;
-	int size=(strlen(user)+strlen(pass)+1)*2;//make sure that we have plenty of room.
+	uint32 size=base64::expectedencodedsize(authinfo.Length());
 	realm->auth=new char[size+1];
-	b64encode((char*)authinfo.String(),authinfo.Length(),realm->auth,size);
+	base64::encode((void*)authinfo.String(),authinfo.Length(),realm->auth,&size);
 	authinfo="nothing";
 }
 void httplayer::ClearRequests() {
@@ -551,14 +446,25 @@ http_request *httplayer::AddRequest(BMessage *info) {
 			info->FindInt32("action",&what);
 			switch(what) {
 				case LoadingNewPage: {
+					//this really doesn't matter to http...
 					if (requests_head!=NULL) {
-#ifdef DEBUG
-						printf("Cleaning up older requests...\n");
-#endif
-						//ClearRequests(); //clear other requests only if the window and tab id match the current request.
 					}
 				}break;
 				case ReloadData: {
+					//flush the cache of the specified URL...
+					if (CacheSys!=NULL) {
+						BString url;
+						info->FindString("target_url",&url);
+						int32 cached_obj=CacheSys->FindObject(CacheToken,url.String());
+						if (cached_obj>=0) {
+							if (CacheSys->AcquireWriteLock(CacheToken,cached_obj)) {
+								CacheSys->RemoveObject(CacheToken,cached_obj);
+							}
+							
+						}
+						
+					}
+					
 				}break;
 				default: {
 #ifdef DEBUG
@@ -601,6 +507,30 @@ http_request *httplayer::AddRequest(BMessage *info) {
 		memset(request->url,0,url.Length()+1);
 		strcpy(request->url,url.String());
 		FindURI(&request->url,&request->host,&request->port,&request->uri,&request->secure);
+		if (info->HasString("username:password")) {
+			BString usepass;
+			info->FindString("username:password",&usepass);
+			if (usepass.Length()>0) {
+				char *u=new char[usepass.Length()+1],*p=new char[usepass.Length()+1];
+				memset(u,0,usepass.Length()+1);
+				memset(p,0,usepass.Length()+1);
+				int32 colon=usepass.FindFirst(':');
+				
+				if (colon!=B_ERROR) {
+					usepass.CopyInto(u,0,colon);
+					usepass.CopyInto(p,colon+1,usepass.Length()-colon);
+					request->a_realm=AddAuthRealm(request,NULL,u,p);
+					
+				}
+				memset(u,0,usepass.Length()+1);
+				memset(p,0,usepass.Length()+1);				
+				delete u;
+				delete p;
+				
+			}
+			
+		}
+		
 #ifdef DEBUG
 		printf("[http->addrequest] Host: %s\n",request->host);
 #endif
@@ -2172,32 +2102,7 @@ bool httplayer::ResubmitRequest(http_request *request) {
 	Proto->Broadcast(MS_TARGET_SELF,info);
 	delete info;
 	
-//	AddRequest(info);
 }
-/*
-int32 httplayer::Lock(int32 timeout) 
-{
-	thread_id callingthread=find_thread(NULL),lockingthread=lock->LockingThread();
-	if (timeout==-1) {
-		if (lock->Lock()) {
-			
-			return B_OK;
-		}
-		
-		return B_ERROR;
-		
-	} else {
-		status_t stat=lock->LockWithTimeout(timeout);
-		return stat;
-	}
-}
-void httplayer::Unlock() 
-{
-	thread_id callingthread=find_thread(NULL),lockingthread=lock->LockingThread();
-	
-	lock->Unlock();
-}
-*/
 void httplayer::FindURI(char **url,char **host,uint16 *port,char **uri,bool *secure) {
 //	BAutolock alock(lock);
 #ifdef DEBUG
@@ -2333,42 +2238,58 @@ int32 httplayer::LayerManager() {
 	
 	unsigned char *buffer=new unsigned char[size];
 	int32 bytes=0;
+	volatile int32 timeouts=0;
+	
 	volatile int32 c=0;
 	signal(SIGALRM,&httpalarm);
-	set_alarm(10000,B_PERIODIC_ALARM);
+	set_alarm(15000,B_PERIODIC_ALARM);
 	while (!quit) {
 	//new way
 		if (acquire_sem(httplayer_sem)==B_OK) {
-			lock->Lock();
-			current=requests_head;
-			while (current!=NULL) {
-				if (quit)
-					break;
-				if (!current->done) {
-					if (current->datawaiting) {
-						memset(buffer,0,size);
-						bytes=0;
-#ifndef NEWNET
-						bytes=TCP->Receive(&current->conn,buffer,10240);
-#else
-						bytes=current->conn->Receive(buffer,10240);
-#endif
-						if (bytes>0) {
-							if (!current->headersdone) {
-								ProcessHeaders(current,buffer,bytes);
-							} else {
-								ProcessData(current,buffer,bytes);
+			if (lock->LockWithTimeout(7500)==B_OK) {
+				timeouts=0;
+				current=requests_head;
+				while (current!=NULL) {
+					if (quit)
+						break;
+					if (!current->done) {
+						if (current->datawaiting) {
+							memset(buffer,0,size);
+							bytes=0;
+	#ifndef NEWNET
+							bytes=TCP->Receive(&current->conn,buffer,10240);
+	#else
+							bytes=current->conn->Receive(buffer,10240);
+	#endif
+							if (bytes>0) {
+								if (!current->headersdone) {
+									ProcessHeaders(current,buffer,bytes);
+								} else {
+									ProcessData(current,buffer,bytes);
+								}
 							}
+							
 						}
 						
 					}
 					
+					current=current->next;
 				}
 				
-				current=current->next;
+				lock->Unlock();
+			} else {
+				atomic_add(&timeouts,1);
+				if (timeouts>=1300) {//if we get roughly 10 seconds worth of time outs,
+									 //we must have hit a deadlock... so unlock this object.
+					printf("Possible deadlock detected in http... correcting.\n");
+					
+					lock->Unlock(); 
+					timeouts=0;
+				}
+				
 			}
 			
-			lock->Unlock();
+			
 		}
 		
 /* //old way

@@ -102,6 +102,8 @@ class CacheObject {
 		int32 SetToken(int32 objecttoken);
 		//! Counts the number of users that this cache object has.
 		virtual int32 CountUsers();
+		virtual CacheUser *GetUser(int32 which);
+	
 		//! Returns the URL of this particular cache object.
 		virtual const char *URL();
 		//! Set the URL for which this object contains data.

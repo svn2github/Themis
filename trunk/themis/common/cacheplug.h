@@ -101,7 +101,8 @@ that user token to access the cache system.
 		
 		//! removes the contents (the data) of the file, setting its file size to zero.
 		virtual void ClearContent(uint32 usertoken, int32 objecttoken)=0;
-		
+		virtual status_t RemoveObject(uint32 usertoken, int32 objecttoken)=0;
+	
 		//removes the CacheUser object for the specified user from one or all CacheObjects.
 		//to access the data again, the cache user must do a FindObject with the object's URL.
 		virtual void ClearRequests(uint32 usertoken, int32 objecttoken);
@@ -113,6 +114,7 @@ that user token to access the cache system.
 		//! manipulation of the write lock privilleges for any given object.
 		virtual bool AcquireWriteLock(uint32 usertoken,int32 objecttoken)=0;
 		virtual void ReleaseWriteLock(uint32 usertoken, int32 objecttoken)=0;
+		static const int32 CACHE_OBJECT_REMOVED='corm';
 };
 
 #endif

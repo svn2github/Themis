@@ -532,34 +532,47 @@ void Win::MessageReceived(BMessage *msg) {
 			protocol=HTTPPlugin;
 			if (urlS.Length()>0) {
 				int32 pos=urlS.FindFirst("://");
-				char *at=strchr(workurl,'@');
-				char *colon=strstr(workurl,"://");
-				if (at!=NULL) {
-					colon=strstr(url_,"://");
-					at=strchr(url_,'@');
-					if (colon!=NULL) {
-						int32 len2=at-(colon+3);
-						usepass=new char[len2+1];
-						memset(usepass,0,len2);
-						strncpy(usepass,colon+3,len2);
-						memset(workurl,0,len+1);
-						strncpy(workurl,url_,(colon-url_)+3);
-						strcat(workurl,at+1);
-						colon=strstr(workurl,"://");
+				int32 atpos=urlS.FindFirst('@');
+				int32 firstslash=urlS.FindFirst('/',7);
+				printf("pos: %ld\tat: %ld\tfs: %ld\n",pos,atpos,firstslash);
+				
+				if (atpos>0) {
+					int32 secondat=urlS.FindFirst('@',atpos+1);
+					if (((secondat!=B_ERROR) && (firstslash!=B_ERROR) && (secondat<firstslash)) 
+						||  ((firstslash==B_ERROR) && (secondat!=B_ERROR))) {
+							
+						atpos=secondat;
+					}			
+					printf("second at: %ld\n",secondat);
+					if (atpos<firstslash) {
+						if (pos!=B_ERROR) {
+							int32 plen=atpos-(pos+3);
+							usepass=new char[plen+1];
+							memset(usepass,0,plen+1);
+							urlS.MoveInto(usepass,pos+3,plen);
+							printf("usepass: %s\tlen: %ld\n",usepass,plen);
+							
+						} else {
+							usepass=new char[atpos+1];
+							memset(usepass,0,atpos+1);
+							urlS.MoveInto(usepass,0,atpos);
+							printf("usepass: %s\tlen: %ld\n",usepass,atpos);
+							
+						}
+						urlS.RemoveFirst("@");
+						
 					} else {
-						int32 len2=at-url_;
-						char *usepass=new char[len2+1];
-						memset(usepass,0,len);
-						strncpy(usepass,url_,len2);
-						memset(workurl,0,len+1);
-						strcpy(workurl,at+1);
-						colon=NULL;
+						if (firstslash==B_ERROR) {
+							usepass=new char[atpos+1];
+							memset(usepass,0,atpos+1);
+							urlS.MoveInto(usepass,0,atpos);
+							urlS.RemoveFirst("@");
+						}
 					}
-					
 				}
 				
-				if (colon!=NULL) {
-					pos=colon-workurl;
+				printf("urlS: %s\n",urlS.String());
+				if (pos!=B_ERROR) {
 					char *protostr=new char[pos+1];
 					memset(protostr,0,pos+1);
 					strncpy(protostr,url_,pos);
@@ -567,7 +580,6 @@ void Win::MessageReceived(BMessage *msg) {
 						protostr[i]=tolower(protostr[i]);
 					protocol=strtoval(protostr);
 					delete protostr;
-					printf("Looking for \"%c%c%c%c\" protocol addon.\n",protocol>>24,protocol>>16,protocol>>8,protocol);
 				}
 			}
 			delete url_;
@@ -576,7 +588,6 @@ void Win::MessageReceived(BMessage *msg) {
 			if (urlS.Length()==0) {
 				return;
 			}
-			url=workurl;
 			if ((urlS.FindFirst("://")==B_ERROR) || (urlS.FindFirst("://")>=6)) {
 				urlS.Prepend("http://");
 				printf("url: %s\n",urlS.String());
@@ -585,7 +596,16 @@ void Win::MessageReceived(BMessage *msg) {
 				workurl=new char[urlS.Length()+1];
 				memset(workurl,0,urlS.Length()+1);
 				urlS.CopyInto(workurl,0,urlS.Length());
+			} else {
+				memset(workurl,0,strlen(workurl)+1);
+				delete workurl;
+				workurl=new char[urlS.Length()+1];
+				memset(workurl,0,urlS.Length()+1);
+				urlS.CopyInto(workurl,0,urlS.Length());
+				
 			}
+			url=workurl;
+
 
 				printf( "Win: creating info message\n" );			
 //			if (pobj!=NULL) {
@@ -603,7 +623,7 @@ void Win::MessageReceived(BMessage *msg) {
 				info->AddPointer("options_menu",optionsmenu);
 				info->AddString("target_url",workurl);
 				delete workurl;
-//				info->AddInt32("action",LoadingNewPage);
+				info->AddInt32("action",LoadingNewPage);
 				if (usepass!=NULL) {
 					
 					info->AddString("username:password",usepass);
@@ -614,19 +634,24 @@ void Win::MessageReceived(BMessage *msg) {
 				printf("info: %p\n",info);
 				info->PrintToStream();
 				printf("Win: telling cache that a new page is being loaded.\n");
-				BMessage *bcast=new BMessage;
+/*
+	8/2/03 from Raymond:	I commented out "bcast" because it isn't actually being sent anywhere.
+*/				
+//				BMessage *bcast=new BMessage;
 				BMessage *lnp=new BMessage(LoadingNewPage);
 				lnp->AddInt32("command",COMMAND_INFO);
-				bcast->AddMessage("message",lnp);
+//				bcast->AddMessage("message",lnp);
 				Broadcast(MS_TARGET_ALL,lnp);
 				delete lnp;
-				delete bcast;
-				
-				bcast=new BMessage(BroadcastMessage);
+//				delete bcast;
+//				bcast=new BMessage(BroadcastMessage);
 				info->AddInt32("command",COMMAND_RETRIEVE);
-				bcast->AddMessage("message",info);
-				bcast->AddInt32("targets",TARGET_PROTOCOL);
-				bcast->AddInt32("source",TARGET_VIEW);
+//				bcast->AddMessage("message",info);
+//				bcast->AddInt32("targets",TARGET_PROTOCOL);
+//				bcast->AddInt32("source",TARGET_VIEW);
+				info->AddInt32("targets",TARGET_PROTOCOL);
+				info->AddInt32("source",TARGET_VIEW);
+			
 			
 //				BMessenger *msgr=new BMessenger(NULL,PluginManager,NULL);
 //				msgr->SendMessage(bcast);
@@ -637,7 +662,7 @@ void Win::MessageReceived(BMessage *msg) {
 				printf("Win: done with request broadcast\n");
 			
 			//	PluginManager->Broadcast(TARGET_VIEW,TARGET_PROTOCOL,bcast);
-				delete bcast;
+//				delete bcast;
 				delete info;
 			
 //				pobj->GetURL(info);
@@ -664,6 +689,171 @@ void Win::MessageReceived(BMessage *msg) {
 			
 			
 		}break;
+		case BUTTON_RELOAD: {
+			printf("reload...\n");
+			BString url;
+			if( msg->HasString( "url_to_open" ) )
+			{
+				url = msg->FindString( "url_to_open" );
+			}
+			else
+			{
+				url = navview->urlview->Text();
+			}
+			cout << "URL_OPEN: url_to_open: " << url.String() << endl;
+			
+			// stop, if there is no url, or about:blank
+			if( url.Length() == 0 )
+				break;
+			if( strncmp( url.String(), "about:blank", 11 ) == 0 )
+				break;
+			
+			// create the fakesite ( later the renderview )
+			FakeSite* fakesite = new FakeSite(
+				( tabview->ContainerView() )->Bounds(),
+				url.String(), ( ( App* )be_app )->GetNewUniqueID(), this );
+			
+			uint32 selection = tabview->Selection();
+			int16 tab_uid = 0;
+			int16 view_uid = fakesite->UniqueID();
+						
+			if( msg->HasInt32( "tab_to_open_in" ) )
+			{
+				int32 tab_index = msg->FindInt32( "tab_to_open_in" );
+				
+				tabview->TabAt( msg->FindInt32( "tab_to_open_in" ) )->SetView( fakesite );
+				tab_uid = ( ( ThemisTab* )tabview->TabAt( tab_index ) )->UniqueID();
+			}
+			else
+			{
+				tabview->TabAt( selection )->SetView( fakesite );
+				tab_uid = ( ( ThemisTab* )tabview->TabAt( selection ) )->UniqueID();
+			}
+			
+			if( msg->FindBool( "hidden" ) == true )
+				tabview->DrawTabs();
+			else
+				tabview->Select( selection );
+						
+			if( CurrentFocus() != NULL )
+				CurrentFocus()->MakeFocus( false );
+			tabview->TabAt( selection )->View()->MakeFocus( true );
+			char *usepass=NULL;
+			char *workurl=NULL;
+			BString urlS=url.String();
+			int len=strlen(url.String());
+			char *url_=new char[len+1];
+			workurl=new char[len+1];
+			memset(url_,0,len+1);
+			memset(workurl,0,len+1);
+			strcpy(url_,url.String());
+			strcpy(workurl,url_);
+			protocol=HTTPPlugin;
+			urlS=url;
+			
+			if (urlS.Length()>0) {
+				int32 pos=urlS.FindFirst("://");
+				int32 atpos=urlS.FindFirst('@');
+				int32 firstslash=urlS.FindFirst('/',7);
+				printf("pos: %ld\tat: %ld\tfs: %ld\n",pos,atpos,firstslash);
+				
+				if (atpos>0) {
+					int32 secondat=urlS.FindFirst('@',atpos+1);
+					if (((secondat!=B_ERROR) && (firstslash!=B_ERROR) && (secondat<firstslash)) 
+						||  ((firstslash==B_ERROR) && (secondat!=B_ERROR))) {
+						atpos=secondat;
+					}			
+					printf("second at: %ld\n",secondat);
+					
+					if (atpos<firstslash) {
+						if (pos!=B_ERROR) {
+							int32 plen=atpos-(pos+3);
+							usepass=new char[plen+1];
+							memset(usepass,0,plen+1);
+							urlS.MoveInto(usepass,pos+3,plen);
+							printf("usepass: %s\tlen: %ld\n",usepass,plen);
+							
+						} else {
+							usepass=new char[atpos+1];
+							memset(usepass,0,atpos+1);
+							urlS.MoveInto(usepass,0,atpos);
+							printf("usepass: %s\tlen: %ld\n",usepass,atpos);
+							
+						}
+						urlS.RemoveFirst("@");
+						
+					} else {
+						if (firstslash==B_ERROR) {
+							usepass=new char[atpos+1];
+							memset(usepass,0,atpos+1);
+							urlS.MoveInto(usepass,0,atpos);
+							urlS.RemoveFirst("@");
+						}
+					}
+				}
+				
+				printf("urlS: %s\n",urlS.String());
+				if (pos!=B_ERROR) {
+					char *protostr=new char[pos+1];
+					memset(protostr,0,pos+1);
+					strncpy(protostr,url_,pos);
+					for (int i=0; i<pos;i++)
+						protostr[i]=tolower(protostr[i]);
+					protocol=strtoval(protostr);
+					delete protostr;
+				}
+			}
+			delete url_;
+			ProtocolPlugClass *pobj=(ProtocolPlugClass*)PluginManager->FindPlugin(protocol);
+			if (urlS.Length()==0) {
+				return;
+			}
+			if ((urlS.FindFirst("://")==B_ERROR) || (urlS.FindFirst("://")>=6)) {
+				urlS.Prepend("http://");
+				delete workurl;
+				workurl=new char[urlS.Length()+1];
+				memset(workurl,0,urlS.Length()+1);
+				urlS.CopyInto(workurl,0,urlS.Length());
+			} else {
+				memset(workurl,0,strlen(workurl)+1);
+				delete workurl;
+				workurl=new char[urlS.Length()+1];
+				memset(workurl,0,urlS.Length()+1);
+				urlS.CopyInto(workurl,0,urlS.Length());
+				
+			}
+			
+			url=workurl;
+				BMessage *info=new BMessage;
+				info->AddInt16( "window_uid", UniqueID() );
+				info->AddInt16( "tab_uid", tab_uid );
+				info->AddInt16( "view_uid", view_uid );
+				info->AddPointer("plug_manager",PluginManager);
+				info->AddPointer("main_menu_bar",menubar);
+				info->AddPointer("file_menu",filemenu);
+				info->AddPointer("options_menu",optionsmenu);
+				info->AddString("target_url",workurl);
+				info->AddInt32("action",ReloadData);
+			
+				delete workurl;
+				if (usepass!=NULL) {
+					info->AddString("username:password",usepass);
+					memset(usepass,0,strlen(usepass)+1);
+					delete usepass;
+				}
+				
+				info->AddInt32("command",COMMAND_RETRIEVE);
+				info->AddMessage("message",info);
+				info->AddInt32("targets",TARGET_PROTOCOL);
+				info->AddInt32("source",TARGET_VIEW);
+				Broadcast(MS_TARGET_PROTOCOL,info);
+				delete info;
+			
+		}break;
+		case BUTTON_STOP: {
+			
+		}break;
+		
 		case WINDOW_NEW :
 		{
 			// resend the message to the app

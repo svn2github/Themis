@@ -56,7 +56,8 @@ CacheUser::CacheUser(CacheUser *cu) {
 			name=new char[strlen(cu->name)+1];
 			memset(name,0,strlen(cu->name)+1);
 			strcpy(name,cu->name);
-		}
+		} else
+			name=NULL;
 	} else {
 		id=0;
 		readpos=writepos=0;

@@ -599,6 +599,42 @@ ssize_t cacheman::SetLength(uint32 usertoken, int32 objecttoken, size_t length)
 	return size;
 	
 }
+status_t cacheman::RemoveObject(uint32 usertoken, int32 objecttoken) 
+{
+	status_t status=B_ERROR;
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		CacheObject *object=FindObject(objecttoken);
+		if (object!=NULL) {
+			if (object->HasWriteLock(usertoken)) {
+				CacheUser *user=NULL;
+				int32 users=object->CountUsers();
+				BMessage msg(CACHE_OBJECT_REMOVED);
+				msg.AddInt32("command",COMMAND_INFO);
+				msg.AddInt32("cache_object_token",objecttoken);
+				
+				for (int32 i=0; i<object->CountUsers(); i++) {
+					user=object->GetUser(i);
+					if (user!=NULL)
+						Broadcast(user->BroadcastID(),&msg);
+					
+				}
+				
+				object->ClearFile();
+				delete object;
+				
+			}
+			
+		} else {
+			status=B_ENTRY_NOT_FOUND;
+			
+		}
+		
+		
+	}
+	return status;
+	
+}
 
 bool cacheman::HasAttr(uint32 usertoken, int32 objecttoken, const char *name, type_code *type, size_t *size)
 {
