@@ -34,6 +34,7 @@ class HTMLParser	{
 		void titleTag( TElementShared parent );
 		void bodyTag( TElementShared parent );
 		void pTag( TElementShared parent );
+		void headingTag( TElementShared parent );
 	
 	public:
 		HTMLParser();

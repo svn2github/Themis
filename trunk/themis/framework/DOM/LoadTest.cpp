@@ -188,12 +188,17 @@ void HTMLParser	::	htmlTag()	{
 		headTag( element );
 		bodyTag( element );
 		
-		if ( !isStartTag() )	{
-			if ( !mTag.compare( "html" ) )	{
-				cout << "html closing tag found\n";
-				
-				// Get the next tag to recognize
-				getNextTag();
+		bool insideHtml = true;
+		
+		while ( insideHtml )	{
+			if ( !isStartTag() )	{
+				if ( !mTag.compare( "html" ) )	{
+					cout << "html closing tag found\n";
+
+					insideHtml = false;
+										
+					// We're done. Nothing comes after this.
+				}
 			}
 		}
 	}	
@@ -240,7 +245,8 @@ void HTMLParser	::	headTag( TElementShared parent )	{
 	
 					// End the while loop
 					insideHead = false;
-	
+					getNextTag();
+						
 				}
 				else	{
 					// Invalid end tag
@@ -250,8 +256,6 @@ void HTMLParser	::	headTag( TElementShared parent )	{
 			}
 		}
 	}
-
-	getNextTag();
 	
 }
 
@@ -277,13 +281,12 @@ void HTMLParser	::	titleTag( TElementShared parent )	{
 			if ( !mTag.compare( "title" ) )	{
 				cout << "title closing tag found\n";
 				insideTitle = false;
+				getNextTag();
 			}
 		}
 	}
 
 	cout << "Title is: " << title << endl;
-	
-	getNextTag();
 	
 }
 
@@ -310,11 +313,21 @@ void HTMLParser	::	bodyTag( TElementShared parent )	{
 					pTag( element );
 				}
 				else	{
-					// Not a known tag
-					cout << "unknown tag found!!!\n";
-					
-					// Ignore it and go to the next one
-					getNextTag();
+					if ( !mTag.compare( "h1" ) ||
+						 !mTag.compare( "h2" ) ||
+						 !mTag.compare( "h3" ) ||
+						 !mTag.compare( "h4" ) ||
+						 !mTag.compare( "h5" ) ||
+						 !mTag.compare( "h6" ) )	{
+						 	headingTag( element );
+					}
+					else	{
+						// Not a known tag
+						cout << "unknown tag found!!!\n";
+						
+						// Ignore it and go to the next one
+						getNextTag();
+					}
 				}
 			}
 			else	{			
@@ -323,7 +336,7 @@ void HTMLParser	::	bodyTag( TElementShared parent )	{
 	
 					// End the while loop
 					insideBody = false;
-	
+					getNextTag();	
 				}
 				else	{
 					// Invalid end tag
@@ -333,10 +346,6 @@ void HTMLParser	::	bodyTag( TElementShared parent )	{
 			}
 		}
 	}
-
-	getNextTag();
-	
-	getNextTag();
 	
 }
 
@@ -362,16 +371,50 @@ void HTMLParser	::	pTag( TElementShared parent )	{
 			if ( !mTag.compare( "p" ) )	{
 				cout << "p closing tag found\n";
 				insideP = false;
+				getNextTag();
 			}
 		}
 	}
 
 	cout << "Text is:" << endl << text << endl;
 	
-	getNextTag();
-	
 }
 
+void HTMLParser	::	headingTag( TElementShared parent )	{
+
+	// Name is already recognized in parent tag
+	cout << mTag << " tag found\n";
+
+	// Add to parent
+	TElementShared element = mDocument->createElement( mTag );
+	parent->appendChild( element );
+	
+	bool insideHeading = true;
+	
+	string heading;
+	
+	while ( insideHeading )	{
+		
+		heading += getText( false );
+		
+		getNextTag();
+		if ( !isStartTag() )	{
+			if ( !mTag.compare( "h1" ) ||
+				 !mTag.compare( "h2" ) ||
+				 !mTag.compare( "h3" ) ||
+				 !mTag.compare( "h4" ) ||
+				 !mTag.compare( "h5" ) ||
+				 !mTag.compare( "h6" ) )	{
+				cout << mTag << " closing tag found\n";
+				insideHeading = false;
+				getNextTag();
+			}
+		}
+	}
+
+	cout << "Text is:" << endl << heading << endl;
+	
+}
 
 int main( int argc, char * argv[] )	{
 	
