@@ -1,7 +1,20 @@
 /* See header for more info */
 
+
 #include "Globals.h"
 #include "TRenderer.h"
+
+#define 	THREAD_NAMES	7
+
+const char *THREAD_NAME[] = {
+	"Boing! BOING! Boing! BOING!"		,
+	"Rendering ? You mean...Again ??"   ,
+	"I'm trying to get out of here"	 	,
+	"You're talking to me ?"			,
+	"I am the blind Renderer"			,	
+	"BeOS Powaaaaaaaaaaaaaaaa !!!!!"	,
+	"Je suis un GniarkGniarkTaTete"
+};
 
 Renderer *renderer;
 
@@ -82,7 +95,9 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 					DOMTrees.push_back(document);								
 					//Start Processing in a new thread so people think it'll work faster ;-))
 					preprocess_thread_param param = {document,this,message->FindInt32("view_id")};
-					thread_id id = spawn_thread(PreProcess,"Boing! Boing! says the renderer",30,(void *)&param);								
+					//feeding the random generator
+					srand(time(NULL));
+					thread_id id = spawn_thread(PreProcess,THREAD_NAME[rand()%THREAD_NAMES],30,(void *)&param);								
 					resume_thread(id);
 				} break;
 /*				case ReturnedData:{ //OLD WAY TO DO
