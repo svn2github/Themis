@@ -23,9 +23,10 @@ class HTMLParser	{
 		string mContent; // Content of the to be parsed file
 		bool mCloseTag; // Indicates if the current tag is a closing tag
 		TDocumentShared mDocument; // Stores the document to be build
-		void getNextTag();
+		string getTag();
 		bool isStartTag()	;
 		string getText( bool conserveSpaces = true );		
+		string getString();
 		
 		// Tag recognition functions
 		void doctypeTag();

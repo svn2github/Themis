@@ -10,6 +10,7 @@
 #include <fstream>
 #include <string>
 #include <algorithm>
+#include <ctype.h>
 
 #include "LoadTest.h"
 
@@ -68,7 +69,7 @@ void HTMLParser	::	showDocument()	{
 
 }
 
-void HTMLParser	::	getNextTag()	{
+string HTMLParser	::	getTag()	{
 	
 	// Reset the tag and tag information
 	mTag = "";
@@ -93,9 +94,11 @@ void HTMLParser	::	getNextTag()	{
 	}
 	
 	while ( mPos != mContent.size() && mContent[mPos] != ' ' && mContent[mPos] != '>' )	{
-		mTag += mContent[mPos];
+		mTag += tolower( mContent[mPos] );
 		mPos++;
 	}
+	
+	return mTag;
 	
 }
 
@@ -103,17 +106,6 @@ void HTMLParser	::	setContent( string aContent )	{
 	
 	mContent = aContent;
 	
-}
-
-void HTMLParser	::	startParsing( TDocumentShared document )	{
-	
-	mDocument = document;
-	
-	getNextTag();
-	
-	doctypeTag();
-	htmlTag();
-
 }
 
 bool HTMLParser	::	isStartTag()	{
@@ -161,104 +153,173 @@ string HTMLParser	::	getText( bool conserveSpaces = true )	{
 	
 	return result;
 	
-}	
+}
+
+string HTMLParser	::	getString()	{
+
+	string result;
+
+	if ( mPos != mContent.size() )	{
+		switch ( mContent[mPos] )	{
+			case '>' :	{
+				result = getText( false );
+				//mStringType = TEXT;
+				break;
+			}
+			case '<' :	{
+				result = getTag();
+				//mStringType = TAG;
+				break;
+			}
+			case '=' :	{
+				//result = getAttrValue();
+				//mStringType = ATTRVALUE;
+				break;
+			}
+			default :	{
+				//result = getAttribute();
+				//mStringType = ATTR;
+			}
+		}
+	}
+
+	return result;
+	
+}
+
+void HTMLParser	::	startParsing( TDocumentShared document )	{
+	
+	mDocument = document;
+	
+	bool insideDoc = true;
+	
+	while ( insideDoc )	{
+		getTag();
+
+		if ( !mTag.compare( "!doctype" ) )	{
+			doctypeTag();
+			continue;
+		}
+
+		if ( !mTag.compare( "html" ) )	{
+			htmlTag();
+			// Last tag, quit the loop
+			insideDoc = false;
+			continue;
+		}
+		
+		cout << "Unknown tag found. Skipping...\n";
+		
+	}
+
+}
 
 void HTMLParser	::	doctypeTag()	{
 	
 	// I don't really care about this tag for now
-	// but I'll just check to see if it's there
-	if ( !mTag.compare( "!DOCTYPE" ) )	{
-		// We've got a doctype tag
-		cout << "doctype tag found\n";
-	
-		// Get the next tag to recognize
-		getNextTag();
-
-	}
+	cout << "doctype tag found\n";
 
 }
 
 void HTMLParser	::	htmlTag()	{
 
-	if ( !mTag.compare( "html" ) )	{
-		// Found html tag
-		cout << "html tag found\n";
+	cout << "html tag found\n";
 
-		// Add to DOM tree
-		TElementShared element = mDocument->createElement( "html" );
-		mDocument->appendChild( element );
-		
-		// Get the next tag to recognize
-		getNextTag();
-		
-		headTag( element );
-		bodyTag( element );
-		
-		bool insideHtml = true;
-		
-		while ( insideHtml )	{
-			if ( !isStartTag() )	{
-				if ( !mTag.compare( "html" ) )	{
-					cout << "html closing tag found\n";
+	// Add to DOM tree
+	TElementShared element = mDocument->createElement( "html" );
+	mDocument->appendChild( element );
+	
+	bool insideHtml = true;
+	
+	while ( insideHtml )	{
+		getTag();
 
-					insideHtml = false;
-										
-					// We're done. Nothing comes after this.
-				}
+		if ( isStartTag() )	{
+			if ( !mTag.compare( "head" ) )	{
+				headTag( element );
+				continue;
+			}
+
+			if ( !mTag.compare( "body" ) )	{
+				bodyTag( element );
+				continue;
+			}
+
+			cout << "Unknown tag found. Skipping...\n";
+
+		}
+		else	{
+			if ( !mTag.compare( "html" ) )	{
+				cout << "html closing tag found\n";
+
+				insideHtml = false;
+									
+			}
+			else	{
+				cout << "Unknown closing tag found. Skipping...\n";
 			}
 		}
-	}	
+	}
 	
 }
 
 void HTMLParser	::	headTag( TElementShared parent )	{
 
-	if ( !mTag.compare( "head" ) )	{
-		// Found head tag
-		cout << "head tag found\n";
-		
-		// Add to parent
-		TElementShared element = mDocument->createElement( "head" );
-		parent->appendChild( element );
-		
-		// Get the next tag to recognize
-		getNextTag();
-		
-		bool insideHead = true;
-		
-		while ( insideHead )	{
-			if ( isStartTag() )	{
-				if ( !mTag.compare( "title" ) )	{
-					titleTag( element );
-				}
-				//styleTag();
-				//scriptTag();
-				//isindexTag();
-				//baseTag();
-				//metaTag();
-				//linkTag();
-				else	{
-					// Not a known tag
-					cout << "unknown tag found!!!\n";
-					
-					// Ignore it and go to the next one
-					getNextTag();
-				}
-			}
-			else	{			
-				if ( !mTag.compare( "head" ) )	{
-					cout << "head closing tag found\n";
+	cout << "head tag found\n";
 	
-					// End the while loop
-					insideHead = false;
-					getNextTag();
-						
-				}
-				else	{
-					// Invalid end tag
-					// Ignore it and go to the next one
-					getNextTag();
-				}
+	// Add to parent
+	TElementShared element = mDocument->createElement( "head" );
+	parent->appendChild( element );
+	
+	bool insideHead = true;
+	
+	while ( insideHead )	{
+		getTag();
+
+		if ( isStartTag() )	{
+			if ( !mTag.compare( "title" ) )	{
+				titleTag( element );
+				continue;
+			}
+/*
+			if ( !mTag.compare( "style" ) )	{
+				styleTag( element );
+				continue;
+			}
+			if ( !mTag.compare( "script" ) )	{
+				scriptTag( element );
+				continue;
+			}
+			if ( !mTag.compare( "isindex" ) )	{
+				isindexTag( element );
+				continue;
+			}
+			if ( !mTag.compare( "base" ) )	{
+				baseTag( element );
+				continue;
+			}
+			if ( !mTag.compare( "meta" ) )	{
+				metaTag( element );
+				continue;
+			}
+			if ( !mTag.compare( "link" ) )	{
+				linkTag( element );
+				continue;
+			}
+*/			
+			// Not a known tag
+			cout << "Unknown tag found. Skipping...\n";
+
+		}
+		else	{			
+			if ( !mTag.compare( "head" ) )	{
+				cout << "head closing tag found\n";
+
+				// End the while loop
+				insideHead = false;
+			}
+			else	{
+				cout << "Unknown closing tag found. Skipping...\n";
 			}
 		}
 	}
@@ -267,7 +328,6 @@ void HTMLParser	::	headTag( TElementShared parent )	{
 
 void HTMLParser	::	titleTag( TElementShared parent )	{
 
-	// Name is already recognized in headTag
 	cout << "title tag found\n";
 
 	// Add to parent
@@ -282,13 +342,19 @@ void HTMLParser	::	titleTag( TElementShared parent )	{
 		
 		title += getText();
 		
-		getNextTag();
+		getTag();
+
 		if ( !isStartTag() )	{
 			if ( !mTag.compare( "title" ) )	{
 				cout << "title closing tag found\n";
 				insideTitle = false;
-				getNextTag();
 			}
+			else	{
+				cout << "Unknown closing tag found. Skipping...\n";
+			}
+		}
+		else	{
+			cout << "Unknown tag found. Skipping...\n";
 		}
 	}
 
@@ -298,72 +364,60 @@ void HTMLParser	::	titleTag( TElementShared parent )	{
 
 void HTMLParser	::	bodyTag( TElementShared parent )	{
 	
-	if ( !mTag.compare( "body" ) )	{
-		// Found body tag
-		cout << "body tag found\n";
+	cout << "body tag found\n";
 
-		// Add to parent
-		TElementShared element = mDocument->createElement( "body" );
-		parent->appendChild( element );
+	// Add to parent
+	TElementShared element = mDocument->createElement( "body" );
+	parent->appendChild( element );
 
-		// Ignoring the attributes for now
-		
-		// Get the next tag to recognize
-		getNextTag();
-		
-		bool insideBody = true;
-		
-		while ( insideBody )	{
-			if ( isStartTag() )	{
-				if ( !mTag.compare( "p" ) )	{
-					pTag( element );
-				}
-				else	{
-					if ( !mTag.compare( "h1" ) ||
-						 !mTag.compare( "h2" ) ||
-						 !mTag.compare( "h3" ) ||
-						 !mTag.compare( "h4" ) ||
-						 !mTag.compare( "h5" ) ||
-						 !mTag.compare( "h6" ) )	{
-						 	headingTag( element );
-					}
-					else	{
-						if ( !mTag.compare( "pre" ) )	{
-							preTag( element );
-						}
-						else	{
-							if ( !mTag.compare( "hr" ) )	{
-								hrTag( element );
-							}
-							else	{
-								if ( !mTag.compare( "blockquote" ) )	{
-									blockquoteTag( element );
-								}
-								else	{
-									// Not a known tag
-									cout << "unknown tag found!!!\n";
-									
-									// Ignore it and go to the next one
-									getNextTag();
-								}
-							}
-						}
-					}
-				}
-			}
-			else	{			
-				if ( !mTag.compare( "body" ) )	{
-					cout << "body closing tag found\n";
+	// Ignoring the attributes for now
 	
-					// End the while loop
-					insideBody = false;
-					getNextTag();	
-				}
-				else	{
-					// Invalid end tag
-					// Ignore it and go to the next one
-					getNextTag();
-				}
+	bool insideBody = true;
+	
+	while ( insideBody )	{
+		// Warning: more possible than a tag only
+		getTag();
+
+		if ( isStartTag() )	{
+			if ( !mTag.compare( "p" ) )	{
+				pTag( element );
+				continue;
+			}
+			if ( !mTag.compare( "h1" ) ||
+				 !mTag.compare( "h2" ) ||
+				 !mTag.compare( "h3" ) ||
+				 !mTag.compare( "h4" ) ||
+				 !mTag.compare( "h5" ) ||
+				 !mTag.compare( "h6" ) )	{
+				 	headingTag( element );
+				 	continue;
+			}
+			if ( !mTag.compare( "pre" ) )	{
+				preTag( element );
+				continue;
+			}
+			if ( !mTag.compare( "hr" ) )	{
+				hrTag( element );
+				continue;
+			}
+			if ( !mTag.compare( "blockquote" ) )	{
+				blockquoteTag( element );
+				continue;
+			}
+
+			// Not a known tag
+			cout << "Unknown tag found. Skipping...\n";
+			
+		}
+		else	{			
+			if ( !mTag.compare( "body" ) )	{
+				cout << "body closing tag found\n";
+
+				// End the while loop
+				insideBody = false;
+			}
+			else	{
+				cout << "Unknown closing tag found. Skipping...\n";
 			}
 		}
 	}
@@ -372,7 +426,6 @@ void HTMLParser	::	bodyTag( TElementShared parent )	{
 
 void HTMLParser	::	pTag( TElementShared parent )	{
 
-	// Name is already recognized in parent tag
 	cout << "p tag found\n";
 
 	// Add to parent
@@ -387,12 +440,15 @@ void HTMLParser	::	pTag( TElementShared parent )	{
 		
 		text += getText( false );
 		
-		getNextTag();
+		getTag();
+		
 		if ( !isStartTag() )	{
 			if ( !mTag.compare( "p" ) )	{
 				cout << "p closing tag found\n";
 				insideP = false;
-				getNextTag();
+			}
+			else	{
+				cout << "Unknown closing tag found. Skipping...\n";
 			}
 		}
 	}
@@ -403,7 +459,6 @@ void HTMLParser	::	pTag( TElementShared parent )	{
 
 void HTMLParser	::	headingTag( TElementShared parent )	{
 
-	// Name is already recognized in parent tag
 	cout << mTag << " tag found\n";
 
 	// Add to parent
@@ -418,7 +473,7 @@ void HTMLParser	::	headingTag( TElementShared parent )	{
 		
 		heading += getText( false );
 		
-		getNextTag();
+		getTag();
 		if ( !isStartTag() )	{
 			if ( !mTag.compare( "h1" ) ||
 				 !mTag.compare( "h2" ) ||
@@ -428,7 +483,9 @@ void HTMLParser	::	headingTag( TElementShared parent )	{
 				 !mTag.compare( "h6" ) )	{
 				cout << mTag << " closing tag found\n";
 				insideHeading = false;
-				getNextTag();
+			}
+			else	{
+				cout << "Unknown closing tag found. Skipping...\n";
 			}
 		}
 	}
@@ -439,7 +496,6 @@ void HTMLParser	::	headingTag( TElementShared parent )	{
 
 void HTMLParser	::	preTag( TElementShared parent )	{
 
-	// Name is already recognized in parent tag
 	cout << "pre tag found\n";
 
 	// Add to parent
@@ -454,12 +510,14 @@ void HTMLParser	::	preTag( TElementShared parent )	{
 		
 		text += getText();
 		
-		getNextTag();
+		getTag();
 		if ( !isStartTag() )	{
 			if ( !mTag.compare( "pre" ) )	{
 				cout << "pre closing tag found\n";
 				insidePre = false;
-				getNextTag();
+			}
+			else	{
+				cout << "Unknown closing tag found. Skipping...\n";
 			}
 		}
 	}
@@ -470,20 +528,16 @@ void HTMLParser	::	preTag( TElementShared parent )	{
 
 void HTMLParser	::	hrTag( TElementShared parent )	{
 
-	// Name is already recognized in parent tag
 	cout << "hr tag found\n";
 
 	// Add to parent
 	TElementShared element = mDocument->createElement( "hr" );
 	parent->appendChild( element );
 	
-	getNextTag();
-	
 }
 
 void HTMLParser	::	blockquoteTag( TElementShared parent )	{
 
-	// Name is already recognized in parent tag
 	cout << "blockquote tag found\n";
 
 	// Add to parent
@@ -498,12 +552,14 @@ void HTMLParser	::	blockquoteTag( TElementShared parent )	{
 		
 		text += getText( false );
 		
-		getNextTag();
+		getTag();
 		if ( !isStartTag() )	{
 			if ( !mTag.compare( "blockquote" ) )	{
 				cout << "blockquote closing tag found\n";
 				insideBlockquote = false;
-				getNextTag();
+			}
+			else	{
+				cout << "Unknown closing tag found. Skipping...\n";
 			}
 		}
 	}
