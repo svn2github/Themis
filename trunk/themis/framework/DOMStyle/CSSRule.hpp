@@ -92,12 +92,14 @@ class CSSRule	{
 
 			@param aCssText	The new text of the rule.
 			
-			@exception	SYNTAX_ERR	Thrown if the rule is unparsable.
+			@exception	SYNTAX_ERR
+								Thrown if the rule is unparsable.
 			@exception	INVALID_MODIFICATION_ERR
 								Thrown if the parameter represents a different type of rule
 								than the current one.
-			@exception	HIERARCHY_REQUEST_ERR	Thrown if the rule can not be inserted
-																		at this point in the style sheet.
+			@exception	HIERARCHY_REQUEST_ERR
+								Thrown if the rule can not be inserted
+								at this point in the style sheet.
 			@exception	NO_MODIFICATION_ALLOWED_ERR
 								Thrown if the rule is readonly.
 		*/
