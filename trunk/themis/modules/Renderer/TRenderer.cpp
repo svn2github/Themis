@@ -78,9 +78,9 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 						BroadcastPointer(document);
 					}
 					}break;
-			}
+			}break;
 		case R_WELCOME:{
-			printf("TRENDERVIEW: R_WELCOME received\n");
+			printf("RENDERER: R_WELCOME received\n");
 			BRect rect;
 			int32 doc_number, view_number;
 			BMessenger userInterface;
