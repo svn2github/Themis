@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2000 Z3R0 One. All Rights Reserved.
+Copyright (c) 2001 Z3R0 One. All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -26,21 +26,29 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
-#ifndef common_defines
-#define common_defines
 
-#define ThemisAppSig "application/x-vnd.becommunity-themis"
-#define ThemisCacheMIME "application/x-Themis-cache"
+#include "htmlparser.h"
 
-#define HTTPPlugin 'http'
-#define CachePlugin 'cash'
-#define HTMLPlugin 'html'
-#define HTMLTagPlugin 'httg'
+extern plugman *PluginManager;
 
-#define FindCachedObject 'fcob'
-#define CreateCacheObject 'ccob'
-#define CacheObjectNotFound 'conf'
-#define UpdateCachedObject 'ucob'
-#define ClearCache 'clca'
-
-#endif
+HTMLParser::HTMLParser()
+ {
+  Run();
+ }
+HTMLParser::~HTMLParser()
+ {
+ }
+bool HTMLParser::QuitRequested()
+ {
+  return true;
+ }
+void HTMLParser::MessageReceived(BMessage *msg)
+ {
+  switch(msg->what)
+   {
+    default:
+     {
+      BLooper::MessageReceived(msg);
+     }
+   }
+ }
