@@ -55,7 +55,7 @@ void App::MessageReceived(BMessage *msg)
       msg->FindPointer("http",(void**)&proto);
       if (proto!=NULL)
        {
-        fprintf(stdout,"webpage:\n%s\n.end\n",(char*)proto->GetURL("http://Themis.sourceforge.net/"));
+        fprintf(stdout,"webpage:\n%s\n.end\n",(char*)proto->GetURL("https://Themis.sourceforge.net/"));
        }
      }break;
     default:

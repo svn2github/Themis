@@ -80,11 +80,9 @@ void http_protocol::FindURI(const char *url,BString &host,int &port,BString &uri
    {
     master.CopyInto(servant,href+6,master.Length()-6);
     master=servant;
-//    printf("first reduction: \"%s\"\n",master.String());
     quote=master.IFindFirst("\"");
     master.CopyInto(servant,0,quote);
     master=servant;
-//    printf("second reduction: \"%s\"\n",master.String());
    }
   urltype=master.IFindFirst("://");
   if (urltype!=B_ERROR)
@@ -93,7 +91,6 @@ void http_protocol::FindURI(const char *url,BString &host,int &port,BString &uri
     BString urlkind;
     master.CopyInto(urlkind,0,urltype);
     master=servant;
-//    printf("third reduction: \"%s\"\n\tURL Kind was: \"%s\"\n",master.String(),urlkind.String());
    }
   slash=master.IFindFirst("/");
   if (slash!=B_ERROR)
@@ -102,7 +99,6 @@ void http_protocol::FindURI(const char *url,BString &host,int &port,BString &uri
     uri=servant.String();
     master.CopyInto(servant,0,slash);
     master=servant;
-//    printf("fouth reduction: \"%s\"\n\tURI: \"%s\"\n",master.String(),uri);
    }
   else
    uri="/";
@@ -113,7 +109,6 @@ void http_protocol::FindURI(const char *url,BString &host,int &port,BString &uri
     port=atoi(servant.String());
     master.CopyInto(servant,0,colon);
     master=servant;
-//    printf("fifth reduction: \"%s\"\n\tport: %d\n",master.String(),port);
    }
   else
    port=80;
@@ -156,7 +151,7 @@ unsigned char *http_protocol::GetDoc(BString &host,int &port,BString &uri)
       while(rep->Receive(*buf,B_PAGE_SIZE*10)>0)
        {
         size=buf->Size();
-        printf("received %ld bytes\n",size);
+//        printf("received %ld bytes\n",size);
         RawBuffer->WriteAt(RawBuffer->Position(),buf->Data(),size);
         ParseResponse(buf->Data(),buf->Size());
         delete buf;
@@ -209,9 +204,10 @@ void http_protocol::ParseResponse(unsigned char *resp,size_t size)
          int32 pos=0,last=0;
          BString param,value;
          BString response;
-         char lf[2];
+         char lf[3];
          lf[0]=13;
-         lf[1]=0;
+         lf[1]=10;
+         lf[2]=0;
          if ((pos=headtext.IFindFirst(lf,0))!=B_ERROR)
           {
            headtext.MoveInto(response,0,pos);
@@ -221,14 +217,20 @@ void http_protocol::ParseResponse(unsigned char *resp,size_t size)
           {
            printf("no response line found...\n");
           }
-         while((pos=headtext.IFindFirst(":",last))!=B_ERROR)
+         headtext.RemoveFirst(lf);
+         while((pos=headtext.IFindFirst(":"))!=B_ERROR)
           {
-           headtext.MoveInto(param,last,pos);
-           if ((last=headtext.IFindFirst(lf,pos))!=B_ERROR)
+           headtext.MoveInto(param,0,pos);
+           headtext.RemoveFirst(":");
+//           printf("%s\n",param.String());
+           if ((last=headtext.IFindFirst(lf))!=B_ERROR)
             {
-             headtext.MoveInto(value,pos,last);
+             headtext.RemoveFirst(lf);
+             headtext.MoveInto(value,0,last);
              printf("parameter: %s\tvalue: %s\n",param.String(),value.String());
             }
+           param="";
+           value="";
           }
         }
       }
@@ -237,7 +239,8 @@ void http_protocol::ParseResponse(unsigned char *resp,size_t size)
        if (!headerreceived)
         {
          printf("Warning!!! Couldn't find crlfcrlf!\n",(char*)RawBuffer->Buffer());
-         BString error="<html><head><title>Server Error!</title></head><body><h1>Error! Webserver returned either invalid header, or no header at all!</h1></body></html>";
+         BString error="<html><head><title>Server Error!</title></head><body><h1>Error! Webserver returned either invalid header, or no header at all!</h1><br>The server sent:<br><pre>";
+         error << (char*)resp << "</pre></br></body></html>";
          buffer->WriteAt(buffer->Position(),error.String(),error.Length());
         }
        else

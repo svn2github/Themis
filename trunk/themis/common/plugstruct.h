@@ -31,7 +31,7 @@ Project Start Date: October 18, 2000
 #define _plugstruct
 #include <AppKit.h>
 #include <KernelKit.h>
-#include "plugin.h"
+#include "protocol_plugin.h"
 
 struct plugst
  {

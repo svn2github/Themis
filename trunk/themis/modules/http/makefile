@@ -57,7 +57,8 @@ RSRCS=
 LIBS=  \
 	netapi \
 	net \
-	be
+	be \
+	root
 
 #	specify additional paths to directories following the standard
 #	libXXX.so or libXXX.a naming scheme.  You can specify full paths
