@@ -113,40 +113,26 @@ bool BaseParser	::	process( const string & symbol, bool aException )	{
 	
 }
 
-bool BaseParser	::	processS( bool aException )	{
+bool BaseParser	::	processS()	{
 
 	if ( isspace( mDocText->getChar() ) || iscntrl( mDocText->getChar() ) )	{
 		mDocText->nextChar();
 	}
 	else	{
-		if ( aException )	{
-			throw ReadException( mDocText->getLineNr(),
-											mDocText->getCharNr(),
-											"S expected" );
-		}
-		else	{
-			return false;
-		}
+		return false;
 	}
 
 	return true;
 	
 }
 
-bool BaseParser	::	processEe( bool aException )	{
+bool BaseParser	::	processEe()	{
 	
 	if ( iscntrl( mDocText->getChar() ) )	{
 		mDocText->nextChar();
 	}
 	else	{
-		if ( aException )	{
-			throw ReadException( mDocText->getLineNr(),
-											mDocText->getCharNr(),
-											"Ee expected" );
-		}
-		else	{
-			return false;
-		}
+		return false;
 	}
 	
 	return true;
@@ -360,7 +346,7 @@ void BaseParser	::	processSStar()	{
 	
 	bool sFound = true;
 	while ( sFound )	{
-		sFound = processS( false );
+		sFound = processS();
 	}
 
 }
@@ -373,10 +359,10 @@ bool BaseParser	::	processPs()	{
 	if ( processParEntityReference() )	{
 		return true;
 	}
-	if ( processS( false ) )	{
+	if ( processS() )	{
 		return true;
 	}
-	if ( processEe( false ) )	{
+	if ( processEe() )	{
 		return true;
 	}
 
@@ -409,10 +395,10 @@ bool BaseParser	::	processTs()	{
 	if ( processParEntityReference() )	{
 		return true;
 	}
-	if ( processS( false ) )	{
+	if ( processS() )	{
 		return true;
 	}
-	if ( processEe( false ) )	{
+	if ( processEe() )	{
 		return true;
 	}
 
@@ -600,13 +586,7 @@ string BaseParser	::	processAttrValueLit()	{
 		}
 		else	{
 			// Not yet found. Process replacable parameter data
-			try	{
-				result += processRepCharData();
-			}
-			catch( ReadException r )	{
-				r.setFatal();
-				throw r;
-			}
+			result += processRepCharData();
 		}
 	}
 	

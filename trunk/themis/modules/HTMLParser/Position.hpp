@@ -109,7 +109,7 @@ class Position	{
 			@todo	@li	The tab size is hard set to 4. Dunno if that is good.
 						@li	Have a look at the body of the function. Hmm...
 		*/
-		void nextPosition( const char aChar );
+		bool nextPosition( const char aChar );
 
 };
 

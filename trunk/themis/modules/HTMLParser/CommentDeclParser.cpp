@@ -25,16 +25,19 @@ CommentDeclParser	::	~CommentDeclParser()	{
 }
 
 bool CommentDeclParser	::	processDeclaration()	{
-	
-	process( mMdo );
+
+	State save = mDocText->saveState();
+
+	if ( ! process( mMdo, false ) )	{
+		return false;
+	}
 	if ( ! processComment() )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"Comment expected" );
+		mDocText->restoreState( save );
+		return false;
 	}
 	bool moreData = true;
 	while ( moreData )	{
-		if ( processS( false ) )	{
+		if ( processS() )	{
 			continue;
 		}
 		if ( ! processComment() )	{

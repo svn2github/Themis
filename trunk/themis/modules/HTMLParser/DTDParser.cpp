@@ -114,10 +114,10 @@ void DTDParser	::	processDeclaration()	{
 
 bool DTDParser	::	processDs()	{
 
-	if ( processS( false ) )	{
+	if ( processS() )	{
 		return true;
 	}
-	if ( processEe( false ) )	{
+	if ( processEe() )	{
 		return true;
 	}
 
@@ -127,18 +127,11 @@ bool DTDParser	::	processDs()	{
 
 	State save = mDocText->saveState();
 
-	try	{
-		commentDecl->parse();
-		//printf( "Comment declaration parsed\n" );
+	if ( commentDecl->parse() )	{
 		return true;
 	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
-		}
-		else	{
-			mDocText->restoreState( save );
-		}
+	else	{
+		mDocText->restoreState( save );
 	}
 	try	{
 		markedSecDecl->parse( entityDecl->getEntityTexts() );

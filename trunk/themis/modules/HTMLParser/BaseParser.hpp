@@ -131,8 +131,8 @@ class BaseParser	{
 		void createDTD();
 		void setupSyntax();
 		bool process( const string & symbol, bool aException = true );
-		bool processS( bool aException = true );
-		bool processEe( bool aException = true );
+		bool processS();
+		bool processEe();
 		bool processComment();
 		bool processParEntityReference();
 		string processLiteral();

@@ -37,7 +37,6 @@
 
 // SGMLParser headers
 #include "Position.hpp"
-#include "PositionException.hpp"
 
 Position	::	Position( unsigned int aStart, unsigned int aSize,
 							 unsigned int aLineNr, unsigned int aCharNr )	{
@@ -78,11 +77,11 @@ unsigned int Position	::	getSize() const	{
 	
 }
 
-void Position	::	nextPosition( const char aChar )	{
+bool Position	::	nextPosition( const char aChar )	{
 
 	if ( mIndex + 1 >= mEnd )	{
 		mIndex--;
-		throw PositionException();
+		return false;
 	}
 
 	if ( aChar != '\n' )	{
@@ -99,5 +98,7 @@ void Position	::	nextPosition( const char aChar )	{
 		mCharNr = 1;
 	}
 	mIndex++;
+	
+	return true;
 
 }

@@ -105,20 +105,14 @@ void SGMLParser	::	processOtherProlog()	{
 
 	State save = mDocText->saveState();
 
-	try	{
-		mCommentDecl->parse();
+	if ( mCommentDecl->parse() )	{
 		return;
 	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
-		}
-		else	{
-			mDocText->restoreState( save );
-		}
+	else	{
+		mDocText->restoreState( save );
 	}
 
-	if ( processS( false ) )	{
+	if ( processS() )	{
 		return;
 	}
 	

@@ -174,7 +174,6 @@ HTMLPARSERSOURCES= \
 	HTMLParser/EntityDeclParser.cpp  \
 	HTMLParser/MarkedSecDeclParser.cpp  \
 	HTMLParser/Position.cpp  \
-	HTMLParser/PositionException.cpp  \
 	HTMLParser/ReadException.cpp  \
 	HTMLParser/SGMLParser.cpp 
 CSSPARSERSOURCES= \

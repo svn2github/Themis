@@ -41,7 +41,6 @@
 // SGMLParser headers
 #include "SGMLText.hpp"
 #include "ReadException.hpp"
-#include "PositionException.hpp"
 
 SGMLText	::	SGMLText( const string & aText )	{
 	
@@ -98,16 +97,16 @@ const char SGMLText	::	nextChar()	{
 	
 	char c = mText[ current.getIndex() ];
 	
-	try	{
-		current.nextPosition( c );
-	}
-	catch( PositionException p )	{
+	if ( ! current.nextPosition( c ) )	{
 		// End of piece of text reached
 		mState.pop();
 		if ( mState.size() == 0 )	{
 			// End of total text reached
-			throw ReadException( current.getLineNr(), current.getCharNr(),
-											"End of text reached", END_OF_FILE_REACHED, true );
+			throw ReadException( current.getLineNr(),
+											current.getCharNr(),
+											"End of text reached",
+											END_OF_FILE_REACHED,
+											true );
 		}
 		return getChar();
 	}

@@ -89,7 +89,7 @@ class ElementParser	:	public BaseParser	{
 		TElementPtr getElementDecl( const string & aName,
 												   TElementPtr declarations ) const;
 		void processComments();
-		void processComment();
+		bool processCommentDeclaration();
 		TElementPtr getElement( TElementPtr aElement,
 											 const TDOMString & aName );
 

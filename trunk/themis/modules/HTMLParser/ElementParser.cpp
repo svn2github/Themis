@@ -106,14 +106,8 @@ void ElementParser	::	processElementContent( const TDOMString & aName,
 
 	bool contentFound = true;
 	while ( contentFound )	{
-		try	{
-			processComment();
-		}
-		catch( ReadException r )	{
-			if ( r.isFatal() )	{
-				throw r;
-			}
-			if ( ! processS( false ) )	{
+		if ( ! processCommentDeclaration() )	{
+			if ( ! processS() )	{
 				contentFound = false;
 			}
 		}
@@ -238,7 +232,6 @@ void ElementParser	::	processElement( const TDOMString & aName,
 														 TNodePtr aParent )	{
 		
 	printf( "Trying to find: %s\n", aName.c_str() );
-	printf( "Declaration name: %s\n", aElementDecl->getTagName().c_str() );
 
 	// Setup the minimization
 	bool start = true;
@@ -942,14 +935,8 @@ void ElementParser	::	processExceptionOtherContent()	{
 
 	bool otherContentFound = true;
 	while ( otherContentFound )	{
-		try	{
-			processComment();
-		}
-		catch( ReadException r )	{
-			if ( r.isFatal() )	{
-				throw r;
-			}
-			if ( ! processS( false ) )	{
+		if ( ! processCommentDeclaration() )	{
+			if ( ! processS() )	{
 				otherContentFound = false;
 			}
 		}
@@ -987,39 +974,15 @@ TElementPtr ElementParser	::	getElementDecl( const string & aName,
 void ElementParser	::	processComments()	{
 
 	bool commentFound = true;
-	State save = mDocText->saveState();
 	while ( commentFound )	{
-		try	{
-			commentParser->parse();
-			save = mDocText->saveState();
-		}
-		catch( ReadException r )	{
-			if ( r.isFatal() )	{
-				throw r;
-			}
-			else	{
-				mDocText->restoreState( save );
-				commentFound = false;
-			}
-		}
+		commentFound = processCommentDeclaration();
 	}
 	
 }
 
-void ElementParser	::	processComment()	{
+bool ElementParser	::	processCommentDeclaration()	{
 
-	State save = mDocText->saveState();
-
-	try	{
-		commentParser->parse();
-		return;
-	}
-	catch( ReadException r )	{
-		if ( ! r.isFatal() )	{
-			mDocText->restoreState( save );
-		}
-		throw r;
-	}
+	return commentParser->parse();
 	
 }
 
