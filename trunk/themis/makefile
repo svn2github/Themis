@@ -60,7 +60,8 @@ DOMLIBRARYSOURCES= \
 	framework/DOM/TNodeList.cpp \
 	framework/DOM/TElement.cpp \
 	framework/DOM/TAttr.cpp \
-	framework/DOM/TCharacterData.cpp 
+	framework/DOM/TCharacterData.cpp \
+	framework/DOM/TText.cpp
 DOMTESTSOURCES= \
 	framework/DOM/DOMTest.cpp
 JAVASCRIPT_LIBRARY= \
