@@ -49,6 +49,11 @@ ThemisUrlView::ThemisUrlView(
 	fav_icon = new BBitmap( BRect( 0,0,15,15 ), B_RGB32 );
 }
 
+ThemisUrlView::~ThemisUrlView()
+{
+	delete fav_icon;
+}
+
 void
 ThemisUrlView::AttachedToWindow()
 {
@@ -140,6 +145,7 @@ ThemisUrlView::SetFavIcon( BBitmap *fav )
 void
 ThemisUrlView::SetText( const char *newtext )
 {
+	printf( "ThemisUrlView::SetText(%s)\n", newtext );
 	textview->SetText( newtext );
 	// move the cursor to the right
 	textview->Select( strlen( newtext ), strlen( newtext ) );
@@ -262,7 +268,7 @@ ThemisUrlViewMessageFilter::Filter( BMessage *msg, BHandler **target )
 	{
 		case B_KEY_DOWN :
 		{
-			//cout << "B_KEY_DOWN received" << endl;			
+//			cout << "B_KEY_DOWN received" << endl;			
 									
 			const char* key = msg->FindString( "bytes" );
 			
@@ -352,9 +358,9 @@ ThemisUrlViewMessageFilter::Filter( BMessage *msg, BHandler **target )
 					result = B_SKIP_MESSAGE;
 					break;
 				}
-				case 'n' :
+				case 'n' : /* New Window */
 				{
-					if( mod == 0x402 )	// B_OPTION_KEY
+					if( mod & B_COMMAND_KEY )
 					{
 						result = B_DISPATCH_MESSAGE;
 						break;
@@ -364,61 +370,14 @@ ThemisUrlViewMessageFilter::Filter( BMessage *msg, BHandler **target )
 					result = B_DISPATCH_MESSAGE;
 					break;
 				}
-				case 't' :
+				case 't' : /* New Tab */
 				{
-					if( mod == 0x402 )	// B_OPTION_KEY
+					if( mod & B_COMMAND_KEY )
 					{
 						result = B_DISPATCH_MESSAGE;
 						break;
 					}
-
-					// please don't ask me why, the below doesn't work!?
-					// i don't know. and this drives me crazy!
-					// same applies for case 'n' and case 'T'/'N'/'E'
-//					if( mod & B_OPTION_KEY )
-//					{
-//						cout << "option + t" << endl;
-//						result = B_DISPATCH_MESSAGE;
-//						break;
-//					}
 					
-					messagetarget.SendMessage( URL_TYPED );
-					result = B_DISPATCH_MESSAGE;
-					break;
-				}
-				// SHIFT+OPTION+x browser ident change detection
-				case 'T' :
-				{
-					if( mod == 0x503 || mod == 0x603 )	// B_OPTION_KEY + SHIFT
-					{
-						result = B_DISPATCH_MESSAGE;
-						break;
-					}
-										
-					messagetarget.SendMessage( URL_TYPED );
-					result = B_DISPATCH_MESSAGE;
-					break;
-				}
-				case 'N' :
-				{
-					if( mod == 0x503 || mod == 0x603 )	// B_OPTION_KEY + SHIFT
-					{
-						result = B_DISPATCH_MESSAGE;
-						break;
-					}
-										
-					messagetarget.SendMessage( URL_TYPED );
-					result = B_DISPATCH_MESSAGE;
-					break;
-				}
-				case 'E' :
-				{
-					if( mod == 0x503 || mod == 0x603 )	// B_OPTION_KEY + SHIFT
-					{
-						result = B_DISPATCH_MESSAGE;
-						break;
-					}
-										
 					messagetarget.SendMessage( URL_TYPED );
 					result = B_DISPATCH_MESSAGE;
 					break;

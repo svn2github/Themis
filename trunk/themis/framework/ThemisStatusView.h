@@ -23,6 +23,11 @@ class ThemisStatusView : public BView
 		void						AttachedToWindow( void );
 		void						Draw( BRect updaterect );
 		
+		
+		void						SetLoadingInfo(
+										int doc_progress,
+										const char* status_text );
+		
 		void						SetValues(
 										int doc_progress,
 										const char* doc_text,

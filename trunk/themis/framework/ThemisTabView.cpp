@@ -343,6 +343,19 @@ ThemisTabView::MouseDown( BPoint point )
 			{
 				ThemisTab* remtab = ( ThemisTab* )RemoveTab( tabindex );
 				
+				/* Generate a broadcast to tell the UrlHandler that it can remove
+				 * the UrlEntry for the given ID. */
+				
+				if( remtab->GetViewID() > 0 );
+				{
+					BMessage* msg = new BMessage( UH_DOC_CLOSED );
+					msg->AddInt32( "view_id", remtab->GetViewID() );
+					msg->AddInt32( "command", COMMAND_INFO );
+				
+					( ( Win* )Window() )->Broadcast( MS_TARGET_URLHANDLER, msg );
+					delete msg;
+				}
+				
 				// tab isnt deleted by RemoveTab()
 				delete ( remtab );
 				
@@ -353,7 +366,8 @@ ThemisTabView::MouseDown( BPoint point )
 								
 				// calculate new ( bigger ) size of tabs and draw again
 				DynamicTabs( false );
-				Draw( Bounds() ); 
+				//Draw( Bounds() ); 
+				Select( Selection() );
 								
 				break;
 			}
@@ -372,97 +386,181 @@ ThemisTabView::MouseDown( BPoint point )
 void
 ThemisTabView::Select( int32 tabindex )
 {
-	cout << "ThemisTabView::Select()" << endl;
+	printf( "ThemisTabView::Select( %ld )\n", tabindex );
 	
-	// hinder tab-selection when urlpopupwindow is open
+	/* Hinder tab selection when urlpopupwindow is open. */
 	if( ( ( Win* )Window() )->urlpopupwindow != NULL )
 		return;
 	
-	FakeSite* tempview = ( FakeSite* )TabAt( tabindex )->View();
-		
-	// draw the appropriate url in the urlview ( site_title for the moment )
-	// ( there is a "bug" at the moment: if we have no startup page specified
-	// in the prefs, we have an empty tab ( '(untitled)' )...
-	// and nothing like 'about:blank' is shown in the urlline
-	// if we click the tab, 'about:blank' is shown...
-	// this could be a bug but isnt really one as i dont wanna get rid of the
-	// 'about:blank' first and then type the url when i start the browser )
+	/* Get a pointer to the tab. We need to query it for the view's ID. */
+	ThemisTab* tab = ( ThemisTab* )TabAt( tabindex );
+	if( !tab )
+		return;	
 	
-	// we need to make sure that we have tabs, because Select() is called
-	// on construction of the tabview before a tab is added	
-	if( CountTabs() > 0 )
+	int32 view_id;
+	view_id = tab->GetViewID();
+	printf( "  view_id: %ld\n", view_id );
+	
+	UrlHandler* uh = ( ( App* )be_app )->GetUrlHandler();
+	if( uh )
 	{
-		BString window_title( "Themis" );
+		BString wtitle( "Themis" );
+		BString ttitle( "" );
+		BString url( "" );
+		BString stext( "" );
+		int lprog = 100;
 		
-		if( tempview != NULL )
+		if( uh->EntryValid( view_id ) )
 		{
+			printf( "  Entry valid.\n" );	
+			
+			/* Tab title */
+			ttitle.Append( uh->GetTitleFor( view_id ) );
+			
+			/* Window title */
+			wtitle.Append( " - " );
+			wtitle.Append( ttitle.String() );
+			
+			/* NavView URL */
+			url.SetTo( uh->GetUrlFor( view_id ) );
+			
+			/* StatusText and loading progress */
+			stext.SetTo( uh->GetStatusTextFor( view_id ) );
+			lprog = uh->GetLoadingProgressFor( view_id );
+		}
+		else	// no UrlEntry
+		{
+			printf( "  No UrlEntry.\n" );
+			
+			/* Tab title */
+			ttitle.Append( "(untitled)" );
+			
+			/* Window title */
+			// Append nothing to the wtitle for non-existant pages.
+			
+			/* NavView URL */
+			url.SetTo( "" );
+			
+			/* StatusText and loading progress */
+			// Do nothing with these values for empty tabs.
+		}
 		
-			/* some temporary removals */
-		
-			// set urlview-text
-//			((Win*)Window())->navview->urlview->SetText( tempview->site_title.String() );
+		/* Set the values */
+		Win* win = ( Win* )Window();
+
+		win->SetTitle( wtitle.String() );
+		tab->SetLabel( ttitle.String() );
+		win->navview->urlview->SetText( url.String() );
+		win->navview->urlview->SetFavIcon( tab->GetFavIcon() );
+		win->statusview->SetLoadingInfo(
+			lprog,
+			stext.String() );
 			
-			// set the urlview-icon
-//			((Win*)Window())->navview->urlview->SetFavIcon( tempview->site_fav_icon );
-			
-			// set window-title-text
-//			window_title << " - " << tempview->site_title.String();
-			
-			Window()->SetTitle( window_title.String() );
-			
-			// set up the statusview
+	}
+	
+	/* Handle the possible resizing. */
+	
+	if( tab->View() )
+	{
+		TRenderView* rview = ( TRenderView* )tab->View();
+		if( rview )
+		{
+			BRect cviewrect = ContainerView()->Bounds();
+			BRect rviewrect = rview->Bounds();
+	
+			if( rviewrect != cviewrect )
+			{
+				rview->ResizeTo( cviewrect.right, cviewrect.bottom );
+			}
+		}		
+	}
+	
+	
+//	FakeSite* tempview = ( FakeSite* )TabAt( tabindex )->View();
+//		
+//	// draw the appropriate url in the urlview ( site_title for the moment )
+//	// ( there is a "bug" at the moment: if we have no startup page specified
+//	// in the prefs, we have an empty tab ( '(untitled)' )...
+//	// and nothing like 'about:blank' is shown in the urlline
+//	// if we click the tab, 'about:blank' is shown...
+//	// this could be a bug but isnt really one as i dont wanna get rid of the
+//	// 'about:blank' first and then type the url when i start the browser )
+//	
+//	// we need to make sure that we have tabs, because Select() is called
+//	// on construction of the tabview before a tab is added	
+//	if( CountTabs() > 0 )
+//	{
+//		BString window_title( "Themis" );
+//		
+//		if( tempview != NULL )
+//		{
+//		
+//			/* some temporary removals */
+//		
+//			// set urlview-text
+////			((Win*)Window())->navview->urlview->SetText( tempview->site_title.String() );
+//			
+//			// set the urlview-icon
+////			((Win*)Window())->navview->urlview->SetFavIcon( tempview->site_fav_icon );
+//			
+//			// set window-title-text
+////			window_title << " - " << tempview->site_title.String();
+//			
+//			Window()->SetTitle( window_title.String() );
+//			
+//			// set up the statusview
+////			( ( Win* )Window() )->statusview->SetValues(
+////				tempview->GetDocBarProgress(),
+////				tempview->GetDocBarText(),
+////				tempview->GetImgBarProgress(),
+////				tempview->GetImgBarText(),
+////				tempview->GetStatusText(),
+////				tempview->GetSecureState(),
+////				tempview->GetCookieState() );
+//		}
+//		else
+//		{
+//			// we could also set "" here ( better for usability, cause we dont
+//			// have to get rid of 'about:blank' everytime )
+//			((Win*)Window())->navview->urlview->SetText( "about:blank" );
+//			
+//			// set the urlview-icon
+//			((Win*)Window())->navview->urlview->SetFavIcon( NULL );
+//			
+//			// set window-title-text
+//			Window()->SetTitle( window_title.String() );
+//			
+//			// set up the statusview
 //			( ( Win* )Window() )->statusview->SetValues(
-//				tempview->GetDocBarProgress(),
-//				tempview->GetDocBarText(),
-//				tempview->GetImgBarProgress(),
-//				tempview->GetImgBarText(),
-//				tempview->GetStatusText(),
-//				tempview->GetSecureState(),
-//				tempview->GetCookieState() );
-		}
-		else
-		{
-			// we could also set "" here ( better for usability, cause we dont
-			// have to get rid of 'about:blank' everytime )
-			((Win*)Window())->navview->urlview->SetText( "about:blank" );
-			
-			// set the urlview-icon
-			((Win*)Window())->navview->urlview->SetFavIcon( NULL );
-			
-			// set window-title-text
-			Window()->SetTitle( window_title.String() );
-			
-			// set up the statusview
-			( ( Win* )Window() )->statusview->SetValues(
-				100,
-				"",
-				100,
-				"",
-				"",
-				false,
-				false );
-		}
-	}
-	
-	// now check, if the containerview bounds and the selected tabs view bounds
-	// are the same, if not, the window size had been changed, and the view
-	// needs to be resized
-	// ( i think its the best way of performance saving, as we only resize the
-	// selected tabs view right before its selected instead of resizing every
-	// targetview on each frameresize event -> geez, that'd be really cpu-intensive :D 
-	// i think the user has an understanding for the little lag before we switch )
-	
-	if( tempview != NULL )
-	{
-		BRect cviewrect = ContainerView()->Bounds();
-		BRect tviewrect = tempview->Bounds();
-	
-		if( tviewrect != cviewrect )
-		{
-			// we should call sth like RenderView::Resize( cviewrect ) later
-			tempview->ResizeTo( cviewrect.right, cviewrect.bottom );
-		}
-	}
+//				100,
+//				"",
+//				100,
+//				"",
+//				"",
+//				false,
+//				false );
+//		}
+//	}
+//	
+//	// now check, if the containerview bounds and the selected tabs view bounds
+//	// are the same, if not, the window size had been changed, and the view
+//	// needs to be resized
+//	// ( i think its the best way of performance saving, as we only resize the
+//	// selected tabs view right before its selected instead of resizing every
+//	// targetview on each frameresize event -> geez, that'd be really cpu-intensive :D 
+//	// i think the user has an understanding for the little lag before we switch )
+//	
+//	if( tempview != NULL )
+//	{
+//		BRect cviewrect = ContainerView()->Bounds();
+//		BRect tviewrect = tempview->Bounds();
+//	
+//		if( tviewrect != cviewrect )
+//		{
+//			// we should call sth like RenderView::Resize( cviewrect ) later
+//			tempview->ResizeTo( cviewrect.right, cviewrect.bottom );
+//		}
+//	}
 	
 	BTabView::Select( tabindex );
 	

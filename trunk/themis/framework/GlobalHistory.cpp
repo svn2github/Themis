@@ -58,8 +58,8 @@ GlobalHistory::~GlobalHistory()
 			 * collector message.
 			 */
 			
-			printf( "  Adding following item to collector message:\n" );
-			item->Print();
+//			printf( "  Adding following item to collector message:\n" );
+//			item->Print();
 			
 			BMessage* collitem = new BMessage;
 			collitem->AddString( "url", item->Text() );
@@ -95,14 +95,16 @@ GlobalHistory::~GlobalHistory()
 //	AppSettings->PrintToStream();
 	
 	delete collector;
+	
+	printf( "GlobalHistory destructor end.\n" );
 }
 
 void
 GlobalHistory::AddEntry(
 	const char* entry )
 {
-	printf( "GlobalHistoryItem::AddEntry()\n" );
-	printf( "  New entry: %s\n", entry );
+//	printf( "GlobalHistoryItem::AddEntry()\n" );
+//	printf( "  New entry: %s\n", entry );
 	GlobalHistoryItem* newitem = new GlobalHistoryItem( entry, time( NULL ) );
 	
 	/* We don't want to add an item twice for a day.
@@ -146,21 +148,21 @@ GlobalHistory::AddEntry(
 	else
 		delete newitem;
 
-	PrintHistory();
+//	PrintHistory();
 }
 
 bool
 GlobalHistory::CheckDoubleDay(
 	GlobalHistoryItem* checkitem )
 {
-	printf( "GlobalHistory::CheckDoubleDay()\n" );
+//	printf( "GlobalHistory::CheckDoubleDay()\n" );
 
 	const time_t checkitem_time_t = checkitem->Time();	
 	struct tm checkitem_tm;
 	
 	if( localtime_r( &checkitem_time_t, &checkitem_tm ) == NULL )
 	{
-		printf( "  checkitem_tm == NULL. aborting.\n" );
+//		printf( "  checkitem_tm == NULL. aborting.\n" );
 		return true;
 	}
 	
@@ -186,26 +188,26 @@ GlobalHistory::CheckDoubleDay(
 					{
 						if( strcmp( item->Text(), checkitem->Text() ) == 0 )
 						{
-							printf( "  URL already stored today. skipping.\n" );
+//							printf( "  URL already stored today. skipping.\n" );
 							return true;
 						}
 					}
 					else
 					{
-						printf( "  Found older (or newer) item [day]. break.\n" );
+//						printf( "  Found older (or newer) item [day]. break.\n" );
 						break;
 					}
 				}
 				else
 				{
-					printf( "  Found older (or newer) item [year]. break.\n" );
+//					printf( "  Found older (or newer) item [year]. break.\n" );
 					break;
 				}
 			}
 		}
 	}
 	
-	printf( "  URL not yet stored today.\n" );
+//	printf( "  URL not yet stored today.\n" );
 		
 	return false;
 }
@@ -213,7 +215,7 @@ GlobalHistory::CheckDoubleDay(
 void
 GlobalHistory::CheckEntryExpiration()
 {
-	printf( "GlobalHistory::CheckEntryExpiration()\n" );
+//	printf( "GlobalHistory::CheckEntryExpiration()\n" );
 	
 	int32 count = fList->CountItems();
 	int8 freecount = 0;
@@ -221,8 +223,8 @@ GlobalHistory::CheckEntryExpiration()
 	struct tm today_tm;
 	localtime_r( &now, &today_tm );
 			
-	printf( "  GlobalHistoryDepthInDays: %d\n", fHistoryDepthInDays );
-	printf( "  today_tm.tm_yday: %d\n", today_tm.tm_yday );
+//	printf( "  GlobalHistoryDepthInDays: %d\n", fHistoryDepthInDays );
+//	printf( "  today_tm.tm_yday: %d\n", today_tm.tm_yday );
 	
 	/* Check the history list for expired entries from last to first item.
 	 * If we find one, which is younger then limit, we can stop checking.
@@ -241,27 +243,27 @@ GlobalHistory::CheckEntryExpiration()
 		
 		if( item_tm.tm_yday >= fHistoryDepthInDays - 1 )
 		{
-			printf( "  Item within this year.\n" );
+//			printf( "  Item within this year.\n" );
 			limit = ( int16 )( today_tm.tm_yday - fHistoryDepthInDays );
 		}
 		else
 		{
-			printf( "  Item from last year.\n" );
+//			printf( "  Item from last year.\n" );
 			limit = ( int16 )( 365 - ( fHistoryDepthInDays - ( item_tm.tm_yday + 1 ) ) );
 		}
 		
-		printf( "  limit: %d ( Entries <= this one are expired. )\n", limit ); 
+//		printf( "  limit: %d ( Entries <= this one are expired. )\n", limit ); 
 		
 		if( item_tm.tm_yday <= limit )
 		{
-			printf( "  The following item is expired. (Will be marked as free url.):\n" );
+//			printf( "  The following item is expired. (Will be marked as free url.):\n" );
 			item->Print();
 			item->SetFree();
 			freecount++;
 		}
 		else
 		{
-			printf( "  Found in time item. break.\n" );
+//			printf( "  Found in time item. break.\n" );
 			break;
 		}
 	}
@@ -308,7 +310,7 @@ GlobalHistory::Clear()
 BList*
 GlobalHistory::GetStrippedList()
 {
-	printf( "GlobalHistory::GetStrippedList()\n" );
+//	printf( "GlobalHistory::GetStrippedList()\n" );
 
 	BList* slist = new BList( 0 );
 	
@@ -355,17 +357,17 @@ GlobalHistory::GetStrippedList()
 		}
 	}
 	
-	int32 scount = slist->CountItems();
-	
-	printf( "  ============================\n" );
-	printf( "  Stripped List: ( %ld items )\n", scount );
-	for( int32 k = 0; k < scount; k++ )
-	{
-		GlobalHistoryItem* item = ( GlobalHistoryItem* )slist->ItemAt( k );
-		if( item != NULL )
-			item->Print();
-	}
-	printf( "  ============================\n" );
+//	int32 scount = slist->CountItems();
+//	
+//	printf( "  ============================\n" );
+//	printf( "  Stripped List: ( %ld items )\n", scount );
+//	for( int32 k = 0; k < scount; k++ )
+//	{
+//		GlobalHistoryItem* item = ( GlobalHistoryItem* )slist->ItemAt( k );
+//		if( item != NULL )
+//			item->Print();
+//	}
+//	printf( "  ============================\n" );
 	
 	return slist;
 }

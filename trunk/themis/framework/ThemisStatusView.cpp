@@ -197,6 +197,17 @@ ThemisStatusView::Draw( BRect updaterect )
 }
 
 void
+ThemisStatusView::SetLoadingInfo(
+	int doc_progress,
+	const char* status_text )
+{
+	fDocumentBar->SetValue( doc_progress, "" );
+	fStatusText.SetTo( status_text );
+	
+	Draw( Bounds() );
+}
+
+void
 ThemisStatusView::SetValues(
 	int doc_progress,
 	const char* doc_text,

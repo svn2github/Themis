@@ -24,6 +24,8 @@ class ThemisUrlView : public BView
 										const char* name,
 										uint32 resizingmode,
 										uint32 flags );
+									
+									~ThemisUrlView();
 										
 		virtual void				AttachedToWindow();											 	 
 		virtual void				Draw( BRect updaterect );

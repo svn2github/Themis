@@ -4,6 +4,7 @@
 #define _THEMISTAB_H_
 
 // BeOS headers
+#include <Bitmap.h>
 #include <TabView.h>
 #include <View.h>
 
@@ -29,9 +30,17 @@ class ThemisTab : public BTab
 										ThemisTabView* owner,
 										BRect frame );
 		
+		BBitmap*					GetFavIcon();
+		
 		TabHistory*					GetHistory();
 										
 		int32						GetViewID();
+		
+		void						SetFavIcon(
+										BBitmap* bmp );
+		
+		void						SetLabel(
+										const char* label );
 		
 		void						SetViewID(
 										int32 id );
@@ -40,6 +49,10 @@ class ThemisTab : public BTab
 		int32						fViewID;
 		
 		TabHistory*					fHistory;
+		
+		BString*					fLabel;
+		
+		BBitmap*					fFavIcon;
 };
 
 #endif

@@ -68,7 +68,6 @@ Win::Win(
 	startup=true;
 	urlpopupwindow = NULL;
 	fNextWindow = NULL;
-//	fUniqueID = ( ( App* )be_app )->GetNewUniqueID();
 	fOldFrame = Frame();
 	fMaximized = false;
 	fQuitConfirmed = false;
@@ -131,26 +130,6 @@ Win::Win(
 	if( CurrentFocus() != NULL )
 		CurrentFocus()->MakeFocus( false );
 	navview->urlview->TextView()->MakeFocus( true );
-/*
-	// probably removable as stated by raymond
-	BMessage *info=new BMessage(AddInitInfo);
-	info->AddPointer("main_menu_bar",menubar);
-	info->AddPointer("file_menu",filemenu);
-	info->AddPointer("options_menu",optionsmenu);
-	info->AddPointer("window",this);
-//	info->AddPointer("parser",Parser);
-	BMessenger *iimsgr=new BMessenger(PluginManager,NULL,NULL);
-
-	BMessage reply;	
-	iimsgr->SendMessage(info,&reply);
-	info->PrintToStream();
-	printf("Window has tried to init: %ld\n",reply.what);
-		
-	reply.PrintToStream();
-			
-	delete iimsgr;
-	delete info;
-*/
 }
 Win::~Win()
 {
@@ -193,9 +172,9 @@ void Win::MessageReceived(BMessage *msg) {
 			PostMessage(B_QUIT_REQUESTED);
 		}break;
 		case PlugInLoaded: {
-			printf("Win PlugInLoaded\n");		
+			printf("WIN: PlugInLoaded\n");		
 			protocol_plugin *pobj=NULL;
-			msg->PrintToStream();
+//			msg->PrintToStream();
 			msg->FindPointer("plugin",(void**)&pobj);
 			printf("pobj: %p\n",pobj);
 			if (pobj!=NULL) {
@@ -203,7 +182,7 @@ void Win::MessageReceived(BMessage *msg) {
 				pobj->Window=this;
 				pobj->AddMenuItems(optionsmenu);
 			} else {
-				printf("Win: pobj was null\n");
+				;//printf("Win: pobj was null\n");
 				
 			}
 			
@@ -233,7 +212,7 @@ void Win::MessageReceived(BMessage *msg) {
 		}break;
 		case BUTTON_BACK :
 		{
-			printf( "BUTTON_BACK\n" );
+			printf( "WIN: BUTTON_BACK\n" );
 			
 			const char* previous = NULL;
 			previous = ( ( ThemisTab* )tabview->TabAt( tabview->Selection() ) )->GetHistory()->GetPreviousEntry();
@@ -253,7 +232,7 @@ void Win::MessageReceived(BMessage *msg) {
 		};
 		case BUTTON_FORWARD :
 		{
-			printf( "BUTTON_FORWARD\n" );
+			printf( "WIN: BUTTON_FORWARD\n" );
 			
 			const char* next = NULL;
 			next = ( ( ThemisTab* )tabview->TabAt( tabview->Selection() ) )->GetHistory()->GetNextEntry();
@@ -281,7 +260,7 @@ void Win::MessageReceived(BMessage *msg) {
 		}
 		case BUTTON_HOME :
 		{
-			printf( "BUTTON_HOME\n" );
+			printf( "WIN: BUTTON_HOME\n" );
 			
 			BString homepage;
 			AppSettings->FindString( "HomePage", &homepage );
@@ -299,7 +278,7 @@ void Win::MessageReceived(BMessage *msg) {
 		{
 			// this function is used for the tab-pop-up-menu function
 			// "Close other Tabs" and also for the closetabview_button
-			cout << "CLOSE_OTHER_TABS received" << endl;
+			cout << "WIN: CLOSE_OTHER_TABS" << endl;
 			
 			Lock();
 			
@@ -342,7 +321,7 @@ void Win::MessageReceived(BMessage *msg) {
 		}break;
 		case CLOSE_URLPOPUP :
 		{
-			cout << "CLOSE_URLPOPUP received" << endl;
+			cout << "WIN: CLOSE_URLPOPUP" << endl;
 			if( urlpopupwindow )
 			{
 				urlpopupwindow->Lock();
@@ -357,17 +336,9 @@ void Win::MessageReceived(BMessage *msg) {
 			ReInitInterface();
 			break;
 		}
-		case SITE_TITLE :
-		{
-			printf( "  SITE_TITLE received\n" );
-			
-			// TODO: set the site title
-			
-			break;
-		}
 		case TAB_ADD :
 		{
-			cout << "TAB_ADD received" << endl;
+			cout << "WIN: TAB_ADD received" << endl;
 			
 			// dissallow adding of new tabs, if they wouldnt fit in the
 			// window anymore, and disable newtab button
@@ -413,133 +384,13 @@ void Win::MessageReceived(BMessage *msg) {
 			}				
 			break;
 		}
-		case URL_LOADING :
-		{
- 			cout << "URL_LOADING received" << endl;
-			
-//			FakeSite* tmpsite = NULL;
-//			if( msg->HasInt16( "tab_uid" ) )
-//			{
-//				tmpsite = GetViewPointer(
-//					msg->FindInt16( "tab_uid" ),
-//					msg->FindInt16( "view_uid" ) );
-//				
-//				if( tmpsite != NULL )
-//					cout << "URL_LOADING: found viewpointer" << endl;
-//				else
-//				{
-//					cout << "no view found -> stopped loading" << endl;
-//					/////////////////
-//					// tell the http_plugin(?) to stop loading the site..
-//					/////////////////
-//					break;
-//				}
-//			}
-//			
-//			int64 delta=0;
-//			int64 contentlen=0;
-//			bool req_done = false;
-//			bool secure = false;
-//			bool cookies_disabled = false; // not implemented atm
-//						
-//			msg->FindInt64("size-delta",&delta);
-//			
-//			if (msg->HasInt64("content-length"))
-//				msg->FindInt64("content-length",&contentlen);
-//
-//			msg->FindBool( "request_done", &req_done );
-//			msg->FindBool( "secure", &secure );
-//			
-//			BString statstr( "Transfering data from " );
-//			statstr.Append( tmpsite->site_title.String() );
-//			
-//			if( contentlen == 0 )
-//			{
-//				if( req_done == false )
-//				{
-//					tmpsite->SetInfo(
-//						50,
-//						false,	// delta = false
-//						"loading",
-//						50,
-//						false,	// delta = false
-//						"loading",
-//						statstr.String(),
-//						secure,
-//						cookies_disabled );
-//				}
-//				else
-//				{
-//						tmpsite->SetInfo(
-//						100,
-//						false,	// delta = false
-//						"",
-//						100,
-//						false,	// delta = false
-//						"",
-//						"Done.",
-//						secure,
-//						cookies_disabled );
-//				}
-//			}
-//			else
-//			{
-//				// generate the progressbar texts
-//				BString str1;
-//				str1 << (int)(((float)delta/(float)contentlen)*100) << "%";
-//				
-//				if( req_done == false )
-//				{
-//					tmpsite->SetInfo(
-//						(int)(((float)delta/(float)contentlen)*100),
-//						true,
-//						str1.String(),
-//						(int)(((float)delta/(float)contentlen)*100),
-//						true,
-//						str1.String(),
-//						statstr.String(),
-//						secure,
-//						cookies_disabled );
-//				}
-//				else
-//				{
-//					tmpsite->SetInfo(
-//						100,
-//						false,	// delta = false
-//						"",
-//						100,
-//						false,	// delta = false
-//						"",
-//						"Done.",
-//						secure,
-//						cookies_disabled );
-//				}
-//			}
-//			
-//			// if the viewpointer points to the currently active view,
-//			// update the statusview
-//			if( tmpsite == tabview->TabAt( tabview->Selection() )->View() )
-//			{
-//				//cout << "tmpsite == current active view tab" << endl;
-//							
-//				statusview->SetValues(
-//					tmpsite->GetDocBarProgress(),
-//					tmpsite->GetDocBarText(),
-//					tmpsite->GetImgBarProgress(),
-//					tmpsite->GetImgBarText(),
-//					tmpsite->GetStatusText(),
-//					tmpsite->GetSecureState(),
-//					tmpsite->GetCookieState() );
-//			}
-			break;
-		}
 		case BUTTON_RELOAD :
 		case URL_OPEN :
 		{
 			if( msg->what == URL_OPEN )
-				printf( "URL_OPEN\n" );
+				printf( "WIN: URL_OPEN\n" );
 			else
-				printf( "BUTTON_RELOAD\n" );
+				printf( "WIN: BUTTON_RELOAD\n" );
 			
 			// close urlpopup if needed
 			if( urlpopupwindow  )
@@ -556,7 +407,7 @@ void Win::MessageReceived(BMessage *msg) {
 			else
 				url = navview->urlview->Text();
 			
-			cout << "requested url: " << url.String() << endl;
+			cout << "  requested url: " << url.String() << endl;
 			
 			// stop, if there is no url, or about:blank
 			if( url.Length() == 0 )
@@ -564,21 +415,7 @@ void Win::MessageReceived(BMessage *msg) {
 			if( strcmp( url.String(), "about:blank" ) == 0 )
 				break;
 			
-//			// Create the RenderView object.
-//			void* buffer = NULL;
-//			TRenderView* rview = new TRenderView(
-//				UIBox( Bounds().Width(), Bounds().Height() ),
-//				( TNode* )buffer );
-			
-//			rview->viewID = ( ( App* )be_app )->GetNewID();
-			
-			
-//			FakeSite* fakesite = new FakeSite(
-//				( tabview->ContainerView() )->Bounds(),
-//				url.String(), ( ( App* )be_app )->GetNewUniqueID(), this );
-			
 			uint32 selection = tabview->Selection();
-//			int16 tab_uid = 0;
 			int32 view_id = ( ( App* )be_app )->GetNewID();
 						
 			if( msg->HasInt32( "tab_to_open_in" ) )
@@ -586,7 +423,6 @@ void Win::MessageReceived(BMessage *msg) {
 				int32 tab_index = msg->FindInt32( "tab_to_open_in" );
 				
 				( ( ThemisTab* )tabview->TabAt( tab_index ) )->SetViewID( view_id );
-//				tab_uid = ( ( ThemisTab* )tabview->TabAt( tab_index ) )->UniqueID();
 				
 				// add history entry for tab
 				if( msg->HasBool( "no_history_add" ) == false )
@@ -595,7 +431,6 @@ void Win::MessageReceived(BMessage *msg) {
 			else
 			{
 				( ( ThemisTab* )tabview->TabAt( selection ) )->SetViewID( view_id );
-//				tab_uid = ( ( ThemisTab* )tabview->TabAt( selection ) )->UniqueID();
 				
 				// add history entry for tab
 				if( msg->HasBool( "no_history_add" ) == false )
@@ -611,17 +446,7 @@ void Win::MessageReceived(BMessage *msg) {
 			*/
 			( ( App* )be_app )->GetGlobalHistory()->AddEntry( url.String() );
 			
-			if( msg->FindBool( "hidden" ) == true )
-				tabview->DrawTabs();
-			else
-				tabview->Select( selection );
-						
-//			if( CurrentFocus() != NULL )
-//				CurrentFocus()->MakeFocus( false );
-//			tabview->TabAt( selection )->View()->MakeFocus( true );
-			
-			// temporary break;
-//			break;
+			/* get this out of here */
 			
 			char *usepass=NULL;
 			char *workurl=NULL;
@@ -720,8 +545,6 @@ void Win::MessageReceived(BMessage *msg) {
 			printf( "Win: creating info message\n" );			
 
 			BMessage *info=new BMessage;
-//			info->AddInt16( "window_uid", UniqueID() );
-//			info->AddInt16( "tab_uid", tab_uid );
 			info->AddInt32( "view_id", view_id );
 			info->AddPointer("plug_manager",PluginManager);
 			info->AddPointer("main_menu_bar",menubar);
@@ -763,10 +586,11 @@ void Win::MessageReceived(BMessage *msg) {
 			delete info;
 			printf("Win: Done with request broadcast.\n");
 			
+			/*********/
+			
+			
 			// I don't want to destroy anything working right now. So let's just
 			// get something new in.
-			
-//			int32 view_id = ( int32 )view_uid;
 			
 			BMessage* uh = NULL;
 			if( msg->what == URL_OPEN )
@@ -778,14 +602,26 @@ void Win::MessageReceived(BMessage *msg) {
 			uh->AddInt32( "view_id", view_id );
 			uh->AddString( "target_url", target_url.String() );
 			
-			Broadcast( MS_TARGET_URLHANDLER, uh );
+			//Broadcast( MS_TARGET_URLHANDLER, uh );
+			( ( App* )be_app )->GetUrlHandler()->ReceiveBroadcast( uh );
 			
 			delete uh;
+
+			/*
+			 * Trigger this after the UrlHandler knows about the URL.
+			 * Otherwise we wouldn't see any URL in UrlView during load.
+			 * Sad, but true.
+			 */
+						
+			if( msg->FindBool( "hidden" ) == true )
+				tabview->DrawTabs();
+			else
+				tabview->Select( selection );
 			
 		}break;
 		case URL_TYPED :
 		{
-			cout << "URL_TYPED received" << endl;
+//			cout << "URL_TYPED received" << endl;
 			
 			bool show_all = false;
 			msg->FindBool( "show_all", &show_all );
@@ -817,7 +653,7 @@ void Win::MessageReceived(BMessage *msg) {
 	}
 }
 uint32 Win::BroadcastTarget() {
-	printf("Win\n");
+//	printf("Win\n");
 	return MS_TARGET_WINDOW;
 }
 void Win::WindowActivated(bool active) {
@@ -1032,7 +868,7 @@ Win::CreateUrlPopUpWindow()
 ThemisTab*
 Win::FindTabFor(
 	int32 id,
-	int32* tabindex )
+	int32* tabindex = NULL )
 {
 	int32 count = tabview->CountTabs();
 	
@@ -1043,47 +879,14 @@ Win::FindTabFor(
 		{
 			if( tab->GetViewID() == id )
 			{
-				*tabindex = i;
+				if( tabindex )
+					*tabindex = i;
 				return tab;
 			}
 		}
 	}
 	return NULL;
 }
-
-//FakeSite*
-//Win::GetViewPointer( int16 tab_uid, int16 view_uid )
-//{
-//	cout << "Win::GetViewPointer() : looking for tab_uid: "
-//		<< tab_uid << " view_uid: " << view_uid << endl;
-//	
-//	ThemisTab* tmptab;
-//	FakeSite* tmpview;
-//	
-//	int32 count = tabview->CountTabs();
-//	
-//	for( int i=count-1; i >= 0; i-- )
-//	{
-//		tmptab = ( ThemisTab* )tabview->TabAt( i );
-//		if( tmptab != NULL )
-//		{
-//			if( tmptab->UniqueID() == tab_uid )
-//			{
-//				tmpview = ( FakeSite* )tmptab->View();
-//				if( tmpview != NULL )
-//				{
-//					if( tmpview->UniqueID() == view_uid )
-//					{
-//						return tmpview;
-//					}
-//				}
-//			}	
-//		}
-//	}
-//	
-//	cout << "Win::GetViewPointer() : no view found!" << endl;
-//	return NULL;
-//}
 
 void
 Win::LoadInterfaceGraphics()
@@ -1235,16 +1038,10 @@ Win::SetQuitConfirmed( bool state )
 	fQuitConfirmed = state;
 }
 
-//int16
-//Win::UniqueID()
-//{
-//	return fUniqueID;
-//}
-
 void
 Win::UrlTypedHandler( bool show_all )
 {
-	printf( "Win::UrlTypedHandler()\n" );
+//	printf( "Win::UrlTypedHandler()\n" );
 	
 	// get the stripped list from GlobalHistory
 	BList* slist = ( ( App* )be_app )->GetGlobalHistory()->GetStrippedList();
@@ -1363,7 +1160,7 @@ Win::UrlTypedHandler( bool show_all )
 
 status_t Win::ReceiveBroadcast(BMessage *message) 
 {
-	printf( "Win::ReceiveBroadcast()\n" );
+//	printf( "Win::ReceiveBroadcast()\n" );
 //	message->PrintToStream();
 	uint32 command=0;
 	message->FindInt32("command",(int32*)&command);
@@ -1380,25 +1177,6 @@ status_t Win::ReceiveBroadcast(BMessage *message)
 		{
 			switch( message->what )
 			{
-				case ProtocolConnectionClosed :
-				{
-					printf( "ProtocolConnectionClosed\n" );
-					
-					message->PrintToStream();
-					
-//					BMessage('_pcc') {
-//						// Timestamp (when) at 9147556310us
-//						command = int32(262 or 0x106)
-//						bytes-received = int64(0 or (nil))
-//						url = string("http://www.beosjournal.org/", 28 bytes)
-//						From = int32(1752462448 or 0x68747470)
-//						FromPointer = pointer(0x800c76a0)
-//						cache_object_token = int32(-1 or 0xffffffff)
-//						request_done = bool(true)
-//					}
-					
-					break;
-				}
 				case RENDERVIEW_POINTER :
 				{
 					printf( "  RENDERVIEW_POINTER\n" );
@@ -1446,95 +1224,57 @@ status_t Win::ReceiveBroadcast(BMessage *message)
 					
 					break;
 				}
-//				case RENDERVIEW_UPDATE :
-//				{
-//					printf( "  RENDERVIEW_UPDATE\n" );
-//					
-//					message->PrintToStream();
-//					
-//					int32 view_id = 0;
-//					message->FindInt32( "view_id", &view_id );
-//					if( view_id == 0 )
-//						break;
-//					
-//					ThemisTab* tab = FindTabFor( view_id );
-//					if( tab == NULL )
-//						break;
-//					
-//					// TODO
-//					// fetch the drawing list, and attach it to the renderview
-//					
-//					break;
-//				}
-//				case ReturnedData :
-//				{
-//					printf( "ReturnedData\n" );
-//					
-//					message->PrintToStream();
-//					
-//					// temporaryliy disable this...
-//					break;
-//					
-//					if( win_uid == UniqueID() )
-//					{
-//						int16 tab_uid = 0;
-//						int16 view_uid = 0;
-//						int64 contentlength=0;
-//						int64 bytes_received=0;
-//						int64 delta=0;
-//						bool req_done = false;
-//						bool secure = false;	
-//						
-//						if( message->HasInt64( "content-length" ) )
-//							message->FindInt64( "content-length", &contentlength );
-//						
-//						message->FindInt16( "tab_uid", &tab_uid );
-//						message->FindInt16( "view_uid", &view_uid );
-//						message->FindInt64( "bytes-received", &bytes_received);
-//						message->FindInt64( "size-delta", &delta);
-//						message->FindBool( "request_done", &req_done );
-//						message->FindBool( "secure", &secure );
-//						
-//						BMessenger msgr( NULL, this, NULL);
-//						BMessage *msg = new BMessage( URL_LOADING );
-//						msg->AddBool( "request_done", req_done ); 
-//						msg->AddBool( "secure", secure );
-//						msg->AddInt16( "tab_uid", tab_uid );
-//						msg->AddInt16( "view_uid", view_uid );
-//						msg->AddInt64( "bytes-received", bytes_received );
-//						msg->AddInt64( "size-delta", delta );
-//						
-//						if( contentlength != 0 )	// non-chunked transfer mode
-//							msg->AddInt64("content-length",contentlength);
-//						
-//						msgr.SendMessage(msg);
-//						delete msg;
-//					}
-//					break;
-//				} // case ReturnedData
-//				case UH_WIN_LOADING_PROGRESS :
-//				{
-//					printf( "WIN: UH_WIN_LOADING_PROGRESS\n" );
-//					
-//					// TODO
-//					// Check wether we have the view with the given ID.
-//					// If yes, check, wether this view is the current view.
-//					// If so again, query the UrlHandler for the views information
-//					// we need, and update the windows informational elements like
-//					// tab title, window caption, loading progress/statusbar.
-//					// Otherwise, break immedeately.
-//					
-//					int32 view_id = 0;
-//					msg->FindInt32( "view_id", &view_id );
-//					
-//					if( view_id == ( ( ThemisTab* )tabview->TabAt( tabview->Selection() ) )->GetViewID() )
-//					{
-//						
-//						
-//					}
-//					
-//					break;
-//				}
+				case UH_WIN_LOADING_PROGRESS :
+				{
+					printf( "WIN: UH_WIN_LOADING_PROGRESS\n" );
+					
+					int32 id = 0;
+					message->FindInt32( "view_id", &id );
+					
+					int32 tabindex;
+					ThemisTab* tab = FindTabFor( id, &tabindex );
+					if( !tab )
+						break;
+					
+					UrlHandler* uh = ( ( App* )be_app )->GetUrlHandler();
+					if( !uh )
+						break;
+					
+					if( uh->EntryValid( id ) )
+					{
+						Lock();					
+
+						/* Update the tabs label and icon */
+						tab->SetLabel( uh->GetTitleFor( id ) );
+						tab->SetFavIcon( uh->GetFavIconFor( id ) );
+						tabview->DrawTabs();
+						
+						if( tabindex == tabview->Selection() )
+						{
+							/*
+							 * I could introduce some checking here, if things have changed at all.
+							 * But imo this is ok for now.
+							 */
+							
+							/* Update the window title */
+							BString wtitle( "Themis - " );
+							wtitle.Append( uh->GetTitleFor( id ) );
+							SetTitle( wtitle.String() );
+							
+							/* Update the FavIcon and Text in the NavView */
+							navview->urlview->SetText( uh->GetUrlFor( id ) );
+							navview->urlview->SetFavIcon( uh->GetFavIconFor( id ) );
+							
+							/* Update the StatusView */
+							statusview->SetLoadingInfo(
+								uh->GetLoadingProgressFor( id ),
+								uh->GetStatusTextFor( id ) );
+						}
+
+						Unlock();
+					}
+					break;
+				}
 			} // switch( message->what )
 			break;
 		} // case COMMAND_INFO :

@@ -12,6 +12,7 @@
 #include <string.h>
 
 // myheaders
+#include "ThemisIcons.h"
 #include "ThemisTab.h"
 #include "ThemisTabView.h"
 #include "FakeSite.h"
@@ -22,15 +23,22 @@ ThemisTab::ThemisTab( BView* view )
 	: BTab( view )
 {
 	fViewID = 0;
+	
+	fLabel = new BString( "(untitled)" );
 		
 	int8 histdepth;
 	AppSettings->FindInt8( "TabHistoryDepth", &histdepth );
 	fHistory = new TabHistory( histdepth );
+	
+	fFavIcon = new BBitmap( BRect( 0, 0, 15, 15 ), B_RGB32 );
+	memcpy( fFavIcon->Bits(), icon_document_empty_hex, 1024 );
 }
 
 ThemisTab::~ThemisTab()
 {
+	delete fLabel;
 	delete fHistory;
+	delete fFavIcon;
 }
 
 void
@@ -169,74 +177,87 @@ ThemisTab::DrawTab(
 void
 ThemisTab::DrawLabel( ThemisTabView* owner, BRect frame )
 {
-	// i am drawing both, the label and the icon here, as it makes
-	// no sense to me doing nearly the same in separate functions
-	
 	//cout << "ThemisTab::DrawLabel()" << endl;
-	BString* label = NULL;
-	FakeSite* tempview = ( FakeSite* )View();
-	
-	// calculate truncate_length
+
+	/* calculate truncate_length */
 	float truncate_length = (( ThemisTabView* )owner)->tab_width - 25 - 5;
 		
-	// the frame for the fav_icon
+	/* the frame for the FavIcon */
 	BRect iconframe = frame;
 	iconframe.left = frame.left + 5;
 	iconframe.top = frame.top + 3;
 	iconframe.right = iconframe.left + 15;
 	iconframe.bottom = iconframe.top + 15;
 	
-	// the startpoint for the label
+	/* the startpoint for the label */
 	BPoint labelpoint( frame.left + 25, frame.bottom - 6 );
+	
+	/* Draw the label */
+	owner->TruncateString( fLabel, B_TRUNCATE_END, truncate_length );
+	owner->DrawString(
+		fLabel->String(),
+		labelpoint,
+		NULL );
+
+	/* Draw the FavIcon */
+	owner->SetDrawingMode( B_OP_ALPHA );
+	owner->DrawBitmap( fFavIcon, iconframe );
+	owner->SetDrawingMode( B_OP_COPY );	
 		
-	if( tempview == NULL )
-	{
-		//cout << "ThemisTab::DrawLabel() : no target view" << endl;
-		// below 8 no string is drawn ( i use 5 here to be safe )
-		if( truncate_length > 5 )
-		{
-			label = new BString( "(untitled)" );
-			owner->TruncateString( label, B_TRUNCATE_END, truncate_length );
-		
-			owner->SetFontSize( 10.0 );
-			owner->DrawString(
-				label->String(),
-				labelpoint,
-				NULL );
-		}
-		
-//		// draw the icon
+//	if( tempview == NULL )
+//	{
+//		//cout << "ThemisTab::DrawLabel() : no target view" << endl;
+//		// below 8 no string is drawn ( i use 5 here to be safe )
+//		if( truncate_length > 5 )
+//		{
+////			label = new BString( "(untitled)" );
+//			owner->TruncateString( fLabel, B_TRUNCATE_END, truncate_length );
+//		
+//			owner->SetFontSize( 10.0 );
+//			owner->DrawString(
+//				fLabel->String(),
+//				labelpoint,
+//				NULL );
+//		}
+//		
+////		// draw the icon
 //		owner->SetDrawingMode( B_OP_ALPHA );
-//		BBitmap* temp_fav_icon = new BBitmap( BRect( 0,0,15,15 ), B_RGB32 );
-//		memcpy( temp_fav_icon->Bits(), ( ( Win* )owner->Window() )->bitmaps[9]->Bits(), 1024 );
-//		owner->DrawBitmap( temp_fav_icon, iconframe );
-//		delete temp_fav_icon;
+////		BBitmap* temp_fav_icon = new BBitmap( BRect( 0,0,15,15 ), B_RGB32 );
+////		memcpy( temp_fav_icon->Bits(), ( ( Win* )owner->Window() )->bitmaps[9]->Bits(), 1024 );
+//		owner->DrawBitmap( fFavIcon, iconframe );
+////		delete temp_fav_icon;
 //		owner->SetDrawingMode( B_OP_COPY );
-	}
-	else
-	{
-		//cout << "ThemisTab::DrawLabel() : we have a target view" << endl;
-		// below 8 no string is drawn ( i use 5 here to be safe )
-		if( truncate_length > 5 )
-		{
-//			label = new BString( tempview->site_title.String() );
-			label = new BString( "lalalala" );
-			owner->TruncateString( label, B_TRUNCATE_END, truncate_length );
-		
-			owner->SetFontSize( 10.0 );
-			owner->DrawString(
-				label->String(),
-				labelpoint,
-				NULL );
-		}
-		
-//		// draw the icon
-//		owner->SetDrawingMode( B_OP_ALPHA );
-//		owner->DrawBitmap( tempview->site_fav_icon, iconframe );
-//		owner->SetDrawingMode( B_OP_COPY );
-	}
-	delete label;
-	tempview = NULL;
+//	}
+//	else
+//	{
+//		//cout << "ThemisTab::DrawLabel() : we have a target view" << endl;
+//		// below 8 no string is drawn ( i use 5 here to be safe )
+//		if( truncate_length > 5 )
+//		{
+////			label = new BString( tempview->site_title.String() );
+////			label = new BString( "lalalala" );
+//			owner->TruncateString( fLabel, B_TRUNCATE_END, truncate_length );
+//		
+//			owner->SetFontSize( 10.0 );
+//			owner->DrawString(
+//				fLabel->String(),
+//				labelpoint,
+//				NULL );
+//		}
+//		
+////		// draw the icon
+////		owner->SetDrawingMode( B_OP_ALPHA );
+////		owner->DrawBitmap( tempview->site_fav_icon, iconframe );
+////		owner->SetDrawingMode( B_OP_COPY );
+//	}
+////	delete label;
+//	tempview = NULL;
+}
+
+BBitmap*
+ThemisTab::GetFavIcon()
+{
+	return fFavIcon;
 }
 
 TabHistory*
@@ -249,6 +270,23 @@ int32
 ThemisTab::GetViewID()
 {
 	return fViewID;
+}
+
+void
+ThemisTab::SetFavIcon(
+	BBitmap* bmp )
+{
+	if( bmp )
+	{
+		memcpy( fFavIcon->Bits(), bmp->Bits(), 1024 );
+	}
+}
+
+void
+ThemisTab::SetLabel(
+	const char* label )
+{
+	fLabel->SetTo( label );
 }
 
 void

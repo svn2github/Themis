@@ -17,6 +17,10 @@ UrlEntry::UrlEntry(
 	
 	fUrl = new BString( url );
 	
+	fStatusText = new BString( "Transfering data from " );
+	fStatusText->Append( url );
+	fStatusText->Append( " ..." );
+	
 	/*
 	 * The page title is set to "loading..." now.
 	 * When loading is finished, its set to the sites url.
@@ -29,6 +33,8 @@ UrlEntry::UrlEntry(
 	
 	fCookiesDisabled = false;
 	fSecureConnection = false;
+	
+	fFavIcon = NULL;
 }
 
 UrlEntry::~UrlEntry()
@@ -37,6 +43,8 @@ UrlEntry::~UrlEntry()
 	
 	if( fUrl != NULL )
 		delete fUrl;
+	if( fStatusText != NULL )
+		delete fStatusText;
 	if( fTitle != NULL )
 		delete fTitle;
 }
@@ -45,6 +53,12 @@ bool
 UrlEntry::GetCookiesDisabled()
 {
 	return fCookiesDisabled;
+}
+
+BBitmap*
+UrlEntry::GetFavIcon()
+{
+	return fFavIcon;
 }
 
 int32
@@ -66,9 +80,22 @@ UrlEntry::GetSecureConnection()
 }
 
 const char*
+UrlEntry::GetStatusText()
+{
+	return fStatusText ? fStatusText->String() : "";
+}
+
+const char*
 UrlEntry::GetTitle()
 {
-	return fTitle ? fTitle->String() : NULL;
+	printf( "  GetTitle(): %s\n", fTitle->String() );
+	return fTitle ? fTitle->String() : "";
+}
+
+const char*
+UrlEntry::GetUrl()
+{
+	return fUrl ? fUrl->String() : "";
 }
 
 void
@@ -89,13 +116,30 @@ UrlEntry::SetCookiesDisabled(
 }
 
 void
+UrlEntry::SetFavIcon(
+	BBitmap* bmp )
+{
+	if( bmp )
+	{
+		if( !fFavIcon )
+			fFavIcon = new BBitmap(
+				BRect( 0, 0, 15, 15 ), B_RGB32 );
+		
+		memcpy( fFavIcon->Bits(), bmp->Bits(), 1024 );
+	}
+}
+
+void
 UrlEntry::SetLoadingProgress(
 	int8 loadingprogress )
 {
 	fLoadingProgress = loadingprogress;
 	
 	if( fLoadingProgress == 100 )
+	{
+		fStatusText->SetTo( "Done." );
 		fTitle->SetTo( fUrl->String() );
+	}
 }
 
 void

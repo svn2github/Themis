@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #include "plugman.h"
+#include "ThemisIcons.h"
 #include "UrlHandler.h"
 #include "../common/commondefs.h"
 #include "../modules/Renderer/TRenderView.h"
@@ -34,7 +35,12 @@ UrlHandler::~UrlHandler()
 	MsgSysUnregister( this );
 	
 	// delete the whole entry list
-	fEntryList.clear();
+	while( !fEntryList.empty() )
+	{
+		UrlEntry* ent = *( fEntryList.begin() );
+		fEntryList.erase( fEntryList.begin() );
+		delete ent;
+	}
 	
 	delete fLocker;
 }
@@ -63,29 +69,63 @@ UrlHandler::BroadcastTarget()
 	return MS_TARGET_URLHANDLER;
 }
 
+bool
+UrlHandler::EntryValid(
+	int32 id )
+{
+	if( GetEntry( id ) )
+		return true;
+	else
+		return false;
+}
+
 UrlEntry*
 UrlHandler::GetEntry(
-	int32 id )
+	int32 id /*,
+	vector< UrlEntry* >::iterator* itp = NULL */ )
 {
 	fLocker->Lock();
 	
-	printf( "UrlHandler::GetEntry( %ld )\n", id );
+//	printf( "UrlHandler::GetEntry( %ld )\n", id );
 	
 	UrlEntry* entry = NULL;
 	
 	// browse through the entry list to find the url entry with the matching id
 	
-	vector< UrlEntry >::iterator it;
+	vector< UrlEntry* >::iterator it;
 	for( it = fEntryList.begin(); it != fEntryList.end(); it++ )
 	{
-		if( it->GetID() == id )
+		if( ( ( UrlEntry* )*it )->GetID() == id )
 		{
-			entry = it;
+//			if( itp )
+//				itp = it;
+			
+			entry = *it;
 		}
 	}
 
 	fLocker->Unlock();
 	return entry;
+}
+
+BBitmap*
+UrlHandler::GetFavIconFor(
+	int32 id )
+{
+	fLocker->Lock();
+
+//	printf( "UrlHandler::GetFavIconFor( %ld )\n", id );
+	
+	UrlEntry* entry = GetEntry( id );
+
+	if( entry == NULL )
+	{
+		fLocker->Unlock();
+		return NULL;
+	}
+	
+	fLocker->Unlock();	
+	return entry->GetFavIcon();	
 }
 
 int8
@@ -94,7 +134,7 @@ UrlHandler::GetLoadingProgressFor(
 {
 	fLocker->Lock();
 
-	printf( "UrlHandler::GetLoadingProgressFor( %ld )\n", id );
+//	printf( "UrlHandler::GetLoadingProgressFor( %ld )\n", id );
 	
 	UrlEntry* entry = GetEntry( id );
 
@@ -106,6 +146,28 @@ UrlHandler::GetLoadingProgressFor(
 	
 	fLocker->Unlock();	
 	return entry->GetLoadingProgress();
+}
+
+const char*
+UrlHandler::GetStatusTextFor(
+	int32 id )
+{
+	fLocker->Lock();
+
+//	printf( "UrlHandler::GetStatusTextFor( %ld )\n", id );
+	
+	BString title;
+	
+	UrlEntry* entry = GetEntry( id );
+	
+	if( entry == NULL )
+	{
+		fLocker->Unlock();
+		return "";
+	}
+
+	fLocker->Unlock();	
+	return entry->GetStatusText();
 }
 
 const char*
@@ -122,12 +184,36 @@ UrlHandler::GetTitleFor(
 	
 	if( entry == NULL )
 	{
+		printf( "  entry NULL\n" );
 		fLocker->Unlock();
-		return NULL;
+		return "";
+	}
+	
+	printf( "  entry valid\n" );
+	fLocker->Unlock();	
+	return entry->GetTitle();
+}
+
+const char*
+UrlHandler::GetUrlFor(
+	int32 id )
+{
+	fLocker->Lock();
+
+//	printf( "UrlHandler::GetUrlFor( %ld )\n", id );
+	
+	BString title;
+	
+	UrlEntry* entry = GetEntry( id );
+	
+	if( entry == NULL )
+	{
+		fLocker->Unlock();
+		return "";
 	}
 
 	fLocker->Unlock();	
-	return entry->GetTitle();
+	return entry->GetUrl();
 }
 
 status_t
@@ -168,10 +254,21 @@ UrlHandler::ReceiveBroadcast(
 					}
 					break;					
 				}
+				case UH_DOC_CLOSED :
+				{
+					printf( "URLHANDLER: UH_DOC_CLOSED\n" );
+					
+					int32 view_id = 0;
+					msg->FindInt32( "view_id", &view_id );
+					
+					RemoveEntry( view_id );
+					
+					break;
+				}
 				case UH_LOADING_FINISHED :
 				case ProtocolConnectionClosed :
 				{
-					printf( "URLHANDLER: ProtocolConnectionClosed/UH_LOADING_FINISHED\n" );
+					//printf( "URLHANDLER: ProtocolConnectionClosed/UH_LOADING_FINISHED\n" );
 					
 					/*
 					 * Set the UrlEntrys state to loading complete. (To be implemented.)
@@ -190,7 +287,7 @@ UrlHandler::ReceiveBroadcast(
 					  * MS_TARGET_PARSER if i am not mistaken, right?
 					  */
 					
-					break;
+					//break;
 				}
 				case UH_LOADING_PROGRESS :
 				case ReturnedData :	// we need to find better specified constants, or take the above one :)
@@ -245,7 +342,20 @@ UrlHandler::ReceiveBroadcast(
 							entry->SetLoadingProgress( loadprogress );
 						}
 						else
+						{
 							entry->SetLoadingProgress( 100 );
+							
+							/*
+							 * As long, as we have no FavIcon loading ready, I do set
+							 * the non-empty document icon here.
+							 */
+							BBitmap* bmp = new BBitmap(
+								BRect( 0, 0, 15,15 ),
+								B_RGB32 );
+							memcpy( bmp->Bits(), icon_document_hex, 1024 );
+							entry->SetFavIcon( bmp );
+							delete bmp;
+						}
 
 						entry->Print();
 						
@@ -283,8 +393,7 @@ UrlHandler::ReceiveBroadcast(
 					printf( "URLHANDLER: adding following item: ID[%ld] URL[%s]\n", id, url.String() ); 
 					
 					UrlEntry* entry = new UrlEntry( id, url.String() );
-					
-					fEntryList.push_back( *entry );
+					fEntryList.push_back( entry );
 					
 					/*
 					 * I was planning to move all urlparsing and handler decision making from the windows
@@ -377,4 +486,29 @@ UrlHandler::ReceiveBroadcast(
 	}
 	
 	return B_OK;
+}
+
+void
+UrlHandler::RemoveEntry(
+	int32 id )
+{
+	fLocker->Lock();
+
+	printf( "UrlHandler::RemoveEntry( %ld )\n", id );
+	
+	vector< UrlEntry* >::iterator it;
+	for( it = fEntryList.begin(); it != fEntryList.end(); it++ )
+	{
+		if( ( ( UrlEntry* )*it )->GetID() == id )
+		{
+			printf( "URLHANDLER: Removing following item:\n" );
+			UrlEntry* entry = *( it );
+			entry->Print();
+			delete entry;
+			fEntryList.erase( it );
+			break;
+		}
+	}
+	
+	fLocker->Unlock();	
 }

@@ -49,16 +49,6 @@ class ThemisTab;
 
 class Win : public BWindow, public MessageSystem
 {
-	private:
-		bool						startup;
-//		HTMLParser*					Parser;
-		uint32						protocol;
-// 		int16						fUniqueID;
-  		Win*						fNextWindow;
-  		BRect						fOldFrame;
-  		bool						fMaximized;
-  		bool						fQuitConfirmed;
-
 	public:
 									Win(
 										BRect frame,
@@ -82,19 +72,17 @@ class Win : public BWindow, public MessageSystem
 		void						CreateTabView();
 		void						CreateUrlPopUpWindow();
 		
+		//! Returns a pointer to a tab with the given _view_ ID. 
 		ThemisTab*					FindTabFor(
-										int32 id,
-										int32* tabindex );		
-		
-//		FakeSite*					GetViewPointer( int16 tab_uid, int16 view_uid );
-
+										int32 view_id,
+										int32* tabindex = NULL );		
 		void						LoadInterfaceGraphics();
 		Win*						NextWindow();
 		status_t					ReceiveBroadcast(BMessage *message);
 		void						ReInitInterface();
 		void						SetNextWindow( Win* nextwin );
 		void						SetQuitConfirmed( bool state );
-//		int16						UniqueID();
+		
 		void						UrlTypedHandler( bool show_all );
 						
 		BMenuBar*					menubar;
@@ -105,6 +93,14 @@ class Win : public BWindow, public MessageSystem
 		ThemisTabView*				tabview;
 		ThemisStatusView*			statusview;
 		BBitmap*					bitmaps[10];
+
+	private:
+		bool						startup;
+		uint32						protocol;
+  		Win*						fNextWindow;
+  		BRect						fOldFrame;
+  		bool						fMaximized;
+  		bool						fQuitConfirmed;
 };
 
 #endif
