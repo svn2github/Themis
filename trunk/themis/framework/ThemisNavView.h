@@ -18,25 +18,17 @@ class ThemisNavView : public BView
 {
 	public:
 											ThemisNavView(
-												BRect rect,
-												const rgb_color* arr );
-												/*rgb_color bgc,
-												rgb_color blkc,
-												rgb_color dgc );*/
+												BRect rect );
 		virtual								~ThemisNavView( void );
 		void								AttachedToWindow( void );
 		void								Draw( BRect updaterect );
+		void								MouseDown( BPoint point );
 		
 		void								CreateInterfaceButtons();
 		
 		ThemisUrlView*						urlview;
 		
 		ThemisPictureButton*				buttons[7];
-	
-	private:
-		rgb_color							fBackgroundColor;
-		rgb_color							fBlackColor;
-		rgb_color							fDarkGrayColor;
 };
 
 #endif

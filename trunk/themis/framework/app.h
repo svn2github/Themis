@@ -36,6 +36,7 @@ Project Start Date: October 18, 2000
 #include "prefswin.h"
 #include "msgsystem.h"
 #include "msgdaemon.h"
+
 //! The application framework version number. 
 #define THEMIS_FRAMEWORK_APP_VERSION 0.40
 
@@ -44,14 +45,21 @@ Project Start Date: October 18, 2000
 
 This is the heart of the entire application.
 */
+
+extern BMessage* AppSettings;
+
 class App:public BApplication, public MessageSystem {
 	private:
-		Win *win;
+		//! The first Window in a possible sequence of Windows
+		Win* fFirstWindow;
 		//! Create the default settings.
 		void InitSettings(char *settings_path=NULL);
 		//! Checks to see if the QuitRequested function has been called.
 		volatile int32 qr_called;
 		MessageDaemon *MDaemon;
+		
+		int16						fUniqueIDCounter;
+		
 	public:
 		//! The About window.
 		aboutwin *AWin;
@@ -70,6 +78,9 @@ class App:public BApplication, public MessageSystem {
 		void ReadyToRun();
 		void ArgvReceived(int32 argc, char **argv);
 		void Pulse();
+		int16						GetNewUniqueID();
+		Win*						FirstWindow();
+		void						SetFirstWindow( Win* newfirst );
 		uint32 BroadcastTarget();
 		status_t ReceiveBroadcast(BMessage *msg);
 		status_t BroadcastReply(BMessage *msg);

@@ -10,19 +10,16 @@
 #include <iostream>
 
 // myheaders
-#include "ThemisTVS.h"
 #include "ThemisNavView.h"
 #include "ThemisIcons.h"
 #include "win.h"
+#include "app.h"
 
 class ThemisPictureButton;
 
-ThemisNavView::ThemisNavView( BRect rect, const rgb_color* arr ) :
+ThemisNavView::ThemisNavView( BRect rect ) :
 	BView( rect, "THEMISNAVVIEW", B_FOLLOW_LEFT_RIGHT, B_WILL_DRAW | B_FULL_UPDATE_ON_RESIZE )
 {
-	fBackgroundColor = arr[0];
-	fBlackColor = arr[2];
-	fDarkGrayColor = arr[4];
 }
 
 ThemisNavView::~ThemisNavView( void )
@@ -34,7 +31,9 @@ ThemisNavView::AttachedToWindow( void )
 {
 	BRect rect = Bounds();
 	
-	SetViewColor( fBackgroundColor );
+	union int32torgb convert;
+	AppSettings->FindInt32( "PanelColor", &convert.value );
+	SetViewColor( convert.rgb );
 	
 	// create the urlview first( we need its frame for go button later )
 	urlview = new ThemisUrlView(
@@ -44,8 +43,8 @@ ThemisNavView::AttachedToWindow( void )
 			rect.right - 25,
 			rect.bottom - 5 ), // minimum height automatically set by BTextControl
 		"URLVIEW", B_FOLLOW_LEFT_RIGHT, B_WILL_DRAW | //B_NAVIGABLE |
-		B_FULL_UPDATE_ON_RESIZE,
-		(( Win* )Window() )->fColorArray );
+		B_FULL_UPDATE_ON_RESIZE );
+
 	urlview->TextView()->AddFilter( new ThemisUrlViewMessageFilter( ( Win* )Window() ) );
 	AddChild( urlview );
 	
@@ -62,23 +61,59 @@ ThemisNavView::Draw( BRect updaterect )
 	
 	rgb_color lo = LowColor();
 	
-	SetLowColor( fBackgroundColor );
+	union int32torgb convert;
+	AppSettings->FindInt32( "PanelColor", &convert.value );
+	SetLowColor( convert.rgb );	
 	FillRect( updaterect, B_SOLID_LOW );
 	
 	// the 'shadow' at the bottom of navview
-	SetLowColor( fBlackColor );
+	AppSettings->FindInt32( "DarkBorderColor", &convert.value );
+	SetLowColor( convert.rgb );
 	StrokeLine(
 		BPoint( updaterect.left, updaterect.bottom ),
 		BPoint( updaterect.right, updaterect.bottom ),
 		B_SOLID_LOW );
 	
-	SetLowColor( fDarkGrayColor );
+	AppSettings->FindInt32( "PanelColor", &convert.value );
+	if( convert.rgb.red - 32 >= 0 )
+		convert.rgb.red -= 32;
+	if( convert.rgb.green - 32 >= 0 )
+		convert.rgb.green -= 32;
+	if( convert.rgb.blue - 32 >= 0 )
+		convert.rgb.blue -= 32;
+	SetLowColor( convert.rgb );
 	StrokeLine(
 		BPoint( updaterect.left, updaterect.bottom - 1 ),
 		BPoint( updaterect.right, updaterect.bottom - 1 ),
 		B_SOLID_LOW );
 	
+	if( CountChildren() > 0 )
+	{
+		BView* child = NULL;
+		for( int32 i = 0; i < CountChildren(); i++ )
+		{
+			child = ChildAt( i );
+			child->Draw( child->Bounds() );
+		}
+	}
+	
 	SetLowColor( lo );
+}
+
+void
+ThemisNavView::MouseDown( BPoint point )
+{
+	// check, if the urlpopupwindow is still open
+	// if yes, close it and return.
+	Win* win = ( Win* )Window();
+	if( win->urlpopupwindow != NULL )
+	{
+		win->urlpopupwindow->Lock();
+		win->urlpopupwindow->Quit();
+		win->urlpopupwindow = 0;
+		return;
+	}
+	BView::MouseDown( point );
 }
 
 void
@@ -247,8 +282,16 @@ ThemisPictureButton::Draw( BRect updaterect )
 	// just erase the whole area as old picture contents are not removed
 	// before drawing the new picture of the button if the buttons state
 	// changed...so we erase the whole button area..
-	FillRect( updaterect, B_SOLID_LOW );
+	union int32torgb convert;
+	AppSettings->FindInt32( "PanelColor", &convert.value );
+	SetHighColor( convert.rgb );
+	FillRect( Bounds(), B_SOLID_HIGH );
 	
+	// this is a little trick, to cheat the BPictureButton::Draw() function.
+	// if we change the panelcolor, the draw function would have drawn a rect
+	// in the bounds dimension in the _old_ panelcolor..
+	SetViewColor( convert.rgb );
+		
 	BPictureButton::Draw( updaterect );
 }
 
@@ -322,6 +365,8 @@ ThemisPictureButton::MouseMoved( BPoint point, uint32 transit, const BMessage* m
 		SetValue( B_CONTROL_OFF );
 		SetEnabled( true );
 		
+		// fixes "press-out-in-release"-problem
+		BPictureButton::MouseUp( BPoint( 0.0, 0.0 ) );
 		// clean up
 		i_was_disabled_on_flag = false;
 	}

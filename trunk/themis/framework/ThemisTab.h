@@ -16,8 +16,8 @@
 class ThemisTab : public BTab
 {
 	public:
-									ThemisTab( BView *view, uint uid );
-		
+									ThemisTab( BView *view, int16 uid );
+									
 		virtual void				DrawTab(
 										ThemisTabView* owner,
 										BRect frame,
@@ -27,10 +27,10 @@ class ThemisTab : public BTab
 										ThemisTabView* owner,
 										BRect frame );
 										
-		uint						UniqueID();
+		int16						UniqueID();
 		
 	private:
-		uint						fUniqueID;
+		int16						fUniqueID;
 };
 
 #endif

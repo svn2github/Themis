@@ -54,7 +54,6 @@ FRAMEWORKSOURCES= \
 	framework/main.cpp \
 	framework/app.cpp \
 	framework/win.cpp \
-	framework/winview.cpp \
 	framework/infowin.cpp \
 	framework/aboutview.cpp \
 	framework/aboutwin.cpp \
@@ -69,7 +68,7 @@ FRAMEWORKSOURCES= \
 	framework/ThemisUrlView.cpp \
 	framework/FakeSite.cpp \
 	framework/msgdaemon.cpp
-#	framework/ThemisTVS.cpp \
+#	framework/winview.cpp
 #	framework/htmlparser.cpp
 COMMONSOURCES= \
 	common/plugclass.cpp \

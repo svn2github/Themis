@@ -10,10 +10,10 @@
 // myheaders
 #include "ThemisUrlPopUpView.h"
 #include "win.h"
+#include "app.h"
 
 ThemisUrlPopUpView::ThemisUrlPopUpView(
-	BRect frame,
-	rgb_color gray )
+	BRect frame )
 	: BView(
 		frame,
 		"THEMISURLPOPUPVIEW",
@@ -21,8 +21,6 @@ ThemisUrlPopUpView::ThemisUrlPopUpView(
 		B_WILL_DRAW | B_FULL_UPDATE_ON_RESIZE )
 {
 	BRect rect = Bounds();
-	
-	fDarkGrayColor = gray;
 	
 	ulv = new ThemisUrlListView(
 		BRect(
@@ -45,13 +43,14 @@ ThemisUrlPopUpView::Draw( BRect updaterect )
 			
 	rgb_color hi = HighColor();
 	
-	SetHighColor( fDarkGrayColor );
+	union int32torgb convert;
+	AppSettings->FindInt32( "LightBorderColor", &convert.value );
+	SetHighColor( convert.rgb );
 	StrokeRect( updaterect, B_SOLID_HIGH );
 	
 	SetHighColor( 255,255,255 );
 	updaterect.InsetBy( 1, 1 );
 	FillRect( updaterect, B_SOLID_HIGH );
-	
 	
 	SetHighColor( hi );
 }

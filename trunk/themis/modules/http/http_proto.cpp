@@ -184,7 +184,8 @@ status_t http_protocol::BroadcastReply(BMessage *msg){
 
 status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 {
-//	printf("!!!! HTTP ReceiveBroadcast\n");
+	printf("http_protocol::ReceiveBroadcast()\n");
+	
 	status_t stat=B_ERROR;
 	int32 command=0;
 	if (msg->HasInt32("command"))

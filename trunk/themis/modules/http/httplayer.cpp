@@ -477,6 +477,7 @@ void httplayer::KillRequest(http_request *request) {
 
 http_request *httplayer::AddRequest(BMessage *info) {
 	printf("AddRequest\n");
+	info->PrintToStream();
 	BAutolock alock(lock);
 	http_request *request=NULL;
 	if (alock.IsLocked()) {
@@ -513,6 +514,13 @@ http_request *httplayer::AddRequest(BMessage *info) {
 			info->FindPointer("plug_manager",(void**)&PluginManager);
 		}
 		request=new http_request;
+		// added by emwe ( hope its correct here )
+		// add the unique IDs
+		info->FindInt16( "window_uid", &request->window_uid );
+		info->FindInt16( "tab_uid", &request->tab_uid );
+		info->FindInt16( "view_uid", &request->view_uid );
+		printf( "UIDS: %d,%d,%d\n", request->window_uid, request->tab_uid, request->view_uid );
+		//
 		if (info->HasInt32("browser_string"))
 			info->FindInt32("browser_string",&use_useragent);
 		if (info->HasString("referrer")) {
@@ -537,6 +545,7 @@ http_request *httplayer::AddRequest(BMessage *info) {
 		printf("[http->addrequest] Host: %s\n",request->host);
 		
 		if (what==LoadingNewPage) {
+			printf( "what==LoadingNewPage\n" );
 			BHandler *target;
 			info->FindPointer("top_view",(void**)&target);
 			BMessenger *msgr=new BMessenger(target,NULL,NULL);
@@ -1619,6 +1628,12 @@ void httplayer::ProcessData(http_request *request, void *buffer, int size) {
 	}
 	printf("ProcessData done. Bytes Received: %ld\n",request->bytesreceived);
 	BMessage *msg=new BMessage(ReturnedData);
+	// added by emwe
+	msg->AddInt16( "window_uid", request->window_uid );
+	msg->AddInt16( "tab_uid", request->tab_uid );
+	msg->AddInt16( "view_uid", request->view_uid );
+	msg->AddBool( "secure", request->secure );
+	//
 	msg->AddInt32("command",COMMAND_INFO);
 	msg->AddInt32("cache_object_token",request->cache_object_token);
 //	msg->AddPointer("data_pointer",request->data);
@@ -1797,7 +1812,7 @@ void httplayer::CloseRequest(http_request *request,bool quick) {
 		msg->AddInt64("content-length",request->contentlen);
 	BMessage container;
 	container.AddMessage("message",msg);
-	printf("http_request::CloseRequest()\n");
+	printf("http_layer::CloseRequest()\n");
 	container.PrintToStream();
 	msg->PrintToStream();
 	Proto->Broadcast(MS_TARGET_ALL,msg);

@@ -33,6 +33,4 @@ Project Start Date: October 18, 2000
 //! An alias for the application signature. The real application signature is now in ThemisAppSig.
 #define AppSig ThemisAppSig
 
-
-
 #endif

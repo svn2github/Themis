@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 // myheaders
-#include "ThemisTVS.h"
+#include "appdefines.h"
 #include "ThemisUrlPopUpWindow.h"
 #include "win.h"
 
@@ -29,8 +29,7 @@ ThemisUrlPopUpWindow::ThemisUrlPopUpWindow( BWindow* parent, BRect frame )
 	trunc_list = NULL;
 	
 	urlpopupview = new ThemisUrlPopUpView(
-		Bounds(),
-		( ( Win* )parentwindow )->fColorArray[4] );
+		Bounds() );
 	AddChild( urlpopupview );
 }
 
@@ -44,15 +43,12 @@ ThemisUrlPopUpWindow::MessageReceived( BMessage *msg )
 			// set the urlview-text
 			//cout << "URL_SELECT_MOUSE" << endl;
 			
-			Lock();
 			BStringItem* item = ( BStringItem* )url_list->ItemAt( 
 				urlpopupview->ulv->CurrentSelection() );
 						
 			parentwindow->Lock();
 			((Win*)parentwindow)->navview->urlview->SetText( item->Text() );
 			parentwindow->Unlock();
-			
-			Unlock();
 			
 			// doubleclick opens url
 			uint32 clickitem = urlpopupview->ulv->CurrentSelection();

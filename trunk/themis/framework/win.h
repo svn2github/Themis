@@ -29,21 +29,19 @@ Project Start Date: October 18, 2000
 #ifndef _winclass
 #define _winclass
 #include <Window.h>
-#include "winview.h"
 #include "htmlparser.h"
 #include "msgsystem.h"
+#include "ThemisNavView.h"
+#include "ThemisStatusView.h"
+#include "ThemisTabView.h"
+#include "ThemisUrlPopUpWindow.h"
+#include "FakeSite.h"
 
 /*!
 \brief The main browser window.
 
 This is the main browser window.
 */
-#include "ThemisNavView.h"
-#include "ThemisStatusView.h"
-#include "ThemisTabView.h"
-#include "ThemisUrlPopUpWindow.h"
-#include "FakeSite.h"
-#include "ThemisTVS.h"
 
 class Win : public BWindow, public MessageSystem
 {
@@ -51,44 +49,52 @@ class Win : public BWindow, public MessageSystem
 		bool						startup;
 		HTMLParser*					Parser;
 		uint32						protocol;
-  		uint						fUniqueIDCounter;
-  		
+  		int16						fUniqueID;
+  		Win*						fNextWindow;
+  		BRect						fOldFrame;
+  		bool						fMaximized;
+  		bool						fQuitConfirmed;
+
 	public:
-		winview *View;
-		Win(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspace=B_CURRENT_WORKSPACE);
-		~Win();
+									Win(
+										BRect frame,
+										const char *title,
+										window_type type,
+										uint32 flags,
+										uint32 wspace=B_CURRENT_WORKSPACE );
+									~Win();
 		bool						QuitRequested();
+		virtual void				FrameMoved( BPoint origin );
+		virtual void				FrameResized( float width, float height );
 		void						MessageReceived(BMessage *msg);
 		//! Detects when the window is brought to the forefront, for utilization.
 		void						WindowActivated(bool active);
-		virtual void				FrameMoved( BPoint origin );
-		virtual void				FrameResized( float width, float height );
 		//! Detects when the workspace that the application is located in is changed.
-		void WorkspacesChanged(uint32 oldws, uint32 newws);
-	
+		void 						WorkspacesChanged(uint32 oldws, uint32 newws);
+		void						Zoom( BPoint origin, float width, float height );
+		
 		void						AddNewTab( bool hidden );
+		uint32						BroadcastTarget();
 		void						CreateTabView();
 		void						CreateUrlPopUpWindow();
-		void						DefineInterfaceColors();
-		uint						GetNewUniqueID();
-		FakeSite*					GetViewPointer( uint tab_uid, uint view_uid );
+		FakeSite*					GetViewPointer( int16 tab_uid, int16 view_uid );
 		void						LoadInterfaceGraphics();
+		Win*						NextWindow();
+		status_t					ReceiveBroadcast(BMessage *message);
+		void						ReInitInterface();
+		void						SetNextWindow( Win* nextwin );
+		void						SetQuitConfirmed( bool state );
+		int16						UniqueID();
 		void						UrlTypedHandler( bool show_all );
-	
+						
+		BMenuBar*					menubar;
 		BMenu*						optionsmenu;
 		BMenu*						filemenu;
-								
-		BMenuBar*					menubar;
 		ThemisNavView*				navview;
 		ThemisUrlPopUpWindow*		urlpopupwindow;
 		ThemisTabView*				tabview;
 		ThemisStatusView*			statusview;
 		BBitmap*					bitmaps[10];
-		
-		rgb_color					fColorArray[6];
-		uint32 BroadcastTarget();
-		status_t ReceiveBroadcast(BMessage *message);
-		
 };
 
 #endif

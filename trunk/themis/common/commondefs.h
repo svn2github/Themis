@@ -118,4 +118,33 @@ to allow interoperability in some parts of the application.
 
 #define GetSupportedMIMEType 'gsmt'
 #define SupportedMIMEType 'spmt'
+
+// Message Constants for the interface
+#define BUTTON_BACK				'bbac'
+#define BUTTON_FORWARD			'bfwd'
+#define BUTTON_STOP				'bstp'
+#define BUTTON_RELOAD			'brel'
+#define BUTTON_HOME				'bhom'
+#define CLOSE_OTHER_TABS		'clot'
+#define CLOSE_URLPOPUP			'clpu'
+#define RE_INIT_INTERFACE		'riif'
+#define SHOW_PREFERENCES		'shpr'
+#define TAB_ADD					'tadd'
+#define TAB_CLOSE				'tclo'
+#define URL_TYPED				'urlt'
+#define URL_LOADING				'urll'
+#define URL_OPEN				'urlo'
+#define URL_SELECT_MOUSE		'ursm'
+#define URL_SELECT_NEXT			'ursn'
+#define URL_SELECT_PREV			'ursp'
+#define WINDOW_CLOSE			'winc'
+#define WINDOW_NEW				'winn'
+
+#include <GraphicsDefs.h>
+
+union int32torgb
+{
+	int32 value;
+	struct rgb_color rgb;
+};
 #endif

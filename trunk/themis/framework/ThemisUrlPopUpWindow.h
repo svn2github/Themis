@@ -10,9 +10,9 @@
 // C/C++ headers
 
 // myheaders
-#include "ThemisTVS.h"
 #include "ThemisUrlPopUpView.h"
 #include "Window.h"
+
 class ThemisUrlPopUpWindow : public BWindow
 {
 	public:

@@ -43,7 +43,7 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 {
 	while (!_Quit_Thread_) {
 		if (acquire_sem(process_sem)==B_OK) {
-//			printf("MessageSystem::_ProcessBroadcasts_\n");
+			printf("MessageSystem::_ProcessBroadcasts_\n");
 			if (has_data(_ProcessThread_)) {
 //				BMessage *msg;
 				thread_id sender_thread;

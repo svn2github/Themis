@@ -12,7 +12,6 @@
 // C/C++ headers
 
 // myheaders
-#include "ThemisTVS.h"
 
 class ThemisUrlListView;
 
@@ -20,14 +19,11 @@ class ThemisUrlPopUpView : public BView
 {
 	public:
 									ThemisUrlPopUpView(
-										BRect frame,
-										rgb_color gray );
+										BRect frame );
 													 	 
 		virtual void				Draw( BRect updaterect );
 		
 		ThemisUrlListView*			ulv;
-		
-		rgb_color					fDarkGrayColor;
 };
 
 #endif

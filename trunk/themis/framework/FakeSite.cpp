@@ -12,11 +12,11 @@
 #include <iostream.h>
 
 // myheaders
-#include "ThemisTVS.h"
+#include "appdefines.h"
 #include "win.h"
 #include "FakeSite.h"
 
-FakeSite::FakeSite( BRect rect, const char* title, uint uid, BWindow* win = NULL ) :
+FakeSite::FakeSite( BRect rect, const char* title, int16 uid, BWindow* win = NULL ) :
 	BView( rect, "fakesite", B_FOLLOW_ALL, B_WILL_DRAW | B_NAVIGABLE )
 {
 	// the fav_site_icon
@@ -50,8 +50,8 @@ FakeSite::FakeSite( BRect rect, const char* title, uint uid, BWindow* win = NULL
 		
 	// info init
 	fStatusText.SetTo( "" );
-	fSecureConnection = false;
-	fCookieEnabled = true;
+	fSecure = false;
+	fCookiesDisabled = false;
 	fDocProgress = 0;
 	fDocText = "";
 	fImgProgress = 0;
@@ -93,7 +93,6 @@ FakeSite::Draw( BRect updaterect )
 		DrawString( text.String(), BPoint( 20,60 ), NULL );
 	}
 	
-	
 	BView::Draw( updaterect );
 }
 
@@ -102,6 +101,17 @@ FakeSite::MouseDown( BPoint point )
 {
 	//cout << "FakeSite::MouseDown()" << endl;
 	
+	// at first check, if the urlpopupwindow is still open
+	// if yes, close it and return.
+	Win* win = ( Win* )mainwin;
+	if( win->urlpopupwindow != NULL )
+	{
+		win->urlpopupwindow->Lock();
+		win->urlpopupwindow->Quit();
+		win->urlpopupwindow = 0;
+		return;
+	}
+		
 	uint32 buttons;
 	GetMouse( &point, &buttons, true );
 	
@@ -138,6 +148,12 @@ FakeSite::MouseDown( BPoint point )
 	
 }
 
+bool
+FakeSite::GetCookieState()
+{
+	return fCookiesDisabled;
+}
+
 int
 FakeSite::GetDocBarProgress()
 {
@@ -162,38 +178,60 @@ FakeSite::GetImgBarText()
 	return fImgText;
 }
 
-void
-FakeSite::SetInfo(
-	int doc_progress_delta,
-	const char* doc_text,
-	int img_progress_delta,
-	const char* img_text,
-	const char* statustext )
+bool
+FakeSite::GetSecureState()
 {
-	//cout << "FakeSite::SetInfo()" << endl;
-	
-	fDocProgress += doc_progress_delta;
-	if( fDocProgress >= 100 )
-	{	
-		fDocProgress = 100;
-		fDocText = "done";
-	}
-	else
-		fDocText = ( char* )doc_text;
-	
-	fImgProgress += img_progress_delta;
-	if( fImgProgress >= 100 )
-	{
-		fImgProgress = 100;
-		fImgText = "done";
-	}
-	else
-		fImgText = ( char* )img_text;
-	
-	fStatusText.SetTo( statustext );
+	return fSecure;
 }
 
-uint
+const char*
+FakeSite::GetStatusText()
+{
+	return fStatusText.String();
+}
+
+void
+FakeSite::SetInfo(
+	int doc_progress,
+	bool delta_doc,
+	const char* doc_text,
+	int img_progress,
+	bool delta_img,
+	const char* img_text,
+	const char* statustext,
+	bool sec,
+	bool cook_dis )
+{
+	cout << "FakeSite::SetInfo()" << endl;
+	
+	if( delta_doc == true )
+	{
+		fDocProgress += doc_progress;
+		if( fDocProgress >= 100 )
+			fDocProgress = 100;
+	}
+	else
+		fDocProgress = doc_progress;
+	
+	fDocText = ( char* )doc_text;
+
+	if( delta_img == true )
+	{
+		fImgProgress += img_progress;
+		if( fImgProgress >= 100 )
+			fImgProgress = 100;
+	}
+	else
+		fImgProgress = img_progress;
+	
+	fImgText = ( char* )img_text;
+		
+	fStatusText.SetTo( statustext );
+	fSecure = sec;
+	fCookiesDisabled = cook_dis;
+}
+
+int16
 FakeSite::UniqueID()
 {
 	return fUniqueID;

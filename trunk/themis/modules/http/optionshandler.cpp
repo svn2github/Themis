@@ -39,9 +39,9 @@ http_opt_handler::http_opt_handler()
 	parentmenu=NULL;
 	browserident=new BMenu("Browser Identification");
 	BMenuItem *mi;
-	browserident->AddItem((mi=(new BMenuItem("Themis",(new BMessage((uint32)BROWSER_IDENT_THEMIS)),'t'))));
-	browserident->AddItem((new BMenuItem("Netscape",(new BMessage((uint32)BROWSER_IDENT_NETSCAPE)),'n')));
-	browserident->AddItem((new BMenuItem("Internet Explorer",(new BMessage((uint32)BROWSER_IDENT_IE)),'e')));
+	browserident->AddItem((mi=(new BMenuItem("Themis",(new BMessage((uint32)BROWSER_IDENT_THEMIS)),'t', B_SHIFT_KEY))));
+	browserident->AddItem((new BMenuItem("Netscape",(new BMessage((uint32)BROWSER_IDENT_NETSCAPE)),'n', B_SHIFT_KEY)));
+	browserident->AddItem((new BMenuItem("Internet Explorer",(new BMessage((uint32)BROWSER_IDENT_IE)),'e', B_SHIFT_KEY)));
 	browserident->SetRadioMode(true);
 	mi->SetMarked(true);
 		

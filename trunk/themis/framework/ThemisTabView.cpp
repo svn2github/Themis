@@ -12,52 +12,48 @@
 #include <math.h>
 
 // myheaders
-#include "ThemisTVS.h"
 #include "win.h"
 #include "ThemisTabView.h"
 #include "ThemisTab.h"
 #include "FakeSite.h"
 #include "ThemisNavView.h"	// ThemisPictureButton
+#include "app.h"
+#include "win.h"
 
 ThemisTabView::ThemisTabView(
 	BRect frame,
-	const char *name,
+	const char* name,
 	button_width width,
 	uint32 resizingmode,
-	uint32 flags,
-	const rgb_color* arr )
+	uint32 flags )
 	: BTabView( frame, name,
 		width,
 		resizingmode,
 		flags )
 {
 	tab_width = 150.0;
-	SetTabHeight( 24.0 );
-	
-	fBackgroundColor = arr[0];
-	fInactiveTabColor = arr[1];
-	fBlackColor = arr[2];
-	fWhiteColor = arr[3];
+	SetTabHeight( 25.0 );
 }
 
 void
 ThemisTabView::AttachedToWindow()
 {
 	//cout << "ThemisTabView::AttachedToWindow()" << endl;
-	
-	SetViewColor( fBackgroundColor );
+	union int32torgb convert;
+	AppSettings->FindInt32( "PanelColor", &convert.value );
+	SetViewColor( convert.rgb );
 	
 	CreateCloseTabViewButton();
 	
-	// if prefs say sth like "always show tabs", display normal TabView
-	// else display the faked singleview
-	// ( perhaps we can add the pref setting as a parameter later )
-	int show_tabs = 1;
-	
-	if( show_tabs == 1 )
+	// ShowTabsAtStartup	
+	bool show_tabs = false;
+	AppSettings->FindBool( "ShowTabsAtStartup", &show_tabs );
+	if( show_tabs == true )
 		SetNormalTabView();
 	else
 		SetFakeSingleView();
+	
+	ContainerView()->AddFilter( new ContainerViewMessageFilter( ( Win* )Window() ) );
 }
 
 void
@@ -67,13 +63,26 @@ ThemisTabView::Draw( BRect updaterect )
 	
 	// draw the background of the tabs
 	
-	rgb_color lo = LowColor();
+	updaterect = Bounds();
 	
-	SetLowColor( fBackgroundColor );
+	rgb_color lo = LowColor();
+	union int32torgb convert;
+	AppSettings->FindInt32( "PanelColor", &convert.value );
+	SetLowColor( convert.rgb );
 	FillRect( updaterect, B_SOLID_LOW );
 	SetLowColor( lo );
 	
 	DrawBox( DrawTabs() );
+	
+	if( CountChildren() > 0 )
+	{
+		BView* child = NULL;
+		for( int32 i = 0; i < CountChildren(); i++ )
+		{
+			child = ChildAt( i );
+			child->Draw( child->Bounds() );
+		}
+	}
 }
 
 void
@@ -102,7 +111,7 @@ ThemisTabView::DrawTabs( void )
 	rect.left = 0.0;
 	rect.top = 2.0;
 	rect.right = tab_width;
-	rect.bottom = TabHeight() - 3;
+	rect.bottom = TabHeight() - 2;
 	
 	// if we got sth to draw
 	if( count >= 1 )
@@ -147,30 +156,44 @@ ThemisTabView::DrawTabs( void )
 	// now draw the 'line' between tabs bottom and site-content
 	rgb_color hi = HighColor();
 	
+	BRect brect = Bounds();
 	BRect linerect;
-	BRect updaterect = Bounds();
-	linerect.left = updaterect.left;
-	linerect.top = updaterect.top + TabHeight() - 3  + 1;
-	linerect.right = updaterect.right;
-	linerect.bottom = linerect.top + 3;
+	linerect.left = brect.left;
+	linerect.top = rect.bottom + 1;
+	linerect.right = brect.right;
+	linerect.bottom = linerect.top + 1;
 	
-	SetHighColor( fBackgroundColor );
+	// some colors
+	union int32torgb convert;
+	AppSettings->FindInt32( "ActiveTabColor", &convert.value );
+	rgb_color activetabcolor = convert.rgb;
+	AppSettings->FindInt32( "DarkBorderColor", &convert.value );
+	rgb_color darkbordercolor = convert.rgb;
+	AppSettings->FindInt32( "ShadowColor", &convert.value );
+	rgb_color shadowcolor = convert.rgb;
+		
+	SetHighColor( activetabcolor );
 	FillRect( linerect, B_SOLID_HIGH );
 	
 	// and stroke a black line from left to right at bottom
-	SetHighColor( fBlackColor );
-	StrokeLine( BPoint( updaterect.left, linerect.bottom ),
-		BPoint( updaterect.right, linerect.bottom ), B_SOLID_HIGH );
+	SetHighColor( darkbordercolor );
+	StrokeLine( BPoint( brect.left, linerect.bottom + 1 ),
+		BPoint( brect.right, linerect.bottom + 1 ), B_SOLID_HIGH );
 	
 	// we still need a part of the black upper line
 	// ( the black one from rightmost tab till windows right side )
 	// the rest of the line is already drawn by the B_TAB_ANY tabs
 	BPoint startpoint;
 	startpoint.x = count * tab_width;
-	startpoint.y = linerect.top-1;
-	StrokeLine( startpoint, BPoint( linerect.right, linerect.top-1 ),
+	startpoint.y = linerect.top - 2;
+	StrokeLine( startpoint, BPoint( linerect.right, linerect.top - 2 ),
 		B_SOLID_HIGH );
-			
+	// the shadow below the upper black line
+	SetHighColor( shadowcolor );
+	startpoint.y += 1;
+	StrokeLine( startpoint, BPoint( linerect.right, linerect.top - 1 ),
+		B_SOLID_HIGH );
+	
 	SetHighColor( hi );
 	
 	return rect;
@@ -192,6 +215,17 @@ ThemisTabView::MakeFocus( bool focus )
 void
 ThemisTabView::MouseDown( BPoint point )
 {
+	// at first check, if the urlpopupwindow is still open
+	// if yes, close it and return.
+	Win* win = ( Win* )Window();
+	if( win->urlpopupwindow != NULL )
+	{
+		win->urlpopupwindow->Lock();
+		win->urlpopupwindow->Quit();
+		win->urlpopupwindow = 0;
+		return;
+	}
+		
 	uint32 buttons;
 	//cout << "ThemisTabView::MouseDown(): point.x: " << point.x << endl;
 	
@@ -338,7 +372,7 @@ ThemisTabView::MouseDown( BPoint point )
 void
 ThemisTabView::Select( int32 tabindex )
 {
-	cout << "ThemisTabView::Select()" << endl;
+	//cout << "ThemisTabView::Select()" << endl;
 	
 	// hinder tab-selection when urlpopupwindow is open
 	if( ( ( Win* )Window() )->urlpopupwindow != NULL )
@@ -363,16 +397,13 @@ ThemisTabView::Select( int32 tabindex )
 		if( tempview != NULL )
 		{
 			// set urlview-text
-			/*( ( ThemisTVS* )be_app )->*/((Win*)Window())->navview->
-				urlview->SetText( tempview->site_title.String() );
+			((Win*)Window())->navview->urlview->SetText( tempview->site_title.String() );
 			
 			// set the urlview-icon
-			/*( ( ThemisTVS* )be_app )->*/((Win*)Window())->navview->
-				urlview->SetFavIcon( tempview->site_fav_icon );
+			((Win*)Window())->navview->urlview->SetFavIcon( tempview->site_fav_icon );
 			
 			// set window-title-text
-			window_title << " - "
-				<< tempview->site_title.String();
+			window_title << " - " << tempview->site_title.String();
 			
 			Window()->SetTitle( window_title.String() );
 			
@@ -382,18 +413,18 @@ ThemisTabView::Select( int32 tabindex )
 				tempview->GetDocBarText(),
 				tempview->GetImgBarProgress(),
 				tempview->GetImgBarText(),
-				"" );
+				tempview->GetStatusText(),
+				tempview->GetSecureState(),
+				tempview->GetCookieState() );
 		}
 		else
 		{
 			// we could also set "" here ( better for usability, cause we dont
 			// have to get rid of 'about:blank' everytime )
-			/*( ( ThemisTVS* )be_app )->*/((Win*)Window())->navview->
-				urlview->SetText( "about:blank" );
+			((Win*)Window())->navview->urlview->SetText( "about:blank" );
 			
 			// set the urlview-icon
-			/*( ( ThemisTVS* )be_app )->*/((Win*)Window())->navview->
-				urlview->SetFavIcon( NULL );
+			((Win*)Window())->navview->urlview->SetFavIcon( NULL );
 			
 			// set window-title-text
 			Window()->SetTitle( window_title.String() );
@@ -404,7 +435,9 @@ ThemisTabView::Select( int32 tabindex )
 				"",
 				100,
 				"",
-				"" );
+				"",
+				false,
+				false );
 		}
 	}
 	
@@ -643,4 +676,39 @@ ThemisTabView::SetNormalTabView()
 	}	
 		
 	fake_single_view = false;
+}
+
+/////////////////////////////////////
+// ContainerViewMessageFilter
+/////////////////////////////////////
+
+ContainerViewMessageFilter::ContainerViewMessageFilter( Win* win )
+	: BMessageFilter( B_ANY_DELIVERY, B_ANY_SOURCE )
+{
+	window = win;
+}
+
+filter_result
+ContainerViewMessageFilter::Filter( BMessage *msg, BHandler **target )
+{
+	filter_result result( B_DISPATCH_MESSAGE );
+	
+	switch( msg->what )
+	{
+		case B_MOUSE_DOWN :
+		{
+			if( window->urlpopupwindow != NULL )
+			{
+				window->urlpopupwindow->Lock();
+				window->urlpopupwindow->Quit();
+				window->urlpopupwindow = 0;
+
+				result = B_SKIP_MESSAGE;
+			}
+			break;
+		}
+		default :
+			break;
+	}
+	return result;
 }

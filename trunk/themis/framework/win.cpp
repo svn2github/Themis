@@ -26,47 +26,51 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
-#include "win.h"
-#include "commondefs.h"
-#include "protocol_plugin.h"
-#include "AppDefs.h"
-#include "iostream.h"
-#include "ThemisTab.h"
-#include <Directory.h>
-#include <Screen.h>
-#include <ctype.h>
-#include "ThemisIcons.h"
-#include <TranslationKit.h>
-#include <MessageRunner.h>
-#include <stdlib.h>
 
-int WinH=800;
-int WinW=600;
+#include <Deskbar.h>
+#include <Directory.h>
+#include <MenuItem.h>
+#include <Screen.h>
+#include <TranslationKit.h>
+
+#include <stdlib.h>
+#include <ctype.h>
+
+#include "app.h"
+#include "../common/commondefs.h"
+#include "protocol_plugin.h"
+//#include "AppDefs.h"
+#include "iostream.h"
+#include "ThemisIcons.h"
+#include "ThemisTab.h"
+#include "win.h"
 
 extern plugman *PluginManager;
 extern BMessage *AppSettings;
-Win::Win(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspace)
-    :BWindow(frame,title,type,flags,wspace),MessageSystem() {
+
+Win::Win(
+	BRect frame,
+	const char *title,
+	window_type type,
+	uint32 flags,
+	uint32 wspace )
+    : BWindow( frame, title, type, flags, wspace ), MessageSystem()
+{
 	MsgSysRegister(this);
 	// size limits
 	BScreen Screen;
 	SetSizeLimits( 300, Screen.Frame().right, 200, Screen.Frame().bottom );
-    protocol=0;
-//  View=new winview(Bounds(),"mainview",B_FOLLOW_ALL,B_FRAME_EVENTS|B_WILL_DRAW|B_ASYNCHRONOUS_CONTROLS|B_NAVIGABLE_JUMP|B_FULL_UPDATE_ON_RESIZE);
+	
+	protocol=0;
 	startup=true;
-//  Parser=new HTMLParser;
-//  Parser->View=View;
-//  View->Parser=Parser;
-//	AddShortcut('a',B_SHIFT_KEY,(new BMessage(B_ABOUT_REQUESTED)));
-//	BScreen Screen;
-	
-//	SetSizeLimits(550,Screen.Frame().right,350,Screen.Frame().bottom);
-//	AddChild(View);
 	urlpopupwindow = NULL;
-	
-	DefineInterfaceColors();
+	fNextWindow = NULL;
+	fUniqueID = ( ( App* )be_app )->GetNewUniqueID();
+	fOldFrame = Frame();
+	fMaximized = false;
+	fQuitConfirmed = false;
+
 	LoadInterfaceGraphics();
-		
 	
 	BRect rect;
 	rect = Bounds();
@@ -75,11 +79,22 @@ Win::Win(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspa
 	menubar = new BMenuBar( BRect(0,0,0,0), "MENUBAR" );
 	AddChild( menubar );
 	
+	// menu messages
+	BMessage* tabaddmsg = new BMessage( TAB_ADD );
+	tabaddmsg->AddBool( "force_non_hidden", true );
+		
 	// filemenu
 	filemenu = new BMenu( "File" );
 	menubar->AddItem( filemenu );
-	filemenu->AddItem((new BMenuItem("About Themis",(new BMessage(B_ABOUT_REQUESTED)),'A',B_SHIFT_KEY)));
-	BMenuItem* quitentry = new BMenuItem( "Quit", new BMessage( B_QUIT_REQUESTED ), 'Q' );
+	BMenuItem* newwinitem = new BMenuItem( "New Window", new BMessage( WINDOW_NEW ), 'N');
+	filemenu->AddItem( newwinitem );
+	BMenuItem* newtabitem = new BMenuItem( "New Tab", tabaddmsg, 'T' );
+	filemenu->AddItem( newtabitem );
+	BMenuItem* aboutitem = new BMenuItem( "About Themis", new BMessage( B_ABOUT_REQUESTED ), 'A', B_SHIFT_KEY );
+	filemenu->AddItem( aboutitem );
+	BMenuItem* quitwentry = new BMenuItem( "Quit Window", new BMessage( B_QUIT_REQUESTED ), 'W' );
+	filemenu->AddItem( quitwentry );
+	BMenuItem* quitentry = new BMenuItem( "Quit Themis", new BMessage( B_QUIT_REQUESTED ), 'Q' );
 	filemenu->AddItem( quitentry );
 	quitentry->SetTarget( this );
 	// optionsmenu
@@ -87,15 +102,13 @@ Win::Win(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspa
 	menubar->AddItem(optionsmenu);
 	BMenuItem* prefsentry = new BMenuItem( "Preferences", new BMessage( SHOW_PREFERENCES ), 'P' );
 	prefsentry->SetTarget( be_app );
-	//optionsmenu->AddItem( new BMenuItem( "Preferences", new BMessage( SHOW_PREFERENCES ), 'P' ));
 	optionsmenu->AddItem( prefsentry );
 	
 		
 	// now we need the navigation view
 	navview = new ThemisNavView(
 		BRect( rect.left, menubar->Bounds().Height() + 1,
-			rect.right,	menubar->Bounds().Height() + 31 ),//
-		fColorArray );
+			rect.right,	menubar->Bounds().Height() + 31 ) );
 	AddChild( navview );
 	
 	// and finally the statusview at the bottom
@@ -103,9 +116,8 @@ Win::Win(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspa
 		BRect(
 			rect.left,
 			rect.bottom - 13,	// heigth of the lower-right doc-view corner
-			rect.right,			// - 13 taken out because of dano deors
-			rect.bottom ),
-		fColorArray );
+			rect.right,			// - 13 taken out because of dano decors
+			rect.bottom ) );
 	AddChild( statusview );
 	
 	// the tabview-system comes last as we need the height of the statusview
@@ -115,39 +127,53 @@ Win::Win(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspa
 	if( CurrentFocus() != NULL )
 		CurrentFocus()->MakeFocus( false );
 	navview->urlview->TextView()->MakeFocus( true );
+/*
+	// probably removable as stated by raymond
 	BMessage *info=new BMessage(AddInitInfo);
-				info->AddPointer("main_menu_bar",menubar);
-				info->AddPointer("file_menu",filemenu);
-				info->AddPointer("options_menu",optionsmenu);
-				info->AddPointer("window",this);
-//				info->AddPointer("parser",Parser);
-				BMessenger *iimsgr=new BMessenger(PluginManager,NULL,NULL);
-		{
-		BMessage reply;	
-		iimsgr->SendMessage(info,&reply);
-		info->PrintToStream();
-		printf("Window has tried to init: %ld\n",reply.what);
-			
-		reply.PrintToStream();
-			
-		}
+	info->AddPointer("main_menu_bar",menubar);
+	info->AddPointer("file_menu",filemenu);
+	info->AddPointer("options_menu",optionsmenu);
+	info->AddPointer("window",this);
+//	info->AddPointer("parser",Parser);
+	BMessenger *iimsgr=new BMessenger(PluginManager,NULL,NULL);
+
+	BMessage reply;	
+	iimsgr->SendMessage(info,&reply);
+	info->PrintToStream();
+	printf("Window has tried to init: %ld\n",reply.what);
 		
-		delete iimsgr;
-		delete info;
+	reply.PrintToStream();
+			
+	delete iimsgr;
+	delete info;
+*/
 }
 Win::~Win(){
 	MsgSysUnregister(this);
 }
 
 bool Win::QuitRequested() {
-//  BMessenger *msgr=new BMessenger(NULL,Parser,NULL);
- // msgr->SendMessage(B_QUIT_REQUESTED);
- // delete msgr;
- 	if (AppSettings->HasRect("main_window_rect"))
-		AppSettings->ReplaceRect("main_window_rect",Frame());
+ 	cout << "Win::QuitRequested" << endl;
+ 	if( fQuitConfirmed == false )
+	{
+		BMessage* closemsg = new BMessage( WINDOW_CLOSE );
+		closemsg->AddPointer( "win_to_close", this );
+		be_app_messenger.SendMessage( closemsg );
+		printf( "returning false\n" );
+		return false;
+	}
 	else
-		AppSettings->AddRect("main_window_rect",Frame());
-	return true;
+	{
+		if( urlpopupwindow != NULL )
+		{
+			urlpopupwindow->Lock();
+			urlpopupwindow->Quit();
+			urlpopupwindow = 0;
+		}
+		AppSettings->ReplaceRect( "WindowRect", Frame() );
+		printf( "returning true\n" );
+		return true;
+	}
 }
 void Win::MessageReceived(BMessage *msg) {
 	switch(msg->what) {
@@ -245,7 +271,7 @@ void Win::MessageReceived(BMessage *msg) {
 		case CLOSE_URLPOPUP :
 		{
 			cout << "CLOSE_URLPOPUP received" << endl;
-			if( urlpopupwindow  )
+			if( urlpopupwindow )
 			{
 				urlpopupwindow->Lock();
 				urlpopupwindow->Quit();
@@ -253,6 +279,12 @@ void Win::MessageReceived(BMessage *msg) {
 			}			
 				
 		}break;
+		case RE_INIT_INTERFACE :
+		{
+			//cout << "RE_INIT_INTERFACE" << endl;
+			ReInitInterface();
+			break;
+		}
 		case TAB_ADD :
 		{
 			cout << "TAB_ADD received" << endl;
@@ -277,8 +309,13 @@ void Win::MessageReceived(BMessage *msg) {
 			// if the prefs are not set to sth like "open new tabs hidden"
 			// we pass hidden = false to AddNewTab
 			// this selects the last tab ( the new one )
-			//bool hidden = false;
 			bool hidden = true;
+			AppSettings->FindBool( "OpenTabsInBackground", &hidden );
+			// OPTION+T shortcut for new tab should open tabs non hidden
+			bool force_non_hidden = false;
+			msg->FindBool( "force_non_hidden", &force_non_hidden );
+			if( force_non_hidden == true )
+				hidden = false;
 			AddNewTab( hidden );
 			
 			if( msg->HasString( "url_to_open" ) )
@@ -292,23 +329,18 @@ void Win::MessageReceived(BMessage *msg) {
 				
 				target->SendMessage( urlopenmsg );
 			}				
-			
-			
-		}	break;
+			break;
+		}
 		case URL_LOADING :
 		{
-// 			cout << "URL_LOADING received" << endl;
-			
-			// all this code below and some code in
-			// FakeSite and ThemisStatusView is just demo code to show
-			// the functioning of the statusview and the progressbars
+ 			cout << "URL_LOADING received" << endl;
 			
 			FakeSite* tmpsite = NULL;
-			if( msg->HasInt32( "tab_uid" ) )
+			if( msg->HasInt16( "tab_uid" ) )
 			{
 				tmpsite = GetViewPointer(
-					msg->FindInt32( "tab_uid" ),
-					msg->FindInt32( "view_uid" ) );
+					msg->FindInt16( "tab_uid" ),
+					msg->FindInt16( "view_uid" ) );
 				
 				if( tmpsite != NULL )
 					cout << "URL_LOADING: found viewpointer" << endl;
@@ -322,30 +354,65 @@ void Win::MessageReceived(BMessage *msg) {
 				}
 			}
 			
-			/////////////////////
-			// remove this later if we are sending unique IDs
-			msg->FindPointer( "view_pointer", ( void** )&tmpsite );
-			/////////////////////
 			int64 delta=0;
 			int64 contentlen=0;
-			
+			bool req_done = false;
+			bool secure = false;
+			bool cookies_disabled = false; // not implemented atm
+						
 			msg->FindInt64("size-delta",&delta);
+			
 			if (msg->HasInt64("content-length"))
 				msg->FindInt64("content-length",&contentlen);
-			if (contentlen==0)
-				contentlen=100*delta;
+
+			msg->FindBool( "request_done", &req_done );
+			msg->FindBool( "secure", &secure );
 			
 			BString statstr( "Transfering data from " );
 			statstr.Append( tmpsite->site_title.String() );
 			
-			srand( ( unsigned )time( NULL ) );
-			
-			tmpsite->SetInfo(
-				(int)(((float)delta/(float)contentlen)*100),
-				"12.3kB/s",
-				rand()%20,
-				"5.9kB/s",
-				statstr.String() );
+			if( contentlen == 0 )
+			{
+				if( req_done == false )
+				{
+					tmpsite->SetInfo(
+						50,
+						false,	// delta = false
+						"loading",
+						50,
+						false,	// delta = false
+						"loading",
+						statstr.String(),
+						secure,
+						cookies_disabled );
+				}
+				else
+				{
+						tmpsite->SetInfo(
+						100,
+						false,	// delta = false
+						"",
+						100,
+						false,	// delta = false
+						"",
+						"",
+						secure,
+						cookies_disabled );
+				}
+			}
+			else
+			{
+				tmpsite->SetInfo(
+					(int)(((float)delta/(float)contentlen)*100),
+					true,
+					"xx.xkB/s",
+					(int)(((float)delta/(float)contentlen)*100),
+					true,
+					"xx.xkB/s",
+					statstr.String(),
+					secure,
+					cookies_disabled );
+			}
 			
 			// if the viewpointer points to the currently active view,
 			// update the statusview
@@ -358,19 +425,10 @@ void Win::MessageReceived(BMessage *msg) {
 					tmpsite->GetDocBarText(),
 					tmpsite->GetImgBarProgress(),
 					tmpsite->GetImgBarText(),
-					statstr.String() );
-				
+					tmpsite->GetStatusText(),
+					tmpsite->GetSecureState(),
+					tmpsite->GetCookieState() );
 			}
-						
-			// if either the doc loading or img loading are not finished,
-			// set up a new BMessageRunner, and resend the message
-		/*
-			if( tmpsite->GetDocBarProgress() < 100 || tmpsite->GetImgBarProgress() < 100 )
-			{
-				cout << "resending progress message" << endl;
-				BMessageRunner* plmsgr = new BMessageRunner( BMessenger( this ), msg, 300000, 1 );
-			}
-		*/	
 			break;
 		}
 		case URL_OPEN :
@@ -405,51 +463,38 @@ void Win::MessageReceived(BMessage *msg) {
 			}
 			cout << "URL_OPEN: url_to_open: " << url.String() << endl;
 			
-			// stop, if there is no url
+			// stop, if there is no url, or about:blank
 			if( url.Length() == 0 )
+				break;
+			if( strncmp( url.String(), "about:blank", 11 ) == 0 )
 				break;
 			
 			// create the fakesite ( later the renderview )
 			FakeSite* fakesite = new FakeSite(
 				( tabview->ContainerView() )->Bounds(),
-				url.String(), GetNewUniqueID(), this );
-			
-			// create a BMessage with unique indexes to tab and view
-			//BMessage* vpmsg = new BMessage( URL_LOADING );
-			//vpmsg->AddInt32( "view_uid", fakesite->UniqueID() );
+				url.String(), ( ( App* )be_app )->GetNewUniqueID(), this );
 			
 			uint32 selection = tabview->Selection();
-			uint tab_uid = 0;
-			uint view_uid = fakesite->UniqueID();
+			int16 tab_uid = 0;
+			int16 view_uid = fakesite->UniqueID();
 						
 			if( msg->HasInt32( "tab_to_open_in" ) )
 			{
 				int32 tab_index = msg->FindInt32( "tab_to_open_in" );
 				
 				tabview->TabAt( msg->FindInt32( "tab_to_open_in" ) )->SetView( fakesite );
-				//vpmsg->AddInt32( "tab_uid", ( ( ThemisTab* )tabview->TabAt( tab_index ) )->UniqueID() );
 				tab_uid = ( ( ThemisTab* )tabview->TabAt( tab_index ) )->UniqueID();
 			}
 			else
 			{
 				tabview->TabAt( selection )->SetView( fakesite );
-				//vpmsg->AddInt32( "tab_uid", ( ( ThemisTab* )tabview->TabAt( selection ) )->UniqueID() );
 				tab_uid = ( ( ThemisTab* )tabview->TabAt( selection ) )->UniqueID();
 			}
-						
+			
 			if( msg->FindBool( "hidden" ) == true )
 				tabview->DrawTabs();
 			else
 				tabview->Select( selection );
-			
-			// create a BMessageRunner which sends a page loading progress message
-			//BMessageRunner* plmsgr = new BMessageRunner( BMessenger( this ), vpmsg, 300000, 1 );
-			
-			////////////////
-			// for Raymond!
-			// use tab_uid/view_uid to send with your messages...
-			// IDs are resolved back into a viewpointer in URL_LOADING or with Win::GetViewPointer(..)
-									
 						
 			if( CurrentFocus() != NULL )
 				CurrentFocus()->MakeFocus( false );
@@ -521,12 +566,16 @@ void Win::MessageReceived(BMessage *msg) {
 				memset(workurl,0,urlS.Length()+1);
 				urlS.CopyInto(workurl,0,urlS.Length());
 			}
-			
+
+				printf( "Win: creating info message\n" );			
 //			if (pobj!=NULL) {
 				BMessage *info=new BMessage;
 //				info->AddPointer("tcp_layer_ptr",TCP);
-				info->AddPointer("top_view",tabview->TabAt( selection )->View());
-				info->AddPointer("window",this);
+//				info->AddPointer("top_view",tabview->TabAt( selection )->View());
+//				info->AddPointer("window",this);
+				info->AddInt16( "window_uid", UniqueID() );
+				info->AddInt16( "tab_uid", tab_uid );
+				info->AddInt16( "view_uid", view_uid );
 //				info->AddPointer("parser",Parser);
 				info->AddPointer("plug_manager",PluginManager);
 				info->AddPointer("main_menu_bar",menubar);
@@ -544,14 +593,15 @@ void Win::MessageReceived(BMessage *msg) {
 				
 				printf("info: %p\n",info);
 				info->PrintToStream();
-					printf("telling cache that a new page is being loaded.\n");
-					BMessage *bcast=new BMessage;
-					BMessage *lnp=new BMessage(LoadingNewPage);
-					lnp->AddInt32("command",COMMAND_INFO);
-					bcast->AddMessage("message",lnp);
-					Broadcast(MS_TARGET_ALL,lnp);
-					delete lnp;
-					delete bcast;
+				printf("Win: telling cache that a new page is being loaded.\n");
+				BMessage *bcast=new BMessage;
+				BMessage *lnp=new BMessage(LoadingNewPage);
+				lnp->AddInt32("command",COMMAND_INFO);
+				bcast->AddMessage("message",lnp);
+				Broadcast(MS_TARGET_ALL,lnp);
+				delete lnp;
+				delete bcast;
+				
 				bcast=new BMessage(BroadcastMessage);
 				info->AddInt32("command",COMMAND_RETRIEVE);
 				bcast->AddMessage("message",info);
@@ -561,10 +611,10 @@ void Win::MessageReceived(BMessage *msg) {
 //				BMessenger *msgr=new BMessenger(NULL,PluginManager,NULL);
 //				msgr->SendMessage(bcast);
 //				delete msgr;
-				printf("about to send request broadcast.\n");
-			
+				
+				printf("Win: sending request broadcast.\n");
 				Broadcast(MS_TARGET_PROTOCOL,info);
-				printf("done with request broadcast\n");
+				printf("Win: done with request broadcast\n");
 			
 			//	PluginManager->Broadcast(TARGET_VIEW,TARGET_PROTOCOL,bcast);
 				delete bcast;
@@ -576,14 +626,17 @@ void Win::MessageReceived(BMessage *msg) {
 		}break;
 		case URL_TYPED :
 		{
-//			cout << "URL_TYPED received" << endl;
+			cout << "URL_TYPED received" << endl;
 			
-			// imaginary prefs
-			bool prefs_open_type_ahead = true;
+			bool show_all = false;
+			msg->FindBool( "show_all", &show_all );
 			
-			if( prefs_open_type_ahead == true || msg->FindBool( "show_all" ) == true )
+			bool prefs_show_type_ahead = false;
+			AppSettings->FindBool( "ShowTypeAhead", &prefs_show_type_ahead );
+									
+			if( ( prefs_show_type_ahead == true ) || ( show_all == true ) )
 			{
-				if( msg->FindBool( "show_all" ) == true )
+				if( show_all == true )
 					UrlTypedHandler( true );
 				else
 					UrlTypedHandler( false );
@@ -591,6 +644,12 @@ void Win::MessageReceived(BMessage *msg) {
 			
 			
 		}break;
+		case WINDOW_NEW :
+		{
+			// resend the message to the app
+			be_app_messenger.SendMessage( msg );
+			break;
+		}
 		default: {
 			BWindow::MessageReceived(msg);
 		}
@@ -623,7 +682,7 @@ void Win::WorkspacesChanged(uint32 oldws, uint32 newws)
 	//we don't really care what workspace we're running in, however, we need to
 	//reset the size limits to match.
 	BScreen Screen;
-	SetSizeLimits(550,Screen.Frame().right,350,Screen.Frame().bottom);
+	SetSizeLimits(300,Screen.Frame().right,200,Screen.Frame().bottom);
 }
 void
 Win::FrameMoved( BPoint origin )
@@ -659,6 +718,77 @@ Win::FrameResized( float width, float height)
 }
 
 void
+Win::Zoom( BPoint origin, float width, float height )
+{
+	bool IM = false;
+	AppSettings->FindBool( "IntelligentMaximize", &IM );
+	
+	if( IM == true )
+	{
+		if( fMaximized == false )
+		{
+			fOldFrame = Frame();
+			
+			BScreen screen;
+			BDeskbar deskbar;
+			BRect dbframe = deskbar.Frame();
+		
+			switch( deskbar.Location() )
+			{
+				case B_DESKBAR_TOP :
+				{
+					origin.y += dbframe.Height() + 2;
+					break;
+				}
+				case B_DESKBAR_BOTTOM :
+				{
+					height -= dbframe.Height() + 2;
+					break;
+				}
+				case B_DESKBAR_LEFT_BOTTOM :
+				{
+					origin.x += dbframe.Width() + 2;
+					width -= dbframe.right + 2;
+					break;
+				}
+				case B_DESKBAR_RIGHT_BOTTOM :
+				{
+					width = dbframe.left - origin.x - 7;
+					break;
+				}
+				case B_DESKBAR_LEFT_TOP :
+				{
+					origin.x += dbframe.Width() + 2;
+					width -= dbframe.right + 2;
+					break;
+				}
+				case B_DESKBAR_RIGHT_TOP :
+				{
+					width = dbframe.left - origin.x - 7;
+					break;
+				}
+			}
+						
+			fMaximized = true;
+			
+			BWindow::Zoom( origin, width, height );
+		}
+		else
+		{
+			origin = fOldFrame.LeftTop();
+			width = fOldFrame.right - fOldFrame.left;
+			height = fOldFrame.bottom - fOldFrame.top;
+			
+			fMaximized = false;
+			
+			BWindow::Zoom( origin, width, height );
+		}
+	}
+	else
+		BWindow::Zoom( origin, width, height );
+}
+
+void
 Win::AddNewTab( bool hidden )
 {
 	//cout << "Win::AddNewTab()" << endl;
@@ -671,7 +801,7 @@ Win::AddNewTab( bool hidden )
 		
 	tabview->DynamicTabs( true );
 	
-	ThemisTab* newtab = new ThemisTab( NULL, GetNewUniqueID() );
+	ThemisTab* newtab = new ThemisTab( NULL, ( ( App* )be_app )->GetNewUniqueID() );
 	
 	tabview->AddTab( NULL, newtab );
 	
@@ -703,19 +833,12 @@ Win::CreateTabView()
 		B_WILL_DRAW |
 		B_NAVIGABLE_JUMP |
 		B_FRAME_EVENTS |
-		B_NAVIGABLE,
-		fColorArray );
+		B_NAVIGABLE );
 	AddChild( tabview );
 	
 	// add the first tab
 	BMessenger* target = new BMessenger( this );
 	target->SendMessage( TAB_ADD );
-	
-	// if we have a sth like a startup page in the prefs
-	//BMessage* firstsite = new BMessage( URL_OPEN );
-	//firstsite->AddString( "url_to_open", "my.startup.site" );
-	//target->SendMessage( firstsite );
-	
 }
 
 void
@@ -745,58 +868,8 @@ Win::CreateUrlPopUpWindow()
 	}
 }
 
-void
-Win::DefineInterfaceColors()
-{
-	//cout << "Win::DefineInterfaceColors()" << endl;
-		
-	// 0 - BackgroundColor
-	// 1 - InactiveTabColor
-	// 2 - BlackColor
-	// 3 - WhiteColor
-	// 4 - DarkGrayColor
-	// 5 - InterfaceColor
-	
-	// color for all view backgrounds, active tab and tabview background
-	fColorArray[0] = ui_color( B_MENU_BACKGROUND_COLOR );
-	// color for inactive tabs
-	fColorArray[1] = fColorArray[0];
-	fColorArray[1].red -= 32;
-	fColorArray[1].green -= 32;
-	fColorArray[1].blue -= 32;
-	// black
-	fColorArray[2].red = 51;
-	fColorArray[2].green = 51;
-	fColorArray[2].blue = 51;
-	// white
-	fColorArray[3].red = 255;
-	fColorArray[3].green = 255;
-	fColorArray[3].blue = 255;
-	// dark gray
-	fColorArray[4].red = 187;
-	fColorArray[4].green = 187;
-	fColorArray[4].blue = 187;
-	// interface
-	fColorArray[5].red = 255;
-	fColorArray[5].green = 200;
-	fColorArray[5].blue = 0;
-}
-
-uint
-Win::GetNewUniqueID()
-{
-	fUniqueIDCounter += 1;
-	
-	// i innerly hope that nobody will ever reach the 65k+ id limit,
-	// who still has the first tab open :)
-	if( fUniqueIDCounter > 65535 )
-		fUniqueIDCounter = 0;
-	
-	return fUniqueIDCounter;
-}
-
 FakeSite*
-Win::GetViewPointer( uint tab_uid, uint view_uid )
+Win::GetViewPointer( int16 tab_uid, int16 view_uid )
 {
 	cout << "Win::GetViewPointer() : looking for tab_uid: "
 		<< tab_uid << " view_uid: " << view_uid << endl;
@@ -845,8 +918,7 @@ Win::LoadInterfaceGraphics()
 	
 	// load the icons either from bitmap-file or if not present, from internal
 	// icon hexdumps located in "ThemisIcons.h"
-	// draw those bitmaps into BPictures and then create BPictureButtons
-
+	
 	// initialize all bitmaps with NULL
 	for( int i=0; i < 10; i++ )
 		bitmaps[i] = NULL;
@@ -921,6 +993,61 @@ Win::LoadInterfaceGraphics()
 			}
 		}
 	}
+}
+
+Win*
+Win::NextWindow()
+{
+	//cout << "Win::NextWindow()" << endl;
+	if( fNextWindow != NULL )
+	{
+		//cout << "fNextWindow != NULL" << endl;
+		return fNextWindow;
+	}
+	else
+	{
+		//cout << "returning NULL" << endl;	
+		return NULL;
+	}
+}
+
+void
+Win::ReInitInterface()
+{
+	//cout << "Win:ReInitInterface()" << endl;
+	
+	union int32torgb convert;
+	AppSettings->FindInt32( "PanelColor", &convert.value );
+	
+	if( CountChildren() > 0 )
+	{
+		for( int32 i = 0; i < CountChildren(); i++ )
+		{
+			BView* child = ChildAt( i );
+			//set the new viewcolor, except for menubar
+			if( strncmp( child->Name(), "MENUBAR", 7 ) != 0 )
+				child->SetViewColor( convert.rgb );
+			child->Draw( child->Bounds() );
+		}
+	}
+}
+
+void
+Win::SetNextWindow( Win* nextwin )
+{
+	fNextWindow = nextwin;
+}
+
+void
+Win::SetQuitConfirmed( bool state )
+{
+	fQuitConfirmed = state;
+}
+
+int16
+Win::UniqueID()
+{
+	return fUniqueID;
 }
 
 void
@@ -1025,7 +1152,7 @@ Win::UrlTypedHandler( bool show_all )
 						cached_url.Prepend( "www." );
 						
 						if( cached_url_proto.Length() != 0 )
-						cached_url.Prepend( cached_url_proto );
+							cached_url.Prepend( cached_url_proto );
 												
 						list->AddItem( new BStringItem( cached_url.String() ) );
 					}
@@ -1061,52 +1188,64 @@ Win::UrlTypedHandler( bool show_all )
 }
 status_t Win::ReceiveBroadcast(BMessage *message) 
 {
+	printf( "Win::ReceiveBroadcast()\n" );
+	message->PrintToStream();
 	uint32 command=0;
 	message->FindInt32("command",(int32*)&command);
-	BString url;
-	message->FindString("url",&url);
-	
-	switch(command) {
-		case COMMAND_INFO: {
-			switch (message->what) {
-				case ReturnedData: {
-						if (((FakeSite*)tabview->TabAt( tabview->Selection() )->View())->site_title.ICompare(url)==0) {
-					int64 contentlength=0;
-					int64 bytes_received=0;
-					int64 delta=0;
-					if (message->HasInt64("content-length"))
-						message->FindInt64("content-length",&contentlength);
-					message->FindInt64("bytes-received",&bytes_received);
-					message->FindInt64("size-delta",&delta);
-							
-					if (contentlength==0) {
-						BMessenger msgr(NULL,this,NULL);
-						BMessage *msg=new BMessage(URL_LOADING);
-								BView *view=tabview->TabAt(tabview->Selection())->View();
-								msg->AddPointer("view_pointer",view);
-								msg->AddInt64("bytes-received",bytes_received);
-								msg->AddInt64("size-delta",delta);
-								msgr.SendMessage(msg);
-								delete msg;
-					} else {
-								BMessenger msgr(NULL,this,NULL);
-								BMessage *msg=new BMessage(URL_LOADING);
-								BView *view=tabview->TabAt(tabview->Selection())->View();
-								msg->AddPointer("view_pointer",view);
-								msg->AddInt64("bytes-received",bytes_received);
-								msg->AddInt64("content-length",contentlength);
-								msg->AddInt64("size-delta",delta);
-								msgr.SendMessage(msg);
-								delete msg;
-										
-					}
-							}
-				
-				}break;
-				
-			}
-			
-		}break;
+
+	int16 win_uid = -1;
+	if( message->HasInt16( "window_uid" ) )
+	{
+		message->FindInt16( "window_uid", &win_uid );
 	}
-	
+					
+	switch(command)
+	{
+		case COMMAND_INFO :
+		{
+			switch( message->what )
+			{
+				case ReturnedData :
+				{
+					if( win_uid == UniqueID() )
+					{
+						int16 tab_uid = 0;
+						int16 view_uid = 0;
+						int64 contentlength=0;
+						int64 bytes_received=0;
+						int64 delta=0;
+						bool req_done = false;
+						bool secure = false;	
+						
+						if( message->HasInt64( "content-length" ) )
+							message->FindInt64( "content-length", &contentlength );
+						
+						message->FindInt16( "tab_uid", &tab_uid );
+						message->FindInt16( "view_uid", &view_uid );
+						message->FindInt64( "bytes-received", &bytes_received);
+						message->FindInt64( "size-delta", &delta);
+						message->FindBool( "request_done", &req_done );
+						message->FindBool( "secure", &secure );
+						
+						BMessenger msgr( NULL, this, NULL);
+						BMessage *msg = new BMessage( URL_LOADING );
+						msg->AddBool( "request_done", req_done ); 
+						msg->AddBool( "secure", secure );
+						msg->AddInt16( "tab_uid", tab_uid );
+						msg->AddInt16( "view_uid", view_uid );
+						msg->AddInt64( "bytes-received", bytes_received );
+						msg->AddInt64( "size-delta", delta );
+						
+						if( contentlength != 0 )	// non-chunked transfer mode
+							msg->AddInt64("content-length",contentlength);
+						
+						msgr.SendMessage(msg);
+						delete msg;
+					}
+					break;
+				} // case ReturnedData
+			} // switch( message->what )
+			break;
+		} // case COMMAND_INFO :
+	} // switch( command )
 }

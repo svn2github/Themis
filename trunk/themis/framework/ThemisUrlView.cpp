@@ -12,9 +12,9 @@
 #include <iostream.h>
 
 // myheaders
-#include "ThemisTVS.h"
 #include "ThemisUrlView.h"
 #include "win.h"
+#include "app.h"
 
 class ThemisUrlTextView;
 
@@ -22,17 +22,13 @@ ThemisUrlView::ThemisUrlView(
 	BRect frame,
 	const char* name,
 	uint32 resizingmode,
-	uint32 flags,
-	const rgb_color* arr )
+	uint32 flags )
 	: BView(
 		frame,
 		name,
 		resizingmode,
 		flags )
 {
-	fDarkGrayColor = arr[4];
-	fInterfaceColor = arr[5];
-	
 	BRect tvrect = Bounds();
 	tvrect.left += 22;
 	tvrect.top += 2;
@@ -73,7 +69,9 @@ ThemisUrlView::Draw( BRect updaterect )
 	rgb_color hi = HighColor();	
 	
 	// the outer margin
-	SetHighColor( fDarkGrayColor );
+	union int32torgb convert;
+	AppSettings->FindInt32( "LightBorderColor", &convert.value );
+	SetHighColor( convert.rgb );
 	StrokeRect( updaterect, B_SOLID_HIGH );
 	/*SetHighColor( 100,100,100 );
 	updaterect.InsetBy( 1, 1 );
@@ -86,7 +84,8 @@ ThemisUrlView::Draw( BRect updaterect )
 	list[0].Set( updaterect.right - 11, updaterect.bottom - 12 );
 	list[1].Set( updaterect.right - 5, updaterect.bottom - 12 );
 	list[2].Set( updaterect.right - 8, updaterect.bottom - 7 );
-	SetHighColor( fInterfaceColor );
+	AppSettings->FindInt32( "ThemeColor", &convert.value );
+	SetHighColor( convert.rgb );
 	FillPolygon( list, 3, B_SOLID_HIGH );
 	
 	SetHighColor( hi );
@@ -205,7 +204,7 @@ filter_result
 ThemisUrlViewMessageFilter::Filter( BMessage *msg, BHandler **target )
 {
 	filter_result result( B_DISPATCH_MESSAGE );
-	
+	uint32 mod = modifiers();
 	switch( msg->what )
 	{
 		case B_KEY_DOWN :
@@ -229,8 +228,11 @@ ThemisUrlViewMessageFilter::Filter( BMessage *msg, BHandler **target )
 						msgr.SendMessage( URL_SELECT_NEXT );
 					}
 					else // create it if ( urltext fits older urls )
-						messagetarget.SendMessage( URL_TYPED );
-					
+					{
+						BMessage* msg = new BMessage( URL_TYPED );
+						msg->AddBool( "show_all", true );
+						messagetarget.SendMessage( msg );
+					}
 					result = B_SKIP_MESSAGE;
 					break;
 				}
@@ -271,6 +273,13 @@ ThemisUrlViewMessageFilter::Filter( BMessage *msg, BHandler **target )
 				}
 				case B_TAB :
 				{
+					// if CONTROL+TAB are pressed, forward the message, to switch windows
+					if( mod & B_CONTROL_KEY )
+					{
+						result = B_DISPATCH_MESSAGE;
+						break;
+					}
+					
 					// if we have the urlpopupwindow
 					if( ((Win*)window)->urlpopupwindow != NULL )
 					{
@@ -288,6 +297,77 @@ ThemisUrlViewMessageFilter::Filter( BMessage *msg, BHandler **target )
 					}	
 								
 					result = B_SKIP_MESSAGE;
+					break;
+				}
+				case 'n' :
+				{
+					if( mod == 0x402 )	// B_OPTION_KEY
+					{
+						result = B_DISPATCH_MESSAGE;
+						break;
+					}
+
+					messagetarget.SendMessage( URL_TYPED );
+					result = B_DISPATCH_MESSAGE;
+					break;
+				}
+				case 't' :
+				{
+					if( mod == 0x402 )	// B_OPTION_KEY
+					{
+						result = B_DISPATCH_MESSAGE;
+						break;
+					}
+
+					// please don't ask me why, the below doesn't work!?
+					// i don't know. and this drives me crazy!
+					// same applies for case 'n' and case 'T'/'N'/'E'
+//					if( mod & B_OPTION_KEY )
+//					{
+//						cout << "option + t" << endl;
+//						result = B_DISPATCH_MESSAGE;
+//						break;
+//					}
+					
+					messagetarget.SendMessage( URL_TYPED );
+					result = B_DISPATCH_MESSAGE;
+					break;
+				}
+				// SHIFT+OPTION+x browser ident change detection
+				case 'T' :
+				{
+					if( mod == 0x503 || mod == 0x603 )	// B_OPTION_KEY + SHIFT
+					{
+						result = B_DISPATCH_MESSAGE;
+						break;
+					}
+										
+					messagetarget.SendMessage( URL_TYPED );
+					result = B_DISPATCH_MESSAGE;
+					break;
+				}
+				case 'N' :
+				{
+					if( mod == 0x503 || mod == 0x603 )	// B_OPTION_KEY + SHIFT
+					{
+						result = B_DISPATCH_MESSAGE;
+						break;
+					}
+										
+					messagetarget.SendMessage( URL_TYPED );
+					result = B_DISPATCH_MESSAGE;
+					break;
+				}
+				case 'E' :
+				{
+					if( mod == 0x503 || mod == 0x603 )	// B_OPTION_KEY + SHIFT
+					{
+						result = B_DISPATCH_MESSAGE;
+						break;
+					}
+										
+					messagetarget.SendMessage( URL_TYPED );
+					result = B_DISPATCH_MESSAGE;
 					break;
 				}
 				default :

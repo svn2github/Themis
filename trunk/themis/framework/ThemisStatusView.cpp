@@ -8,27 +8,32 @@
 
 // myheaders
 #include "ThemisStatusView.h"
-#include "win.h"
+#include "app.h"
 
 ThemisStatusView::ThemisStatusView(
-	BRect rect,
-	const rgb_color* arr )
+	BRect rect )
 	: BView(
 		rect,
 		"THEMISSTATUSVIEW",
 		B_FOLLOW_LEFT_RIGHT | B_FOLLOW_BOTTOM,
 		B_WILL_DRAW | B_FULL_UPDATE_ON_RESIZE )
 {
-	fBackgroundColor = arr[0];
-	fWhiteColor = arr[3];
-	fDarkGrayColor = arr[4];
-	
 	fStatusText.SetTo( "" );
+	fSecure = false;
+	fCookiesDisabled = false;
 	
 	fDocBmp = new BBitmap( BRect( 0,0,6,9 ), B_RGB32 );
 	memcpy( fDocBmp->Bits(), pbar_doc_icon, 280 );
 	fImgBmp = new BBitmap( BRect( 0,0,6,9 ), B_RGB32 );
 	memcpy( fImgBmp->Bits(), pbar_img_icon, 280 );
+	fSecureBmp = new BBitmap( BRect( 0,0,6,9 ), B_RGB32 );
+	memcpy( fSecureBmp->Bits(), pbar_secure_icon, 280 );
+	fInsecureBmp = new BBitmap( BRect( 0,0,6,9 ), B_RGB32 );
+	memcpy( fInsecureBmp->Bits(), pbar_insecure_icon, 280 );
+	fCookieBmp = new BBitmap( BRect( 0,0,6,9 ), B_RGB32 );
+	memcpy( fCookieBmp->Bits(), pbar_cookie_icon, 280 );
+	fCookieDisabledBmp = new BBitmap( BRect( 0,0,6,9 ), B_RGB32 );
+	memcpy( fCookieDisabledBmp->Bits(), pbar_cookie_disabled_icon, 280 );
 }
 
 ThemisStatusView::~ThemisStatusView( void )
@@ -38,12 +43,13 @@ ThemisStatusView::~ThemisStatusView( void )
 void
 ThemisStatusView::AttachedToWindow( void )
 {
-	SetViewColor( fBackgroundColor );
+	union int32torgb convert;
+	AppSettings->FindInt32( "PanelColor", &convert.value );
+	SetViewColor( convert.rgb );
 	
 	BRect rect = Bounds();
 	
 	// the image progress bar
-	//rect.left = fDocumentBar->Frame().right + 16;
 	rect.top += 2;
 	rect.right -= 20;
 	rect.left = rect.right - 60;
@@ -52,8 +58,7 @@ ThemisStatusView::AttachedToWindow( void )
 		rect,
 		"IMGPROGRESSBAR",
 		B_FOLLOW_RIGHT | B_FOLLOW_TOP,
-		B_WILL_DRAW,
-		( ( Win* )Window() )->fColorArray );
+		B_WILL_DRAW );
 	fImageBar->SetValue( 100, "" );
 	AddChild( fImageBar );
 	
@@ -65,8 +70,7 @@ ThemisStatusView::AttachedToWindow( void )
 		rect,
 		"DOCPROGRESSBAR",
 		B_FOLLOW_RIGHT | B_FOLLOW_TOP,
-		B_WILL_DRAW,
-		( ( Win* )Window() )->fColorArray  );
+		B_WILL_DRAW );
 	fDocumentBar->SetValue( 100, "" );
 	AddChild( fDocumentBar );
 		
@@ -83,21 +87,32 @@ ThemisStatusView::Draw( BRect updaterect )
 	//cout << "ThemisStatusView::Draw()" << endl;
 	rgb_color lo = LowColor();
 	
+	// define the colors
+	union int32torgb convert;
+	AppSettings->FindInt32( "DarkBorderColor", &convert.value );
+	rgb_color darkbordercolor = convert.rgb;
+	AppSettings->FindInt32( "PanelColor", &convert.value );
+	rgb_color panelcolor = convert.rgb;
+	AppSettings->FindInt32( "LightBorderColor", &convert.value );
+	rgb_color lightbordercolor = convert.rgb;
+	AppSettings->FindInt32( "ShadowColor", &convert.value );
+	rgb_color shadowcolor = convert.rgb;
+	
 	// the top 'shadow'
-	SetLowColor( fDarkGrayColor );
+	SetLowColor( 169,169,169,255 );
 	StrokeLine(
 		BPoint( updaterect.left, updaterect.top ),
 		BPoint( updaterect.right, updaterect.top ),
 		B_SOLID_LOW );
 	
-	SetLowColor( 240, 240, 240, 255 );
+	SetLowColor( shadowcolor );
 	StrokeLine(
 		BPoint( updaterect.left, updaterect.top + 1 ),
 		BPoint( updaterect.right, updaterect.top + 1 ),
 		B_SOLID_LOW );
 	
 	// fill the whole area
-	SetLowColor( fBackgroundColor );
+	SetLowColor( panelcolor );
 	FillRect(
 		BRect(
 			updaterect.left,
@@ -121,13 +136,23 @@ ThemisStatusView::Draw( BRect updaterect )
 	DrawBitmap( fDocBmp, BPoint( fDocumentBar->Frame().left - 10, updaterect.top + 3 ) );
 	DrawBitmap( fImgBmp, BPoint( fImageBar->Frame().left - 10, updaterect.top + 3 ) );
 	
+	if( fCookiesDisabled == false )
+		DrawBitmap( fCookieBmp, BPoint( fDocumentBar->Frame().left - 25, updaterect.top + 3 ) );
+	else
+		DrawBitmap( fCookieDisabledBmp, BPoint( fDocumentBar->Frame().left - 25, updaterect.top + 3 ) );
+	
+	if( fSecure == false )
+		DrawBitmap( fInsecureBmp, BPoint( fDocumentBar->Frame().left - 39, updaterect.top + 3 ) );
+	else
+		DrawBitmap( fSecureBmp, BPoint( fDocumentBar->Frame().left - 39, updaterect.top + 3 ) );
+	
 	BPoint sep_pt_top( fDocumentBar->Frame().left - 15, Bounds().top + 2 );
-	BPoint sep_pt_bot( fDocumentBar->Frame().left - 15, Bounds().bottom );
+	BPoint sep_pt_bot( fDocumentBar->Frame().left - 15, Bounds().bottom - 1 );
 	
 	// separator left to bars
-	SetLowColor( fDarkGrayColor );
+	SetLowColor( lightbordercolor );
 	StrokeLine( sep_pt_top, sep_pt_bot, B_SOLID_LOW );
-	SetLowColor( fWhiteColor );
+	SetLowColor( shadowcolor );
 	sep_pt_top.x +=1;
 	sep_pt_bot.x +=1;
 	StrokeLine( sep_pt_top, sep_pt_bot, B_SOLID_LOW );
@@ -135,9 +160,9 @@ ThemisStatusView::Draw( BRect updaterect )
 	// separator left to cookie icon
 	sep_pt_top.x -=15;
 	sep_pt_bot.x -=15;
-	SetLowColor( fDarkGrayColor );
+	SetLowColor( lightbordercolor );
 	StrokeLine( sep_pt_top, sep_pt_bot, B_SOLID_LOW );
-	SetLowColor( fWhiteColor );
+	SetLowColor( shadowcolor );
 	sep_pt_top.x +=1;
 	sep_pt_bot.x +=1;
 	StrokeLine( sep_pt_top, sep_pt_bot, B_SOLID_LOW );
@@ -145,13 +170,22 @@ ThemisStatusView::Draw( BRect updaterect )
 	// separator left to secure icon
 	sep_pt_top.x -=15;
 	sep_pt_bot.x -=15;
-	SetLowColor( fDarkGrayColor );
+	SetLowColor( lightbordercolor );
 	StrokeLine( sep_pt_top, sep_pt_bot, B_SOLID_LOW );
-	SetLowColor( fWhiteColor );
+	SetLowColor( shadowcolor );
 	sep_pt_top.x +=1;
 	sep_pt_bot.x +=1;
 	StrokeLine( sep_pt_top, sep_pt_bot, B_SOLID_LOW );
 	
+	if( CountChildren() > 0 )
+	{
+		BView* child = NULL;
+		for( int32 i = 0; i < CountChildren(); i++ )
+		{
+			child = ChildAt( i );
+			child->Draw( child->Bounds() );
+		}
+	}
 	
 	SetLowColor( lo );
 }
@@ -162,18 +196,17 @@ ThemisStatusView::SetValues(
 	const char* doc_text,
 	int img_progress,
 	const char* img_text,
-	const char* status_text )
+	const char* status_text,
+	bool sec,
+	bool cook_dis )
 {
+	//cout << "ThemisStatusView::SetValues()" << endl;
+	
 	fDocumentBar->SetValue( doc_progress, doc_text );
 	fImageBar->SetValue( img_progress, img_text );
-	
-	// needs to be changed later..
-	// for now i was to lazy to change the statustext
-	// to "" or "done" in the demo URL_LOADING, so we check here
-	if( doc_progress < 100 || img_progress < 100 )
-		fStatusText.SetTo( status_text );
-	else
-		fStatusText.SetTo( "" );
+	fStatusText.SetTo( status_text );
+	fSecure = sec;
+	fCookiesDisabled = cook_dis;
 	
 	Draw( Bounds() );
 }
@@ -187,19 +220,13 @@ ThemisProgressBar::ThemisProgressBar(
 	BRect rect,
 	const char* name,
 	uint32 resizingmode,
-	uint32 flags,
-	const rgb_color* arr )
+	uint32 flags )
 	: BView(
 		rect,
 		name,
 		resizingmode,
 		flags )
 {
-	fBackgroundColor = arr[0];
-	fWhiteColor = arr[3];
-	fDarkGrayColor = arr[4];
-	fInterfaceColor = arr[5];
-	
 	fProgress = 0;
 	fBarText.SetTo( "" );
 }
@@ -214,69 +241,74 @@ ThemisProgressBar::Draw( BRect updaterect )
 	updaterect = Bounds();
 	
 	rgb_color hi = HighColor();
+	rgb_color lo = LowColor();
 
 	SetFont( be_plain_font );
 	SetFontSize( 10.0 );
 	
-	if( fProgress < 100 )
-	{
-		// draw the outer rectangle
-		SetHighColor( fDarkGrayColor );
-		StrokeRect( updaterect, B_SOLID_HIGH );
+	// define the colors
+	union int32torgb convert;
+	AppSettings->FindInt32( "PanelColor", &convert.value );
+	rgb_color panelcolor = convert.rgb;
+	AppSettings->FindInt32( "LightBorderColor", &convert.value );
+	rgb_color lightbordercolor = convert.rgb;
+	AppSettings->FindInt32( "ThemeColor", &convert.value );
+	rgb_color themecolor = convert.rgb;
+
+	// draw the outer rectangle
+	SetHighColor( lightbordercolor );
+	StrokeRect( updaterect, B_SOLID_HIGH );
 	
-		if( fProgress > 0 )
+	if( fProgress > 0 )
+	{
+		// draw the progressbar
+		BRect progrect( updaterect );
+		progrect.InsetBy( 0, 1 );
+		progrect.left += 1;
+		progrect.right = fProgress * ( ( updaterect.right - 1 ) / 100 );
+		
+		if( fProgress < 100 )
 		{
-			// draw the progressbar
-			BRect progrect( updaterect );
-			progrect.InsetBy( 0, 1 );
-			progrect.left += 1;
-			progrect.right = fProgress * ( ( updaterect.right - 1 ) / 100 );
-			
-			SetHighColor( fInterfaceColor );
+			SetLowColor( themecolor );
+			FillRect( progrect, B_SOLID_LOW );
+			// fill the rest of the bar with white
+			progrect.left = progrect.right;
+			progrect.right = updaterect.right -1;
+			SetHighColor( 255,255,255,255 );
 			FillRect( progrect, B_SOLID_HIGH );
-			
-			if( fProgress < 100 )
-			{
-				// fill the rest of the bar with white
-				progrect.left = progrect.right;
-				progrect.right = updaterect.right -1;
-				SetHighColor( fWhiteColor );
-				FillRect( progrect, B_SOLID_HIGH );
-			}
 		}
-		else
+		else	// fProgress == 100
 		{
-			BRect whiterect( updaterect );
-			whiterect.InsetBy( 1, 1 );
-			SetHighColor( fWhiteColor );
-			FillRect( whiterect, B_SOLID_HIGH );
+			SetLowColor( panelcolor );
+			BRect fillrect( updaterect );
+			fillrect.InsetBy( 1, 1 );
+			FillRect( fillrect, B_SOLID_LOW );
 		}
-	
-		SetHighColor( 0, 0, 0, 255 );
-	
-		SetDrawingMode( B_OP_MIN );
-		
-		float strwidth = StringWidth( fBarText.String() );
-		DrawString( fBarText.String(), BPoint(
-			( updaterect.right / 2 ) - ( strwidth / 2 ),
-			updaterect.bottom - 1 ) );
-		
-		SetDrawingMode( B_OP_OVER );
 	}
-	else	// progress == 100
+	else	// fProgress == 0
 	{
-		// erase the whole area
-		SetHighColor( fBackgroundColor );
-		FillRect( updaterect, B_SOLID_HIGH );
-		
+		BRect whiterect( updaterect );
+		whiterect.InsetBy( 1, 1 );
+		SetLowColor( 255,255,255,255 );
+		FillRect( whiterect, B_SOLID_LOW );
+	}
+			
+	if( fBarText.Length() > 0 )
+	{
+		float value = ( themecolor.red + themecolor.green + themecolor.blue ) / ( 3.0 * 255.0 );
+		if( value > 0.5 )
+			SetHighColor( 0, 0, 0, 255 );
+		else
+			SetHighColor( 255,255,255,255 );
+	
 		float strwidth = StringWidth( fBarText.String() );
-		SetHighColor( 0, 0, 0, 255 );
 		DrawString( fBarText.String(), BPoint(
 			( updaterect.right / 2 ) - ( strwidth / 2 ),
 			updaterect.bottom - 1 ) );
-	}	
-	
+	}
+		
 	SetHighColor( hi );
+	SetLowColor( lo );
 }
 
 void

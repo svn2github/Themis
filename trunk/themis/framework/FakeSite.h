@@ -19,25 +19,32 @@ class FakeSite : public BView
 									FakeSite(
 										BRect rect,
 										const char* title,
-										uint uid,
+										int16 uid,
 										BWindow* win = NULL );
 		virtual						~FakeSite( void );
 		void						AttachedToWindow( void );
 		void						Draw( BRect updaterect );
 		virtual void				MouseDown( BPoint where );
 		
+		bool						GetCookieState();
 		int							GetDocBarProgress();
 		const char*					GetDocBarText();
 		int							GetImgBarProgress();
 		const char*					GetImgBarText();
+		bool						GetSecureState();
+		const char*					GetStatusText();
 		
 		void						SetInfo(
 										int doc_progress,
+										bool delta_doc,
 										const char* doc_text,
 										int img_progress,
+										bool delta_img,
 										const char* img_text,
-										const char* statustext );
-		uint						UniqueID();
+										const char* statustext,
+										bool sec,
+										bool cook_dis );
+		int16						UniqueID();
 										
 		BWindow*					mainwin;
 		
@@ -51,11 +58,11 @@ class FakeSite : public BView
 		char*						fDocText;
 		int							fImgProgress;
 		char*						fImgText;
-		bool						fSecureConnection;
-		bool						fCookieEnabled;
+		bool						fSecure;
+		bool						fCookiesDisabled;
 		BString						fStatusText;
 		
-		uint						fUniqueID;
+		int16						fUniqueID;
 };
 
 #endif

@@ -117,6 +117,11 @@ struct header_st {
 class authwin;
 
 struct http_request {
+	// added by emwe
+	int16 window_uid;
+	int16 tab_uid;
+	int16 view_uid;
+	// 
 	uint32 cache_system_type;
 	int32 cache_object_token;
 	auth_realm *a_realm;//authentication realm
@@ -149,6 +154,11 @@ struct http_request {
 	uint32 storagesize;
 	bool receivetilclosed;
 	http_request() {
+		// added by emwe
+		window_uid = 0;
+		tab_uid = 0;
+		view_uid = 0;
+		// 
 		cache_object_token=B_ERROR;
 		a_realm=NULL;
 		awin=NULL;

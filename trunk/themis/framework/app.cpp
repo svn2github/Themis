@@ -26,11 +26,14 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
+#include <Alert.h>
+#include <Directory.h>
+#include <Screen.h>
+#include <storage/FindDirectory.h>
+#include <String.h>
 #include "app.h"
 #include "tcplayer.h"
-#include <Directory.h>
-#include <storage/FindDirectory.h>
-#include "ThemisTVS.h"
+
 plugman *PluginManager;
 tcplayer *TCP;
 BMessage *AppSettings;
@@ -45,6 +48,7 @@ App::App(const char *appsig)
 	qr_called=0;
 	AWin=NULL;
 	PWin=NULL;
+	fUniqueIDCounter = 0;
 	GetAppInfo(&ai);
 	entry_ref appdirref;
 	BEntry *ent=new BEntry(&ai.ref);
@@ -54,12 +58,20 @@ App::App(const char *appsig)
 	PluginManager=new plugman(appdirref);
 	TCP=new tcplayer;
 	TCP->Start();
-	BRect r(100,100,650,450);
-	if (AppSettings->HasRect("main_window_rect"))
-		AppSettings->FindRect("main_window_rect",&r);
-	
-	win=new Win(r,"Themis",B_DOCUMENT_WINDOW,B_QUIT_ON_WINDOW_CLOSE|B_ASYNCHRONOUS_CONTROLS,B_CURRENT_WORKSPACE);
-	PluginManager->Window=win;
+	BRect r;
+	BScreen screen;
+	AppSettings->FindRect( "WindowRect", &r );
+	// if any of the sides is out of screen, reset the rect
+	if( r.right > screen.Frame().right ||
+			r.bottom > screen.Frame().bottom ||
+			r.left < screen.Frame().left ||
+			r.top < screen.Frame().top )
+	{
+		r.Set( 150, 100, 620, 460 );
+		AppSettings->ReplaceRect( "WindowRect", r );
+	}
+	fFirstWindow = new Win(r,"Themis",B_DOCUMENT_WINDOW,B_ASYNCHRONOUS_CONTROLS,B_CURRENT_WORKSPACE);
+	PluginManager->Window=fFirstWindow;
 	BMessenger *msgr=new BMessenger(PluginManager,NULL,NULL);
 	BMessage *msg=new BMessage(AddInitInfo);
 	msg->AddPointer("tcp_layer_ptr",TCP);
@@ -73,6 +85,7 @@ App::App(const char *appsig)
 	delete msgr;
 	delete msg;
 }
+
 App::~App(){
 	printf("app destructor\n");
 	MsgSysUnregister(this);
@@ -87,24 +100,27 @@ App::~App(){
 	printf("~app end\n");
 	delete MDaemon;
 }
+
 void App::AboutRequested() {
 	if (AWin==NULL) {
 		AWin=new aboutwin(BRect(100,100,600,300),"About Themis",B_TITLED_WINDOW,B_ASYNCHRONOUS_CONTROLS|B_NOT_MINIMIZABLE);
 	} else {
 		AWin->Activate(true);
 	}
-	
 }
+
 uint32 App::BroadcastTarget() 
 {
 	printf("App\n");
 	return MS_TARGET_APPLICATION;
 }
+
 status_t App::ReceiveBroadcast(BMessage *msg) 
 {
 	printf("App::ReceiveBroadcast\n");
 	return B_OK;
 }
+
 status_t App::BroadcastReply(BMessage *msg)
 {
 	return B_OK;
@@ -121,24 +137,29 @@ void App::Pulse()
 }
 
 bool App::QuitRequested(){
+	
+	printf( "App::QuitRequested()\n" );
 	SetPulseRate(0);
 	atomic_add(&qr_called,1);
 	status_t stat;
-	BWindow *w=NULL;
+	Win* w=NULL;
 	BMessenger *msgr=NULL;
 	thread_id th;
+	printf( "CountWindows(): %d\n", CountWindows() );
 	while (CountWindows()>0) {
-		w=WindowAt(0);
+		w=( Win* )WindowAt(0);
 		if (w!=NULL) {
-//			printf("app: quit message target is Window \"%s\".\n",w->Title());
+			printf("app: quit message target is Window \"%s\".\n",w->Title());
+			w->SetQuitConfirmed( true );
 			msgr=new BMessenger(NULL,w,NULL);
 			th=w->Thread();
 			msgr->SendMessage(B_QUIT_REQUESTED);
-//			printf("app: quit requested message sent, waiting for the window to die.\n");
+			printf("app: quit requested message sent, waiting for the window to die.\n");
 			wait_for_thread(th,&stat);
 			delete msgr;
 		}
 	}
+	printf( "done closing windows\n" );
 	if (PluginManager!=NULL) {
 		msgr=new BMessenger(NULL,PluginManager,NULL);
 		th=PluginManager->Thread();
@@ -152,6 +173,7 @@ bool App::QuitRequested(){
 	}
 	
 	if (TCP!=NULL) {
+		printf( "telling TCP to quit\n" );
 		TCP->lock->Lock();
 		stat=TCP->Quit();
 		TCP->lock->Unlock();
@@ -161,17 +183,31 @@ bool App::QuitRequested(){
 	
 	//  PluginManager->Lock();
 	//  PluginManager->Quit();
+	printf( "end of App::QuitRequested()\n" );
 	return true;
 }
+
 void App::MessageReceived(BMessage *msg){
 	switch(msg->what){
+		case B_QUIT_REQUESTED :
+		{
+			printf( "APP B_QUIT_REQUESTED\n" );
+			break;
+		}
 		case SHOW_PREFERENCES :
 		{
 			printf( "SHOW_PREFERENCES\n" );
 			if( PWin == NULL)
 			{
+				BPoint point;
+				AppSettings->FindPoint( "PrefsWindowPoint", &point );
+				BRect rect;
+				rect.left = point.x;
+				rect.top = point.y;
+				rect.right = rect.left + 500;
+				rect.bottom = rect.top + 265;
 				PWin = new prefswin(
-					BRect(100,100,600,300),
+					rect,
 					"Preferences",
 					B_TITLED_WINDOW_LOOK,
 					B_MODAL_APP_WINDOW_FEEL,
@@ -182,20 +218,227 @@ void App::MessageReceived(BMessage *msg){
 				
 			break;
 		}
+		case WINDOW_CLOSE :
+		{
+			printf( "APP WINDOW_CLOSE\n" );
+			Win* closewin;
+			msg->FindPointer( "win_to_close", ( void** )&closewin );
+			printf( "windowcount: %d\n", CountWindows() );
+			
+			if( closewin == NULL )
+			{
+				printf( "closewin == NULL; aborting!\n" );
+				break;
+			}
+						
+			if( CountWindows() == 1 )
+			{
+				printf( "CountWindows() == 1\n" );
+				closewin->SetQuitConfirmed( true );
+				printf( "sending B_QUIT_REQUESTED to app\n" );
+				be_app_messenger.SendMessage( B_QUIT_REQUESTED );
+				break;
+			}
+			else
+			{
+				if( closewin == FirstWindow() )
+				{
+					printf( "closewin == FirstWindow()\n" );
+					SetFirstWindow( closewin->NextWindow() );
+				}
+				else
+				{
+					// find the ancesstor window
+					printf( "finding antecessor window\n" );
+					Win* awin = FirstWindow();
+				
+					while( awin->NextWindow() != closewin )
+					{
+						awin = awin->NextWindow();
+						if( awin == NULL )
+						{	
+							printf( "awin == NULL; aborting\n" );
+							break;
+						}
+					}
+					
+					if( awin->NextWindow() == closewin )
+						printf( "found antecessor window!\n" );
+					else
+					{
+						printf( "error finding antecessor window; aborting!\n" );
+						break;
+					}
+				
+					// find the successor window
+					printf( "finding successor window\n" );
+					Win* swin = NULL;
+					if( closewin->NextWindow() != NULL )
+					{
+						swin = closewin->NextWindow();
+						printf( "found successor window!\n" );
+					}
+					else
+						printf( "no successor window\n" );
+				
+					// combine antecessor win and successor win
+					printf( "combining awin and swin\n" );
+					
+					if( swin != NULL )
+						awin->SetNextWindow( swin );
+					else
+						awin->SetNextWindow( NULL );
+				}
+								
+				// quit the to be closed window
+				printf( "closing closewin\n" );
+				closewin->SetQuitConfirmed( true );
+				BMessenger msgr( closewin );
+				msgr.SendMessage( B_QUIT_REQUESTED );
+								
+				break;
+			}
+		}
+		case WINDOW_NEW :
+		{
+			printf( "APP WINDOW_NEW\n" );
+			
+			// find the last win
+			printf( "finding last window\n" );
+			Win* lastwin = FirstWindow();
+			while( lastwin->NextWindow() != NULL )
+			{
+				lastwin = lastwin->NextWindow();
+			}
+			
+			if( lastwin != NULL )
+				printf( "found lastwin\n" );
+			else
+			{
+				printf( "lastwin not found; aborting!\n" );
+				break;
+			}
+									
+			BRect r = lastwin->Frame();
+			r.OffsetBySelf( 20.0, 20.0 );
+			
+			float minw = 0.0, minh = 0.0, maxw = 0.0, maxh = 0.0;
+			FirstWindow()->GetSizeLimits( &minw, &maxw, &minh, &maxh );
+			
+			r.PrintToStream();
+					
+			// outside screen?
+			BScreen screen;
+			screen.Frame().PrintToStream();
+			bool usingsettingsrect = false;
+			if( r.right > screen.Frame().right - 30 )
+			{
+				// check if we can resize it smaller, but that its still above its minimum size
+				if( minw < ( r.right - r.left ) )
+					r.right = screen.Frame().right - 30;
+				else
+				{
+					printf( "width: using settings rect\n" );
+					AppSettings->FindRect( "WindowRect", &r );
+					usingsettingsrect = true;
+				}
+			}
+			if( usingsettingsrect == false )
+			{
+				if( r.bottom > screen.Frame().bottom - 30 )
+				{
+					if( minh < ( r.bottom - r.top ) )
+						r.bottom = screen.Frame().bottom - 30;
+					else
+						AppSettings->FindRect( "WindowRect", &r );
+				}
+			}
+				
+			Win* newwin = new Win(r,"Themis",B_DOCUMENT_WINDOW,B_ASYNCHRONOUS_CONTROLS,B_CURRENT_WORKSPACE);
+			
+			lastwin->SetNextWindow( newwin );			
+			
+			if( lastwin->NextWindow() != NULL )
+			{
+				// get the current windows url ( for case 2 )
+				BString currenturl;
+				for( int32 i = 0; i < CountWindows(); i++ )
+				{
+					if( WindowAt( i )->IsActive() == true )
+					{
+						Win* win = ( Win* )WindowAt( i );
+						currenturl.SetTo( win->navview->urlview->Text() );
+						break;
+					}
+				}
+				if( currenturl.Length() == 0 )
+					currenturl.SetTo( lastwin->navview->urlview->Text() );
+				
+				printf( "current url: %s\n", currenturl.String() );
+				
+				printf( "successfully added new win; showing now\n" );
+				lastwin->NextWindow()->Show();
+				
+				// open with blank, home or current page
+				int8 val;
+				AppSettings->FindInt8( "NewWindowStartPage", &val );
+				printf( "VALUE: %d\n", val );
+				switch( val )
+				{
+					case 0 : break;	// blank, do nothing
+					case 1 : // homepage
+					{
+						BMessenger msgr( FirstWindow() );
+						BMessage* homepage = new BMessage( URL_OPEN );
+						BString string;
+						AppSettings->FindString( "HomePage", &string );
+						homepage->AddString( "url_to_open", string.String() );
+						msgr.SendMessage( homepage );
+						break;
+					}
+					case 2 : // current windows page
+					{
+						BMessenger msgr( lastwin->NextWindow() );
+						BMessage* currentpage = new BMessage( URL_OPEN );
+						currentpage->AddString( "url_to_open", currenturl.String() );
+						msgr.SendMessage( currentpage );
+						break;
+					}
+				}
+				
+			}
+			else
+				printf( "not successfully added window\n" );
+						
+			break;
+		}
 		default:{
 			BApplication::MessageReceived(msg);
 		}
 	}
 }
+
 void App::RefsReceived(BMessage *refs){
 }
+
 void App::ReadyToRun(){
+	printf( "APP READYTORUN\n" );
 	PluginManager->BuildRoster(true);
-	win->Show();
+	fFirstWindow->Show();
 	//SetPulseRate(2000000);
+	
+	// if we have a homepage specified in prefs
+	BMessenger msgr( FirstWindow() );
+	BMessage* homepage = new BMessage( URL_OPEN );
+	BString string;
+	AppSettings->FindString( "HomePage", &string );
+	homepage->AddString( "url_to_open", string.String() );
+	msgr.SendMessage( homepage );
 }
+
 void App::ArgvReceived(int32 argc, char **argv){
 }
+
 void App::InitSettings(char *settings_path) {
 	if (settings_path!=NULL) {
 		AppSettings->AddString("settings_directory",settings_path);
@@ -206,8 +449,90 @@ void App::InitSettings(char *settings_path) {
 		AppSettings->AddString("settings_directory","/boot/home/config/settings/Themis/");
 		AppSettings->AddString("settings_file","/boot/home/config/settings/Themis/Themis Settings");
 	}
+	
+	// add the remaining prefs
+	
+	BRect rect( 100,100,650,450 );
+	AppSettings->AddRect( "WindowRect", rect );
+	BPoint point( 200, 200 );
+	AppSettings->AddPoint( "PrefsWindowPoint", point );
+		
+	// window
+	AppSettings->AddString( "HomePage", BString( "about:blank" ) );
+	AppSettings->AddBool( "IntelligentMaximize", false );
+	AppSettings->AddBool( "ShowTypeAhead", false );
+	AppSettings->AddInt8( "NewWindowStartPage", 0 );
+	
+	// tabs
+	AppSettings->AddBool( "ShowTabsAtStartup", false );
+	AppSettings->AddBool( "OpenTabsInBackground", false );
+	
+	// fonts
+	
+	// colors
+	union int32torgb convert;
+//	convert.rgb = ui_color( B_MENU_BACKGROUND_COLOR );
+//	AppSettings->AddInt32( "MenuColor", convert.value );
+	convert.rgb = ui_color( B_PANEL_BACKGROUND_COLOR );
+	AppSettings->AddInt32( "PanelColor", convert.value );
+	convert.rgb.red = 255;
+	convert.rgb.green = 200;
+	convert.rgb.blue = 0;
+	AppSettings->AddInt32( "ThemeColor", convert.value );
+	convert.rgb = ui_color( B_PANEL_BACKGROUND_COLOR );
+	AppSettings->AddInt32( "ActiveTabColor", convert.value );
+	convert.rgb.red -=32;
+	convert.rgb.green -=32;
+	convert.rgb.blue -=32;
+	AppSettings->AddInt32( "InactiveTabColor", convert.value );
+	convert.rgb.red = 187;
+	convert.rgb.green = 187;
+	convert.rgb.blue = 187;
+	AppSettings->AddInt32( "LightBorderColor", convert.value );
+	convert.rgb.red = 51;
+	convert.rgb.green = 51;
+	convert.rgb.blue = 51;
+	AppSettings->AddInt32( "DarkBorderColor", convert.value );
+	convert.rgb.red = 240;
+	convert.rgb.green = 240;
+	convert.rgb.blue = 240;
+	AppSettings->AddInt32( "ShadowColor", convert.value );
+	
+	// privacy
+	
+	// HTML Parser
+	AppSettings->AddString( "DTDToUsePath", "none" );
+	
 	AppSettings->PrintToStream();
 	
+}
+
+int16
+App::GetNewUniqueID()
+{
+	fUniqueIDCounter += 1;
+		
+	// i innerly hope that nobody will ever reach the 32k+ id limit,
+	// who still has the first tab/window/site open :)
+	if( fUniqueIDCounter > 32766 )
+	{
+		fUniqueIDCounter = 0;
+		BString astring;
+		astring <<
+		"Congratulations!\n\nYou are a hardcore Themis user!\n\n" <<
+		"Unfortunately, you have reached the unique indexing limit. " <<
+		"Themis could behave inconsistent from now on. You've been warned! :)";
+		BAlert* alert = new BAlert(	"Long Time Usage", astring.String(), "OK" );
+		alert->Go();
+	}		
+	
+	return fUniqueIDCounter;
+}
+
+Win*
+App::FirstWindow()
+{
+	return fFirstWindow;
 }
 
 status_t App::LoadSettings() {
@@ -240,6 +565,88 @@ status_t App::LoadSettings() {
 					file->Unlock();
 					delete file;
 					printf("Settings loaded.\n");
+					// check for missing pref-vars
+					printf( "Checking for missing pref-vars in AppSettings.\n" );
+					if( !AppSettings->HasRect( "WindowRect" ) )
+						AppSettings->AddRect( "WindowRect", BRect( 100,100,650,450 ) );
+					if( !AppSettings->HasPoint( "PrefsWindowPoint" ) )
+						AppSettings->AddPoint( "PrefsWindowPoint", BPoint( 200,200 ) );
+					// window
+					if( !AppSettings->HasString( "HomePage" ) )
+						AppSettings->AddString( "HomePage", BString( "about:blank" ) );
+					if( !AppSettings->HasBool( "IntelligentMaximize" ) )
+						AppSettings->AddBool( "IntelligentMaximize", false );
+					if( !AppSettings->HasBool( "ShowTypeAhead" ) )
+						AppSettings->AddBool( "ShowTypeAhead", false );
+					if( !AppSettings->HasInt8( "NewWindowStartPage" ) )
+						AppSettings->AddInt8( "NewWindowStartPage", 0 );
+					// tabs
+					if( !AppSettings->HasBool( "ShowTabsAtStartup" ) )
+						AppSettings->AddBool( "ShowTabsAtStartup", false );
+					if( !AppSettings->HasBool( "OpenTabsInBackground" ) )
+						AppSettings->AddBool( "OpenTabsInBackground", false );
+					// fonts
+					// colors
+					union int32torgb convert;
+//					if( !AppSettings->HasInt32( "MenuColor" ) )
+//					{
+//						convert.rgb = ui_color( B_MENU_BACKGROUND_COLOR );
+//						AppSettings->AddInt32( "MenuColor", convert.value );
+//					}
+					if( !AppSettings->HasInt32( "PanelColor" ) )
+					{
+						convert.rgb = ui_color( B_PANEL_BACKGROUND_COLOR );
+						AppSettings->AddInt32( "PanelColor", convert.value );
+					}
+					if( !AppSettings->HasInt32( "ThemeColor" ) )
+					{
+						convert.rgb.red = 255;
+						convert.rgb.green = 200;
+						convert.rgb.blue = 0;
+						AppSettings->AddInt32( "ThemeColor", convert.value );
+					}
+					if( !AppSettings->HasInt32( "ActiveTabColor" ) )
+					{
+						convert.rgb = ui_color( B_PANEL_BACKGROUND_COLOR );
+						AppSettings->AddInt32( "ActiveTabColor", convert.value );
+					}
+					if( !AppSettings->HasInt32( "InactiveTabColor" ) )
+					{
+						convert.rgb = ui_color( B_PANEL_BACKGROUND_COLOR );
+						convert.rgb.red -=32;
+						convert.rgb.green -=32;
+						convert.rgb.blue -=32;
+						AppSettings->AddInt32( "InactiveTabColor", convert.value );						
+					}
+					if( !AppSettings->HasInt32( "LightBorderColor" ) )
+					{
+						convert.rgb.red = 187;
+						convert.rgb.green = 187;
+						convert.rgb.blue = 187;
+						AppSettings->AddInt32( "LightBorderColor", convert.value );
+					}
+					if( !AppSettings->HasInt32( "DarkBorderColor" ) )
+					{
+						convert.rgb.red = 51;
+						convert.rgb.green = 51;
+						convert.rgb.blue = 51;
+						AppSettings->AddInt32( "DarkBorderColor", convert.value );
+					}
+					if( !AppSettings->HasInt32( "ShadowColor" ) )
+					{
+						convert.rgb.red = 240;
+						convert.rgb.green = 240;
+						convert.rgb.blue = 240;
+						AppSettings->AddInt32( "ShadowColor", convert.value );
+					}
+					// privacy
+					
+					// HTML Parser
+					if( !AppSettings->HasString( "DTDToUsePath" ) )
+					{
+						AppSettings->AddString( "DTDToUsePath", "none" );
+					}
+						
 					AppSettings->PrintToStream();
 					return ret;
 					
@@ -266,6 +673,7 @@ status_t App::LoadSettings() {
 	return B_ERROR;
 	
 }
+
 status_t App::SaveSettings() {
 	if (AppSettings!=NULL) {
 		
@@ -299,5 +707,10 @@ status_t App::SaveSettings() {
 		return ret;
 	}
 	return B_ERROR;
-	
+}
+
+void
+App::SetFirstWindow( Win* newfirst )
+{
+	fFirstWindow = newfirst;
 }

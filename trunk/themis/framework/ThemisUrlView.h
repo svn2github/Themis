@@ -13,7 +13,6 @@
 // C/C++ headers
 
 // myheaders
-#include "ThemisTVS.h"
 
 class ThemisUrlTextView;
 
@@ -24,8 +23,7 @@ class ThemisUrlView : public BView
 										BRect frame,
 										const char* name,
 										uint32 resizingmode,
-										uint32 flags,
-										const rgb_color* arr );
+										uint32 flags );
 										
 		virtual void				AttachedToWindow();											 	 
 		virtual void				Draw( BRect updaterect );
@@ -40,8 +38,6 @@ class ThemisUrlView : public BView
 	
 	private:	
 		BBitmap*					fav_icon;
-		rgb_color					fDarkGrayColor;
-		rgb_color					fInterfaceColor;
 };
 
 #endif
