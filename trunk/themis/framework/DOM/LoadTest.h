@@ -34,7 +34,8 @@ class HTMLParser	{
 		TDocumentShared mDocument; // Stores the document to be build
 		string getTag();
 		bool isStartTag()	;
-		string getText( bool conserveSpaces = true );
+		bool isFontStyleTag();
+		string getText( bool aConserveSpaces = true );
 		string getAttrValue();
 		string getAttribute();		
 		string getString();
@@ -43,22 +44,24 @@ class HTMLParser	{
 		// Tag recognition functions
 		void doctypeTag();
 		void htmlTag();
-		void headTag( TElementShared parent );
-		void titleTag( TElementShared parent );
-		void bodyTag( TElementShared parent );
-		void pTag( TElementShared parent );
-		void headingTag( TElementShared parent );
-		void preTag( TElementShared parent );
-		void hrTag( TElementShared parent );
-		void blockquoteTag( TElementShared parent );
+		void headTag( TElementShared aParent );
+		void titleTag( TElementShared aParent );
+		void bodyTag( TElementShared aParent );
+		void pTag( TElementShared aParent );
+		void headingTag( TElementShared aParent );
+		void preTag( TElementShared aParent );
+		void hrTag( TElementShared aParent );
+		void blockquoteTag( TElementShared aParent );
+		void aTag( TElementShared aParent );
+		void fontStyleTag( TElementShared aParent );
 	
 	public:
 		HTMLParser();
 		~HTMLParser();
-		void showTree( const TNodeShared node, int spacing );
+		void showTree( const TNodeShared aNode, int aSpacing );
 		void showDocument();
 		void setContent( string aContent );
-		void startParsing( TDocumentShared document );
+		void startParsing( TDocumentShared aDocument );
 };
 
 #endif
