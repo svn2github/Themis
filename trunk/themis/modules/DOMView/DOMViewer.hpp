@@ -28,59 +28,41 @@
 	Class Start Date: September 21, 2002
 */
 
-#ifndef DOMVIEW_H
-#define DOMVIEW_H
+#ifndef DOMVIEWER_HPP
+#define DOMVIEWER_HPP
 
-// Standard C++ headers
-#include <string>
+// Themis headers
+#include "plugclass.h"
 
-// BeOS headers
-#include <SupportDefs.h>
-#include <Handler.h>
-#include <Window.h>
-#include <OutlineListView.h>
-#include <ListView.h>
-#include <PopUpMenu.h>
-#include <TextView.h>
+// Declarations of DOMViewer classes
+class DOMView;
 
-// DOM headers
-#include "DOMSupport.h"
+// Exports
+extern "C" __declspec( dllexport ) status_t Initialize( void * aInfo = NULL );
+extern "C" __declspec( dllexport ) status_t Shutdown( bool aNow = false );
+extern "C" __declspec( dllexport ) PlugClass * GetObject();
 
-// Declarations of BeOS classes
-class BStringItem;
-
-// Namespaces used
-using namespace std;
-
-// Constants used
-const int32 SELECTION = 'slct';
-const int32 TEXT_MENU_CHANGED = 'tmcd';
-
-class DOMView	:	public BWindow	{
-
+class DOMViewer	:	public BHandler, public PlugClass	{
+	
 	private:
-		BOutlineListView * mTree;
-		BListView * mAttributes;
-		BListView * mValues;
-		BPopUpMenu * mTextMenu;
-		BTextView * mText;
-
-		BList * mItems;
-
-		TDocumentPtr mDocument;
-		TNodePtr mSelectedNode;
+		DOMView * mView;
 	
 	public:
-		DOMView( TDocumentPtr aDocument );
-		~DOMView();
+		DOMViewer( BMessage * aInfo = NULL );
+		~DOMViewer();
 		void MessageReceived( BMessage * aMessage );
-		bool QuitRequested();
-		void showTree( const TNodePtr aNode, BStringItem * aParent );
-		void showDocument();
-		void setDocument( TDocumentPtr aDocument );
-		TNodePtr findNode( TNodePtr aNode, int32 aTarget, int32 & aCurrent );
+		bool IsHandler();
+		BHandler * Handler();
+		bool IsPersistent();
+		uint32 PlugID();
+		char * PlugName();
+		float PlugVersion();
+		void Heartbeat();
+		status_t ReceiveBroadcast( BMessage * aMessage );
+		status_t BroadcastReply( BMessage * aMessage );
+		uint32 BroadcastTarget();
+		int32 Type();
 		
-	
 };
 
 #endif

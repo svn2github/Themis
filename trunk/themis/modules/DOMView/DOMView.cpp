@@ -1,3 +1,32 @@
+/*
+	Copyright (c) 2001 Mark Hellegers. All Rights Reserved.
+	
+	Permission is hereby granted, free of charge, to any person
+	obtaining a copy of this software and associated documentation
+	files (the "Software"), to deal in the Software without
+	restriction, including without limitation the rights to use,
+	copy, modify, merge, publish, distribute, sublicense, and/or
+	sell copies of the Software, and to permit persons to whom
+	the Software is furnished to do so, subject to the following
+	conditions:
+	
+	   The above copyright notice and this permission notice
+	   shall be included in all copies or substantial portions
+	   of the Software.
+	
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+	KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+	WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+	PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+	OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+	OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+	
+	Original Author: 	Mark Hellegers (M.H.Hellegers@stud.tue.nl)
+	Project Start Date: October 18, 2000
+	Class Start Date: September 21, 2002
+*/
 /*	DOMView implementation
 	See DOMView.h for some more information
 */
@@ -12,13 +41,7 @@
 #include <Box.h>
 #include <MenuField.h>
 #include <MenuItem.h>
-
-// DOMView headers
-#include "DOMView.h"
-
-// Themis headers
-#include "commondefs.h"
-#include "plugman.h"
+#include <ScrollView.h>
 
 // DOM headers
 #include "TDocument.h"
@@ -26,86 +49,51 @@
 #include "TNodeList.h"
 #include "TNamedNodeMap.h"
 
-DOMView * viewer;
-BMessage ** appSettings_p;
-BMessage * appSettings;
+// DOMView headers
+#include "DOMView.h"
 
-status_t Initialize( void * info )	{
-	
-	viewer = NULL;
-	if ( info != NULL )	{
-		BMessage * message = (BMessage *) info;
-		if ( message->HasPointer( "settings_message_ptr" ) )	{
-			message->FindPointer( "settings_message_ptr", (void **) & appSettings_p );
-			appSettings = *appSettings_p;
-		}
-		viewer = new DOMView( message );
-	}
-	else	{
-		viewer = new DOMView();
-	}
-	
-	return B_OK;
-	
-}
+DOMView	::	DOMView( TDocumentPtr aDocument )
+				:	BWindow( BRect( 100, 100, 450, 400 ), "DOMWindow",
+								   B_TITLED_WINDOW,
+								   B_CURRENT_WORKSPACE )	{
 
-status_t Shutdown( bool now )	{
-	
-	delete viewer;
-	
-	return B_OK;
-	
-}
-
-PlugClass * GetObject()	{
-	
-	return viewer;
-	
-}
-
-DOMWindow	::	DOMWindow( TDocumentPtr document )	:
-							BWindow( BRect( 100, 100, 450, 400 ), "DOMWindow", B_TITLED_WINDOW,
-								B_CURRENT_WORKSPACE )	{
-
+	// Set background and add it to the window.
 	BRect backRect = Bounds();
 	BView * backGround = new BView( backRect, "Background", B_FOLLOW_ALL_SIDES,
 					B_WILL_DRAW );
-
 	backGround->SetViewColor( ui_color( B_PANEL_BACKGROUND_COLOR ) );
-
 	AddChild( backGround );
 
+	// Create tree view. 
 	BRect treeRect = backRect;
-	BRect listRect = treeRect;
 	treeRect.bottom -= B_H_SCROLL_BAR_HEIGHT;
 	treeRect.right -= 200;
 	treeRect.right -= B_V_SCROLL_BAR_WIDTH;
-
-	tree = new BOutlineListView( treeRect, "DOMView", B_SINGLE_SELECTION_LIST,
-			B_FOLLOW_ALL_SIDES );
-	doc = document;
-	showDocument();
-
-	tree->SetSelectionMessage( new BMessage( SELECTION ) );
-
-	scrollTree = new BScrollView( "Scroll Tree", tree,
-			B_FOLLOW_TOP_BOTTOM | B_FOLLOW_LEFT,  0, true, true );
-
+	mTree = new BOutlineListView( treeRect,
+												   "DOMView",
+												   B_SINGLE_SELECTION_LIST,
+												   B_FOLLOW_ALL_SIDES );
+	mTree->SetSelectionMessage( new BMessage( SELECTION ) );
+	BScrollView * scrollTree
+		= new BScrollView( "Scroll Tree",
+									 mTree,
+									 B_FOLLOW_TOP_BOTTOM | B_FOLLOW_LEFT,
+									  0, true, true );
 	scrollTree->SetViewColor( ui_color( B_PANEL_BACKGROUND_COLOR ) );
 
-	listRect.left += 155;
-	
-	BRect textRect = listRect;
+	// Create text box.
+	BRect textRect = backRect;
+	textRect.left += 155;
 	textRect.bottom -= 160;
 	textRect.InsetBy( 5, 5 );
-
 	BBox * textBox = new BBox( textRect, "TextBox", B_FOLLOW_LEFT_RIGHT | B_FOLLOW_TOP );
 
-	textMenu = new BPopUpMenu( "No text" );
-	textMenu->SetEnabled( false );
-	
+	// Create text popup menu.
+	mTextMenu = new BPopUpMenu( "No text" );
+	mTextMenu->SetEnabled( false );
 	BRect menuRect( 0, 0, 100, 50 );
-	BMenuField * textSelect = new BMenuField( menuRect, "TextPopUp", NULL, textMenu );
+	BMenuField * textSelect =
+		new BMenuField( menuRect, "TextPopUp", NULL, mTextMenu );
 
 	textBox->SetLabel( textSelect );
 	
@@ -116,18 +104,26 @@ DOMWindow	::	DOMWindow( TDocumentPtr document )	:
 	textRect.bottom -= B_H_SCROLL_BAR_HEIGHT;
 	textRect.right -= B_V_SCROLL_BAR_WIDTH;
 
+	// Create text view.
 	BRect textDisplay( 0, 0, textRect.Width(), textRect.Height() );
-
-	text = new BTextView( textRect, "TextView", textDisplay, B_FOLLOW_ALL_SIDES, B_WILL_DRAW );
-
-	BScrollView * scrollText = new BScrollView( "Scroll Text", text,
-			B_FOLLOW_TOP | B_FOLLOW_LEFT_RIGHT,  B_FRAME_EVENTS, true, true );
-
+	mText = new BTextView( textRect, "TextView",
+									   textDisplay,
+									   B_FOLLOW_ALL_SIDES,
+									   B_WILL_DRAW );
+	BScrollView * scrollText =
+		new BScrollView( "Scroll Text",
+								  mText,
+								  B_FOLLOW_TOP | B_FOLLOW_LEFT_RIGHT,
+								  B_FRAME_EVENTS,
+								  true, true );
 	scrollText->SetViewColor( ui_color( B_PANEL_BACKGROUND_COLOR ) );
 
+	BRect listRect = backRect;
+	listRect.left += 155;
 	listRect.top += 135;
 	listRect.InsetBy( 5, 5 );
 
+	// Create attribute box.
 	BBox * attrBox = new BBox( listRect, "AttributeBox", B_FOLLOW_ALL_SIDES );
 	attrBox->SetLabel( "Attributes" );
 
@@ -138,143 +134,158 @@ DOMWindow	::	DOMWindow( TDocumentPtr document )	:
 	listRect.bottom -= B_H_SCROLL_BAR_HEIGHT;
 	listRect.right -= B_V_SCROLL_BAR_WIDTH;
 	
-	attributes = new BListView( listRect, "AttrView", B_SINGLE_SELECTION_LIST,
-			B_FOLLOW_ALL_SIDES );
-
-	scrollAttr = new BScrollView( "Scroll Attr", attributes,
+	// Create attribute list view.
+	mAttributes =
+		new BListView( listRect,
+							   "AttrView",
+							   B_SINGLE_SELECTION_LIST,
+							   B_FOLLOW_ALL_SIDES );
+	BScrollView * scrollAttr =
+		new BScrollView( "Scroll Attr", mAttributes,
 			B_FOLLOW_TOP_BOTTOM | B_FOLLOW_LEFT,  B_FRAME_EVENTS, true, true );
-
 	scrollAttr->SetViewColor( ui_color( B_PANEL_BACKGROUND_COLOR ) );
-
 	BStringItem * attrItem = new BStringItem( "No attributes" );
-	attributes->AddItem( attrItem );
+	mAttributes->AddItem( attrItem );
 
 	listRect.left += 100;
 	listRect.right += 80;
 
-	values = new BListView( listRect, "ValueView", B_SINGLE_SELECTION_LIST,
-			B_FOLLOW_ALL_SIDES );
-
-	scrollValue = new BScrollView( "Scroll Value", values,
-			B_FOLLOW_ALL_SIDES,  B_FRAME_EVENTS, true, true );
-
+	// Create value view.
+	mValues =
+		new BListView( listRect,
+							   "ValueView",
+							   B_SINGLE_SELECTION_LIST,
+							   B_FOLLOW_ALL_SIDES );
+	BScrollView * scrollValue =
+		new BScrollView( "Scroll Value",
+								  mValues,
+								  B_FOLLOW_ALL_SIDES,
+								  B_FRAME_EVENTS,
+								  true, true );
 	scrollValue->SetViewColor( ui_color( B_PANEL_BACKGROUND_COLOR ) );
-
 	BStringItem * valueItem = new BStringItem( "No value" );
-	values->AddItem( valueItem );
+	mValues->AddItem( valueItem );
 	
+	// Add children to background view.
 	backGround->AddChild( scrollTree );
 	backGround->AddChild( textBox );
 	backGround->AddChild( attrBox );
 	textBox->AddChild( scrollText );
 	attrBox->AddChild( scrollAttr );
 	attrBox->AddChild( scrollValue );
+
+	// Setup the document.
+	setDocument( aDocument );
+
+	// Show the window.
 	Show();
-	
+
 }
 
-DOMWindow	::	~DOMWindow()	{
+DOMView	::	~DOMView()	{
 
-	int32 items = tree->CountItems();
+	int32 items = mTree->CountItems();
 	for ( int32 i = 0; i < items; i++ )	{
-		delete tree->RemoveItem( (int32) 0 );
+		delete mTree->RemoveItem( (int32) 0 );
 	}
 	
 }
 
-void DOMWindow	::	MessageReceived( BMessage * message )	{
+void DOMView	::	MessageReceived( BMessage * aMessage )	{
 
-	switch ( message->what )	{
+	switch ( aMessage->what )	{
 		case SELECTION:	{
 			int32 index = 0;
-			message->FindInt32( "index", &index );
+			aMessage->FindInt32( "index", &index );
 			int32 current = 0;
-			TNodePtr found = findNode( doc, index, current );
-			attributes->RemoveItems( 0, attributes->CountItems() );
-			values->RemoveItems( 0, values->CountItems() );
+			TNodePtr found = findNode( mDocument, index, current );
+			mAttributes->RemoveItems( 0, mAttributes->CountItems() );
+			mValues->RemoveItems( 0, mValues->CountItems() );
 			if ( found->hasAttributes() )	{
 				TNamedNodeMapPtr attrs = found->getAttributes();
 				for ( unsigned int i = 0; i < attrs->getLength(); i++ )	{
 					TNodePtr attr = attrs->item( i );
-					BStringItem * attrItem = new BStringItem( attr->getNodeName().c_str() );
-					attributes->AddItem( attrItem );
-					BStringItem * valueItem = new BStringItem( attr->getNodeValue().c_str() );
-					values->AddItem( valueItem );
+					BStringItem * attrItem =
+						new BStringItem( attr->getNodeName().c_str() );
+					mAttributes->AddItem( attrItem );
+					BStringItem * valueItem =
+						new BStringItem( attr->getNodeValue().c_str() );
+					mValues->AddItem( valueItem );
 				}
 			}
 			else	{
-				BStringItem * attrItem = new BStringItem( "No attributes" );
-				attributes->AddItem( attrItem );
-				BStringItem * valueItem = new BStringItem( "No values" );
-				values->AddItem( valueItem );
+				BStringItem * attrItem =
+					new BStringItem( "No attributes" );
+				mAttributes->AddItem( attrItem );
+				BStringItem * valueItem =
+					new BStringItem( "No values" );
+				mValues->AddItem( valueItem );
 			}
 			
-			int menuItems = textMenu->CountItems();
+			int menuItems = mTextMenu->CountItems();
 			int32 markedIndex = 0;
 			if ( menuItems )	{
-				BMenuItem * marked = textMenu->FindMarked();
+				BMenuItem * marked = mTextMenu->FindMarked();
 				if ( marked )	{
-					markedIndex = textMenu->IndexOf( marked );
+					markedIndex = mTextMenu->IndexOf( marked );
 				}
 			}
 			for ( int i = 0; i < menuItems; i++ )	{
-				delete textMenu->RemoveItem( (int32) 0 );
-				textMenu->SetEnabled( false );
-				text->SetText( "" );
-				textMenu->Invalidate();
+				delete mTextMenu->RemoveItem( (int32) 0 );
+				mTextMenu->SetEnabled( false );
+				mText->SetText( "" );
+				mTextMenu->Invalidate();
 			}
 			
 			int textNr = 1;
 			if ( found->hasChildNodes() )	{
 				TNodeListPtr children = found->getChildNodes();
-				selectedNode = found;
+				mSelectedNode = found;
 				for ( unsigned int i = 0; i < children->getLength(); i++ )	{
 					TNodePtr child = children->item( i );
 					if ( child->getNodeType() == TEXT_NODE )	{
-						textMenu->SetEnabled( true );
+						mTextMenu->SetEnabled( true );
 						BString * itemText = new BString( "Text part " );
 						*itemText << textNr;
-						BMessage * menuChange = new BMessage( TEXT_MENU_CHANGED );
+						BMessage * menuChange =
+							new BMessage( TEXT_MENU_CHANGED );
 						// Warning: Adding index of all children
 						// Makes it easier to find
 						menuChange->AddInt32( "index", i );
-						BMenuItem * item = new BMenuItem( itemText->String(), menuChange );
+						BMenuItem * item =
+							new BMenuItem( itemText->String(), menuChange );
 						if ( (int32) i <= markedIndex )	{
 							item->SetMarked( true );
-							text->SetText( child->getNodeValue().c_str(), child->getNodeValue().size() );
+							mText->SetText( child->getNodeValue().c_str(),
+												   child->getNodeValue().size() );
 						}
-						textMenu->AddItem( item );
+						mTextMenu->AddItem( item );
 						textNr++;
 					}
 				}
 			}
-							
 			break;
 		}
 		case TEXT_MENU_CHANGED:	{
 			int32 index = 0;
-			message->FindInt32( "index", &index );
-			TNodeListPtr children = selectedNode->getChildNodes();
+			aMessage->FindInt32( "index", &index );
+			TNodeListPtr children = mSelectedNode->getChildNodes();
 			TNodePtr child = children->item( index );
-			text->SetText( child->getNodeValue().c_str(), child->getNodeValue().size() );
-		
-			break;	
-		}
-		default:	{
-			//message->PrintToStream();
+			mText->SetText( child->getNodeValue().c_str(),
+									  child->getNodeValue().size() );
 			break;
 		}
 	}
 
 }
 
-bool DOMWindow	::	QuitRequested()	{
+bool DOMView	::	QuitRequested()	{
 	
 	return true;
 	
 }
 
-void DOMWindow	::	showTree( const TNodePtr aNode, BStringItem * parent )	{
+void DOMView	::	showTree( const TNodePtr aNode, BStringItem * aParent )	{
 	
 	TNodeListPtr children = aNode->getChildNodes();
 	int length = children->getLength();
@@ -283,199 +294,79 @@ void DOMWindow	::	showTree( const TNodePtr aNode, BStringItem * parent )	{
 			TNodePtr child = children->item( i );
 	
 			if ( child->getNodeType() == ELEMENT_NODE )	{
-				BStringItem * childItem = new BStringItem( child->getNodeName().c_str() );
-				tree->AddUnder( childItem, parent );
-
+				BStringItem * childItem =
+					new BStringItem( child->getNodeName().c_str() );
+				mTree->AddUnder( childItem, aParent );
 				showTree( child, childItem );
 			}
 		}
 	}	
 }
 
-void DOMWindow	::	showDocument()	{
+void DOMView	::	showDocument()	{
 	
-	int32 items = tree->CountItems();
+	int32 items = mTree->CountItems();
 	for ( int32 i = 0; i < items; i++ )	{
-		delete tree->RemoveItem( (int32) 0 );
+		delete mTree->RemoveItem( (int32) 0 );
 	}
 
-	BStringItem * root = new BStringItem( doc->getNodeName().c_str() );
-	tree->AddItem( root );
-	showTree( doc, root );
+	BStringItem * root =
+		new BStringItem( mDocument->getNodeName().c_str() );
+	mTree->AddItem( root );
+	showTree( mDocument, root );
 
 }
 
-void DOMWindow	::	setDocument( TDocumentPtr document )	{
+void DOMView	::	setDocument( TDocumentPtr aDocument )	{
 
-	doc = document;
+	mDocument = aDocument;
 	showDocument();
 	
 }
 
-TNodePtr DOMWindow	::	findNode( TNodePtr node, int32 target, int32 & current )	{
+TNodePtr DOMView	::	findNode( TNodePtr aNode,
+												   int32 aTarget,
+												   int32 & aCurrent )	{
 	
-	if ( node.get() && ( node->getNodeType() == ELEMENT_NODE ||
-								node->getNodeType() == DOCUMENT_NODE ) )	{
+	if ( aNode.get() && ( aNode->getNodeType() == ELEMENT_NODE ||
+		 aNode->getNodeType() == DOCUMENT_NODE ) )	{
 		
-		if ( target == current )	{
+		if ( aTarget == aCurrent )	{
 			// This is the node we're looking for
-			return node;
+			return aNode;
 		}
 		
 		// Get the next node
 		// I'm using getChildNodes instead of getFirstChild,
 		// because of a weird crash with getFirstChild. Not sure who is wrong here
-		TNodeListPtr children = node->getChildNodes();
+		TNodeListPtr children = aNode->getChildNodes();
 		TNodePtr result = TNodePtr();
 		if ( children->getLength() )	{
-			current++;
+			aCurrent++;
 			TNodePtr next = children->item( 0 );
-			result = findNode( next, target, current );
+			result = findNode( next, aTarget, aCurrent );
 		}
 		if ( result.get() )	{
 			return result;
 		}
 		else	{
-			current++;
-			TNodePtr next = node->getNextSibling();
-			return findNode( next, target, current );
+			aCurrent++;
+			TNodePtr next = aNode->getNextSibling();
+			return findNode( next, aTarget, aCurrent );
 		}							
 	}
 	else	{
 		// Was not an element or a document node or didn't exist
-		if ( node.get() )	{
-			TNodePtr next = node->getNextSibling();
-			return findNode( next, target, current );
+		if ( aNode.get() )	{
+			TNodePtr next = aNode->getNextSibling();
+			return findNode( next, aTarget, aCurrent );
 		}
 		else	{
 			// Node doesn't exist
-			current--;
+			aCurrent--;
 		}
 	}
 	
 	return TNodePtr();
 	
-}
-
-DOMView	::	DOMView( BMessage * info )	:	BHandler( "DOMView" ), PlugClass( info )	{
-	
-	window = NULL;
-	
-}
-
-DOMView	::	~DOMView()	{
-	
-	window->Lock();
-	delete window;
-	
-}
-
-void DOMView	::	MessageReceived( BMessage * message )	{
-	
-	//message->PrintToStream();
-	
-}
-
-bool DOMView	::	IsHandler()	{
-	
-	return true;
-	
-}
-
-BHandler * DOMView	::	Handler()	{
-	
-	return this;
-	
-}
-
-bool DOMView	::	IsPersistent()	{
-	
-	return true;
-	
-}
-
-uint32 DOMView	::	PlugID()	{
-	
-	return 'tree';
-	
-}
-
-char * DOMView	::	PlugName()	{
-	
-	return "DOM Viewer";
-	
-}
-
-float DOMView	::	PlugVersion()	{
-	
-	return 0.0;
-	
-}
-
-void DOMView	::	Heartbeat()	{
-	
-}
-
-status_t DOMView	::	ReceiveBroadcast( BMessage * message )	{
-	
-	printf( "DOMView is receiving broadcast:\n" );
-	message->PrintToStream();
-	
-	int32 command = 0;
-	message->FindInt32( "command", &command );
-	
-	switch ( command )	{
-		case COMMAND_INFO:	{
-			printf( "COMMAND_INFO called\n" );
-			// Check if it is dom data
-			BString type;
-			message->FindString( "type", &type );
-			if ( type != "dom" )	{
-				printf( "DOMV: Message not recognized\n" );
-				break;
-			}
-			
-			// Get the pointer out
-			void * document = NULL;
-			message->FindPointer( "data_pointer", &document );
-			if ( document )	{
-				TDocumentPtr * temp = (TDocumentPtr *) document;
-				TDocumentPtr copy = *temp;
-				if ( !window )	{
-					window = new DOMWindow( copy );
-				}
-				else	{
-					window->Lock();
-					window->setDocument( copy );
-					window->Unlock();
-				}
-			}
-			break;
-		}
-		default:	{
-			message->PrintToStream();
-			return PLUG_DOESNT_HANDLE;
-		}
-	}
-	
-	return PLUG_HANDLE_GOOD;
-	
-}
-
-int32 DOMView	::	Type()	{
-	
-	return TARGET_DOM;
-	
-}
-
-uint32 DOMView::BroadcastTarget()	{
-
-	return MS_TARGET_DOM_VIEWER;
-
-}
-
-status_t DOMView::BroadcastReply(BMessage *msg)	{
-
-	return B_OK;
-
 }
