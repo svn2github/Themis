@@ -78,6 +78,7 @@ enum MsgSysTargets
 	MS_TARGET_PARSER=0x100,//!< Send message to text/data parser members of the broadcast system.
 	MS_TARGET_APPLICATION=0x202,//!< Send message to the BApplication object.
 	MS_TARGET_RENDERER=0x204,//!< Send message to the renderer object.
+	MS_TARGET_URLHANDLER=0x206,//!< Send message to the UrlHandler object.
 	MS_TARGET_TYPE_ALL=0x404,//!< Send message to members that process data on disk or RAM. Useful really only with cache target.
 	MS_TARGET_TYPE_DISK=0x406,//!< Send message to members that process data on disk only. Useful really only with cache target.
 	MS_TARGET_TYPE_RAM=0x408,//!< Send message to members that process data in RAM only. Useful really only with cache target.
