@@ -247,10 +247,14 @@ plugman::plugman(entry_ref &appdirref)
 */
 }
 plugman::~plugman() {
+	printf("Stop node watching.\n");
 	stop_watching((BHandler *)this,(BLooper*)this);
-	Locker->Lock();
+//	Locker->Lock();
+	printf("Removing Lock\n");
 	delete Locker;
+	printf("Unregistering from Message System\n");
 	MsgSysUnregister(this);
+	printf("Plugin Manager Destructor complete.\n");
 }
 bool plugman::QuitRequested() {
 //	{
@@ -327,95 +331,6 @@ status_t plugman::UnloadAllPlugins(bool clean) {
 	}
 	
 }
-/*
-status_t plugman::Broadcast(int32 source,int32 targets,BMessage *msg) {
-	plugst *cur=head;
-//this makes sure that at least one plug-in will receive the broadcast. if there isn't
-//it returns with a B_ERROR message right away.
-	if (targets!=ALL_TARGETS) {
-		int32 count=0;
-		while (cur!=NULL) {
-			if ((cur->type&targets)>=1)
-				count++;
-			cur=cur->next;
-		}
-		cur=head;
-		if (count==0)
-			return B_ERROR;
-	}
-	status_t ret=B_OK,final_ret=0;
-	BMessage *subm=new BMessage;
-	bool iloaded=false;
-	
-	msg->FindMessage("message",subm);
-	
-	while (cur!=NULL) {
-		if (source==cur->plugid) {
-			cur=cur->next;
-			continue;
-		}
-		
-		if (targets!=ALL_TARGETS) {
-			if ((cur->type&targets)>=1){
-				iloaded=false;
-				
-				if (!cur->inmemory) {
-					
-					LoadPlugin(cur->plugid);
-					iloaded=true;
-					
-				}
-#ifdef DEBUG
-				printf("Sending broadcast to: %s - %ld\n",cur->pobj->PlugName(),cur->pobj->Type());
-#endif
-				ret=cur->pobj->ReceiveBroadcast(subm);
-				if ((cur->type&targets>=1) && (ret!=PLUG_HANDLE_GOOD))
-					final_ret|=B_ERROR;
-				else
-					final_ret|=~B_ERROR;
-				
-						if (ret!=PLUG_HANDLE_GOOD)
-							if (iloaded==true)
-								UnloadPlugin(cur->plugid);
-
-#ifdef DEBUG
-				printf("Broadcast sent to: %s\t%ld (%c%c%c%c)\n",cur->pobj->PlugName(),ret,ret>>24,ret>>16,ret>>8,ret);
-#endif
-			}
-		} else {
-			if (!cur->inmemory)
-				LoadPlugin(cur->plugid);
-			cur->pobj->ReceiveBroadcast(subm);
-#ifdef DEBUG
-				printf("Broadcast sent to: %s\t%ld\n",cur->pobj->PlugName(),ret);
-#endif
-		}
-		cur=cur->next; 
-	}
-	BMessenger *msgr=NULL;
-	//send broadcast to other non-plugin targets
-	if ((source!=TARGET_DOM) && ((targets&TARGET_DOM!=0) || (targets&ALL_TARGETS!=0))) {
-		//send broadcast to DOM object.
-	}
-	if ((source!=TARGET_WINDOW) && ((targets&TARGET_WINDOW!=0) || (targets&ALL_TARGETS!=0))) {
-		//send broadcast to Window object.
-	}
-	if ((source!=TARGET_VIEW) && ((targets&TARGET_VIEW!=0) || (targets&ALL_TARGETS!=0))) {
-		//send broadcast to [top] View object.
-	}
-	if ((source!=TARGET_APPLICATION) && ((targets&TARGET_APPLICATION!=0) || (targets&ALL_TARGETS!=0))) {
-		//send broadcast to App object.
-		be_app_messenger.SendMessage(subm);
-	}
-	
-	delete subm;
-#ifdef DEBUG
-	printf("plugman is returning: %ld; B_OK= %ld\n",final_ret,B_OK);
-#endif
-	return final_ret;
-	
-}
-*/
 status_t plugman::LoadPlugin(uint32 which) 
 {
 	plugst *cur=head;//,*tmp;

@@ -130,5 +130,5 @@ float Renderer::PlugVersion()
 
 int32 Renderer::Type()
 {
-	return TARGET_RENDERER;
+	return MS_TARGET_RENDERER;
 }

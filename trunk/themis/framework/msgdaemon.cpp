@@ -29,7 +29,7 @@ Project Start Date: October 18, 2000
 #include "msgdaemon.h"
 #include <Autolock.h>
 MessageDaemon::MessageDaemon():MessageSystem() {
-	msgsyslock=new BLocker(true);
+//	msgsyslock=new BLocker(true);
 	Start();
 }
 
@@ -39,7 +39,7 @@ MessageDaemon::~MessageDaemon() {
 	printf("Message System Statistics:\n==========================\nMessages Sent: %lu\nMessage Targets: %lu\n",_messages_sent_,_message_targets_);
 	printf("==========================\n");
 	fflush(stdout);
-	delete msgsyslock;
+//	delete msgsyslock;
 }
 void MessageDaemon::Start() 
 {

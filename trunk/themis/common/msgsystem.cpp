@@ -32,7 +32,7 @@ Project Start Date: October 18, 2000
 #include <OS.h>
 volatile int32 MessageSystem::broadcast_target_count=0;
 MessageSystem::msgsysclient_st *MessageSystem::MsgSysClients=NULL;
-BLocker *MessageSystem::msgsyslock=NULL;
+BLocker MessageSystem::msgsyslock;
 sem_id MessageSystem::process_sem=0;
 sem_id MessageSystem::transmit_sem=0;
 volatile int32 MessageSystem::_Quit_Thread_=0;
@@ -114,7 +114,9 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 							found=true;
 //							broadcaster->broadcast_status_code|=cur->ptr->ReceiveBroadcast(msg);
 							_message_targets_++;
+								cur->ptr->_message_queue_.Lock();
 								cur->ptr->_message_queue_.AddMessage(new BMessage(*msg));
+								cur->ptr->_message_queue_.Unlock();
 								if (cur->ptr->_msg_receiver_running_==0) {
 //									release_sem(cur->ptr->_msg_receiver_sem_);
 									cur->ptr->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,cur->ptr->MS_Name,B_LOW_PRIORITY,cur->ptr);
@@ -123,6 +125,7 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 								}
 							broadcaster->broadcast_successful_receives++;
 						}break;
+
 /*
 						case MS_TARGET_PROTOCOL: {
 							if (current_target&MS_TARGET_PROTOCOL==MS_TARGET_PROTOCOL) {
@@ -131,11 +134,14 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 							}
 						}break;
 */
+
 						case MS_TARGET_SELF: {
 							if (current_target==sender_target_id) {
 								found=true;
 								broadcaster->broadcast_successful_receives++;
+								cur->ptr->_message_queue_.Lock();
 								cur->ptr->_message_queue_.AddMessage(new BMessage(*msg));
+								cur->ptr->_message_queue_.Unlock();
 								if (cur->ptr->_msg_receiver_running_==0) {
 //									release_sem(cur->ptr->_msg_receiver_sem_);
 									cur->ptr->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,cur->ptr->MS_Name,B_LOW_PRIORITY,cur->ptr);
@@ -154,7 +160,9 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 								found=true;
 //								printf("calling ReceiveBroadcast()\n");
 								broadcaster->broadcast_successful_receives++;
+								cur->ptr->_message_queue_.Lock();
 								cur->ptr->_message_queue_.AddMessage(new BMessage(*msg));
+								cur->ptr->_message_queue_.Unlock();
 								if (cur->ptr->_msg_receiver_running_==0) {
 //									release_sem(cur->ptr->_msg_receiver_sem_);
 									cur->ptr->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,cur->ptr->MS_Name,B_LOW_PRIORITY,cur->ptr);
@@ -238,7 +246,8 @@ int32 MessageSystem::_ProcessMessage_(void *arg)
 //		if (acquire_sem(me->_msg_receiver_sem_)==B_OK) {
 			if (_ms_receiver_quit_)
 				break;
-			me->_msg_receiver_running_=1;
+			if (me->_msg_receiver_running_==0)
+				atomic_add(&me->_msg_receiver_running_,1);
 			me->_message_queue_.Lock();
 			if (!me->_message_queue_.IsEmpty()) {
 				count=me->_message_queue_.CountMessages();
@@ -248,10 +257,10 @@ int32 MessageSystem::_ProcessMessage_(void *arg)
 				while (count!=0) {
 					if (_ms_receiver_quit_)
 						break;
-			me->_message_queue_.Lock();
+					me->_message_queue_.Lock();
 					msg=me->_message_queue_.NextMessage();
 					count=me->_message_queue_.CountMessages();
-			me->_message_queue_.Unlock();
+					me->_message_queue_.Unlock();
 					me->ReceiveBroadcast(msg);
 					delete msg;
 					msg=NULL;
@@ -260,13 +269,13 @@ int32 MessageSystem::_ProcessMessage_(void *arg)
 				
 			}
 			
-			me->_msg_receiver_running_=0;
 			
 //		}
 		if (me->_message_queue_.IsEmpty())
 			break;
 		
 	}
+	me->_msg_receiver_running_=0;
 	exit_thread(0L);
 
 }

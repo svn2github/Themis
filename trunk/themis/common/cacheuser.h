@@ -55,7 +55,7 @@ class CacheUser {
 		CacheUser *next, //!< these are used as part of the linked list system
 		 *prev; //!< these are used as part of the linked list system
 		char *name; //!< optional name of the component using the cache
-		BLocker *lock;
+		BLocker lock;
 	
 	public:
 		CacheUser(uint32 broadcast_target,uint32 usertoken=0, const char *Name=NULL);

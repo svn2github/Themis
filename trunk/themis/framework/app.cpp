@@ -514,6 +514,10 @@ void App::MessageReceived(BMessage *msg){
 }
 
 void App::RefsReceived(BMessage *refs){
+	printf("RefsReceived\n");
+	//we need to tell the currently active window and tab to load the
+	//the file from disk, assuming that the file protocol add-on is in
+	//memory...
 }
 
 void App::ReadyToRun(){

@@ -485,7 +485,7 @@ $(COMMON_OBJECT_DIR)%.o: common/%.cpp $(COMMON_DEPENDS_DIR)%.d
 
 #renderer
 renderer: $(BASE_ADDON_INSTALL_DIR)renderer.so
-$(BASE_ADDON_INSTALL_DIR)renderer.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(RENDERERSOURCES),$(BASE_ADDONS_OBJECT_DIR)Renderer/$(notdir $(file:.cpp=.o)))
+$(BASE_ADDON_INSTALL_DIR)renderer.so: $(BASE_INSTALL_DIR)Themis domlib $(foreach file,$(RENDERERSOURCES),$(BASE_ADDONS_OBJECT_DIR)Renderer/$(notdir $(file:.cpp=.o)))
 	@echo "Linking renderer..."
 	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)renderer.so $(foreach file,$(notdir $(RENDERERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)/Renderer/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=renderer.so -L ./ -L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) $(STDLIBS) -ldom -lstdc++.r4 _APP_
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)renderer.so

@@ -150,7 +150,7 @@ This pointer points to the first member of the msgsysclient linked list.
 \brief System locking object.
 
 */
-		static BLocker *msgsyslock;
+		static BLocker msgsyslock;
 /*!
 \brief Message transmission semaphore.
 

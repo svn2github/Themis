@@ -64,7 +64,7 @@ CacheUser::CacheUser(CacheUser *cu) {
 		name=NULL;
 	}
 //	printf("\tCacheUser (copied): %ld %p - %s\n",id,name,name);
-	lock=new BLocker(true);
+//	lock=new BLocker(true);
 }
 
 CacheUser::~CacheUser() {
@@ -76,7 +76,7 @@ CacheUser::~CacheUser() {
 		delete name;
 		name=NULL;
 	}
-	delete lock;
+//	delete lock;
 	
 }
 uint32 CacheUser::BroadcastID() {
