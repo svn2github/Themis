@@ -37,7 +37,7 @@ Project Start Date: October 18, 2000
 #include <SupportKit.h>
 #include <StorageKit.h>
 #include <Window.h>
-
+#include <MessageRunner.h>
 #include "../common/plugstruct.h"
 #include "../common/protocol_plugin.h"
 
@@ -45,6 +45,8 @@ class plugman: public BLooper {
 	private:
 		plugst *head,*tail;
 		void AddPlug(plugst *plug);
+		int32 heartcount;
+		BMessageRunner *Heartbeat_mr;
 	
 	public:
 		BWindow *Window;

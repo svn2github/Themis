@@ -62,6 +62,7 @@ Project Start Date: October 18, 2000
 
 //general notification
 #define LoadingNewPage 'ldnp'
+#define HeartbeatMessage 'hrtb'
 
 //protocol items
 #define FetchItem 'fitm'

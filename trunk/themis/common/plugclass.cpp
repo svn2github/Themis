@@ -32,7 +32,7 @@ Include *both* plugclass.h *and* plugclass.cpp in your plugin!
 */
 
 #include "plugclass.h"
-
+#include <stdio.h>
 /*
  The strtoval function takes the first four characters of a string, and converts them to
 a 32-bit integer value. This value, when viewed properly, will represent an integer version
@@ -73,6 +73,7 @@ PlugClass::PlugClass(BMessage *info) {
 	thread=0;
 	Window=NULL;
 	PlugMan=NULL;
+	uses_heartbeat=false;
 }
 
 PlugClass::~PlugClass() {
@@ -173,4 +174,13 @@ the menu passed as a parameter.
 void PlugClass::AddMenuItems(BMenu *menu) {
 }
 void PlugClass::RemoveMenuItems() {
+}
+
+void PlugClass::Heartbeat() {
+//This does something whenever called.
+	printf("\t[%s] Default Heartbeat action.\n",PlugName());
+}
+
+bool PlugClass::RequiresHeartbeat() {
+	return uses_heartbeat;
 }

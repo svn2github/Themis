@@ -61,7 +61,10 @@ struct plugst {
 			nextone->prev=current->prev;
 			delete current;
 	*/
+	bool uses_heartbeat;
 	plugst() {
+		plugid=0;
+		uses_heartbeat=false;
 		inmemory=false;
 		pobj=NULL;
 		sysid=0;

@@ -111,6 +111,10 @@ class PlugClass {
 		virtual void AddMenuItems(BMenu *menu);//this is a signal for plug-ins to add any menus or items
 		virtual void RemoveMenuItems();
 		
+		bool uses_heartbeat;
+		virtual void Heartbeat();
+		virtual bool RequiresHeartbeat();
+	
 };
 
 #endif 
