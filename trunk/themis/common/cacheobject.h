@@ -30,6 +30,7 @@ Project Start Date: October 18, 2000
 #define _cache_object_class_
 
 #include <SupportDefs.h>
+#include <Message.h>
 #include "cacheuser.h"
 /*
 	The CacheObject class represents the actual cached file, whether it is on disk
