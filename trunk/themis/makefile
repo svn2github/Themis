@@ -82,20 +82,21 @@ FRAMEWORKSOURCES= \
 	framework/tcpmanager.cpp \
 	framework/base64.cpp
 RENDERERSOURCES= \
-	Renderer/UIElement.cpp \
-	Renderer/TRenderView.cpp \
-	Renderer/TextElement.cpp \
-	Renderer/ColorRectElement.cpp \
-	Renderer/TableElement.cpp \
-	Renderer/TextControlElement.cpp \
+	Renderer/BitmapElement.cpp \
 	Renderer/BitmapLinkElement.cpp \
 	Renderer/ButtonElement.cpp \
-	Renderer/TRendererEngine.cpp \
+	Renderer/ColorRectElement.cpp \
+	Renderer/CSS_Units.cpp \
+	Renderer/TableElement.cpp \
+	Renderer/TextControlElement.cpp \
+	Renderer/TextElement.cpp \
 	Renderer/TextLinkElement.cpp \
-	Renderer/TRenderWindow.cpp \
-	Renderer/BitmapElement.cpp \
-	Renderer/Utils.cpp \
-	Renderer/TRenderer.cpp
+	Renderer/TRenderer.cpp \
+	Renderer/TRendererEngine.cpp \
+	Renderer/TRenderView.cpp \
+	Renderer/UIBox.cpp \
+	Renderer/UIElement.cpp \
+	Renderer/Utils.cpp
 COMMONSOURCES= \
 	common/plugclass.cpp \
 	common/tcplayer.cpp \
@@ -456,11 +457,11 @@ frameworkobjects: $(foreach file,$(FRAMEWORKSOURCES),$(FRAMEWORK_OBJECT_DIR)$(no
 
 $(FRAMEWORK_DEPENDS_DIR)%.d: framework/%.cpp
 	@echo "Framework: Updating dependency file $(notdir $@)"
-	@set -e;VAR1=$(shell echo "$(FRAMEWORK_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(FRAMEWORK_OBJECT_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $(COMPILE_FLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/framework\/\1.o depends\/framework\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
+	@set -e;VAR1=$(shell echo "$(FRAMEWORK_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(FRAMEWORK_OBJECT_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -Iframework/DOM -I./ -M $(CPPFLAGS) $(COMPILE_FLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/framework\/\1.o depends\/framework\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
 
 $(FRAMEWORK_OBJECT_DIR)%.o: framework/%.cpp $(FRAMEWORK_DEPENDS_DIR)%.d
 	@echo "Framework: Updating object file $(notdir $@)"
-	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
+	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -Iframework/DOM -I./ -c $< -o $@
 
 
 #files located in the common directory
@@ -487,7 +488,7 @@ $(COMMON_OBJECT_DIR)%.o: common/%.cpp $(COMMON_DEPENDS_DIR)%.d
 renderer: $(BASE_ADDON_INSTALL_DIR)renderer.so
 $(BASE_ADDON_INSTALL_DIR)renderer.so: $(BASE_INSTALL_DIR)Themis domlib $(foreach file,$(RENDERERSOURCES),$(BASE_ADDONS_OBJECT_DIR)Renderer/$(notdir $(file:.cpp=.o)))
 	@echo "Linking renderer..."
-	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)renderer.so $(foreach file,$(notdir $(RENDERERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)/Renderer/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=renderer.so -L ./ -L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) $(STDLIBS) -ldom -lstdc++.r4 _APP_
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)renderer.so $(foreach file,$(notdir $(RENDERERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)/Renderer/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=renderer.so -L ./ -L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) $(STDLIBS) -ldom -lstdc++.r4 _APP_ 
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)renderer.so
 	@echo "Renderer plug-in compiled and linked successfully."
 $(RENDERER_DEPENDS_DIR)%.d: $(BASE_ADDON_SOURCE_DIR)Renderer/%.cpp 
@@ -495,7 +496,7 @@ $(RENDERER_DEPENDS_DIR)%.d: $(BASE_ADDON_SOURCE_DIR)Renderer/%.cpp
 	@set -e;VAR1=$(shell echo "$(RENDERER_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(RENDERER_DEPENDS_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -Iframework/DOM -I./ -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/add-ons\/Renderer\/\1.o depends\/add-ons\/Renderer\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
 $(RENDERER_OBJECT_DIR)%.o: $(BASE_ADDON_SOURCE_DIR)Renderer/%.cpp $(BASE_ADDONS_DEPENDS_DIR)Renderer/%.d
 	@echo "Renderer: Updating object file $(notdir $@)"
-	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -Iframework/DOM -I./ -c $< -o $@
+	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -Iframework/DOM -I./ -c $< -o $@ 
 ifneq ($(MAKECMDGOALS),clean)
 -include $(foreach file,$(BASE_ADDON_SOURCE_DIR)$(RENDERERSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)Renderer/$(notdir $(file)))
 endif
