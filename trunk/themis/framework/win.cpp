@@ -1183,13 +1183,13 @@ status_t Win::ReceiveBroadcast(BMessage *message)
 					
 					message->PrintToStream();
 					
-					int32 view_id = 0;
-					message->FindInt32( "view_id", &view_id );
-					if( view_id == 0 )
+					int32 site_id = 0;
+					message->FindInt32( "site_id", &site_id );
+					if( site_id == 0 )
 						break;
 					
 					int32 tabindex;
-					ThemisTab* tab = FindTabFor( view_id, &tabindex );
+					ThemisTab* tab = FindTabFor( site_id, &tabindex );
 					if( tab == NULL )
 						break;
 					

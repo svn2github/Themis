@@ -275,6 +275,8 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * aMessage )	{
 						string urlString( url );
 						mDocument->setDocumentURI( urlString );
 						
+						printf( "HTMLPARSER: broadcasting SH_PARSE_DOC_FINISHED\n" );
+						
 						BMessage * done = new BMessage( SH_PARSE_DOC_FINISHED );
 						done->AddInt32( "command", COMMAND_INFO );
 						done->AddString( "type", "dom" );

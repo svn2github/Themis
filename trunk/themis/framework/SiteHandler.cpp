@@ -328,7 +328,7 @@ SiteHandler::ReceiveBroadcast(
 					
 					delete retrieve;
 					
-					printf( "SITEHANDLER: Broadcast to protocol(s) send!\n" );
+					printf( "SITEHANDLER: Broadcast to protocol(s) sent!\n" );
 					
 					break;
 				}
@@ -506,6 +506,17 @@ SiteHandler::ReceiveBroadcast(
 						}
 					}
 						
+					break;
+				}
+				case SH_RENDER_FINISHED :
+				{
+					printf( "SiteHandler: SH_RENDER_FINISHED\n" );
+					
+					/*
+					 * do nothing for now ;)
+					 * 
+					 */
+					
 					break;
 				}
 //				case UH_DOC_CLOSED :

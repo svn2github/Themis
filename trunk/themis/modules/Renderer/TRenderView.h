@@ -36,7 +36,8 @@ class TRenderView : public BView , public UIElement
 		
 				BMessenger		userInterface; 
 				
-				int32			viewID;
+				int32			siteID;
+				int32			urlID;
 				
 				Renderer		*renderer;
 				

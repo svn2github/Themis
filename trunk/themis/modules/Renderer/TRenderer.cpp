@@ -93,6 +93,7 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 						cache = NULL;
 					}break;
 				case SH_RENDER_START:{ //New way to do
+					printf( "RENDERER: SH_RENDER_START\n" );
 					void *buffer = NULL;
 					TDocumentPtr document;
 					message->FindPointer("dom_tree_pointer",&buffer);
@@ -102,13 +103,16 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 					document = *typer;		
 					DOMTrees.push_back(document);								
 					//Start Processing in a new thread so people think it'll work faster ;-))
-					int32 view_id;
-					message->FindInt32( "view_id", &view_id );
+					int32 site_id;
+					int32 url_id;
+					message->FindInt32( "site_id", &site_id );
+					message->FindInt32( "url_id", &url_id );
 					// allocate the struct on the heap now ;)
 					preprocess_thread_param* param = new preprocess_thread_param;
 					param->document = document;
 					param->renderer = this;
-					param->viewID = view_id;
+					param->siteID = site_id;
+					param->urlID = url_id;
 					//feeding the random generator
 					srand(time(NULL));
 					thread_id id = spawn_thread(PreProcess,THREAD_NAME[rand()%THREAD_NAMES],30,(void *)param);								

@@ -483,9 +483,11 @@ http_request *httplayer::AddRequest(BMessage *info) {
 		request=new http_request;
 		// added by emwe ( hope its correct here )
 		// add the unique IDs
-		info->FindInt32( "view_id", &request->view_id );
+		info->FindInt32( "site_id", &request->site_id );
+		info->FindInt32( "url_id", &request->url_id );
 #ifdef DEBUG
-		printf( "UID: %ld\n", request->view_id );
+		printf( "HTTP_LAYER: site_id: %ld\n", request->site_id );
+		printf( "HTTP_LAYER: url_id: %ld\n", request->url_id );
 #endif
 		//
 		if (info->HasInt32("browser_string"))
@@ -1497,7 +1499,9 @@ until/unless data is written to the object; including by writing attributes out.
 		request->receivetilclosed=true;
 	}
 	if (request->status==304) {
-		BMessage *msg=new BMessage(ReturnedData);
+		// deprecated
+		//BMessage *msg=new BMessage(ReturnedData);
+		BMessage *msg=new BMessage(SH_LOADING_PROGRESS);
 		msg->AddInt32("command",COMMAND_INFO);
 		if (!nocaching) {
 	if (request->cache_object_token>=0) {
@@ -1745,12 +1749,15 @@ void httplayer::ProcessData(http_request *request, void *buffer, int size) {
 #ifdef DEBUG
 	printf("ProcessData done. Bytes Received: %ld\n",request->bytesreceived);
 #endif
-	BMessage *msg=new BMessage(ReturnedData);
+	//BMessage *msg=new BMessage(ReturnedData);
+	BMessage *msg=new BMessage( SH_LOADING_PROGRESS );
 	// added by emwe
 #ifdef DEBUG
-	printf( "returned UID: %ld\n", request->view_id );
+	printf( "HTTP_LAYER: returned site_id: %ld\n", request->site_id );
+	printf( "HTTP_LAYER: returned url_id: %ld\n", request->url_id );
 #endif
-	msg->AddInt32( "view_id", request->view_id );
+	msg->AddInt32( "site_id", request->site_id );
+	msg->AddInt32( "url_id", request->url_id );
 	msg->AddBool( "secure", request->secure );
 	//
 	msg->AddInt32("command",COMMAND_INFO);
@@ -1870,7 +1877,9 @@ void httplayer::CloseRequest(http_request *request,bool quick) {
 		return;
 	}
 	
-	BMessage *msg=new BMessage(ProtocolConnectionClosed);
+	// this is old and deprecated
+	//BMessage *msg=new BMessage(ProtocolConnectionClosed);
+	BMessage *msg=new BMessage( SH_LOADING_PROGRESS );
 	msg->AddInt32("command",COMMAND_INFO);
 	
 	if (request->bytesreceived>0){
@@ -1968,8 +1977,10 @@ void httplayer::CloseRequest(http_request *request,bool quick) {
 					msg->AddInt32("status",UnexpectedDisconnect);
 			}
 	
-	/* added by emwe. I need this damn view id :)) */
-	msg->AddInt32( "view_id", request->view_id );
+	/* added by emwe. */
+	//msg->AddInt32( "view_id", request->view_id );
+	msg->AddInt32( "site_id", request->site_id );
+	msg->AddInt32( "url_id", request->url_id );
 	
 	if (request->contentlen>0)
 		msg->AddInt64("content-length",request->contentlen);
@@ -2130,7 +2141,7 @@ char *httplayer::BuildRequest(http_request *request){
 		
 
 bool httplayer::ResubmitRequest(http_request *request) {
-//	printf( "httplayer::ResubmitRequest()\n" );
+	printf( "httplayer::ResubmitRequest()\n" );
 	
 	//BAutolock alock(lock);
 	if (request->done==0)
@@ -2139,9 +2150,11 @@ bool httplayer::ResubmitRequest(http_request *request) {
 	info->AddInt32("command",COMMAND_RETRIEVE);
 	
 	/* added by enwe */
-	info->AddInt32( "view_id", request->view_id );
+	//info->AddInt32( "view_id", request->view_id );
+	info->AddInt32( "site_id", request->site_id );
+	info->AddInt32( "url_id", request->url_id );
 	
-	info->AddString("target_url",request->url);
+	info->AddString("url",request->url);
 	if (request->referrer!=NULL) {
 		info->AddString("referrer",request->referrer);
 	}

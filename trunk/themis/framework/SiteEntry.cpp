@@ -160,13 +160,14 @@ SiteEntry::GetUrl()
 void
 SiteEntry::Print()
 {
+	printf( "------------------------------------\n" );
 	printf( "SiteEntry: ID[%ld] URL[%s] TITLE[%s]\n", fID, fUrl->String(), fTitle->String() );
-	printf( "          LoadingProgess[%d] CookiesDisabled[%s], SecureConnection[%s]\n",
+	printf( "           LoadingProgess[%d] CookiesDisabled[%s], SecureConnection[%s]\n",
 		fLoadingProgress,
 		fCookiesDisabled ? "true" : "false",
 		fSecureConnection ? "true" : "false" );
 	
-	printf( "-- SiteEntrys UrlEntries --\n" );
+	printf( "  -- SiteEntrys UrlEntries --\n" );
 	
 	vector< UrlEntry* >::iterator it;
 	for( it = fEntryList.begin(); it != fEntryList.end(); it++ )
@@ -174,7 +175,7 @@ SiteEntry::Print()
 		( ( UrlEntry* )*it )->Print();
 	}
 	
-	printf( "----------------\n" );
+	printf( "------------------------------------\n" );
 }
 
 void

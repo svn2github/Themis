@@ -86,7 +86,9 @@ class Renderer : public PlugClass
 struct preprocess_thread_param {
 	TDocumentPtr 	document; 
 	Renderer		*renderer;
-	int32			viewID;
+	//int32			viewID;
+	int32			siteID;
+	int32			urlID;
 };
 
 #endif

@@ -27,11 +27,14 @@ void Renderer::BroadcastPointer(TRenderView *view)
 
 int32 Renderer::PreProcess(void *data)
 {
+	printf( "Renderer::PreProcess()\n" );
+	
 	preprocess_thread_param *cdata = (preprocess_thread_param *)data;
 
 	//The new view
 	TRenderView *view = new TRenderView(UIBox(800,450),cdata->document);	
-	view->viewID   = cdata->viewID;
+	view->siteID   = cdata->siteID;
+	view->urlID	   = cdata->urlID;
 	view->renderer = cdata->renderer;
 
 	cdata->renderer->locker->Lock();
@@ -65,20 +68,28 @@ int32 Renderer::PreProcess(void *data)
 	//Do the Broadcasting to give the view to the UI
 	BMessage *message = new BMessage(RENDERVIEW_POINTER);
 	message->AddInt32("command",COMMAND_INFO);
-	message->AddInt32("view_id",view->viewID);
+	message->AddInt32("site_id",view->siteID);
+	message->AddInt32("url_id",view->urlID);
 	message->AddPointer("renderview_pointer",(void *)view);
-	cdata->renderer->Broadcast(MS_TARGET_ALL,message);
+//	printf( "RENDERER: sending RENDERVIEW_POINTER\n" );
+//	cdata->renderer->Broadcast(MS_TARGET_ALL,message);
 						
 	//Start processing the DOM Tree
 	printf("RENDERER: START PROCESSING...\n");
 	bigtime_t time = real_time_clock_usecs();
 	cdata->renderer->Process(cdata->document,view); 
 	printf("RENDERER: DONE PROCESSING in %g microseconds.\n",real_time_clock_usecs() - time);
+	
+	// send broadcast here. otherwise the renderer would have to inform us with
+	// subsequent update notifications about the view...
+	printf( "RENDERER: sending RENDERVIEW_POINTER\n" );
+	cdata->renderer->Broadcast(MS_TARGET_ALL,message);
+
 
 	//Do the Broadcasting to say we are done rendering
-	message->what = SH_RENDER_FINISHED;
-	message->RemoveName("renderview_pointer");
-
+	//message->what = SH_RENDER_FINISHED;
+	//message->RemoveName("renderview_pointer");
+	
 //Commented as make the thread crash. Might need some fixing or may be moved elsewhere
 //	cdata->renderer->Broadcast(MS_TARGET_URLHANDLER,message);	
 	

@@ -74,7 +74,7 @@ class Win : public BWindow, public MessageSystem
 		
 		//! Returns a pointer to a tab with the given _view_ ID. 
 		ThemisTab*					FindTabFor(
-										int32 view_id,
+										int32 site_id,
 										int32* tabindex = NULL );		
 		void						LoadInterfaceGraphics();
 		Win*						NextWindow();

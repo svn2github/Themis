@@ -22,7 +22,8 @@ TRenderView::TRenderView(UIBox frame, TNodePtr node) : BView(frame.MarginRect(),
 	
 	currentMouseOver = this;
 	parentView 		 = this;
-	viewID			 = 0;
+	siteID			 = 0;
+	urlID			 = 0;
 	
 	UIElement::frame = frame;
 	

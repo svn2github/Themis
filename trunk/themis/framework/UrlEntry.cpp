@@ -101,8 +101,8 @@ UrlEntry::GetUrl()
 void
 UrlEntry::Print()
 {
-	printf( "URLENTRY: ID[%ld] URL[%s] TITLE[%s]\n", fID, fUrl->String(), fTitle->String() );
-	printf( "          LoadingProgess[%d] SecureConnection[%s]\n",
+	printf( "  URLENTRY: ID[%ld] URL[%s] TITLE[%s]\n", fID, fUrl->String(), fTitle->String() );
+	printf( "            LoadingProgess[%d] SecureConnection[%s]\n",
 		fLoadingProgress,
 		fSecureConnection ? "true" : "false" );
 
