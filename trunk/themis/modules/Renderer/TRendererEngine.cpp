@@ -37,7 +37,6 @@ int32 Renderer::PreProcess(void *data)
 	locker->Lock();
 	//Add the DOM & the view to the list of trees.
 	cdata->renderer->UITrees.AddItem(view);
-	cdata->renderer->DOMTrees.push_back(cdata->document);
 	locker->Unlock();
 	delete locker;					
 	//TODO: Get the DPI from User Option and give it to the view
@@ -76,6 +75,13 @@ int32 Renderer::PreProcess(void *data)
 	bigtime_t time = real_time_clock_usecs();
 	cdata->renderer->Process(cdata->document,view); 
 	printf("RENDERER: DONE PROCESSING in %g microseconds.\n",real_time_clock_usecs() - time);
+
+	//Do the Broadcasting to say we are done rendering
+	BMessage message(UH_RENDER_FINISHED);
+	message.AddInt32("command",COMMAND_INFO);
+	message.AddInt32("view_id",cdata->viewID);
+	cdata->renderer->Broadcast(MS_TARGET_URLHANDLER,&message);
+	
 	//cdata->view->UnlockLooper();
 	//Update the view
 	//cdata->view->Invalidate();

@@ -75,7 +75,7 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 						break;
 					TDocumentPtr *typer = (TDocumentPtr *)buffer;
 					document = *typer;		
-								
+					DOMTrees.push_back(document);								
 					//Start Processing in a new thread so people think it'll work faster ;-))
 					preprocess_thread_param param = {document,this,message->FindInt32("view_id")};
 					thread_id id = spawn_thread(PreProcess,"Boing! Boing! says the renderer",30,(void *)&param);								
