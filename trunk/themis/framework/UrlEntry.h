@@ -7,8 +7,6 @@
 
 #include <String.h>
 
-#include <be_prim.h>	// missing int types :/
-
 class UrlEntry
 {
 	public:
