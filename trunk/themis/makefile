@@ -183,7 +183,8 @@ endif
 #			domlib
 #			libs
 #			domtest
-all: framework addons domtest
+#			domloadtest
+all: framework addons domtest domloadtest
 	@echo "Themis application and add-ons built successfully."
 addons: httpaddon cacheaddon #cookieaddon jsaddon
 	@echo "All add-ons built successfully."
@@ -217,6 +218,7 @@ help:
 	@echo "	domlib		DOM library"
 	@echo "	libs		Just the ibraries"
 	@echo "	domtest		DOM test application"
+	@echo "	domloadtest	DOM LoadTest application"
 	@echo "*** NOTE ***"
 	@echo "You will get errors if you use any of the \"clean\" targets in combination with any of the build targets."
 libs: domlib
