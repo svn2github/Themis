@@ -31,6 +31,24 @@
 #ifndef CSSPRIMITIVEVALUE_HPP
 #define CSSPRIMITIVEVALUE_HPP
 
+// DOM Style headers
+#include "DOMStyleSupport.hpp"
+#include "CSSValue.hpp"
+
+// Boost headers
+#include "boost/shared_ptr.hpp"
+#include "boost/weak_ptr.hpp"
+
+// Declarations
+class Counter;
+class Rect;
+class RGBColor;
+
+// Typedefs
+typedef boost::shared_ptr<Counter> CounterPtr;
+typedef boost::shared_ptr<Rect> RectPtr;
+typedef boost::shared_ptr<RGBColor> RGBColorPtr;
+
 /// CSSPrimitiveValue implementation of the DOM CSS.
 
 /**
@@ -39,8 +57,16 @@
 	http://www.w3.org/TR/2000/REC-DOM-Level-2-Style-20001113/css.html
 */
 
-class CSSPrimitiveValue	{
+class CSSPrimitiveValue	:	public CSSValue	{
 	
+	private:
+		unsigned short mPrimitiveType;
+		float mFloatValue;
+		TDOMString mStringValue;
+		CounterPtr mCounterValue;
+		RectPtr mRectValue;
+		RGBColorPtr mRGBColorValue;
+
 	public:
 		enum	{
 			/// The value is an unknown CSS2 value.
@@ -104,10 +130,14 @@ class CSSPrimitiveValue	{
 			changed after construction.
 			
 			@param	aCssText				The css text of the value to store.
-			@param	aCssPrimitiveType	The type of the value to store.
+			@param	aPrimitiveType		The type of the value to store.
+			
+			@todo	Look if aPrimitiveType should be checked if it is a valid value
+						and what to do if it isn't.
+			
 		*/
 		CSSPrimitiveValue( const TDOMString aCssText,
-									unsigned short aCssPrimitiveType );
+									unsigned short aPrimitiveType );
 
 		/// Destructor of the CSSPrimitiveValue class.
 		/**
@@ -117,7 +147,7 @@ class CSSPrimitiveValue	{
 		~CSSPrimitiveValue();
 
 		/// A function to get the type of the value.
-		void getPrimitiveType();
+		unsigned short getPrimitiveType() const;
 
 		/// A function to set a float value.
 		/**
@@ -144,7 +174,7 @@ class CSSPrimitiveValue	{
 							  a float value or the value can't be converted to
 							  the supplied type.
 		*/
-		float getFloatValue( unsigned short aUnitType );
+		float getFloatValue( unsigned short aUnitType ) const;
 		
 		/// A function to set a string value.
 		/**
@@ -175,6 +205,8 @@ class CSSPrimitiveValue	{
 		/**
 			This function gets a Counter value.
 			Modifying the result, modifies the Counter value in this primitive value.
+			That's what it says in the w3c documentation, but the Counter interface
+			only has readonly attributes. Ahahaha.
 			
 			@exception INVALID_ACCESS_ERR Thrown if the css value doesn't contain
 							  a Counter value.

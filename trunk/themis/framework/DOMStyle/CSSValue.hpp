@@ -70,6 +70,9 @@ class CSSValue	{
 			
 			@param	aCssText			The css text of the value to store.
 			@param	aCssValueType	The type of the value to store.
+			
+			@todo	Look if aCssValueType should be checked if it is a valid value
+						and what to do if it isn't.
 		*/
 		CSSValue( const TDOMString aCssText, unsigned short aCssValueType );
 
@@ -93,12 +96,16 @@ class CSSValue	{
 
 			@param aCssText	The new text of the rule.
 			
-			@exception	SYNTAX_ERR	Thrown if the value is unparsable.
+			@exception	SYNTAX_ERR
+								Thrown if the value is unparsable.
 			@exception	INVALID_MODIFICATION_ERR
 								Thrown if the parameter represents a different type of value
 								than the current one.
 			@exception	NO_MODIFICATION_ALLOWED_ERR
 								Thrown if the value is readonly.
+
+			@todo	@li	Implement the parsing of the text.
+						@li	Implement the exceptions.
 		*/
 		void setCssText( const TDOMString aCssText );
 

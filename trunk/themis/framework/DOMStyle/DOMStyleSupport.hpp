@@ -28,6 +28,9 @@
 	Support Definitions Start Date: March 07, 2004
 */
 
+#ifndef DOMSTYLESUPPORT_HPP
+#define DOMSTYLESUPPORT_HPP
+
 // Standard C++ headers
 #include <string>
 
@@ -39,3 +42,5 @@ using namespace std;
 	Is not UTF-16, so must be changed!
 */
 typedef string TDOMString;
+
+#endif

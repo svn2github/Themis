@@ -29,40 +29,77 @@
 */
 
 /*
-	CSSValue implementation.
-	See CSSValue.hpp for more information.
+	CSSPrimitiveValue implementation.
+	See CSSPrimitiveValue.hpp for more information.
 */
 
 // Standard C headers
 #include <stdio.h>
 
 // DOM Style headers
-#include "CSSValue.hpp"
+#include "CSSPrimitiveValue.hpp"
+#include "Counter.hpp"
 
-CSSValue	::	CSSValue( const TDOMString aCssText, unsigned short aCssValueType )	{
+CSSPrimitiveValue	::	CSSPrimitiveValue( const TDOMString aCssText,
+															unsigned short aPrimitiveType )
+							:	CSSValue( aCssText, CSS_PRIMITIVE )	{
 
-	printf( "Creating CSSValue\n" );
+	printf( "Creating CSSPrimitiveValue\n" );
 
-	setCssText( aCssText );
-	mCssValueType = aCssValueType;
+	mPrimitiveType = aPrimitiveType;
 
 }
 
-CSSValue	::	~CSSValue()	{
+CSSPrimitiveValue	::	~CSSPrimitiveValue()	{
 	
 }
 
-TDOMString CSSValue	::	getCssText() const	{
+unsigned short CSSPrimitiveValue	::	getPrimitiveType() const	{
 
-	return mCssText;
+	return mPrimitiveType;
+
 }
 
-void CSSValue	::	setCssText( const TDOMString aCssText )	{
+void CSSPrimitiveValue	::	setFloatValue( unsigned short aUnitType,
+															  float aFloatValue )	{
 
-	mCssText = aCssText;
+	mFloatValue = aFloatValue;
+
 }
 
-unsigned short CSSValue	::	getCssValueType() const	{
+float CSSPrimitiveValue	::	getFloatValue( unsigned short aUnitType ) const	{
+	
+	return mFloatValue;
+	
+}
 
-	return mCssValueType;
+void CSSPrimitiveValue	::	setStringValue( unsigned short aStringType,
+															   TDOMString aStringValue )	{
+
+	mStringValue = aStringValue;
+
+}
+
+TDOMString CSSPrimitiveValue	:: getStringValue()	{
+
+	return mStringValue;
+
+}
+
+CounterPtr CSSPrimitiveValue	::	getCounterValue()	{
+
+	return mCounterValue;
+
+}
+
+RectPtr CSSPrimitiveValue	::	getRectValue()	{
+
+	return mRectValue;
+	
+}
+
+RGBColorPtr CSSPrimitiveValue	::	getRGBColorValue()	{
+
+	return mRGBColorValue;
+	
 }
