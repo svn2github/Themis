@@ -399,6 +399,7 @@ void prefswin::MessageReceived( BMessage* msg )
 					char* string;
 					sprintf( string, "%d", fTabHistoryDepth );
 					tabhistdepth->SetText( string );
+					tabhistdepth->TextView()->AddFilter( new DigitOnlyMessageFilter() );
 					box->AddChild( tabhistdepth );
 					
 					
@@ -722,32 +723,16 @@ void prefswin::MessageReceived( BMessage* msg )
 			if( string.Length() == 0 )
 				break;
 			
-//			for( int32 i = 0; i < string.Length(); i++ )
-//				printf( "  byte %3ld: %c\n", i, string.ByteAt( i ) );
-			
-//			printf( "  last byte: %c\n", string.ByteAt( string.Length() - 1 ) );
-			
-			if( isdigit( string.ByteAt( string.Length() - 1 ) ) == 0 )
+			int32 newdepth = atoi( string.String() );
+			if( newdepth > 127 || newdepth == 0 )
 			{
-				printf( "  last byte is no digit!\n" );
-				if( string.Length() == 1 )
-					string.SetTo( "10" );
-				else
-					string.Remove( string.Length() - 1, 1 );
-				
-				ctrl->SetText( string.String() );
-				ctrl->TextView()->Select( string.Length(), string.Length() );
-			}
-			
-			fTabHistoryDepth = ( int8 )atoi( string.String() );
-			if( ( uint8 )fTabHistoryDepth > 127 || fTabHistoryDepth == 0 ) 
-			{
+//				printf( "  Correction.\n" );
 				fTabHistoryDepth = 10;
-				char* newstring;
-				sprintf( newstring, "%d", fTabHistoryDepth );
-				ctrl->SetText( newstring );
-				ctrl->TextView()->Select( strlen( newstring ), strlen( newstring ) );
+				ctrl->SetText( "10" );
+				ctrl->TextView()->Select( 2, 2 );
 			}
+			else
+				fTabHistoryDepth = ( int8 )newdepth;
 			
 //			printf( "  new fTabHistoryDepth: %d\n", fTabHistoryDepth );
 					
