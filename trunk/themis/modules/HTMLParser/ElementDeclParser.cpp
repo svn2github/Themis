@@ -70,8 +70,17 @@ void ElementDeclParser	::	processDeclaration()	{
 		throw r;
 	}
 
+	// Find right element to put information in
+	TElementShared infoElement = element;
+	if ( element->hasChildNodes() )	{
+		// Name group. Assuming has connector as child
+		TNodeShared connector = make_shared( element->getFirstChild() );
+		TNodeShared child = make_shared( connector->getFirstChild() );
+		infoElement = shared_static_cast<TElement>( child );
+	}
+
 	try	{
-		processTagMin( element );
+		processTagMin( infoElement );
 		try	{
 			processPsPlus();
 		}
@@ -85,22 +94,13 @@ void ElementDeclParser	::	processDeclaration()	{
 		throw r;
 	}
 
-	// Find right element to put content on
-	TElementShared contentElement = element;
-	if ( element->hasChildNodes() )	{
-		// Name group. Assuming has connector as child
-		TNodeShared connector = make_shared( element->getFirstChild() );
-		TNodeShared child = make_shared( connector->getFirstChild() );
-		contentElement = shared_static_cast<TElement>( child );
-	}
-	
 	try	{
-		processDeclContent( contentElement );
+		processDeclContent( infoElement );
 	}
 	catch( ReadException r )	{
 		// Not declared content. Must be a content model
 		try	{
-			processContentModel( contentElement );
+			processContentModel( infoElement );
 		}
 		catch( ReadException r )	{
 			r.setFatal();

@@ -168,7 +168,7 @@ void BaseParser	::	processParEntityReference()	{
 				}
 			}
 			else	{
-				printf( "Equal to PUBLIC\n" );
+				//printf( "Equal to PUBLIC\n" );
 			}
 		}
 	}

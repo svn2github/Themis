@@ -48,6 +48,30 @@ class ElementParser	:	public BaseParser	{
 		void processContent( const TElementShared & aContent,
 										const TElementShared & aExceptions,
 										TNodeShared aParent );
+		void processBrackets( const TElementShared & aContent,
+										 const TElementShared & aExceptions,
+										 TNodeShared aParent );
+		void processOptional( const TElementShared & aContent,
+										const TElementShared & aExceptions,
+										TNodeShared aParent );
+		void processPlus( const TElementShared & aContent,
+								  const TElementShared & aExceptions,
+								  TNodeShared aParent );
+		void processStar( const TElementShared & aContent,
+								  const TElementShared & aExceptions,
+								  TNodeShared aParent );
+		void processOr( const TElementShared & aContent,
+								const TElementShared & aExceptions,
+								TNodeShared aParent );
+		void processAnd( const TElementShared & aContent,
+								  const TElementShared & aExceptions,
+								  TNodeShared aParent );
+		void processComma( const TElementShared & aContent,
+									   const TElementShared & aExceptions,
+									   TNodeShared aParent );
+		void processDataText( const TElementShared & aContent,
+										 const TElementShared & aExceptions,
+										 TNodeShared aParent );
 		void processExceptions( const TElementShared & aExceptions, TNodeShared aParent );
 		void processException( const TElementShared & aExceptions, TNodeShared aParent );
 		void processComments();

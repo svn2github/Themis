@@ -131,35 +131,24 @@ void ElementParser	::	processElement( const TElementShared & aElementDecl,
 	
 	// See if this element declaration is part of a name group
 	TNodeShared parent = make_shared( aElementDecl->getParentNode() );
-	TNodeShared child = aElementDecl;
+	TElementShared child = aElementDecl;
 	TElementShared exceptions;
 	if ( parent->getNodeName() != "elements" )	{
 		// Is part of a name group
-		child = make_shared( parent->getFirstChild() );
-		TNodeShared base = make_shared( parent->getParentNode() );
-		TElementShared baseElement = shared_static_cast<TElement>( base );
-		if ( baseElement->getAttribute( "end" ) == "false" )	{
-			end = false;
-		}
-		TNodeListShared list = baseElement->getChildNodes();
-		for ( unsigned int i = 0; i < list->getLength(); i++ )	{
-			TNodeShared child = list->item( i );
-			if ( child->getNodeName() == "exceptions" )	{
-				exceptions = shared_static_cast<TElement>( child );
-			}
-		}
+		TNodeShared firstChild = make_shared( parent->getFirstChild() );
+		child = shared_static_cast<TElement>( firstChild );
 	}
-	else	{
-		TElementShared childElement = shared_static_cast<TElement>( child );
-		if ( childElement->getAttribute( "end" ) == "false" )	{
-			end = false;
-		}
-		TNodeListShared list = childElement->getChildNodes();
-		for ( unsigned int i = 0; i < list->getLength(); i++ )	{
-			TNodeShared child = list->item( i );
-			if ( child->getNodeName() == "exceptions" )	{
-				exceptions = shared_static_cast<TElement>( child );
-			}
+	
+	// Get the end tag minimization
+	if ( child->getAttribute( "end" ) == "false" )	{
+		end = false;
+	}
+	// Get the exception list
+	TNodeListShared list = child->getChildNodes();
+	for ( unsigned int i = 0; i < list->getLength(); i++ )	{
+		TNodeShared item = list->item( i );
+		if ( item->getNodeName() == "exceptions" )	{
+			exceptions = shared_static_cast<TElement>( item );
 		}
 	}
 	
@@ -327,176 +316,35 @@ void ElementParser	::	processContent( const TElementShared & aContent,
 	// Using switch statement, by only looking at the first character.
 	switch( contentName[ 0 ] )	{
 		case '(':	{
-			printf( "At brackets\n" );
-			TNodeShared child = make_shared( aContent->getFirstChild() );
-			TElementShared subContent = shared_static_cast<TElement>( child );
-			processContent( subContent, aExceptions, aParent );
-			printf( "Finished brackets\n" );
+			processBrackets( aContent, aExceptions, aParent );
 			break;
 		}
 		case '?':	{
-			printf( "At optional element\n" );
-			TNodeShared child = make_shared( aContent->getFirstChild() );
-			TElementShared subContent = shared_static_cast<TElement>( child );
-			try	{
-				processContent( subContent, aExceptions, aParent );
-			}
-			catch( ReadException r )	{
-				if ( ! r.isWrongTag() && r.isFatal() )	{
-					// Something went wrong here
-					throw r;
-				}
-			}
-			printf( "Finished optional element\n" );
+			processOptional( aContent, aExceptions, aParent );
 			break;
 		}
 		case '+':	{
-			printf( "At plus element\n" );
-			TNodeShared child = make_shared( aContent->getFirstChild() );
-			TElementShared subContent = shared_static_cast<TElement>( child );
-			processContent( subContent, aExceptions, aParent );
-			bool plusFound = true;
-			while ( plusFound )	{
-				try	{
-					printf( "Going for another plus\n" );
-					processContent( subContent, aExceptions, aParent );
-				}
-				catch( ReadException r )	{
-					printf( "No plus found anymore\n" );
-					if ( r.isFatal() )	{
-						throw r;
-					}
-					else	{
-						plusFound = false;
-					}
-				}
-			}
-			printf( "Finished plus element\n" );
+			processPlus( aContent, aExceptions, aParent );
 			break;
 		}
 		case '*':	{
-			printf( "At star element\n" );
-			TNodeShared child = make_shared( aContent->getFirstChild() );
-			TElementShared subContent = shared_static_cast<TElement>( child );
-			bool starFound = true;
-			while ( starFound )	{
-				try	{
-					printf( "Going for another star\n" );
-					processContent( subContent, aExceptions, aParent );
-				}
-				catch( ReadException r )	{
-					printf( "No star found anymore\n" );
-					if ( ! r.isWrongTag() && r.isFatal() )	{
-						throw r;
-					}
-					else	{
-						starFound = false;
-					}
-				}
-			}
-			printf( "Finished star element\n" );
+			processStar( aContent, aExceptions, aParent );
 			break;
 		}
 		case '|':	{
-			printf( "At or element\n" );
-			TNodeListShared children = aContent->getChildNodes();
-			bool found = false;
-			for ( unsigned int i = 0; i < children->getLength(); i++ )	{
-				TNodeShared child = make_shared( children->item( i ) );
-				TElementShared element = shared_static_cast<TElement>( child );
-				try	{
-					processContent( element, aExceptions, aParent );
-					found = true;
-					break;
-				}
-				catch( ReadException r )	{
-					if ( ! r.isWrongTag() && r.isFatal() )	{
-						throw r;
-					}
-				}
-			}
-			if ( ! found )	{
-				throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(),
-												"No tag of or children found" );
-			}
-			printf( "Finished or element\n" );
+			processOr( aContent, aExceptions, aParent );
 			break;
 		}
 		case '&':	{
-			printf( "At seq element\n" );
-			TNodeShared child = make_shared( aContent->getFirstChild() );
-			TElementShared subContent = shared_static_cast<TElement>( child );
-			printf( "Processing first seq child\n" );
-			processContent( subContent, aExceptions, aParent );
-			child = make_shared( aContent->getLastChild() );
-			subContent = shared_static_cast<TElement>( child );
-			printf( "Processing second seq child\n" );
-			processContent( subContent, aExceptions, aParent );
-			printf( "Finished seq element\n" );
+			processAnd( aContent, aExceptions, aParent );
 			break;
 		}
 		case ',':	{
-			printf( "At and element\n" );
-			TNodeListShared children = aContent->getChildNodes();
-			for ( unsigned int i = 0; i < children->getLength(); i++ )	{
-				TNodeShared child = make_shared( children->item( i ) );
-				TElementShared element = shared_static_cast<TElement>( child );
-				element->setAttribute( "used", "false" );
-			}
-			bool progress = true;
-			while ( progress )	{
-				progress = false;
-				for ( unsigned int i = 0; i < children->getLength(); i++ )	{
-					TNodeShared child = make_shared( children->item( i ) );
-					TElementShared element = shared_static_cast<TElement>( child );
-					if ( element->getAttribute( "used" ) == "true" )	{
-						// Already done. Skip to next
-						continue;
-					}
-					unsigned int before = mDocText->getIndex();
-					try	{
-						processContent( element, aExceptions, aParent );
-					}
-					catch( ReadException r )	{
-						if ( ! r.isWrongTag() && r.isFatal() )	{
-							throw r;
-						}
-					}
-					unsigned int after = mDocText->getIndex();
-					if ( before != after )	{
-						printf( "Content processed\n" );
-						element->setAttribute( "used", "true" );
-						progress = true;
-					}
-				}
-			}
-			printf( "Finished and element\n" );
+			processComma( aContent, aExceptions, aParent );
 			break;
 		}
 		case '#':	{
-			printf( "At data text\n" );
-			string text = "";
-			bool stFound = false;
-			while ( ! stFound )	{
-				if ( mDocText->getChar() != '<' )	{
-					// Not yet found. Process replacable character data
-					try	{
-						text += processRepCharData();
-					}
-					catch( ReadException r )	{
-						r.setFatal();
-						throw r;
-					}
-				}
-				else	{
-					stFound = true;
-				}
-			}
-			if ( text == "" )	{
-				throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(),
-												"PCDATA expected" );
-			}
-			printf( "Finished data text: %s\n", text.c_str() );
+			processDataText( aContent, aExceptions, aParent );
 			break;
 		}
 		default:	{
@@ -514,6 +362,209 @@ void ElementParser	::	processContent( const TElementShared & aContent,
 			printf( "Finished tag\n" );
 		}
 	}
+
+}
+
+void ElementParser	::	processBrackets( const TElementShared & aContent,
+														  const TElementShared & aExceptions,
+														  TNodeShared aParent )	{
+
+	printf( "At brackets\n" );
+	TNodeShared child = make_shared( aContent->getFirstChild() );
+	TElementShared subContent = shared_static_cast<TElement>( child );
+	processContent( subContent, aExceptions, aParent );
+	printf( "Finished brackets\n" );
+														  	
+}
+
+void ElementParser	::	processOptional( const TElementShared & aContent,
+														 const TElementShared & aExceptions,
+														 TNodeShared aParent )	{
+
+	printf( "At optional element\n" );
+	TNodeShared child = make_shared( aContent->getFirstChild() );
+	TElementShared subContent = shared_static_cast<TElement>( child );
+	try	{
+		processContent( subContent, aExceptions, aParent );
+	}
+	catch( ReadException r )	{
+		if ( ! r.isWrongTag() && r.isFatal() )	{
+			// Something went wrong here
+			throw r;
+		}
+	}
+	printf( "Finished optional element\n" );
+														  	
+}
+
+void ElementParser	::	processPlus( const TElementShared & aContent,
+												   const TElementShared & aExceptions,
+												   TNodeShared aParent )	{
+
+	printf( "At plus element\n" );
+	TNodeShared child = make_shared( aContent->getFirstChild() );
+	TElementShared subContent = shared_static_cast<TElement>( child );
+	processContent( subContent, aExceptions, aParent );
+	bool plusFound = true;
+	while ( plusFound )	{
+		try	{
+			printf( "Going for another plus\n" );
+			processContent( subContent, aExceptions, aParent );
+		}
+		catch( ReadException r )	{
+			printf( "No plus found anymore\n" );
+			if ( r.isFatal() )	{
+				throw r;
+			}
+			else	{
+				plusFound = false;
+			}
+		}
+	}
+	printf( "Finished plus element\n" );
+													  	
+}
+
+void ElementParser	::	processStar( const TElementShared & aContent,
+												   const TElementShared & aExceptions,
+												   TNodeShared aParent )	{
+
+	printf( "At star element\n" );
+	TNodeShared child = make_shared( aContent->getFirstChild() );
+	TElementShared subContent = shared_static_cast<TElement>( child );
+	bool starFound = true;
+	while ( starFound )	{
+		try	{
+			printf( "Going for another star\n" );
+			processContent( subContent, aExceptions, aParent );
+		}
+		catch( ReadException r )	{
+			printf( "No star found anymore\n" );
+			if ( ! r.isWrongTag() && r.isFatal() )	{
+				throw r;
+			}
+			else	{
+				starFound = false;
+			}
+		}
+	}
+	printf( "Finished star element\n" );
+
+}
+
+void ElementParser	::	processOr( const TElementShared & aContent,
+												 const TElementShared & aExceptions,
+												 TNodeShared aParent )	{
+
+	printf( "At or element\n" );
+	TNodeListShared children = aContent->getChildNodes();
+	bool found = false;
+	for ( unsigned int i = 0; i < children->getLength(); i++ )	{
+		TNodeShared child = make_shared( children->item( i ) );
+		TElementShared element = shared_static_cast<TElement>( child );
+		try	{
+			processContent( element, aExceptions, aParent );
+			found = true;
+			break;
+		}
+		catch( ReadException r )	{
+			if ( ! r.isWrongTag() && r.isFatal() )	{
+				throw r;
+			}
+		}
+	}
+	if ( ! found )	{
+		throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(),
+										"No tag of or children found" );
+	}
+	printf( "Finished or element\n" );
+
+}
+
+void ElementParser	::	processAnd( const TElementShared & aContent,
+												   const TElementShared & aExceptions,
+												   TNodeShared aParent )	{
+
+	printf( "At seq element\n" );
+	TNodeListShared children = aContent->getChildNodes();
+	for ( unsigned int i = 0; i < children->getLength(); i++ )	{
+		TNodeShared child = make_shared( children->item( i ) );
+		TElementShared element = shared_static_cast<TElement>( child );
+		processContent( element, aExceptions, aParent );
+	}
+	printf( "Finished seq element\n" );
+
+}
+
+void ElementParser	::	processComma( const TElementShared & aContent,
+														const TElementShared & aExceptions,
+														TNodeShared aParent )	{
+
+	printf( "At comma element\n" );
+	TNodeListShared children = aContent->getChildNodes();
+	for ( unsigned int i = 0; i < children->getLength(); i++ )	{
+		TNodeShared child = make_shared( children->item( i ) );
+		TElementShared element = shared_static_cast<TElement>( child );
+		element->setAttribute( "used", "false" );
+	}
+	bool progress = true;
+	while ( progress )	{
+		progress = false;
+		for ( unsigned int i = 0; i < children->getLength(); i++ )	{
+			TNodeShared child = make_shared( children->item( i ) );
+			TElementShared element = shared_static_cast<TElement>( child );
+			if ( element->getAttribute( "used" ) == "true" )	{
+				// Already done. Skip to next
+				continue;
+			}
+			unsigned int before = mDocText->getIndex();
+			try	{
+				processContent( element, aExceptions, aParent );
+			}
+			catch( ReadException r )	{
+				if ( ! r.isWrongTag() && r.isFatal() )	{
+					throw r;
+				}
+			}
+			unsigned int after = mDocText->getIndex();
+			if ( before != after )	{
+				printf( "Content processed\n" );
+				element->setAttribute( "used", "true" );
+				progress = true;
+			}
+		}
+	}
+	printf( "Finished comma element\n" );
+	
+}
+
+void ElementParser	::	processDataText( const TElementShared & aContent,
+														   const TElementShared & aExceptions,
+														   TNodeShared aParent )	{
+
+	printf( "At data text\n" );
+	string text = "";
+	bool stFound = false;
+	while ( ! stFound )	{
+		if ( mDocText->getChar() != '<' )	{
+			// Not yet found. Process replacable character data
+			try	{
+				text += processRepCharData();
+			}
+			catch( ReadException r )	{
+				r.setFatal();
+				throw r;
+			}
+		}
+		else	{
+			stFound = true;
+		}
+	}
+	if ( text == "" )	{
+		throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(),
+										"PCDATA expected" );
+	}
+	printf( "Finished data text: %s\n", text.c_str() );
 
 }
 
