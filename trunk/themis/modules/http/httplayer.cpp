@@ -568,14 +568,15 @@ http_request *httplayer::AddRequest(BMessage *info) {
 		}
 		if (request->secure) {
 #ifndef USEOPENSSL
-// We have and want to be able to use OpenSSL in Themis.
+// We don't have OpenSSL.
 		printf("OpenSSL not supported in this build.");
 		(new BAlert("SSL Not Supported","I'm afraid that this version of Themis\nwas built without OpenSSL support.\nUnfortunately, it means that you can't\nvisit HTTPS sites.","Damn."))->Go();
 		delete info;
 		delete request;
 		request=NULL;
+		return;
 #else
-// We don't have OpenSSL.
+// We have and want to be able to use OpenSSL in Themis.
 		printf("Request is to: %s:%u\nURI: %s\n",request->host,request->port,request->uri);
 		UnprocessedReqs->AddItem(request);
 		delete info;
