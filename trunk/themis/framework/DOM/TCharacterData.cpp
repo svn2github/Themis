@@ -1,0 +1,111 @@
+/* CharacterData implementation
+	See TCharacterData.h for some more information
+*/
+
+#include "TCharacterData.h"
+
+TCharacterData	::	TCharacterData( const unsigned short aNodeType )	:	TNode( aNodeType )	{
+	
+	mData = new TDOMString();
+	
+}
+
+TCharacterData	::	~TCharacterData()	{
+	
+	delete mData;
+	
+}
+
+TDOMString * TCharacterData	::	getData() const	{
+	
+	return mData;
+	
+}
+
+void TCharacterData	::	setData( const TDOMString aData )	{
+
+	if ( isReadOnly() )	{
+		throw TDOMException( NO_MODIFICATION_ALLOWED_ERR );
+	}
+	
+	mData->SetTo( aData );
+	
+}
+
+int TCharacterData	::	getLength() const	{
+	
+	return mData->CountChars();
+	
+}
+
+TDOMString TCharacterData	::	substringData( const unsigned long aOffset, const unsigned long aCount ) const	{
+	
+	// Check if requested substring can be returned.
+	// Negative values are impossible and are not checked
+	if ( aOffset > (unsigned long) mData->CountChars() )	{
+		throw TDOMException( INDEX_SIZE_ERR );
+	}
+
+	TDOMString result;
+	return mData->CopyInto( result, aOffset, aCount );
+	
+}
+
+void TCharacterData	::	appendData( const TDOMString aArg )	{
+
+	if ( isReadOnly() )	{
+		throw TDOMException( NO_MODIFICATION_ALLOWED_ERR );
+	}
+	
+	mData->Append( aArg );
+	
+}
+
+void TCharacterData	::	insertData( const unsigned long aOffset, const TDOMString aArg )	{
+	
+	if ( isReadOnly() )	{
+		throw TDOMException( NO_MODIFICATION_ALLOWED_ERR );
+	}
+
+	// Check if string can be inserted at the requested offset.
+	// Negative values are impossible and are not checked
+	if ( aOffset > (unsigned long) mData->CountChars() )	{
+		throw TDOMException( INDEX_SIZE_ERR );
+	}
+
+	mData->Insert( aArg, aOffset );
+	
+}
+
+void TCharacterData	::	deleteData( const unsigned long aOffset, const unsigned long aCount )	{
+	
+	if ( isReadOnly() )	{
+		throw TDOMException( NO_MODIFICATION_ALLOWED_ERR );
+	}
+
+	// Check if string can be deleted at the requested offset.
+	// Negative values are impossible and are not checked
+	if ( aOffset > (unsigned long) mData->CountChars() )	{
+		throw TDOMException( INDEX_SIZE_ERR );
+	}
+
+	mData->Remove( aOffset, aCount );
+	
+}
+
+void TCharacterData	::	replaceData( const unsigned long aOffset, const unsigned long aCount, const TDOMString aArg )	{
+
+	if ( isReadOnly() )	{
+		throw TDOMException( NO_MODIFICATION_ALLOWED_ERR );
+	}
+
+	// Check if string can be replaced at the requested offset.
+	// Negative values are impossible and are not checked
+	if ( aOffset > (unsigned long) mData->CountChars() )	{
+		throw TDOMException( INDEX_SIZE_ERR );
+	}
+	
+	deleteData( aOffset, aCount );
+	mData->Insert( aArg, aCount, aOffset );
+	
+}
