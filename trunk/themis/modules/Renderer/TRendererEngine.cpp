@@ -13,6 +13,7 @@
 //Elements
 #include "Elements.h"
 
+/*
 void Renderer::BroadcastPointer(TRenderView *view)
 {
 	//Do the Broadcasting
@@ -22,11 +23,11 @@ void Renderer::BroadcastPointer(TRenderView *view)
 	message.AddPointer("data_pointer",view);
 	Broadcast(MS_TARGET_ALL,&message);
 }
-
-void Renderer::PreProcess(TDocumentPtr document)
+*/
+void Renderer::PreProcess(TDocumentPtr document, TRenderView *view)
 {
 	//The size of the view doesn't matter here
-	TRenderView *view = new TRenderView(UIBox(800,450),document);
+	//TRenderView *view = new TRenderView(UIBox(800,450),document);
 	
 	//Add the DOM & the view to the list of trees.
 	UITrees.AddItem(view);
@@ -56,16 +57,23 @@ void Renderer::PreProcess(TDocumentPtr document)
 	//view->userInterface = userInterface;
 	
 	//Start processing the DOM Tree
+	view->LockLooper();
 	printf("RENDERER: START PROCESSING...\n");
 	bigtime_t time = real_time_clock_usecs();
 	Process(document,view); 
 	printf("RENDERER: DONE PROCESSING in %g microseconds.\n",real_time_clock_usecs() - time);
-	
+	view->UnlockLooper();
 	//Update the view
 	view->Invalidate();
 	
-	BroadcastPointer(view);
-	
+//	BroadcastPointer(view);
+
+	//Do the Broadcasting to say we are done with rendering
+	BMessage message(UH_RENDER_FINISHED);
+	message.AddInt32("command",COMMAND_INFO);
+	message.AddInt32("view_id",view->viewID);
+	Broadcast(MS_TARGET_ALL,&message);
+		
 	//Show the View, will be removed as soon as the REAL window uses the view
 	//(new TRenderWindow((TRenderView *)UITrees.ItemAt(UITrees.CountItems()-1)))->Show();	
 }

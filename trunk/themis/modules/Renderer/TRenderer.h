@@ -59,10 +59,10 @@ class Renderer : public PlugClass
 				BList		UITrees;
 				vector 		<TDocumentPtr> DOMTrees;
 				
-				void		BroadcastPointer(TRenderView *view);
+//				void		BroadcastPointer(TRenderView *view);
 				
 				//Below spreads the dark land of Processing methods.
-				void		PreProcess(TDocumentPtr document);
+				void		PreProcess(TDocumentPtr document, TRenderView *view);
 				void		Process(TNodePtr node, UIElement *view);
 				
 				int8		GetCSSDisplay(TElementPtr node);

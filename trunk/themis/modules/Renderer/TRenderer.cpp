@@ -67,7 +67,22 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 					if (((uint32)(message->FindInt32("type")) & TARGET_CACHE) != 0)
 						cache = NULL;
 					}break;
-				case ReturnedData:{
+				case UH_RENDER_START:{ //New way to do
+					void *buffer = NULL;
+					TDocumentPtr document;
+					message->FindPointer("dom_tree_pointer",&buffer);
+					if (!buffer)
+						break;
+					TDocumentPtr *typer = (TDocumentPtr *)buffer;
+					document = *typer;		
+					TRenderView *view = NULL;
+					message->FindPointer("renderview_pointer",(void **)&view);
+					if (!view)
+						break;
+					//Start Processing
+					PreProcess(document,view);								
+				} break;
+/*				case ReturnedData:{ OLD WAY TO DO
 					BString type = message->FindString("type");
 					if (type == "dom"){
 						void *buffer = NULL;
@@ -81,7 +96,7 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 					//Start Processing
 					PreProcess(document);						
 					}
-					}break;
+					}break;*/
 /*				case R_WELCOME:{
 					printf("RENDERER: R_WELCOME received\n");
 					BRect rect;
