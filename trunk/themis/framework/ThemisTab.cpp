@@ -17,9 +17,10 @@
 #include "FakeSite.h"
 #include "win.h"
 
-ThemisTab::ThemisTab( BView *view )
+ThemisTab::ThemisTab( BView *view, uint uid )
 	: BTab( view )
 {
+	fUniqueID = uid;
 }
 
 void
@@ -170,4 +171,10 @@ ThemisTab::DrawLabel( ThemisTabView* owner, BRect frame )
 		owner->DrawBitmap( tempview->site_fav_icon, iconframe );
 		owner->SetDrawingMode( B_OP_COPY );
 	}
+}
+
+uint
+ThemisTab::UniqueID()
+{
+	return fUniqueID;
 }

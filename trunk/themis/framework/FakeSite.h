@@ -16,7 +16,11 @@
 class FakeSite : public BView
 {
 	public:
-									FakeSite( BRect rect, const char* title, BWindow* win = NULL );
+									FakeSite(
+										BRect rect,
+										const char* title,
+										uint uid,
+										BWindow* win = NULL );
 		virtual						~FakeSite( void );
 		void						AttachedToWindow( void );
 		void						Draw( BRect updaterect );
@@ -33,6 +37,7 @@ class FakeSite : public BView
 										int img_progress,
 										const char* img_text,
 										const char* statustext );
+		uint						UniqueID();
 										
 		BWindow*					mainwin;
 		
@@ -49,6 +54,8 @@ class FakeSite : public BView
 		bool						fSecureConnection;
 		bool						fCookieEnabled;
 		BString						fStatusText;
+		
+		uint						fUniqueID;
 };
 
 #endif

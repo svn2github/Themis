@@ -48,10 +48,11 @@ This is the main browser window.
 class Win : public BWindow, public MessageSystem
 {
 	private:
-		bool startup;
-		HTMLParser *Parser;
-		uint32 protocol;
-  
+		bool						startup;
+		HTMLParser*					Parser;
+		uint32						protocol;
+  		uint						fUniqueIDCounter;
+  		
 	public:
 		winview *View;
 		Win(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspace=B_CURRENT_WORKSPACE);
@@ -69,6 +70,8 @@ class Win : public BWindow, public MessageSystem
 		void						CreateTabView();
 		void						CreateUrlPopUpWindow();
 		void						DefineInterfaceColors();
+		uint						GetNewUniqueID();
+		FakeSite*					GetViewPointer( uint tab_uid, uint view_uid );
 		void						LoadInterfaceGraphics();
 		void						UrlTypedHandler( bool show_all );
 	

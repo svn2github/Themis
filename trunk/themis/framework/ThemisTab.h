@@ -16,7 +16,7 @@
 class ThemisTab : public BTab
 {
 	public:
-												ThemisTab( BView* view );
+									ThemisTab( BView *view, uint uid );
 		
 		virtual void				DrawTab(
 										ThemisTabView* owner,
@@ -26,6 +26,11 @@ class ThemisTab : public BTab
 		virtual void				DrawLabel(
 										ThemisTabView* owner,
 										BRect frame );
+										
+		uint						UniqueID();
+		
+	private:
+		uint						fUniqueID;
 };
 
 #endif

@@ -16,7 +16,7 @@
 #include "win.h"
 #include "FakeSite.h"
 
-FakeSite::FakeSite( BRect rect, const char* title, BWindow* win = NULL ) :
+FakeSite::FakeSite( BRect rect, const char* title, uint uid, BWindow* win = NULL ) :
 	BView( rect, "fakesite", B_FOLLOW_ALL, B_WILL_DRAW | B_NAVIGABLE )
 {
 	// the fav_site_icon
@@ -24,6 +24,8 @@ FakeSite::FakeSite( BRect rect, const char* title, BWindow* win = NULL ) :
 	site_fav_icon = new BBitmap( BRect( 0,0,15,15 ), B_RGB32 );
 	
 	mainwin = win;
+	
+	fUniqueID = uid;
 	
 	if( mainwin != NULL )
 		// load the icon from mainwindow
@@ -189,4 +191,10 @@ FakeSite::SetInfo(
 		fImgText = ( char* )img_text;
 	
 	fStatusText.SetTo( statustext );
+}
+
+uint
+FakeSite::UniqueID()
+{
+	return fUniqueID;
 }

@@ -295,9 +295,30 @@ void Win::MessageReceived(BMessage *msg) {
 			// all this code below and some code in
 			// FakeSite and ThemisStatusView is just demo code to show
 			// the functioning of the statusview and the progressbars
-						
-			FakeSite* tmpsite;
+			
+			FakeSite* tmpsite = NULL;
+			if( msg->HasInt32( "tab_uid" ) )
+			{
+				tmpsite = GetViewPointer(
+					msg->FindInt32( "tab_uid" ),
+					msg->FindInt32( "view_uid" ) );
+				
+				if( tmpsite != NULL )
+					cout << "URL_LOADING: found viewpointer" << endl;
+				else
+				{
+					cout << "no view found -> stopped loading" << endl;
+					/////////////////
+					// tell the http_plugin(?) to stop loading the site..
+					/////////////////
+					break;
+				}
+			}
+			
+			/////////////////////
+			// remove this later if we are sending unique IDs
 			msg->FindPointer( "view_pointer", ( void** )&tmpsite );
+			/////////////////////
 			int64 delta=0;
 			int64 contentlen=0;
 			
@@ -319,7 +340,6 @@ void Win::MessageReceived(BMessage *msg) {
 				"5.9kB/s",
 				statstr.String() );
 			
-			Lock();
 			// if the viewpointer points to the currently active view,
 			// update the statusview
 			if( tmpsite == tabview->TabAt( tabview->Selection() )->View() )
@@ -334,8 +354,7 @@ void Win::MessageReceived(BMessage *msg) {
 					statstr.String() );
 				
 			}
-			Unlock();
-			
+						
 			// if either the doc loading or img loading are not finished,
 			// set up a new BMessageRunner, and resend the message
 		/*
@@ -386,35 +405,45 @@ void Win::MessageReceived(BMessage *msg) {
 			// create the fakesite ( later the renderview )
 			FakeSite* fakesite = new FakeSite(
 				( tabview->ContainerView() )->Bounds(),
-				url.String(), this );
+				url.String(), GetNewUniqueID(), this );
 			
-			////////////////////
-			// remove this later
-			////////////////////
-		/*	
-			// create a BMessage with a pointer to the new view
-			BMessage* vpmsg = new BMessage( URL_LOADING );
-			vpmsg->AddPointer( "view_pointer", fakesite );
-			
-			// create a BMessageRunner which sends a page loading progress message
-			BMessageRunner* plmsgr = new BMessageRunner( BMessenger( this ), vpmsg, 300000, 1 );
-		*/	
-			////////////////////////
-			// remove this later end
-			////////////////////////
+			// create a BMessage with unique indexes to tab and view
+			//BMessage* vpmsg = new BMessage( URL_LOADING );
+			//vpmsg->AddInt32( "view_uid", fakesite->UniqueID() );
 			
 			uint32 selection = tabview->Selection();
+			uint tab_uid = 0;
+			uint view_uid = fakesite->UniqueID();
 						
 			if( msg->HasInt32( "tab_to_open_in" ) )
+			{
+				int32 tab_index = msg->FindInt32( "tab_to_open_in" );
+				
 				tabview->TabAt( msg->FindInt32( "tab_to_open_in" ) )->SetView( fakesite );
+				//vpmsg->AddInt32( "tab_uid", ( ( ThemisTab* )tabview->TabAt( tab_index ) )->UniqueID() );
+				tab_uid = ( ( ThemisTab* )tabview->TabAt( tab_index ) )->UniqueID();
+			}
 			else
+			{
 				tabview->TabAt( selection )->SetView( fakesite );
+				//vpmsg->AddInt32( "tab_uid", ( ( ThemisTab* )tabview->TabAt( selection ) )->UniqueID() );
+				tab_uid = ( ( ThemisTab* )tabview->TabAt( selection ) )->UniqueID();
+			}
 						
 			if( msg->FindBool( "hidden" ) == true )
 				tabview->DrawTabs();
 			else
 				tabview->Select( selection );
 			
+			// create a BMessageRunner which sends a page loading progress message
+			//BMessageRunner* plmsgr = new BMessageRunner( BMessenger( this ), vpmsg, 300000, 1 );
+			
+			////////////////
+			// for Raymond!
+			// use tab_uid/view_uid to send with your messages...
+			// IDs are resolved back into a viewpointer in URL_LOADING or with Win::GetViewPointer(..)
+									
+						
 			if( CurrentFocus() != NULL )
 				CurrentFocus()->MakeFocus( false );
 			tabview->TabAt( selection )->View()->MakeFocus( true );
@@ -635,7 +664,7 @@ Win::AddNewTab( bool hidden )
 		
 	tabview->DynamicTabs( true );
 	
-	ThemisTab* newtab = new ThemisTab( NULL );
+	ThemisTab* newtab = new ThemisTab( NULL, GetNewUniqueID() );
 	
 	tabview->AddTab( NULL, newtab );
 	
@@ -744,6 +773,53 @@ Win::DefineInterfaceColors()
 	fColorArray[5].red = 255;
 	fColorArray[5].green = 200;
 	fColorArray[5].blue = 0;
+}
+
+uint
+Win::GetNewUniqueID()
+{
+	fUniqueIDCounter += 1;
+	
+	// i innerly hope that nobody will ever reach the 65k+ id limit,
+	// who still has the first tab open :)
+	if( fUniqueIDCounter > 65535 )
+		fUniqueIDCounter = 0;
+	
+	return fUniqueIDCounter;
+}
+
+FakeSite*
+Win::GetViewPointer( uint tab_uid, uint view_uid )
+{
+	cout << "Win::GetViewPointer() : looking for tab_uid: "
+		<< tab_uid << " view_uid: " << view_uid << endl;
+	
+	ThemisTab* tmptab;
+	FakeSite* tmpview;
+	
+	int32 count = tabview->CountTabs();
+	
+	for( int i=count-1; i >= 0; i-- )
+	{
+		tmptab = ( ThemisTab* )tabview->TabAt( i );
+		if( tmptab != NULL )
+		{
+			if( tmptab->UniqueID() == tab_uid )
+			{
+				tmpview = ( FakeSite* )tmptab->View();
+				if( tmpview != NULL )
+				{
+					if( tmpview->UniqueID() == view_uid )
+					{
+						return tmpview;
+					}
+				}
+			}	
+		}
+	}
+	
+	cout << "Win::GetViewPointer() : no view found!" << endl;
+	return NULL;
 }
 
 void
