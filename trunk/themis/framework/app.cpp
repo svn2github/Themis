@@ -616,7 +616,8 @@ App::CheckSettings(
 			strcmp( AppSettings->FindString( kPrefsActiveDTDPath ), kNoDTDFoundString ) == 0 )
 	{
 		/* set our default */
-		AppSettings->AddString( kPrefsActiveDTDPath, kNoDTDFoundString );
+		if( !AppSettings->HasString( kPrefsActiveDTDPath ) )
+			AppSettings->AddString( kPrefsActiveDTDPath, kNoDTDFoundString );
 		
 		/* find a DTD */
 		BString dtddir;
