@@ -147,6 +147,17 @@ to allow interoperability in some parts of the application.
 #define WINDOW_CLOSE			'winc'
 #define WINDOW_NEW				'winn'
 
+// UrlHandler message constants
+#define UH_LOAD_NEW_PAGE		'ulnp'	// sent by win to UH/all interested
+#define UH_LOADING_FINISHED		'ulfi'	// sent by network to UH
+#define UH_LOADING_PROGRESS		'ulpg'	// sent by network to UH
+#define UH_PARSE_HTML_FINISHED	'uphf'	// sent by HTML parser to UH
+#define UH_PARSE_HTML_START		'uphs'	// sent by UH to HTML parser
+#define UH_RELOAD_PAGE			'urel'	// sent by win to UH/all interested
+#define UH_RENDER_START			'urst'	// sent by UH to renderer
+#define UH_RENDER_FINISHED		'urfi'	// snet by renderer to UH
+#define UH_WIN_LOADING_PROGRESS	'uwlp'	// sent by UH to windows
+
 #include <GraphicsDefs.h>
 
 union int32torgb
