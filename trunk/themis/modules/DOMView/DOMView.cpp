@@ -461,3 +461,11 @@ int32 DOMView	::	Type()	{
 	return TARGET_DOM;
 	
 }
+uint32 DOMView::BroadcastTarget() 
+{
+	return MS_TARGET_DOM_VIEWER;
+}
+status_t DOMView::BroadcastReply(BMessage *msg) 
+{
+	return B_OK;
+}

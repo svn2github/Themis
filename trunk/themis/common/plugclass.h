@@ -252,7 +252,7 @@ class PlugClass: public MessageSystem {
 	This constructor takes a BMessage object that contains various tidbits that are
 	useful to all plug-ins, including pointers to the settings BMessage.
 	*/
-		PlugClass(BMessage *info=NULL);
+		PlugClass(BMessage *info=NULL,char *msg_sys_name="Plug-in");
 		//!Initialization information container.
 		BMessage *InitInfo;
 		//!The destructor.

@@ -32,7 +32,7 @@ Project Start Date: October 18, 2000
 #include "plugman.h"
 #include <stdio.h>
 cookieman::cookieman(BMessage *info)
-	:BHandler("cookie_manager"),PlugClass(info) {
+	:BHandler("cookie_manager"),PlugClass(info,"cookie manager admin") {
 	uses_heartbeat=false;
 		
 }
@@ -89,6 +89,14 @@ status_t cookieman::ReceiveBroadcast(BMessage *msg){
 	
 	}
 	return PLUG_HANDLE_GOOD;
+}
+uint32 cookieman::BroadcastTarget() 
+{
+	return MS_TARGET_UNKNOWN;
+}
+status_t cookieman::BroadcastReply(BMessage *msg) 
+{
+	return B_OK;
 }
 
 int32 cookieman::Type(){

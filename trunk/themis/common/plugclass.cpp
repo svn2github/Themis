@@ -69,7 +69,7 @@ the app is started. When the plug-in is brought back into memory depends on what
 it, and what the plug-in actually does. For instance, the protocol plug-ins are handed
 URL information, and a number of pointers to objects which they might need.
 */
-PlugClass::PlugClass(BMessage *info) :MessageSystem() {
+PlugClass::PlugClass(BMessage *info,char *msg_sys_name) :MessageSystem(msg_sys_name) {
 	MsgSysRegister(this);
 	InitInfo=info;
 	thread=0;

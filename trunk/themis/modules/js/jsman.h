@@ -97,6 +97,8 @@ This function receives broadcasts sent to the plug-in system.
 This function receives and processes information sent to the plug-in system.
 */
 		status_t ReceiveBroadcast(BMessage *msg);
+		status_t BroadcastReply(BMessage *msg);
+		uint32 BroadcastTarget();
 		int32 Type();
 };
 

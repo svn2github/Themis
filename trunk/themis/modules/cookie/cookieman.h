@@ -57,6 +57,9 @@ class cookieman: public BHandler, public PlugClass {
 //		bool RequiresHeartbeat(){return true;};
 		void Heartbeat();
 		status_t ReceiveBroadcast(BMessage *msg);
+		uint32 BroadcastTarget();
+		status_t BroadcastReply(BMessage *msg);
+
 		int32 Type();
 };
 

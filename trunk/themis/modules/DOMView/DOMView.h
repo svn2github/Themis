@@ -83,6 +83,8 @@ class DOMView	:	public BHandler, public PlugClass	{
 		void Heartbeat();
 		status_t ReceiveBroadcast( BMessage * message );
 		int32 Type();
+		uint32 BroadcastTarget();
+		status_t BroadcastReply(BMessage *msg);
 		
 };
 

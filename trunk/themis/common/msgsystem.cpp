@@ -10,14 +10,17 @@ volatile int32 MessageSystem::_Quit_Thread_=0;
 thread_id MessageSystem::_ProcessThread_=0;
 volatile uint32 MessageSystem::_messages_sent_=0;
 volatile uint32 MessageSystem::_message_targets_=0;
-MessageSystem::MessageSystem()
+MessageSystem::MessageSystem(char *msg_sys_name)
 {
+	MS_Name=msg_sys_name;
+	if (MS_Name==NULL)
+		MS_Name="MessageSystem member";
 	broadcast_status_code=B_NO_ERROR;
 	_message_queue_=new BMessageQueue();
 	_msg_receiver_sem_=create_sem(0,"message_receiver_sem");
 	_ms_receiver_quit_=0;
 	_msg_receiver_running_=0;
-	_msg_receiver_thread_=spawn_thread(MS_Start_Thread,"message_system_thread",B_LOW_PRIORITY,this);
+	_msg_receiver_thread_=spawn_thread(MS_Start_Thread,MS_Name,B_LOW_PRIORITY,this);
 	resume_thread(_msg_receiver_thread_);
 }
 

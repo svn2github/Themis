@@ -417,3 +417,7 @@ bool ImageMan::TypeSupported(char *type)
 	}
 	return found;
 }
+uint32 ImageMan::BroadcastTarget() 
+{
+	return MS_TARGET_DOM_VIEWER;
+}

@@ -180,4 +180,12 @@ status_t jsman::ReceiveBroadcast(BMessage *msg){
 int32 jsman::Type(){
 	return JAVASCRIPT_HANDLER;
 }
+uint32 jsman::BroadcastTarget() 
+{
+	return MS_TARGET_DOM_VIEWER;
+}
+status_t jsman::BroadcastReply(BMessage *msg) 
+{
+	return B_OK;
+}
 

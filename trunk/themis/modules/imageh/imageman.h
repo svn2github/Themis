@@ -66,6 +66,7 @@ class ImageMan: public PlugClass {
 		float PlugVersion();
 		status_t ReceiveBroadcast(BMessage *msg);
 		status_t BroadcastReply(BMessage *msg);
+		uint32 BroadcastTarget();
 		int32 Type();
 		char *SettingsViewLabel();
 		BView *SettingsView();

@@ -66,7 +66,7 @@ PlugClass * GetObject()	{
 	
 }
 
-HTMLParser	::	HTMLParser( BMessage * info )	:	BHandler( "HTMLParser" ), PlugClass( info )	{
+HTMLParser	::	HTMLParser( BMessage * info )	:	BHandler( "HTMLParser" ), PlugClass( info , "HTMLParser" )	{
 	
 	cache = (CachePlug *) PlugMan->FindPlugin( CachePlugin );
 	userToken = 0;
