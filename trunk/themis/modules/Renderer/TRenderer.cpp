@@ -35,8 +35,11 @@ Renderer::Renderer(BMessage *info) : PlugClass(info,"TRenderer")
 		cacheUserToken = cache->Register( Type(), "Themis Renderer" );
 	else
 		cacheUserToken = 0;
-
+	
+	//Default DPI
 	dpi = 72;
+	
+	locker = new BLocker();
 }
 
 Renderer::~Renderer()
@@ -49,6 +52,7 @@ Renderer::~Renderer()
 		
 	DOMTrees.clear();
 
+	delete locker;
 }
 
 status_t Renderer::ReceiveBroadcast(BMessage *message)

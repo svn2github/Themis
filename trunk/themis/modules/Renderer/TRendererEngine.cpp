@@ -33,12 +33,11 @@ int32 Renderer::PreProcess(void *data)
 	TRenderView *view = new TRenderView(UIBox(800,450),cdata->document);
 	view->viewID = cdata->viewID;
 
-	BLocker *locker = new BLocker();
-	locker->Lock();
+	cdata->renderer->locker->Lock();
 	//Add the DOM & the view to the list of trees.
 	cdata->renderer->UITrees.AddItem(view);
-	locker->Unlock();
-	delete locker;					
+	cdata->renderer->locker->Unlock();
+					
 	//TODO: Get the DPI from User Option and give it to the view
 		
 	//Set the correct frame: the one specified or the one of Themis' window
@@ -65,7 +64,7 @@ int32 Renderer::PreProcess(void *data)
 	//Do the Broadcasting to give the view to the UI
 	BMessage message(RENDERVIEW_POINTER);
 	message.AddInt32("command",COMMAND_INFO);
-	message.AddInt32("view_id",cdata->viewID);
+	message.AddInt32("view_id",view->viewID);
 	message.AddPointer("renderview_pointer",(void *)view);
 	cdata->renderer->Broadcast(MS_TARGET_ALL,&message);
 						
@@ -79,7 +78,7 @@ int32 Renderer::PreProcess(void *data)
 	//Do the Broadcasting to say we are done rendering
 	BMessage message2(UH_RENDER_FINISHED);
 	message2.AddInt32("command",COMMAND_INFO);
-	message2.AddInt32("view_id",cdata->viewID);
+	message2.AddInt32("view_id",view->viewID);
 	cdata->renderer->Broadcast(MS_TARGET_URLHANDLER,&message2);
 	
 	//cdata->view->UnlockLooper();

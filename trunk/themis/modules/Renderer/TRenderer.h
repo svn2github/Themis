@@ -53,7 +53,10 @@ class Renderer : public PlugClass
 		virtual	int32		Type();
 
 				//That's the resolution, by default 72dpi
-				int32			dpi;		
+				int32		dpi;
+				
+				//A Lock
+				BLocker		*locker;		
 
 	private:
 				BList		UITrees;
