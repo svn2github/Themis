@@ -15,6 +15,7 @@
 #include "TElement.h"
 #include "TNode.h"
 #include "TNodeList.h"
+#include "TText.h"
 
 #include "TRenderView.h"
 #include "UIElement.h"
@@ -52,7 +53,9 @@ class Renderer : public PlugClass
 				BList		UITrees;
 				BList 		DOMTrees;
 				
-				void		PreProcess( TDocumentPtr document);
+				void		BroadcastPointer(TDocumentPtr document);
+				void		PreProcess(int32 document_number, int32 view_number, 
+									   BRect view_frame, BMessenger userInterface);
 				void		Process( TNodePtr node, UIElement *view);				
 };
 

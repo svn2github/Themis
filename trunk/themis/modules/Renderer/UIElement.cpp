@@ -98,13 +98,22 @@ void UIElement::EMouseMoved(BPoint point, uint32 transit, const BMessage *messag
 	//See TRenderView::MouseMoved()
 }
 
-void UIElement::EFrameResized(float width, float height)
+void UIElement::EFrameResized(float deltaWidth, float deltaHeight)
 {
 	//Do the calculus of the new frame for the element (for derivated classes)
 	
 	//Then forward to next layer
 	if (nextLayer) 
 		for (int32 i=0; i<nextLayer->CountItems(); i++)
-			((UIElement *)nextLayer->ItemAt(i))->EFrameResized(width,height);	
+			((UIElement *)nextLayer->ItemAt(i))->EFrameResized(deltaWidth,deltaHeight);	
+}
+
+void UIElement::ProportionalResizingAndMoving(float deltaWidth, float deltaHeight)
+{
+	frame.right  = frame.left + frame.Width()*deltaWidth;
+	frame.bottom = frame.top  + frame.Height()*deltaHeight;
+
+	frame.left = frame.left*deltaWidth; 
+	frame.top  = frame.top*deltaHeight;
 }
 

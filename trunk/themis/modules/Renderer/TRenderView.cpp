@@ -47,21 +47,35 @@ void TRenderView::Draw(BRect updateRect)
 	//Let's update the layers that need to
 	if (nextLayer)
 		for (int32 i=0; i<nextLayer->CountItems(); i++)
-			if (((UIElement *)nextLayer->ItemAt(i))->frame.Intersects(updateRect))
+			if (((UIElement *)nextLayer->ItemAt(i))->frame.Intersects(updateRect)){
+				printf("TRENDERVIEW: Calling EDraw()\n");
 				((UIElement *)nextLayer->ItemAt(i))->EDraw();
+			}
+			else {
+				printf("TRENDERVIEW: updateRect = ");
+				updateRect.PrintToStream();
+				printf("TRENDERVIEW: layer_frame = ");
+				((UIElement *)nextLayer->ItemAt(i))->frame.PrintToStream();
+			}
 
 	/*Many drawing above (mostly when drawing BBitmaps) are done asynchronously for speed
 	 (DrawBitmapAsync() for instance) so we got to Sync() for safety. */
 	Sync();
-	
-	BView::Draw(updateRect);
 }
 
 void TRenderView::FrameResized(float width, float height)
 {
-	UIElement::frame = Bounds();
+	BRect oldRect = UIElement::frame;
 	
-	EFrameResized(width,height);
+	printf("TRENDERVIEW: Calling FrameResized(%f,%f)\n",width,height);
+	printf("TRENDERVIEW: Frame changed from: ");
+	frame.PrintToStream();		
+	UIElement::frame = Bounds();
+	printf(" to: ");
+	frame.PrintToStream();
+	
+	//Calling EFrameResized with RELATIVES VALUES : THE RELATIVE VARIATION ! ! ! !
+	EFrameResized(frame.Width()/oldRect.Width(),frame.Height()/oldRect.Height());
 }
 
 void TRenderView::MouseDown(BPoint point)
@@ -90,11 +104,6 @@ void TRenderView::MouseMoved(BPoint point, uint32 transit, const BMessage *messa
 void TRenderView::MessageReceived(BMessage *message)
 {
 	switch(message->what){
-		case R_WELCOME:{
-			BRect rect;
-			message->FindRect("rect",&rect);
-			FrameResized(rect.Width(),rect.Height());
-			}break;
 		default:
 			BView::MessageReceived(message);
 	}

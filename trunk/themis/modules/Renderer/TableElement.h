@@ -18,6 +18,10 @@ class TableElement : public UIElement
 		virtual 			~TableElement();
 		
 		virtual	void		EDraw();
+		virtual void		EFrameResized(float deltaWidth, float deltaHeight);
+		
+		void	AddColumn();
+		void	AddRow();
 	
 	private:
 				int 		cellpadding;
@@ -25,6 +29,7 @@ class TableElement : public UIElement
 				int			rows;
 				int			columns;
 				rgb_color	bordercolor;
+				BList		rects;
 };
 
 #endif

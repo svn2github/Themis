@@ -17,8 +17,10 @@
 #define RGB_GREEN					0,255,0
 #define RGB_BLUE					0,0,255
 
-//Interface with UI
+//Communication with the UI
 #define	R_WELCOME					'rwoe'
+#define RENDERVIEW_POINTER 			'rwpr'
+#define SITE_TITLE		   			'sete'
 
 //TextElement Specific
 #define TE_COLOR_PATTERNS 			'crps'

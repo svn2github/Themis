@@ -1,5 +1,6 @@
 /* See header for more info */
 
+#include "Globals.h"
 #include "TRenderer.h"
 
 Renderer *renderer;
@@ -74,10 +75,22 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 							break;
 						TDocumentPtr *typer = (TDocumentPtr *)buffer;
 						document = *typer;
-						PreProcess(document);
+						BroadcastPointer(document);
 					}
 					}break;
 			}
+		case R_WELCOME:{
+			printf("TRENDERVIEW: R_WELCOME received\n");
+			BRect rect;
+			int32 doc_number, view_number;
+			BMessenger userInterface;
+			
+			message->FindRect("rect",&rect);
+			message->FindInt32("document_number",&doc_number);
+			message->FindInt32("view_number",&view_number);
+			message->FindMessenger("messenger",&userInterface);
+			PreProcess(doc_number,view_number,rect,userInterface);
+			}break;
 		default:{
 			printf("Renderer doesn't handle this broadcast\n");
 			return PLUG_DOESNT_HANDLE;	

@@ -23,7 +23,7 @@ class UIElement
 
 				void			EAddChild(UIElement *element);
 		virtual void			EDraw();
-		virtual	void			EFrameResized(float width, float height);
+		virtual	void			EFrameResized(float deltaWidth, float deltaHeight);
 			
 		virtual	void			EMouseDown(BPoint point);
 		virtual void			EMouseUp(BPoint point);
@@ -47,6 +47,10 @@ class UIElement
 				UIElement 		*FindElementFor(BPoint point);
 
 				BView			*parentView;
+
+	protected:
+				//Some UIElements call this on EFrameResized()
+				void			ProportionalResizingAndMoving(float deltaWidth, float deltaHeight);
 };
 
 #endif

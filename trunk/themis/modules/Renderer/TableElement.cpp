@@ -2,7 +2,8 @@
 
 #include "TableElement.h"
 #include "Utils.h"
-
+#include <String.h> //temporary
+#include <stdio.h>  //temporary
 TableElement::TableElement(BRect frame, int cellpadding, int cellspacing, 
 						   rgb_color bgcolor, rgb_color bordercolor) 
 			 : UIElement(frame)
@@ -15,7 +16,7 @@ TableElement::TableElement(BRect frame, int cellpadding, int cellspacing,
 
 	UIElement::lowcolor		  = bgcolor;
 	
-	rows = columns = 1;
+	rows = columns = 0;
 }
 
 TableElement::~TableElement()
@@ -24,8 +25,13 @@ TableElement::~TableElement()
 void TableElement::EDraw()
 {
 	int32 i=0;
-	
-	parentView->BeginLineArray(2+rows+columns);
+
+	BString s = "TABLE: ";
+	s << columns  << " columns, " << rows << "rows";
+//	parentView->DrawString(s.String(),BPoint(15,15));
+	printf("%s\n",s.String());
+		
+	parentView->BeginLineArray(4+rows+columns);
 	
 	//Draw borders (basic by now: no options, etc. just basic lines)
 	parentView->AddLine(frame.LeftTop(),frame.RightTop(),bordercolor);
@@ -33,7 +39,7 @@ void TableElement::EDraw()
 	parentView->AddLine(frame.RightBottom(),frame.LeftBottom(),bordercolor);
 	parentView->AddLine(frame.LeftBottom(),frame.LeftTop(),bordercolor);	
 	
-	//Draw lines (basic)
+	//Draw rows (basic)
 	for (i=1; i < rows; i++)
 		parentView->AddLine(BPoint(frame.LeftTop().x,
 								   frame.LeftTop().y+i*frame.Height()/rows),
@@ -54,3 +60,27 @@ void TableElement::EDraw()
 	UIElement::EDraw();
 }
 
+void TableElement::EFrameResized(float deltaWidth, float deltaHeight)
+{
+	printf("TABLEELEMENT: Calling FrameResized(%f,%f)\n",deltaWidth,deltaHeight);
+	printf("TABLEELEMENT: Frame changed from: ");
+	frame.PrintToStream();		
+	
+	//TODO: Should be enhanced later
+	ProportionalResizingAndMoving(deltaWidth,deltaHeight);
+	
+	printf(" to: ");
+	frame.PrintToStream();
+	
+	UIElement::EFrameResized(deltaWidth,deltaHeight);
+}
+
+void TableElement::AddColumn()
+{
+	columns++;
+}
+
+void TableElement::AddRow()
+{
+	rows++;
+}

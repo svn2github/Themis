@@ -4,6 +4,7 @@
 	
 	This code falls under the General Themis License.
 */
+#include <Messenger.h>
 #include <View.h>
 
 #include "UIElement.h"
@@ -29,6 +30,8 @@ class TRenderView : public BView , public UIElement
 		virtual void			MouseMoved(BPoint point, uint32 transit, const BMessage *message);
 	
 		virtual	void			MessageReceived(BMessage *message);
+		
+				BMessenger		userInterface; 
 	private:
 				//Pointer to the UIElement which has currently the mouse over it.
 				UIElement		*currentMouseOver;
