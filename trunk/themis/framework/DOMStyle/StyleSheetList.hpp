@@ -34,11 +34,8 @@
 // Standard C++ headers
 #include <vector>
 
-// Boost headers
-#include "boost/shared_ptr.hpp"
-#include "boost/weak_ptr.hpp"
-
 // DOM Style headers
+#include "DOMStyleSupport.hpp"
 #include "StyleSheet.hpp"
 
 // Declarations used
@@ -47,6 +44,12 @@ class StyleSheetList;
 // Typedefs used
 typedef boost::weak_ptr<StyleSheetList> StyleSheetListWeak;
 typedef boost::shared_ptr<StyleSheetList> StyleSheetListPtr;
+
+// Standard C++ headers
+#include <vector>
+
+// Namespaces used
+using namespace std;
 
 /// StyleSheetList implementation of the DOM Style Sheets.
 
@@ -57,7 +60,11 @@ typedef boost::shared_ptr<StyleSheetList> StyleSheetListPtr;
 */
 
 class StyleSheetList	{
-	
+
+	private:
+		/// The list of stylesheets.
+		const vector<StyleSheetPtr> * mStyleSheetList;	
+
 	public:
 		/// Constructor of the StyleSheetList class.
 		/**
@@ -76,7 +83,7 @@ class StyleSheetList	{
 		~StyleSheetList();
 		
 		/// A function to get the number of stylesheets in the list.
-		unsigned long getLength();
+		unsigned long getLength() const;
 		
 		/// A function to get an item.
 		/**

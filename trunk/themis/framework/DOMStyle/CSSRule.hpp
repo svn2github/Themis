@@ -31,6 +31,19 @@
 #ifndef CSSRULE_HPP
 #define CSSRULE_HPP
 
+// DOM Style headers
+#include "DOMStyleSupport.hpp"
+
+// Declarations used
+class CSSRule;
+class CSSStyleSheet;
+
+// Typedefs used
+typedef boost::weak_ptr<CSSStyleSheet> CSSStyleSheetWeak;
+typedef boost::shared_ptr<CSSStyleSheet> CSSStyleSheetPtr;
+typedef boost::weak_ptr<CSSRule> CSSRuleWeak;
+typedef boost::shared_ptr<CSSRule> CSSRulePtr;
+
 /// CSSRule implementation of the DOM CSS.
 
 /**
@@ -40,6 +53,16 @@
 */
 
 class CSSRule	{
+
+	private:
+		/// The parent stylesheet.
+		CSSStyleSheetWeak mParentStyleSheet;
+		/// The parent rule.
+		CSSRuleWeak mParentRule;
+		/// The parent type.
+		unsigned short mType;
+		/// The parsable text of the rule.
+		TDOMString mCssText;
 
 	public:
 		enum	{
@@ -67,9 +90,10 @@ class CSSRule	{
 			@param	aParentStyleSheet	The parent style sheet.
 			@param	aParentRule			The parent rule.
 			@param	aType					The type of the rule.
+			@param	aCssText				The parsable text of the rule.
 		*/
 		CSSRule( CSSStyleSheetPtr aParentStyleSheet, CSSRulePtr aParentRule,
-					  unsigned short aType );
+					  unsigned short aType, const TDOMString aCssText );
 		
 		/// Destructor of the CSSRule class.
 		/**
@@ -106,14 +130,14 @@ class CSSRule	{
 		void setCssText( const TDOMString aCssText );
 		
 		/// A function to get the parent style sheet.
-		CSSStyleSheetPtr getParentStyleSheet();
+		CSSStyleSheetPtr getParentStyleSheet() const;
 
 		/// A function to get the parent rule.
 		/**
 			This function gets the parent rule if this rule is contained in another rule.
 			If it is not contained in another rule, it returns a null item.
 		*/		
-		CSSRulePtr getParentRule();
+		CSSRulePtr getParentRule() const;
 		
 };
 

@@ -32,9 +32,18 @@
 #define CSSSTYLESHEET_HPP
 
 // DOM Style headers
+#include "DOMStyleSupport.hpp"
+
+// Declarations used
+class CSSRule;
+class CSSRuleList;
+
+// Typedefs used
+typedef boost::shared_ptr<CSSRule> CSSRulePtr;
+typedef boost::shared_ptr<CSSRuleList> CSSRuleListPtr;
+
+// DOM Style headers
 #include "StyleSheet.hpp"
-#include "CSSRuleList.hpp"
-#include "CSSRule.hpp"
 
 /// CSSStyleSheet implementation of the DOM CSS.
 
@@ -46,6 +55,10 @@
 */
 
 class CSSStyleSheet	:	public StyleSheet	{
+
+	private:
+		/// The owner rule.
+		CSSRulePtr mOwnerRule;
 
 	public:
 		/// Constructor of the CSSStyleSheet class.

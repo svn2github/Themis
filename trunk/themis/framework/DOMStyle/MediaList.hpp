@@ -31,9 +31,8 @@
 #ifndef MEDIALIST_HPP
 #define MEDIALIST_HPP
 
-// Boost headers
-#include "boost/shared_ptr.hpp"
-#include "boost/weak_ptr.hpp"
+// DOM Style headers
+#include "DOMStyleSupport.hpp"
 
 // Declarations used
 class MediaList;
@@ -41,6 +40,12 @@ class MediaList;
 // Typedefs used
 typedef boost::weak_ptr<MediaList> MediaListWeak;
 typedef boost::shared_ptr<MediaList> MediaListPtr;
+
+// Standard C++ headers
+#include <vector>
+
+// Namespaces used
+using namespace std;
 
 /// MediaList implementation of the DOM Style Sheets.
 
@@ -53,13 +58,19 @@ typedef boost::shared_ptr<MediaList> MediaListPtr;
 
 class MediaList	{
 
+	private:
+		/// The list of media.
+		vector<TDOMString> mMediaList;
+
 	public:
 		/// Constructor of the MediaList class.
 		/**
 			The constructor of the MediaList class.
-			It does nothing as there is nothing to initialize.
+			It sets the media text to the supplied parameter.
+			
+			@param	aMediaText	The parsable textual representation.
 		*/
-		MediaList();
+		MediaList( const TDOMString aMediaText );
 		
 		/// Destructor of the MediaList class.
 		/**
@@ -76,13 +87,13 @@ class MediaList	{
 			This function sets the parsable textual representation of the media list
 			to the value supplied in the parameter.
 			
-			@param	aText	The new parsable textual representation.
+			@param	aMediaText	The new parsable textual representation.
 			
 			@exception	SYNTAX_ERR	Thrown if the new value is unparsable.
 			@exception	NO_MODIFICATION_ALLOWED_ERR
 								Thrown if the media list is readonly.
 		*/
-		void setMediaText( const TDOMString aText );
+		void setMediaText( const TDOMString aMediaText );
 		
 		/// A function to get the number of media in the list.
 		unsigned long getLength() const;

@@ -31,9 +31,8 @@
 #ifndef STYLESHEET_HPP
 #define STYLESHEET_HPP
 
-// Boost headers
-#include "boost/shared_ptr.hpp"
-#include "boost/weak_ptr.hpp"
+// DOM Style headers
+#include "DOMStyleSupport.hpp"
 
 // DOM headers
 #include "TNode.h"
@@ -58,6 +57,22 @@ typedef boost::shared_ptr<StyleSheet> StyleSheetPtr;
 */
 
 class StyleSheet	{
+
+	private:
+		/// The type of the stylesheet.
+		TDOMString mType;
+		/// The owner node of the stylesheet.
+		TNodeWeak mOwnerNode;
+		/// The parent stylesheet.
+		StyleSheetWeak mParentStyleSheet;
+		/// The href (location) of the stylesheet.
+		TDOMString mHref;
+		/// The title of the stylesheet.
+		TDOMString mTitle;
+		/// The media list of the stylesheet.
+		MediaListPtr mMedia;
+		/// The disabled status of the stylesheet.
+		bool mDisabled;
 
 	public:
 		/// Constructor of the StyleSheet class.
@@ -113,7 +128,7 @@ class StyleSheet	{
 			If this stylesheet is a top-level stylesheet or the stylesheet language
 			does not support inclusion, the parent stylesheet is NULL.
 		*/
-		TStyleSheetPtr getParentStyleSheet() const;
+		StyleSheetPtr getParentStyleSheet() const;
 
 		/// A function to get the href of the stylesheet.
 		/**
@@ -136,7 +151,7 @@ class StyleSheet	{
 			The media list could be specified in the owner node.
 			If no media have been specified, the media list is empty.
 		*/
-		MediaListPtr getMediaList() const;
+		MediaListPtr getMedia() const;
 
 };
 
