@@ -487,7 +487,7 @@ string BaseParser	::	processGI()	{
 
 	if ( mDocText->getChar() == '/' )	{
 		throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(), "Is an end tag",
-										false, false, false, "", true );
+										END_TAG_FOUND );
 	}
 
 	// Generic identifier and name are equivalent

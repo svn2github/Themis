@@ -140,6 +140,7 @@ void ElementParser	::	processElement( const TElementShared & aElementDecl,
 	}
 	// Get the end tag minimization
 	if ( child->getAttribute( "end" ) == "false" )	{
+		printf( "End tag not required\n" );
 		end = false;
 	}
 	// Get the exception list
@@ -164,7 +165,7 @@ void ElementParser	::	processElement( const TElementShared & aElementDecl,
 	catch( ReadException r )	{
 		printf( "Didn't find: %s\n", aElementDecl->getNodeName().c_str() );
 		mDocText->restoreState( save );
-		if ( start )	{
+		if ( start || r.isEndTag() )	{
 			throw r;
 		}
 		printf( "Start not required\n" );
@@ -199,7 +200,13 @@ void ElementParser	::	processElement( const TElementShared & aElementDecl,
 
 void ElementParser	::	processStartTag( const TElementShared & elementDecl )	{
 	
-	process( mStago );
+	try	{
+		process( mStago );
+	}
+	catch( ReadException r )	{
+		r.setReason( NO_TAG_FOUND );
+		throw r;
+	}
 	
 	// Skipping the document type specification for now
 	
@@ -216,8 +223,10 @@ void ElementParser	::	processStartTag( const TElementShared & elementDecl )	{
 	else	{
 		string error = "Expected start tag ";
 		error += elementDecl->getNodeName();
-		throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(),
-										error, true, false, true, name );
+		ReadException exception( mDocText->getLineNr(), mDocText->getCharNr(),
+											  error, WRONG_TAG_FOUND, true );
+		exception.setWrongTag( name );
+		throw exception;
 	}
 	
 	// Skipping some stuff for now
@@ -262,8 +271,10 @@ void ElementParser	::	processEndTag( const TElementShared & elementDecl )	{
 	else	{
 		string error = "Expected closing tag ";
 		error += elementDecl->getNodeName();
-		throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(),
-										error, true, false, true );
+		ReadException exception( mDocText->getLineNr(), mDocText->getCharNr(),
+											  error, WRONG_TAG_FOUND, true );
+		exception.setWrongTag( name );
+		throw exception;
 	}
 	
 	processSStar();
@@ -485,49 +496,56 @@ void ElementParser	::	processOr( const TElementShared & aContent,
 												 TNodeShared aParent )	{
 
 	printf( "At or element\n" );
+
 	TNodeListShared children = aContent->getChildNodes();
-	bool found = false;
+	string token = "";
 	for ( unsigned int i = 0; i < children->getLength(); i++ )	{
 		TNodeShared child = make_shared( children->item( i ) );
 		TElementShared element = shared_static_cast<TElement>( child );
-		try	{
-			processContent( element, aExceptions, aParent );
-			found = true;
-			break;
-		}
-		catch( ReadException r )	{
-			if ( ( ! r.isWrongTag() && r.isFatal() ) || r.isEndTag() )	{
-				throw r;
+		if ( element->getTagName() == token || token == "" )	{
+			try	{
+				processContent( element, aExceptions, aParent );
+				printf( "Finished or element\n" );
+				return;
 			}
-			if ( r.isWrongTag() )	{
-				string name = r.getWrongTag();
-				printf( "Need to find tag: %s. Have %s\n", name.c_str(), element->getNodeName().c_str() );
-				for ( unsigned int j = i; j < children->getLength(); j++ )	{
-					TNodeShared child = make_shared( children->item( j ) );
-					TElementShared element = shared_static_cast<TElement>( child );
-					if ( element->getTagName() == name )	{
-						printf( "Found right name: %s\n", name.c_str() );
-						try	{
-							processContent( element, aExceptions, aParent );
-							found = true;
-							break;
+			catch( ReadException r )	{
+				switch ( r.getReason() )	{
+					case WRONG_TAG_FOUND:	{
+						token = r.getWrongTag();
+						break;
+					}
+					case NO_TAG_FOUND:	{
+						printf( "NO TAG FOUND\n" );
+						TNodeListShared results = aContent->getElementsByTagName( "#PCDATA" );
+						if ( results->getLength() != 0 )	{
+							token = "#PCDATA";
 						}
-						catch( ReadException r )	{
-							if ( ! r.isWrongTag() && r.isFatal() )	{
-								throw r;
+						else	{
+							results = aContent->getElementsByTagName( "CDATA" );
+							if ( results->getLength() != 0 )	{
+								token = "CDATA";
 							}
 						}
+						break;
+					}
+					case END_TAG_FOUND:
+					case END_OF_FILE_REACHED:	{
+						throw r;
+						break;
+					}
+					default:	{
+						if ( r.isFatal() )	{
+							throw r;
+						}
+						break;
 					}
 				}
-				break;
 			}
 		}
 	}
-	if ( ! found )	{
-		throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(),
-										"No tag of or children found" );
-	}
-	printf( "Finished or element\n" );
+
+	throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(),
+									"No tag of or children found" );
 
 }
 
@@ -654,48 +672,56 @@ void ElementParser	::	processException( const TElementShared & aExceptions,
 	TNodeShared plusChild = make_shared( plus->getFirstChild() );
 	TNodeShared connectorNode = make_shared( plusChild->getFirstChild() );
 	TElementShared connector = shared_static_cast<TElement>( connectorNode );
-	TNodeListShared list = connector->getChildNodes();
-	for ( unsigned int i = 0; i < list->getLength(); i++ )	{
-		TNodeShared child = make_shared( list->item( i ) );
-		TElementShared elementDecl =
-			getElementDecl( child->getNodeName(), mElements );
-		try	{
-			printf( "Trying an exception tag\n" );
-			processElement( elementDecl, aParent );
-			return;
-		}
-		catch( ReadException r )	{
-			// Not the one. Try next one
-			if ( ( ! r.isWrongTag() && r.isFatal() ) || r.isEndTag() )	{
-				throw r;
+
+	TNodeListShared children = connector->getChildNodes();
+	string token = "";
+	for ( unsigned int i = 0; i < children->getLength(); i++ )	{
+		TNodeShared child = make_shared( children->item( i ) );
+		TElementShared element = getElementDecl( child->getNodeName(), mElements );
+		if ( element->getTagName() == token || token == "" )	{
+			try	{
+				processElement( element, aParent );
+				printf( "Finished exception\n" );
+				return;
 			}
-			if ( r.isWrongTag() )	{
-				string name = r.getWrongTag();
-				printf( "Need to find tag: %s. Have %s\n", name.c_str(), elementDecl->getNodeName().c_str() );
-				for ( unsigned int j = i; j < list->getLength(); j++ )	{
-					TNodeShared child = make_shared( list->item( j ) );
-					elementDecl =
-						getElementDecl( child->getNodeName(), mElements );
-					if ( elementDecl->getTagName() == name )	{
-						printf( "Found right name: %s\n", name.c_str() );
-						try	{
-							processElement( elementDecl, aParent );
-							return;
+			catch( ReadException r )	{
+				switch ( r.getReason() )	{
+					case WRONG_TAG_FOUND:	{
+						token = r.getWrongTag();
+						break;
+					}
+					case NO_TAG_FOUND:	{
+						printf( "NO TAG FOUND\n" );
+						TNodeListShared results = connector->getElementsByTagName( "#PCDATA" );
+						if ( results->getLength() != 0 )	{
+							token = "#PCDATA";
 						}
-						catch( ReadException r )	{
-							if ( ! r.isWrongTag() && r.isFatal() )	{
-								throw r;
+						else	{
+							results = connector->getElementsByTagName( "CDATA" );
+							if ( results->getLength() != 0 )	{
+								token = "CDATA";
 							}
 						}
+						break;
+					}
+					case END_TAG_FOUND:
+					case END_OF_FILE_REACHED:	{
+						throw r;
+						break;
+					}
+					default:	{
+						if ( r.isFatal() )	{
+							throw r;
+						}
+						break;
 					}
 				}
-				break;
 			}
 		}
 	}
 
-	throw ReadException( mDocText->getLineNr(),
-									mDocText->getCharNr(), "No exception found" );
+	throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(),
+									"No exception found" );
 
 }
 

@@ -46,7 +46,7 @@ char SGMLText	::	nextChar()	{
 		if ( mPositions.size() == 0 )	{
 			// End of total text reached
 			throw ReadException( current.getLineNr(), current.getCharNr(),
-											"End of text reached", true, true );
+											"End of text reached", END_OF_FILE_REACHED, true );
 		}
 		return getChar();
 	}

@@ -9,19 +9,15 @@
 #include "ReadException.hpp"
 
 ReadException	::	ReadException( unsigned int aLineNr, unsigned int aCharNr,
-												   string aErrorMessage, bool aFatal, bool aEof,
-												   bool aWrongTag, string aWrongTagString,
-												   bool aEndTag )	{
-		
+												   string aErrorMessage, ExceptionReason aReason,
+												   bool aFatal )	{
+
 	mLineNr = aLineNr;
 	mCharNr = aCharNr;
 	mErrorMessage = aErrorMessage;
+	mReason = aReason;
 	mFatal = aFatal;
-	mEof = aEof;
-	mWrongTag = aWrongTag;
-	mWrongTagString = aWrongTagString;
-	mEndTag = aEndTag;
-		
+
 }
 
 ReadException	::	~ReadException()	{
@@ -46,6 +42,18 @@ string ReadException	::	getErrorMessage() const	{
 	
 }
 
+ExceptionReason ReadException	::	getReason() const	{
+	
+	return mReason;
+	
+}
+
+void ReadException	::	setReason( ExceptionReason aReason )	{
+	
+	mReason = aReason;
+	
+}
+
 bool ReadException	::	isFatal() const	{
 	
 	return mFatal;
@@ -54,25 +62,43 @@ bool ReadException	::	isFatal() const	{
 
 bool ReadException	::	isEof() const	{
 	
-	return mEof;
+	if ( mReason == END_OF_FILE_REACHED )	{
+		return true;
+	}
+	
+	return false;
 	
 }
 
 bool ReadException	::	isWrongTag() const	{
 	
-	return mWrongTag;
+	if ( mReason == WRONG_TAG_FOUND )	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
+void ReadException	::	setWrongTag( string aWrongTag )	{
+	
+	mWrongTag = aWrongTag;
 	
 }
 
 string ReadException	::	getWrongTag() const	{
 	
-	return mWrongTagString;
+	return mWrongTag;
 	
 }
 
 bool ReadException	::	isEndTag() const	{
+
+	if ( mReason == END_TAG_FOUND )	{
+		return true;
+	}
 	
-	return mEndTag;
+	return false;	
 	
 }
 

@@ -15,6 +15,14 @@
 // Namespaces used
 using namespace std;
 
+enum ExceptionReason	{
+	GENERIC,
+	END_OF_FILE_REACHED,
+	WRONG_TAG_FOUND,
+	END_TAG_FOUND,
+	NO_TAG_FOUND
+};
+
 class ReadException	{
 	
 	private:
@@ -22,24 +30,24 @@ class ReadException	{
 		unsigned int mLineNr;
 		string mErrorMessage;
 		bool mFatal;
-		bool mEof;
-		bool mWrongTag;
-		bool mEndTag;
-		string mWrongTagString;
+		string mWrongTag;
+		ExceptionReason mReason;
 	
 	public:
 		ReadException( unsigned int aLineNr, unsigned int aCharNr,
-							   string aErrorMessage, bool aFatal = false, bool aEof = false,
-							   bool aWrongTag = false, string aWrongTagString = "",
-							   bool aEndTag = false );
+							   string aErrorMessage, ExceptionReason aReason = GENERIC,
+							   bool aFatal = false );
 		~ReadException();
 		unsigned int getCharNr() const;
 		unsigned int getLineNr() const;
 		string getErrorMessage() const;
+		ExceptionReason getReason() const;
+		void setReason( ExceptionReason aReason );
 		bool isFatal() const;
 		bool isEof() const;
 		bool isWrongTag() const;
 		bool isEndTag() const;
+		void setWrongTag( string aWrongTag );
 		string getWrongTag() const;
 		void setFatal( bool aFatal = true );
 		
