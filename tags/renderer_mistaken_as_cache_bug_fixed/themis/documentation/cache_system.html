@@ -1,0 +1,131 @@
+<HTML>
+<HEAD>
+<TITLE>cache system documentation.html</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff">
+<P>The New Cache System</P>
+<P>&nbsp;</P>
+<P>This is a quick overview of how the new cache system works, and which messages (along with which parameters) it requires.</P>
+<P>&nbsp;</P>
+<P>The new cache system handles both RAM and disk cache files, and does not allow direct access to the pointers of the file handlers. This is to make sure that no part of the application can do anything sneaky, such as writing to a cache file while some other part is also trying to write to it.</P>
+<P>&nbsp;</P>
+<P>So, without further ado, here it is.</P>
+<P>&nbsp;</P>
+<P>The best way to access the cache system is to use the pointer to the plug-in manager "PlugMan" in your add-on's PlugClass child class. Be sure to include the header file "plugman.h" in your source or header file so that you can properly reference this object without getting an error. You will also need to include "cacheplug.h" in your source or header, and add a CachePlug pointer somewhere. (Preferably in your class declaration so that it's available throughout your class.) For example:</P>
+<P>&nbsp;</P>
+<P>#include "plugclass.h"</P>
+<P>#include "plugman.h"</P>
+<P>#include "cacheplug.h"</P>
+<P>&nbsp;</P>
+<pre>
+class MyPlugin: public PlugClass {
+	public:
+		MyPlugin(BMessage *info=NULL);
+		~MyPlugin();
+		CachePlug *CacheSystem;//pointer to the cache plug-in object.
+		uint32 CacheUserToken;
+		status_t ReceiveBroadcast(BMessage *msg); 
+		...
+};
+</pre>
+<P>&nbsp;</P>
+<P>In your class constructor as well as in ReceiveBroadcast() you will want to try to find the cache object. Because it is nearly impossible to tell whether the cache plug-in will load before or after your plug-in, you need to cover your bases. Whenever the plug-in manager loads a plug-in, it sends a broadcast to all plug-ins notifying them of the plug-in most recently loaded; so we can utilize that feature if the cache plug-in is not already loaded when your plug-in is loaded.</P>
+<P>&nbsp;</P>
+<P>In your constructor, you will want to see if the cache plug-in has been loaded and if so, initialize your pointer to the appropriate address:</P>
+<P>&nbsp;</P>
+<pre>
+MyPlugin::MyPlugin(BMessage *info):PlugClass(info){
+	CacheSys=(CachePlug*)PlugMan-&gt;FindPlugin(CachePlugin);
+	CacheUserToken=0;
+	...
+}
+&nbsp;
+</pre>
+<P>If CacheSys is still NULL after your constructor completes, then you can safely assume that the cache plug-in has not yet been loaded. Note that you must include commondefs.h in order to use the "CachePlugin" value for FindPlugin. Otherwise you may simply use 'cash'.</P>
+<P>&nbsp;</P>
+<P>In your ReceiveBroadcast function, you will want to have similar behavior. When your plug-in receives a COMMAND_INFO broadcast with PlugInLoaded as the "what" value of the BMessage, you will want to check the newly loaded plug-in's Type to see if it matches the cache system's type:</P>
+<P>&nbsp;</P>
+<pre>
+status_t MyPlugin::ReceiveBroadcast(BMessage *msg) {
+	uint32 command=0;
+	command=msg-&gt;FindInt32("command");
+	switch(command) {
+		case COMMAND_INFO: {
+			switch(msg-&gt;what) {
+				case PlugInLoaded: {
+					PlugClass *pobj=NULL;
+					msg-&gt;FindPointer("plugin",(void**)&amp;pobj);
+					if (pobj!=NULL) {
+						if ((pobj-&gt;Type()&amp;TARGET_CACHE)!=0) {
+							CacheSys=(CachePlug*)pobj;
+						}
+					}
+				}break;
+				case PlugInUnloaded: {
+					uint32 type=0;
+					type=msg-&gt;FindInt32("type");
+					if ((type&amp;TARGET_CACHE)!=0) {
+						CacheSys=NULL;
+					}
+				}break;
+				case B_QUIT_REQUESTED: {
+					...
+				}break;
+			}
+		}break;
+		...
+	}
+}
+&nbsp;
+</pre>
+<P>As illustrated above, you may easily set and unset the pointer to the cache system, or update any variable necessary, so that you may properly access (or refrain from accessing) the cache in your plug-in.</P>
+<P>&nbsp;</P>
+<P>While it is possible to use the Themis broadcast system to access the cache, it is best accessed via pointer, as the broadcast system method requires that the cache user is also a plug-in. In addition, the broadcast system method requires the use of the BroadcastReply function in your plug-in. As in the http protocol plug-in, you may have to use semaphores or some other method to make sure that a response from the cache system is received if the cache system is loaded, and that it can handle a situation where no response is forthcoming if the cache system isn't loaded. This can be a major headache, so it's best to just use the pointer method. In addition, virtually none of the cache system's functionality is available [yet] via the Themis broadcast system.</P>
+<P>&nbsp;</P>
+<P>Once you have a valid pointer to the cache system, you will want to make a call to the Register function. If you do not register your plug-in, you will not be able to use much of the cache's functionality. The register function takes two parameters, though the second is optional. The first parameter should be your plug-in's type or target value as given to the broadcast system. This will be used so that you may receive updates of various sorts with regards to any URL's your plug-in might be interested in. The second parameter is a text description of your choice. At this point, it is not utilized at all, so it is completely optional. In the future, this description may be used for logging purposes if enabled. </P>
+<P>&nbsp;</P>
+<P>Continuing on our example above, you might register like this:</P>
+<P>&nbsp;</P>
+<P>...</P>
+<P>CacheUserToken=CacheSys-&gt;Register(Type(),"My Plug-in");</P>
+<P>...</P>
+<P>&nbsp;</P>
+<P>Be sure to keep the return value from the registration call. This value, called the cache user token, is used to manipulate the cache objects. It is used when reading and writing data and attributes to the cache object, as well as for simply finding a cached URL. </P>
+<P>&nbsp;</P>
+<P>The cache system handles two types of cache files: disk and RAM(memory). While it is most likely that disk cache files will be used, it sometimes happens that a memory cache file is used instead. For the most part, the type of cache file being handled is completely transparent to the user of the cache. (And the cache system itself for that matter.) The only control you as a user of the cache system have over whether the file to be cached is a memory or disk file, is when creating a cache object. Cache objects are created with the CreateObject function call as follows:</P>
+<P>&nbsp;</P>
+<P>For a memory cache object:</P>
+<P>CacheSys-&gt;CreateObject( CacheUserToken, "http://www.themisbrowser.org/", TYPE_RAM);</P>
+<P>&nbsp;</P>
+<P>For a disk cache object:</P>
+<P>CacheSys-&gt;CreateObject(CacheUserToken, "http://www.themisbrowser.org/", TYPE_DISK);</P>
+<P ALIGN="center">or</P>
+<P>CacheSys-&gt;CreateObject(CacheUserToken, "http://www.themisbrowser.org/");</P>
+<P>&nbsp;</P>
+<P>Notice that by default, disk cache files are created. Although it isn't illustrated in the example above, you will need to keep track of the int32 value returned by the function. This value is the cache object token (or simply object token). Also be aware that when you create a cache object, you are by default the "write lock owner." In order to write to any cache object, you must first acquire the write lock with the AcquireWriteLock call, which takes your cache user token and the object token as parameters. If you obtained the cache object token by searching for an URL, then you will need to acquire the write lock before you try to write to the file. The AcquireWriteLock function returns true if successfully acquired and false if not.</P>
+<P>&nbsp;</P>
+<P>The FindObject function is called relatively simply, and returns either B_ENTRY_NOT_FOUND or an int32 value for the cache object. The function call works as follows:</P>
+<P>&nbsp;</P>
+<P>int32 cacheobject=CacheSys-&gt;FindObject(CacheUserToken,"http://themis.sourceforge.net/");</P>
+<P>&nbsp;</P>
+<P>Again, if you will be using the cache object for more than a moment, you'll probably want to cache the value, and/or associate it with the URL you're dealing with.</P>
+<P>&nbsp;</P>
+<P>The remaining functions that you will most likely utilize are as follows:</P>
+<P>&nbsp;</P>
+<P>BMessage *GetInfo(uint32 usertoken, int32 objecttoken);</P>
+<P>ssize_t Write(uint32 usertoken, int32 objecttoken, void *data, size_t size);</P>
+<P>ssize_t Read(uint32 usertoken, int32 objecttoken, void *data, size_t size);</P>
+<P>ssize_t GetObjectSize(uint32 usertoken, int32 objecttoken);</P>
+<P>void ReleaseWriteLock(uint32 usertoken, int32 objecttoken);</P>
+<P>&nbsp;</P>
+<P>Most of these should be fairly obvious. The ReleaseWriteLock function release the write lock, so that some other part of the application may write to the cache file. GetInfo returns a BMessage with any and all attribute information that has been set on the cache object.</P>
+<P>&nbsp;</P>
+<P>GetObjectSize, Write, and Read all do as their names imply.</P>
+<P>&nbsp;</P>
+<P>As for the messages the cache system handles currently:</P>
+<P>&nbsp;</P>
+<TABLE WIDTH=400 HEIGHT=284 BORDER=1 CELLPADDING=1 CELLSPACING=2><TR><TD WIDTH=100 HEIGHT=17 COLSPAN=1 ROWSPAN=1><P>Command</TD><TD WIDTH=100 HEIGHT=17 COLSPAN=1 ROWSPAN=1><P>"what" Value</TD><TD WIDTH=100 HEIGHT=17 COLSPAN=1 ROWSPAN=1><P>Field and type</TD><TD WIDTH=100 HEIGHT=17 COLSPAN=1 ROWSPAN=1><P>Purpose</TD></TR><TR><TD WIDTH=100 HEIGHT=92 COLSPAN=1 ROWSPAN=1><P>COMMAND_STORE</TD><TD WIDTH=100 HEIGHT=92 COLSPAN=1 ROWSPAN=1><P>CreateCacheObject</TD><TD WIDTH=100 HEIGHT=92 COLSPAN=1 ROWSPAN=1><P>int32 cache_type</TD><TD WIDTH=100 HEIGHT=92 COLSPAN=1 ROWSPAN=1><P>TYPE_DISK or TYPE_RAM to determine whether the file is stored in RAM or on DISK.</TD></TR><TR><TD WIDTH=100 HEIGHT=32 COLSPAN=1 ROWSPAN=1></TD><TD WIDTH=100 HEIGHT=32 COLSPAN=1 ROWSPAN=1></TD><TD WIDTH=100 HEIGHT=32 COLSPAN=1 ROWSPAN=1><P>char* url</TD><TD WIDTH=100 HEIGHT=32 COLSPAN=1 ROWSPAN=1><P>The url to be stored.</TD></TR><TR><TD WIDTH=100 HEIGHT=32 COLSPAN=1 ROWSPAN=1></TD><TD WIDTH=100 HEIGHT=32 COLSPAN=1 ROWSPAN=1></TD><TD WIDTH=100 HEIGHT=32 COLSPAN=1 ROWSPAN=1><P>uint32 cache_user_token</TD><TD WIDTH=100 HEIGHT=32 COLSPAN=1 ROWSPAN=1><P>Your plug-in's cache user token.</TD></TR><TR><TD WIDTH=100 HEIGHT=47 COLSPAN=1 ROWSPAN=1></TD><TD WIDTH=100 HEIGHT=47 COLSPAN=1 ROWSPAN=1></TD><TD WIDTH=100 HEIGHT=47 COLSPAN=1 ROWSPAN=1><P>PlugClass*  ReplyToPointer</TD><TD WIDTH=100 HEIGHT=47 COLSPAN=1 ROWSPAN=1><P>Pointer to your plug-in's PlugClass derived object.</TD></TR><TR><TD WIDTH=100 HEIGHT=32 COLSPAN=1 ROWSPAN=1><P>COMMAND_INFO_REQUEST</TD><TD WIDTH=100 HEIGHT=32 COLSPAN=1 ROWSPAN=1><P>FindCachedObject</TD><TD WIDTH=100 HEIGHT=32 COLSPAN=1 ROWSPAN=1><P>cache_user_token</TD><TD WIDTH=100 HEIGHT=32 COLSPAN=1 ROWSPAN=1><P>Your plug-in's cache user token.</TD></TR><TR><TD WIDTH=100 HEIGHT=32 COLSPAN=1 ROWSPAN=1></TD><TD WIDTH=100 HEIGHT=32 COLSPAN=1 ROWSPAN=1></TD><TD WIDTH=100 HEIGHT=32 COLSPAN=1 ROWSPAN=1><P>char* url</TD><TD WIDTH=100 HEIGHT=32 COLSPAN=1 ROWSPAN=1><P>The url being requested.</TD></TR></TABLE><P>&nbsp;</P>
+<P>&nbsp;</P>
+<P>The messages it responds with are:</P>
+<TABLE WIDTH=400 HEIGHT=113 BORDER=1 CELLPADDING=1 CELLSPACING=2><TR><TD WIDTH=100 HEIGHT=17 COLSPAN=1 ROWSPAN=1><P>Command</TD><TD WIDTH=100 HEIGHT=17 COLSPAN=1 ROWSPAN=1><P>"what" Value</TD><TD WIDTH=100 HEIGHT=17 COLSPAN=1 ROWSPAN=1><P>Field and type</TD><TD WIDTH=100 HEIGHT=17 COLSPAN=1 ROWSPAN=1><P>Purpose</TD></TR><TR><TD WIDTH=100 HEIGHT=47 COLSPAN=1 ROWSPAN=1><P>COMMAND_INFO</TD><TD WIDTH=100 HEIGHT=47 COLSPAN=1 ROWSPAN=1><P>CachedObject</TD><TD WIDTH=100 HEIGHT=47 COLSPAN=1 ROWSPAN=1><P>int32 cache_object_token</TD><TD WIDTH=100 HEIGHT=47 COLSPAN=1 ROWSPAN=1><P>The object token of the URL requested.</TD></TR><TR><TD WIDTH=100 HEIGHT=32 COLSPAN=1 ROWSPAN=1><P>COMMAND_INFO</TD><TD WIDTH=100 HEIGHT=32 COLSPAN=1 ROWSPAN=1><P>CacheObjectNotFound</TD><TD WIDTH=100 HEIGHT=32 COLSPAN=1 ROWSPAN=1></TD><TD WIDTH=100 HEIGHT=32 COLSPAN=1 ROWSPAN=1><P>The file wasn't found.</TD></TR><TR><TD WIDTH=100 HEIGHT=17 COLSPAN=1 ROWSPAN=1></TD><TD WIDTH=100 HEIGHT=17 COLSPAN=1 ROWSPAN=1></TD><TD WIDTH=100 HEIGHT=17 COLSPAN=1 ROWSPAN=1></TD><TD WIDTH=100 HEIGHT=17 COLSPAN=1 ROWSPAN=1></TD></TR></TABLE></BODY>
+</HTML>

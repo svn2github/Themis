@@ -1,0 +1,31 @@
+Project Themis
+=======================
+PLEASE BE AWARE THAT THE MAKEFILE HAS CHANGED.
+Please remove any directories or binaries named "Themis" in your base working copy folder. (Where this notice is located.) If you do not, you may be in for a rather rude awakening. You may also remove, if you created it, the add-ons directory.
+
+To build Themis, simply type "make", but you may see other options by typing "make help".
+
+It is also no longer necessary to type "makelinks.sh" after pulling a new copy of the repository down. This file has been left for the sake of leaving it, but it no longer does anything. Why?
+
+The new makefile now builds dependencies and uses them properly. There are also centralized directories for object files, so that multiple targets that need the same object file(s) can access them from one place, rather than having to compile it again for each target.
+
+In addition, for those of you with multiprocessor/SMP machines,  you should be able to take advantage of the extra processors by adding a "-j" and the number of processors you'd like to use. For instance, in my dual machine I type "make -j2" to build more quickly.
+
+That's about it for now.
+-= Z3R0 One =-
+February 18, 2002
+=======================
+See any and all included source code for license info pertaining directly to Themis, but
+see individual licenses for any outside source code that might be included in this project.
+You know, the usual legal stuff applies, and all licenses must be followed as per their respective licenses otherwise the whole thing is pretty much null and void.
+
+
+This file is being included at the moment just to tell you to run the makelinks.sh script
+before attempting to build Themis. This creates one or more links that will make it possible
+to build plug-ins and/or other parts of the app. The second most important thing I can say right now is to run makelinks.sh from within your working Themis directory in a Terminal window.
+
+
+If you don't follow that little bit of advice, you're probably going to have lots of problems.
+
+-= Z3R0 One =-
+May 30, 2001
