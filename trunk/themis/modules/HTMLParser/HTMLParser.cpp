@@ -252,12 +252,10 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 						done->AddString( "type", "dom" );
 						done->AddPointer( "data_pointer", &mDocument );
 						
-						BMessage container;
-						container.AddMessage( "message", done );
+						Broadcast( MS_TARGET_ALL, done );
+
 						delete done;
 						done = NULL;
-						
-						Broadcast( MS_TARGET_ALL, &container );
 					}
 					break;
 				}
