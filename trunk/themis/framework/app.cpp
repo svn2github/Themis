@@ -84,10 +84,6 @@ void App::AboutRequested() {
 bool App::QuitRequested(){
 	printf("app destructor\n");
 	status_t stat;
-	TCP->lock->Lock();
-	stat=TCP->Quit();
-	TCP->lock->Unlock();
-	delete TCP;
 	BWindow *w=NULL;
 	BMessenger *msgr=NULL;
 	thread_id th;
@@ -110,6 +106,10 @@ bool App::QuitRequested(){
 	printf("App: Waiting for Plug-in manager to quit.\n");
 	wait_for_thread(th,&stat);
 	printf("Done.\n");
+	TCP->lock->Lock();
+	stat=TCP->Quit();
+	TCP->lock->Unlock();
+	delete TCP;
 	
 	//  PluginManager->Lock();
 	//  PluginManager->Quit();

@@ -257,7 +257,7 @@ void cacheman::MessageReceived(BMessage *mmsg)
       type_code type;
       int32 count,index;
      // char name[B_OS_NAME_LENGTH];
-      char *name;
+      char *name=NULL;
       if (msg->CountNames(B_ANY_TYPE)>=1)
        {
         printf("msg contains items\n");
@@ -277,6 +277,7 @@ void cacheman::MessageReceived(BMessage *mmsg)
         BNodeInfo *ni=new BNodeInfo(node);
         ni->SetType(ThemisCacheMIME);
         delete ni;
+//		memset(name,0,B_OS_NAME_LENGTH+1);
         printf("cache: About to loop...\n");
  //       msg->PrintToStream();
  		//memset(name,0,B_OS_NAME_LENGTH);
@@ -286,8 +287,9 @@ void cacheman::MessageReceived(BMessage *mmsg)
         for (index=0;msg->GetInfo(B_ANY_TYPE,index,&name,&type,&count)==B_OK; index++)
 #endif
          {
-          printf("cache - message: %s %ld %ld\n",name,type,count);
-          for (int i=0;i<count;i++)
+          printf("cache - message: %s %c%c%c%c %ld\n",name,type>>24,type>>16,type>>8,type,count);
+          for (int i=0;i<count;i++) {
+			  
            switch(type)
             {
 			 case B_INT64_TYPE:
@@ -304,7 +306,8 @@ void cacheman::MessageReceived(BMessage *mmsg)
 			  }break;
              case B_INT32_TYPE:
               {
-               if (strcasecmp(name,"what")==0)
+ 
+              if (strcasecmp(name,"what")==0)
                 continue;
                if (strcasecmp(name,"when")==0)
                 continue;
@@ -313,7 +316,7 @@ void cacheman::MessageReceived(BMessage *mmsg)
               {
                if (strcasecmp(name,"url")==0)
                 {
-                 msg->FindString(name,&fname);//let's reuse stuff! :)
+                 msg->FindString(name,&fname);//let's reuse stuff! 
                  printf("writing %s: %s\n",name,fname.String());
                  node->WriteAttr("Themis:URL",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
                  continue;
@@ -375,10 +378,13 @@ void cacheman::MessageReceived(BMessage *mmsg)
                  continue;
                 }
               }break;
+			   
             }
-          // memset(name,0,B_OS_NAME_LENGTH); 
+		  }
+		  name=NULL;
+		  
          }
-        node->Unlock();
+       node->Unlock();
         node->Sync();
         delete node;
         delete file;
@@ -387,7 +393,7 @@ void cacheman::MessageReceived(BMessage *mmsg)
        }
       delete msg;
       mmsg->SendReply(&reply);
-     }break;
+	 }break;
     case UpdateCachedObject:
      {
       type_code type;
@@ -403,11 +409,10 @@ void cacheman::MessageReceived(BMessage *mmsg)
         BNodeInfo *ni=new BNodeInfo(node);
         ni->SetType(ThemisCacheMIME);
         delete ni;
-        char *name;
+        char *name=NULL;
         BMessage reply(*msg);
-        printf("cache: About to loop...\n");
+        printf("cache (update): About to loop...\n");
  //       msg->PrintToStream();
- 		memset(name,0,B_OS_NAME_LENGTH);
  		BString fname;
 #if (B_BEOS_VERSION > 0x0504)
         for (index=0;msg->GetInfo(B_ANY_TYPE,index,(const char**)&name,&type,&count)==B_OK; index++)
@@ -415,7 +420,7 @@ void cacheman::MessageReceived(BMessage *mmsg)
         for (index=0;msg->GetInfo(B_ANY_TYPE,index,&name,&type,&count)==B_OK; index++)
 #endif
          {
-          printf("cache - message: %s %ld %ld\n",name,type,count);
+          printf("cache (update) - message: %s %c%c%c%c %ld\n",name,type>>24,type>>16,type>>8,type,count);
           for (int i=0;i<count;i++)
            switch(type)
             {
@@ -515,7 +520,7 @@ void cacheman::MessageReceived(BMessage *mmsg)
                 }
               }break;
             }
-          // memset(name,0,B_OS_NAME_LENGTH); 
+		  name=NULL;
          }
         node->Unlock();
         node->Sync();
@@ -528,6 +533,13 @@ void cacheman::MessageReceived(BMessage *mmsg)
      {
       mmsg->PrintToStream();
       printf("Clearing cache...\n");
+	  bool specific=false;
+	  BString url;
+	  if (mmsg->HasString("url")) {
+	  	mmsg->FindString("url",&url);
+		specific=true;
+	  }
+	  
       BVolumeRoster volr;
       BVolume vol;
       for (int i=0;i<5;i++)
@@ -541,6 +553,14 @@ void cacheman::MessageReceived(BMessage *mmsg)
           query.PushAttr("BEOS:TYPE");
           query.PushString(ThemisCacheMIME);
           query.PushOp(B_EQ);
+		  if (specific)
+		  {
+		  	query.PushAttr("Themis:URL");
+			query.PushString(url.String());
+			query.PushOp(B_EQ);
+		  	query.PushOp(B_AND);
+		  }
+		  
           query.Fetch();
           snooze(100000);
           BEntry ent;

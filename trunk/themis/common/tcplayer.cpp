@@ -817,7 +817,8 @@ int32 tcplayer::Receive(connection **conn, unsigned char *data, int32 size) {
 #ifdef USENETSERVER
 	if (got<=0) {
 //		printf("connection terminated.\n");
-		(*conn)->open=false;
+		CloseConnection((*conn));
+//		 (*conn)->open=false;
 	}
 #endif
 	return got;

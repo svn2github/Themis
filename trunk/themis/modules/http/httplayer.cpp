@@ -52,7 +52,7 @@ void DataReceived(connection *conn)
 }
 int32 LockHTTP(int32 timeout)
 {
-	return meHTTP->Lock();
+	return meHTTP->Lock(timeout);
 }
 void UnlockHTTP(void) 
 {
@@ -400,6 +400,7 @@ void httplayer::ClearRequests() {
 	release_sem(reqhandle_sem);
 	//The sem is released so that other processes may continue quicker.
 	while(curreq!=NULL) {
+		printf("clearing request at %p\n",curreq);
 		next=curreq->next;
 		delete curreq;
 		curreq=next;
@@ -407,6 +408,7 @@ void httplayer::ClearRequests() {
 	
 }
 void httplayer::KillRequest(http_request *request) {
+	printf("killing request %p\n",request);
 	acquire_sem(reqhandle_sem);
 	http_request *curreq=requests_head;
 	if (request==curreq) {
@@ -1410,6 +1412,13 @@ void httplayer::CloseRequest(http_request *request) {
 	msg->AddString("url",request->url);
 	msg->AddInt32("From",Proto->PlugID());
 	msg->AddPointer("FromPointer",Proto);
+	char *resultstr=NULL;
+	resultstr=FindHeader(request,"content-type");
+	int32 target=0;
+	if (resultstr!=NULL) {
+		msg->AddString("mimetype",resultstr);
+	}
+	resultstr=NULL;
 	if ((request->contentlen!=0) && (request->bytesreceived==request->contentlen))
 		msg->AddBool("request_done",true);
 	else {
@@ -1482,7 +1491,7 @@ char *httplayer::BuildRequest(http_request *request){
 			delete temp;
 			temp=NULL;
 			//check authentication zones vs domain being connected to.
-			reqstr << "Connection: keep-alive\r\n";
+			reqstr << "Connection: close\r\n";
 			auth_realm *realm=FindAuthRealm(request);
 			printf("Authentication realm: %p",realm);
 			fflush(stdout);
@@ -1682,6 +1691,7 @@ int32 httplayer::LayerManager() {
 	int32 bytes=0;
 	while (!quit) {
 		stat=Lock(20000);
+//		printf("http layermanager\n");
 		if (stat!=B_OK) {
 			snooze(10000);
 			continue;
