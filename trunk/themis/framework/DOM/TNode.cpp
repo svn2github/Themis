@@ -236,7 +236,7 @@ TNodeWeak TNode	::	insertBefore( TNodeShared aNewChild, TNodeShared aRefChild )	
 					}
 
 					// Insert aNewChild in the tree and adjust the pointers
-					mNodeList.insert( &mNodeList[ i - 1 ], aNewChild );
+					mNodeList.insert( &mNodeList[ i ], aNewChild );
 					aNewChild->mParentNode = mThisPointer;
 					aNewChild->mPreviousSibling = aRefChild->mPreviousSibling;
 					aNewChild->mNextSibling = aRefChild;
@@ -446,7 +446,7 @@ bool TNode	::	isSameNode( const TNodeShared aOther ) const	{
 }
 
 bool TNode	::	isAncestor( const TNodeShared aNode ) const	{
-	
+
 	TNodeWeak ancestorNode = mThisPointer;
 	ancestorNode = ancestorNode.get()->mParentNode;
 	while ( ancestorNode.get() != NULL )	{
