@@ -93,9 +93,9 @@ struct connection {
 	in_addr **pptr;
 	BString addrstr;
 	connection() {
+		usessl=false;
 #ifdef USEOPENSSL
 		sslbio=NULL;
-		usessl=false;
 		server_cert=NULL;
 		ssl=NULL;
 #endif
