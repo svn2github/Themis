@@ -88,7 +88,7 @@ UrlEntry::GetStatusText()
 const char*
 UrlEntry::GetTitle()
 {
-	printf( "  GetTitle(): %s\n", fTitle->String() );
+//	printf( "  GetTitle(): %s\n", fTitle->String() );
 	return fTitle ? fTitle->String() : "";
 }
 

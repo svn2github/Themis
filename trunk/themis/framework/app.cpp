@@ -161,13 +161,13 @@ void App::AboutRequested()
 
 uint32 App::BroadcastTarget() 
 {
-	printf("App\n");
+//	printf("App\n");
 	return MS_TARGET_APPLICATION;
 }
 
 status_t App::ReceiveBroadcast(BMessage *msg) 
 {
-	printf("App::ReceiveBroadcast\n");
+//	printf("App::ReceiveBroadcast\n");
 	return B_OK;
 }
 

@@ -176,7 +176,7 @@ UrlHandler::GetTitleFor(
 {
 	fLocker->Lock();
 
-	printf( "UrlHandler::GetTitleFor( %ld )\n", id );
+//	printf( "UrlHandler::GetTitleFor( %ld )\n", id );
 	
 	BString title;
 	
@@ -189,7 +189,7 @@ UrlHandler::GetTitleFor(
 		return "";
 	}
 	
-	printf( "  entry valid\n" );
+//	printf( "  entry valid\n" );
 	fLocker->Unlock();	
 	return entry->GetTitle();
 }
@@ -233,7 +233,7 @@ UrlHandler::ReceiveBroadcast(
 			{
 				case PlugInLoaded :
 				{
-					printf( "URLHANDLER: PlugInLoaded\n" );
+//					printf( "URLHANDLER: PlugInLoaded\n" );
 					
 					int32 plugid = 0;
 					msg->FindInt32( "plugid", &plugid );
@@ -294,7 +294,7 @@ UrlHandler::ReceiveBroadcast(
 				{
 					printf( "URLHANDLER: ReturnedData/UH_LOADING_PROGRESS\n" );
 					
-					msg->PrintToStream();
+					//msg->PrintToStream();
 					
 					int32 id = 0;
 					int64 contentlength = 0;
@@ -329,6 +329,8 @@ UrlHandler::ReceiveBroadcast(
 						
 						if( request_done == false )
 						{
+							printf( "URLHANDLER: Document is still loading...\n" );
+							
 							int8 loadprogress = -1;
 						
 							if( contentlength != 0 )
@@ -343,6 +345,8 @@ UrlHandler::ReceiveBroadcast(
 						}
 						else
 						{
+							printf( "URLHANDLER: Document loaded completely!\n" );
+							
 							entry->SetLoadingProgress( 100 );
 							
 							/*
@@ -442,7 +446,7 @@ UrlHandler::ReceiveBroadcast(
 							render->AddPointer( "dom_tree_pointer", dom_ptr );
 							render->AddInt32( "view_id", view_id );
 							
-							printf( "  URLHANDLER: sending UH_RENDER_START\n" );
+							printf( "URLHANDLER: sending UH_RENDER_START\n" );
 							
 							Broadcast( MS_TARGET_RENDERER, render );
 							
