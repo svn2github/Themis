@@ -33,8 +33,13 @@ class HTMLParser	{
 		bool mCloseTag; // Indicates if the current tag is a closing tag
 		TDocumentShared mDocument; // Stores the document to be build
 		string getTag();
+		void skipTag();
 		bool isStartTag()	;
+		bool isHeadingTag();
 		bool isFontStyleTag();
+		bool isPhraseTag();
+		bool isEmptyElementTag();
+		bool isBodyStyleTag();
 		string getText( bool aConserveSpaces = true );
 		string getAttrValue();
 		string getAttribute();		
@@ -46,14 +51,15 @@ class HTMLParser	{
 		void htmlTag();
 		void headTag( TElementShared aParent );
 		void titleTag( TElementShared aParent );
-		void bodyTag( TElementShared aParent );
+		void bodyStyleTag( TElementShared aParent );
 		void pTag( TElementShared aParent );
 		void headingTag( TElementShared aParent );
 		void preTag( TElementShared aParent );
 		void hrTag( TElementShared aParent );
-		void blockquoteTag( TElementShared aParent );
+		//void blockquoteTag( TElementShared aParent );
 		void aTag( TElementShared aParent );
-		void fontStyleTag( TElementShared aParent );
+		void emptyElementTag( TElementShared aParent );
+		void textLevelTag( TElementShared aParent );
 	
 	public:
 		HTMLParser();
