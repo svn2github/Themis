@@ -516,7 +516,7 @@ ifneq ($(MAKECMDGOALS),clean)
 endif
 #css parser addon
 csspaddon: $(BASE_ADDON_INSTALL_DIR)css_parser.so
-$(BASE_ADDON_INSTALL_DIR)css_parser.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(CSSPARSERSOURCES),$(BASE_ADDONS_OBJECT_DIR)CSSParser/$(notdir $(file:.cpp=.o)))
+$(BASE_ADDON_INSTALL_DIR)css_parser.so: $(BASE_INSTALL_DIR)Themis domlib $(foreach file,$(CSSPARSERSOURCES),$(BASE_ADDONS_OBJECT_DIR)CSSParser/$(notdir $(file:.cpp=.o)))
 	@echo "Linking css parser..."
 	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)css_parser.so $(foreach file,$(notdir $(CSSPARSERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)CSSParser/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=css_parser.so -L ./ -L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR)  $(STDLIBS) -lstdc++.r4 -ldom _APP_
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)css_parser.so
