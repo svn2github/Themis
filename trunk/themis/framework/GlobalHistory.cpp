@@ -47,7 +47,7 @@ GlobalHistory::~GlobalHistory()
 	printf( "GlobalHistory::~GlobalHistory()\n" );
 	printf( "  Putting GlobalHistoryData in AppSettings\n" );
 	
-	BMessage* collector = new BMessage;
+	BMessage collector;
 		
 	while( fList->CountItems() > 0 )
 	{
@@ -61,12 +61,11 @@ GlobalHistory::~GlobalHistory()
 //			printf( "  Adding following item to collector message:\n" );
 //			item->Print();
 			
-			BMessage* collitem = new BMessage;
-			collitem->AddString( "url", item->Text() );
-			collitem->AddInt32( "time", item->Time() );
+			BMessage collitem;
+			collitem.AddString( "url", item->Text() );
+			collitem.AddInt32( "time", item->Time() );
 			
-			collector->AddMessage( "GlobalHistoryItemMessage", collitem );
-			delete collitem;
+			collector.AddMessage( "GlobalHistoryItemMessage", &collitem );
 							
 			fList->RemoveItem( item );
 			delete item;
@@ -86,15 +85,13 @@ GlobalHistory::~GlobalHistory()
 	if( AppSettings->HasMessage( "GlobalHistoryData" ) )
 		AppSettings->ReplaceMessage(
 			"GlobalHistoryData",
-			collector );
+			&collector );
 	else
 		AppSettings->AddMessage(
 			"GlobalHistoryData",
-			collector );
+			&collector );
 	
 //	AppSettings->PrintToStream();
-	
-	delete collector;
 	
 	printf( "GlobalHistory destructor end.\n" );
 }
