@@ -123,9 +123,6 @@ App::~App(){
 	MsgSysUnregister(this);
 	if (!qr_called)
 		QuitRequested();
-	// delete the UrlHandler
-	if( fUrlHandler != NULL )
-		delete fUrlHandler;	
 	// delete GlobalHistory before AppSettings gets deleted
 	delete fGlobalHistory;
 	SaveSettings();
@@ -202,6 +199,12 @@ bool App::QuitRequested(){
 		}
 	}
 	printf( "done closing windows\n" );
+	
+	// Delete the UrlHandler here, as it is unregistering from the cache system in its
+	// destructor. This needs to be done before the PluginManager unloads all plugins.
+	if( fUrlHandler != NULL )
+		delete fUrlHandler;	
+	
 	if (PluginManager!=NULL) {
 		msgr=new BMessenger(NULL,PluginManager,NULL);
 		th=PluginManager->Thread();

@@ -702,6 +702,10 @@ void Win::MessageReceived(BMessage *msg) {
 				urlS.CopyInto(workurl,0,urlS.Length());
 				
 			}
+			
+			// ok, lets make a copy of url.
+			BString target_url( url );
+			
 			url=workurl;
 
 
@@ -750,6 +754,25 @@ void Win::MessageReceived(BMessage *msg) {
 			Broadcast(MS_TARGET_PROTOCOL,info);
 			delete info;
 			printf("Win: Done with request broadcast.\n");
+			
+			// I don't want to destroy anything working right now. So let's just
+			// get something new in.
+			
+			int32 view_id = ( int32 )view_uid;
+			
+			BMessage* uh = NULL;
+			if( msg->what == URL_OPEN )
+				uh = new BMessage( UH_LOAD_NEW_PAGE );
+			else
+				uh = new BMessage( UH_RELOAD_PAGE );
+			
+			uh->AddInt32( "command", COMMAND_INFO );
+			uh->AddInt32( "view_id", view_id );
+			uh->AddString( "target_url", target_url.String() );
+			
+			Broadcast( MS_TARGET_URLHANDLER, uh );
+			
+			delete uh;
 			
 		}break;
 		case URL_TYPED :
@@ -1417,6 +1440,20 @@ status_t Win::ReceiveBroadcast(BMessage *message)
 					}
 					break;
 				} // case ReturnedData
+				case UH_WIN_LOADING_PROGRESS :
+				{
+					printf( "WIN: UH_WIN_LOADING_PROGRESS\n" );
+					
+					// TODO
+					// Check wether we have the view with the given ID.
+					// If yes, check, wether this view is the current view.
+					// If so again, query the UrlHandler for the views information
+					// we need, and update the windows informational elements like
+					// tab title, window caption, loading progress/statusbar.
+					// Otherwise, break immedeately.
+					
+					break;
+				}
 			} // switch( message->what )
 			break;
 		} // case COMMAND_INFO :
