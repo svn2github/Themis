@@ -133,8 +133,8 @@ class BaseParser	{
 		bool process( const string & symbol, bool aException = true );
 		bool processS( bool aException = true );
 		bool processEe( bool aException = true );
-		void processComment();
-		void processParEntityReference();
+		bool processComment();
+		bool processParEntityReference();
 		string processLiteral();
 		void processParLiteral( TElementPtr & entity );
 		string processMinLiteral();
@@ -142,10 +142,10 @@ class BaseParser	{
 		string processName();
 		string processNameToken();
 		void processSStar();
-		void processPs();
+		bool processPs();
 		void processPsStar();
 		void processPsPlus();
-		void processTs();
+		bool processTs();
 		void processTsStar();
 		string processRepParData();
 		string processRepCharData();

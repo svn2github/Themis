@@ -25,7 +25,7 @@ class CommentDeclParser	:	public DeclarationParser	{
 	public:
 		CommentDeclParser( SGMLTextPtr aDocText, TDocumentPtr aDTD );
 		~CommentDeclParser();
-		virtual void processDeclaration();
+		virtual bool processDeclaration();
 	
 };
 

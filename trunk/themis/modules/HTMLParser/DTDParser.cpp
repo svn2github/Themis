@@ -96,77 +96,33 @@ void DTDParser	::	processDeclaration()	{
 
 	State save = mDocText->saveState();
 
-	try	{
-		entityDecl->parse( entityDecl->getEntityTexts() );
+	if ( entityDecl->parse( entityDecl->getEntityTexts() ) )	{
 		return;
-	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
-		}
-		else	{
-			mDocText->restoreState( save );
-		}
 	}
 
-	try	{
-		elementDecl->parse( entityDecl->getEntityTexts() );
+	if ( elementDecl->parse( entityDecl->getEntityTexts() ) )	{
 		return;
-	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
-		}
-		else	{
-			mDocText->restoreState( save );
-		}
 	}
 
-	try	{
-		attrListDecl->parse( entityDecl->getEntityTexts() );
+	if ( attrListDecl->parse( entityDecl->getEntityTexts() ) )	{
 		return;
-	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
-		}
-		else	{
-			mDocText->restoreState( save );
-		}
 	}
 
 	throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(), "Declaration expected" );
 	
 }
 
-void DTDParser	::	processDs()	{
+bool DTDParser	::	processDs()	{
 
-	try	{
-		processS();
-		return;
+	if ( processS( false ) )	{
+		return true;
 	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
-		}
+	if ( processEe( false ) )	{
+		return true;
 	}
-	try	{
-		processEe();
-		return;
-	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
-		}
-	}
-	try	{
-		processParEntityReference();
-		return;
-	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
-		}
+
+	if ( processParEntityReference() )	{
+		return true;
 	}
 
 	State save = mDocText->saveState();
@@ -174,7 +130,7 @@ void DTDParser	::	processDs()	{
 	try	{
 		commentDecl->parse();
 		//printf( "Comment declaration parsed\n" );
-		return;
+		return true;
 	}
 	catch( ReadException r )	{
 		if ( r.isFatal() )	{
@@ -187,7 +143,7 @@ void DTDParser	::	processDs()	{
 	try	{
 		markedSecDecl->parse( entityDecl->getEntityTexts() );
 		//printf( "Marked Section declaration parsed\n" );
-		return;
+		return true;
 	}
 	catch( ReadException r )	{
 		if ( r.isFatal() )	{
@@ -198,7 +154,7 @@ void DTDParser	::	processDs()	{
 		}
 	}
 
-	throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(), "Ds expected" );
+	return false;
 	
 }
 
@@ -206,17 +162,7 @@ void DTDParser	::	processDsStar()	{
 
 	bool dsFound = true;
 	while ( dsFound )	{
-		try	{
-			processDs();
-		}
-		catch( ReadException r )	{
-			if ( r.isFatal() )	{
-				throw r;
-			}
-			else	{
-				dsFound = false;
-			}
-		}
+		dsFound = processDs();
 	}
 
 }

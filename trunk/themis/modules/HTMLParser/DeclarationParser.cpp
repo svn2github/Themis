@@ -58,48 +58,50 @@ void DeclarationParser	::	setDTD( TDocumentPtr aDTD )	{
 	
 }
 
-void DeclarationParser	::	parse( const map<string, Position> & aEntityTexts )	{
+bool DeclarationParser	::	parse( const map<string, Position> & aEntityTexts )	{
 
 	mEntityTexts = aEntityTexts;
 
-	processDeclaration();
+	return processDeclaration();
 	
 }
 
-void DeclarationParser	::	parse()	{
+bool DeclarationParser	::	parse()	{
 	
-	processDeclaration();
-	
-}
-
-void DeclarationParser	::	processDeclaration()	{
+	return processDeclaration();
 	
 }
 
-void DeclarationParser	::	processExtEntitySpec( TElementPtr & entity )	{
-
-	processExternalId( entity );
+bool DeclarationParser	::	processDeclaration()	{
+	
+	return false;
 	
 }
 
-void DeclarationParser	::	processExternalId( TElementPtr & entity )	{
+bool DeclarationParser	::	processExtEntitySpec( TElementPtr & entity )	{
 
-	try	{
-		process( kSYSTEM );
+	return processExternalId( entity );
+	
+}
+
+bool DeclarationParser	::	processExternalId( TElementPtr & entity )	{
+
+	if ( process( kSYSTEM, false ) )	{
 		entity->setAttribute( "type", kSYSTEM );
 	}
-	catch( ReadException r )	{
+	else	{
 		// Not a system identifier. Must be public.
-		try	{
-			process( kPUBLIC );
+		if ( process( kPUBLIC, false ) )	{
 			entity->setAttribute( "type", kPUBLIC );
 			processPsPlus();
 			string text = processPublicId();
 			entity->setAttribute( "text", text );
 		}
-		catch( ReadException r )	{
-			r.setFatal();
-			throw r;
+		else	{
+			throw ReadException( mDocText->getLineNr(),
+											mDocText->getCharNr(),
+											"PUBLIC or SYSTEM identifier expected",
+											GENERIC, true );
 		}
 	}
 	
@@ -111,12 +113,13 @@ void DeclarationParser	::	processExternalId( TElementPtr & entity )	{
 		// Do nothing
 	}
 	
+	return true;
+	
 }
 
 string DeclarationParser	::	processPublicId()	{
 	
 	string text = "";
-
 	text = processMinLiteral();
 
 	return text;
@@ -126,7 +129,6 @@ string DeclarationParser	::	processPublicId()	{
 string DeclarationParser	::	processSystemId()	{
 	
 	string text = "";
-	
 	text = processMinLiteral();
 	
 	return text;

@@ -24,7 +24,7 @@ MarkedSecDeclParser	::	~MarkedSecDeclParser()	{
 	
 }
 
-void MarkedSecDeclParser	::	processDeclaration()	{
+bool MarkedSecDeclParser	::	processDeclaration()	{
 
 	process( mMdo );
 	process( mDso );
@@ -65,6 +65,8 @@ void MarkedSecDeclParser	::	processDeclaration()	{
 		throw r;
 	}
 	
+	return true;
+	
 }
 
 void MarkedSecDeclParser	::	processStatusKeyWordSpec()	{
@@ -79,42 +81,24 @@ void MarkedSecDeclParser	::	processStatusKeyWordSpec()	{
 
 void MarkedSecDeclParser	::	processStatusKeyWord()	{
 
-	try	{
-		process( kCDATA );
+	if ( process( kCDATA, false ) )	{
 		return;
 	}
-	catch( ReadException r )	{
-		// Do nothing
-	}	
-	try	{
-		process( kIGNORE );
+	if ( process( kIGNORE, false ) )	{
 		return;
 	}
-	catch( ReadException r )	{
-		// Do nothing
-	}	
-	try	{
-		process( kINCLUDE );
+	if ( process( kINCLUDE, false ) )	{
 		return;
 	}
-	catch( ReadException r )	{
-		// Do nothing
-	}	
-	try	{
-		process( kRCDATA );
+	if ( process( kRCDATA, false ) )	{
 		return;
 	}
-	catch( ReadException r )	{
-		// Do nothing
-	}	
-	try	{
-		process( kTEMP );
+	if ( process( kTEMP, false ) )	{
 		return;
 	}
-	catch( ReadException r )	{
-		// Do nothing
-	}	
 
-	throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(), "Status keyword expected" );
+	throw ReadException( mDocText->getLineNr(),
+									mDocText->getCharNr(),
+									"Status keyword expected" );
 	
 }

@@ -43,8 +43,8 @@ class ElementParser	:	public BaseParser	{
 												   const TElementPtr & aElementDecl,
 												   TNodePtr aParent );
 		void processUnknownTags( TNodePtr aParent );
-		void processUnknownStartTag( TNodePtr aParent );
-		void processUnknownEndTag();
+		bool processUnknownStartTag( TNodePtr aParent );
+		bool processUnknownEndTag();
 		void processElement( const TDOMString & aName,
 										const TElementPtr & aElementDecl,
 										TNodePtr aParent );
@@ -90,6 +90,8 @@ class ElementParser	:	public BaseParser	{
 												   TElementPtr declarations ) const;
 		void processComments();
 		void processComment();
+		TElementPtr getElement( TElementPtr aElement,
+											 const TDOMString & aName );
 
 };
 

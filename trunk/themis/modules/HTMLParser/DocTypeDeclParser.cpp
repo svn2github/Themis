@@ -26,7 +26,7 @@ DocTypeDeclParser	::	~DocTypeDeclParser()	{
 	
 }
 
-void DocTypeDeclParser	::	processDeclaration()	{
+bool DocTypeDeclParser	::	processDeclaration()	{
 	
 	process( mMdo );
 	process( kDOCTYPE );
@@ -69,6 +69,8 @@ void DocTypeDeclParser	::	processDeclaration()	{
 		r.setFatal();
 		throw r;
 	}
+	
+	return true;
 	
 }
 

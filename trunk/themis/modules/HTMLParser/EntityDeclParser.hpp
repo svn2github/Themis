@@ -26,10 +26,10 @@ class EntityDeclParser	:	public DeclarationParser	{
 		EntityDeclParser( SGMLTextPtr aDocText, TDocumentPtr aDTD );
 		~EntityDeclParser();
 		map<string, Position> getEntityTexts();
-		void processDeclaration();
+		bool processDeclaration();
 		TElementPtr processEntityName();
 		void processEntityText( TElementPtr & entity );
-		void processDataText( TElementPtr & entity );
+		bool processDataText( TElementPtr & entity );
 		string processGenEntityName();
 		string processParEntityName();
 	

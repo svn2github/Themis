@@ -44,7 +44,7 @@ class DTDParser	:	public BaseParser	{
 		
 		// Functions
 		void processDeclaration();
-		void processDs();
+		bool processDs();
 		void processDsStar();
 
 	public:

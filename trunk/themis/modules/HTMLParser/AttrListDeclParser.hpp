@@ -29,7 +29,7 @@ class AttrListDeclParser	:	public DeclarationParser	{
 	public:
 		AttrListDeclParser( SGMLTextPtr aDocText, TDocumentPtr aDTD );
 		~AttrListDeclParser();
-		virtual void processDeclaration();
+		virtual bool processDeclaration();
 		TElementPtr processAssElementType();
 		TElementPtr processAttrDefList();
 		TElementPtr processAttrDef();

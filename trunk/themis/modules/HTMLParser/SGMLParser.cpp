@@ -118,17 +118,8 @@ void SGMLParser	::	processOtherProlog()	{
 		}
 	}
 
-	try	{
-		processS();
+	if ( processS( false ) )	{
 		return;
-	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
-		}
-		else	{
-			mDocText->restoreState( save );
-		}
 	}
 	
 	throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(),
@@ -197,7 +188,7 @@ void SGMLParser	::	processDocElement()	{
 TDocumentPtr SGMLParser	::	parse()	{
 	
 	parseDTD();
-	showTree( mDTD, 0 );
+	//showTree( mDTD, 0 );
 
 	mDocText->reset();
 	

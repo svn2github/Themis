@@ -28,7 +28,7 @@ class DocTypeDeclParser	:	public DeclarationParser	{
 	public:
 		DocTypeDeclParser( SGMLTextPtr aDocText, TDocumentPtr aDTD );
 		~DocTypeDeclParser();
-		virtual void processDeclaration();
+		virtual bool processDeclaration();
 		string processDocTypeName();
 		string getDocTypeName() const;
 	

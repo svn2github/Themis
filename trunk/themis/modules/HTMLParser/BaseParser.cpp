@@ -102,7 +102,9 @@ bool BaseParser	::	process( const string & symbol, bool aException )	{
 			else	{
 				string error = "Expected ";
 				error += symbol;
-				throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(), error );
+				throw ReadException( mDocText->getLineNr(),
+												mDocText->getCharNr(),
+												error );
 			}
 		}
 	}
@@ -151,11 +153,13 @@ bool BaseParser	::	processEe( bool aException )	{
 	
 }
 
-void BaseParser	::	processComment()	{
+bool BaseParser	::	processComment()	{
 
 	string comment = "";
 
-	process( mCom );
+	if ( ! process( mCom, false ) )	{
+		return false;
+	}
 	bool comFound = false;
 	while ( ! comFound )	{
 		if ( process( mCom, false ) )	{
@@ -168,13 +172,19 @@ void BaseParser	::	processComment()	{
 		}
 	}
 	
+	return true;
+	
 }
 
-void BaseParser	::	processParEntityReference()	{
+bool BaseParser	::	processParEntityReference()	{
 
+	// WARNING: Doesn't need to throw an exception. Change it. !!!!
+	
 	// Fix me
 	State save = mDocText->saveState();
-	process( mPero );
+	if ( ! process( mPero, false ) )	{
+		return false;
+	}
 	
 	string name = "";
 	try	{
@@ -183,7 +193,12 @@ void BaseParser	::	processParEntityReference()	{
 	catch( ReadException r )	{
 		// Probably not a parameter entity reference. Set index back
 		mDocText->restoreState( save );
-		throw r;
+		if ( r.isFatal() )	{
+			throw r;
+		}
+		else	{
+			return false;
+		}
 	}
 
 	// Can be omitted
@@ -207,6 +222,8 @@ void BaseParser	::	processParEntityReference()	{
 			}
 		}
 	}
+	
+	return true;
 	
 }
 
@@ -241,13 +258,7 @@ void BaseParser	::	processParLiteral( TElementPtr & entity )	{
 		}
 		else	{
 			// Not yet found. Process replacable parameter data
-			try	{
-				text += processRepParData();
-			}
-			catch( ReadException r )	{
-				r.setFatal();
-				throw r;
-			}
+			text += processRepParData();
 		}
 	}
 
@@ -302,7 +313,9 @@ string BaseParser	::	processName()	{
 	string name = "";
 
 	if ( ! isalpha( mDocText->getChar() ) )	{
-		throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(), "Not a name" );
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Not a name" );
 	}
 	
 	name += toupper( mDocText->getChar() );
@@ -334,7 +347,9 @@ string BaseParser	::	processNameToken()	{
 	}
 	
 	if ( start == mDocText->getIndex() )	{
-		throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(), "Not a name token" );
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Not a name token" );
 	}
 	
 	return token;
@@ -345,58 +360,27 @@ void BaseParser	::	processSStar()	{
 	
 	bool sFound = true;
 	while ( sFound )	{
-		try	{
-			processS();
-		}
-		catch( ReadException r )	{
-			if ( r.isFatal() )	{
-				throw r;
-			}
-			else	{
-				sFound = false;
-			}
-		}
+		sFound = processS( false );
 	}
 
 }
 
-void BaseParser	::	processPs()	{
+bool BaseParser	::	processPs()	{
 
-	switch( mDocText->getChar() )	{
-		case '-':	{
-			try	{
-				processComment();
-				return;
-			}
-			catch( ReadException r )	{
-				if ( r.isFatal() )	{
-					throw;
-				}
-				break;
-			}
-		}
-		case '%':	{
-			try	{
-				processParEntityReference();
-				return;
-			}
-			catch( ReadException r )	{
-				if ( r.isFatal() )	{
-					throw r;
-				}
-				break;
-			}
-		}
+	if ( processComment() )	{
+		return true;
 	}
-
+	if ( processParEntityReference() )	{
+		return true;
+	}
 	if ( processS( false ) )	{
-		return;
+		return true;
 	}
 	if ( processEe( false ) )	{
-		return;
+		return true;
 	}
 
-	throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(), "Ps expected" );
+	return false;
 	
 }
 
@@ -404,79 +388,43 @@ void BaseParser	::	processPsStar()	{
 
 	bool psFound = true;
 	while ( psFound )	{
-		try	{
-			processPs();
-		}
-		catch( ReadException r )	{
-			if ( r.isFatal() )	{
-				throw r;
-			}
-			else	{
-				psFound = false;
-			}
-		}
+		psFound = processPs();
 	}
 	
 }
 
 void BaseParser	::	processPsPlus()	{
-	
-	try	{
-		processPs();
+
+	if ( ! processPs() )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Ps expected" );
 	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
-	try	{
-		processPsStar();
-	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
+	processPsStar();
 	
 }
 
-void BaseParser	::	processTs()	{
+bool BaseParser	::	processTs()	{
 
-	if ( mDocText->getChar() == mPero[0] )	{
-		try	{
-			processParEntityReference();
-			return;
-		}
-		catch( ReadException r )	{
-			if ( r.isFatal() )	{
-				throw r;
-			}
-		}	
+	if ( processParEntityReference() )	{
+		return true;
 	}
-
 	if ( processS( false ) )	{
-		return;
+		return true;
 	}
 	if ( processEe( false ) )	{
-		return;
+		return true;
 	}
 
-	throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(), "Ts expected" );
-	
+	return false;
+		
 }
 
 void BaseParser	::	processTsStar()	{
 
 	bool tsFound = true;
 	while ( tsFound )	{
-		try	{
-			processTs();
-		}
-		catch( ReadException r )	{
-			if ( r.isFatal() )	{
-				throw r;
-			}
-			else	{
-				tsFound = false;
-			}
-		}
+		tsFound =	processTs();
 	}
 	
 }
@@ -506,7 +454,9 @@ string BaseParser	::	processRepCharData()	{
 string BaseParser	::	processGI()	{
 
 	if ( mDocText->getChar() == '/' )	{
-		throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(), "Is an end tag",
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Is an end tag",
 										END_TAG_FOUND );
 	}
 

@@ -24,31 +24,21 @@ CommentDeclParser	::	~CommentDeclParser()	{
 	
 }
 
-void CommentDeclParser	::	processDeclaration()	{
+bool CommentDeclParser	::	processDeclaration()	{
 	
 	process( mMdo );
-	processComment();
+	if ( ! processComment() )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Comment expected" );
+	}
 	bool moreData = true;
 	while ( moreData )	{
-		try	{
-			processS();
+		if ( processS( false ) )	{
 			continue;
 		}
-		catch( ReadException r )	{
-			if ( r.isFatal() )	{
-				throw r;
-			}
-		}
-		try	{
-			processComment();
-		}
-		catch( ReadException r )	{
-			if ( r.isFatal() )	{
-				throw r;
-			}
-			else	{
-				moreData = false;
-			}
+		if ( ! processComment() )	{
+			moreData = false;
 		}
 	}
 
@@ -59,5 +49,7 @@ void CommentDeclParser	::	processDeclaration()	{
 		r.setFatal();
 		throw r;
 	}
+	
+	return true;
 	
 }

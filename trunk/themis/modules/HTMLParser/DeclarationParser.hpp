@@ -27,11 +27,11 @@ class DeclarationParser	:	public BaseParser	{
 		virtual ~DeclarationParser();
 		void setDocText( SGMLTextPtr aDocText );
 		void setDTD( TDocumentPtr aDTD );
-		void parse( const map<string, Position> & aEntityTexts );
-		void parse();	// If you don't need entities
-		virtual void processDeclaration();
-		void processExtEntitySpec( TElementPtr & entity );
-		void processExternalId( TElementPtr & entity );
+		bool parse( const map<string, Position> & aEntityTexts );
+		bool parse();	// If you don't need entities
+		virtual bool processDeclaration();
+		bool processExtEntitySpec( TElementPtr & entity );
+		bool processExternalId( TElementPtr & entity );
 		string processPublicId();
 		string processSystemId();
 	

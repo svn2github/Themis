@@ -28,20 +28,21 @@ class ElementDeclParser	:	public DeclarationParser	{
 	public:
 		ElementDeclParser( SGMLTextPtr aDocText, TDocumentPtr aDTD );
 		~ElementDeclParser();
-		virtual void processDeclaration();
+		bool processDeclaration();
 		TElementPtr processElementType();
 		void processTagMin( TElementPtr aElement );
-		void processDeclContent( TElementPtr aElement );
+		bool processDeclContent( TElementPtr aElement,
+											  bool aException = true );
 		void processContentModel( TElementPtr aElement );
 		TElementPtr processModelGroup();
 		TElementPtr processSubModelGroup();
 		TElementPtr processContentToken();
 		TElementPtr processPrimContentToken();
 		TElementPtr processElementToken();
-		TElementPtr processOccIndicator();
+		TElementPtr processOccIndicator( TElementPtr aElementToken );
 		TElementPtr processExceptions();
-		TElementPtr processExclusions();
-		TElementPtr processInclusions();
+		bool processExclusions( TElementPtr aExceptions );
+		bool processInclusions( TElementPtr aExceptions );
 
 		// Test function
 		void showTree( TNodePtr aNode, int aSpacing );

@@ -28,25 +28,25 @@ AttrListDeclParser	::	~AttrListDeclParser()	{
 
 }
 
-void AttrListDeclParser	::	processDeclaration()	{
+bool AttrListDeclParser	::	processDeclaration()	{
 
 	// Define an element to store the attribute list declaration
 	TElementPtr declaration = mDTD->createElement( "declaration" );
 	TElementPtr element;
 	
 	//process( mMdo );
-	process( kATTLIST );
+	if ( ! process( kATTLIST, false ) )	{
+		return false;
+	}
 
 	try	{
 		processPsPlus();
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
-	
-	try	{
 		element = processAssElementType();
+		processPsPlus();
+		TElementPtr attrDefList = processAttrDefList();
+		declaration->appendChild( attrDefList );
+		processPsStar();
+		process( mMdc );
 	}
 	catch( ReadException r )	{
 		r.setFatal();
@@ -63,41 +63,9 @@ void AttrListDeclParser	::	processDeclaration()	{
 		elements->appendChild( element );
 	}
 
-	try	{
-		processPsPlus();
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
-
-	try	{
-		TElementPtr attrDefList = processAttrDefList();
-		declaration->appendChild( attrDefList );
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
-	
-	try	{
-		processPsStar();
-	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
-		}
-	}
-	
-	try	{
-		process( mMdc );
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
-
 	mAttrLists->appendChild( declaration );
+
+	return true;
 
 }
 

@@ -18,14 +18,10 @@ EntityDeclParser	::	EntityDeclParser( SGMLTextPtr aDocText,
 													  TDocumentPtr aDTD )
 								:	DeclarationParser( aDocText, aDTD )	{
 
-	//printf( "Constructing EntityDeclParser\n" );
-	
 }
 
 EntityDeclParser	::	~EntityDeclParser()	{
 
-	//printf( "Destroying EntityDeclParser\n" );
-	
 }
 
 map<string, Position> EntityDeclParser	::	getEntityTexts()	{
@@ -34,56 +30,22 @@ map<string, Position> EntityDeclParser	::	getEntityTexts()	{
 	
 }
 
-void EntityDeclParser	::	processDeclaration()	{
+bool EntityDeclParser	::	processDeclaration()	{
 
 	// Create an element to store the entity
 	TElementPtr entity;
 
 	//process( mMdo );
-	process( kENTITY );
+	if ( ! process( kENTITY, false ) )	{
+		return false;
+	}
 
 	try	{
 		processPsPlus();
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
-	
-	try	{
 		entity = processEntityName();
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}		
-
-	try	{
 		processPsPlus();
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
-
-	try	{
 		processEntityText( entity );
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}		
-
-	try	{
 		processPsStar();
-	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
-		}
-	}
-	
-	try	{
 		process( mMdc );
 	}
 	catch( ReadException r )	{
@@ -91,8 +53,7 @@ void EntityDeclParser	::	processDeclaration()	{
 		throw r;
 	}
 	
-//	printf( "Entity found: %s with text: %s\n", entity->getNodeName().c_str(),
-//			  entity->getAttribute( "text" ).c_str() );
+	return true;
 
 }
 
@@ -131,58 +92,46 @@ void EntityDeclParser	::	processEntityText( TElementPtr & entity )	{
 	catch( ReadException r )	{
 		// Do nothing
 	}
-	try	{
-		processDataText( entity );
+	if ( processDataText( entity ) )	{
 		return;
 	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
-	try	{
-		processExtEntitySpec( entity );
+	if ( processExtEntitySpec( entity ) )	{
 		return;
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
 	}
 
 }
 
-void EntityDeclParser	::	processDataText( TElementPtr & entity )	{
+bool EntityDeclParser	::	processDataText( TElementPtr & entity )	{
 
-	try	{
-		process( kCDATA );
+	if ( process( kCDATA, false ) )	{
 		entity->setAttribute( "type", kCDATA );
 	}
-	catch( ReadException r )	{
+	else	{
 		// Not CDATA. Try SDATA
-		try	{
-			process( kSDATA );
+		if ( process( kSDATA, false ) )	{
 			entity->setAttribute( "type", kSDATA );
 		}
-		catch( ReadException r )	{
+		else	{
 			// Not SDATA. Must be PI
-			process( kPI );
-			entity->setAttribute( "type", kPI );
+			if ( process( kPI, false ) )	{
+				entity->setAttribute( "type", kPI );
+			}
+			else	{
+				return false;
+			}
 		}
 	}
 
 	try	{
 		processPsPlus();
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
-	
-	try	{
 		processParLiteral( entity );
 	}
 	catch( ReadException r )	{
 		r.setFatal();
 		throw r;
 	}
+
+	return true;
 
 }
 
@@ -199,13 +148,6 @@ string EntityDeclParser	::	processParEntityName()	{
 
 	try	{
 		processPsPlus();
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
-	
-	try	{
 		return processName();
 	}
 	catch( ReadException r )	{

@@ -30,33 +30,31 @@ ElementDeclParser	::	~ElementDeclParser()	{
 
 }
 
-void ElementDeclParser	::	processDeclaration()	{
+bool ElementDeclParser	::	processDeclaration()	{
 
 	// Define an element to store the element declaration
 	TElementPtr declaration = mDTD->createElement( "declaration" );
+	TElementPtr minimization = mDTD->createElement( "minimization" );
+	TElementPtr content = mDTD->createElement( "content" );
 	TElementPtr element;
 
 	//process( mMdo );
-	process( kELEMENT );
+	if ( ! process( kELEMENT, false ) )	{
+		return false;
+	}
 	
 	try	{
 		processPsPlus();
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
-
-	try	{
 		element = processElementType();
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
-
-	try	{
 		processPsPlus();
+		processTagMin( minimization );
+		processPsPlus();
+		if ( ! processDeclContent( content, false ) )	{
+			// Not declared content. Must be a content model
+			processContentModel( content );
+		}
+		processPsStar();
+		process( mMdc );
 	}
 	catch( ReadException r )	{
 		r.setFatal();
@@ -72,54 +70,12 @@ void ElementDeclParser	::	processDeclaration()	{
 		declaration->appendChild( elements );
 		elements->appendChild( element );
 	}
-
-	TElementPtr minimization = mDTD->createElement( "minimization" );
 	declaration->appendChild( minimization );
-
-	try	{
-		processTagMin( minimization );
-		processPsPlus();
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
-
-	TElementPtr content = mDTD->createElement( "content" );
 	declaration->appendChild( content );
 	
-	try	{
-		processDeclContent( content );
-	}
-	catch( ReadException r )	{
-		// Not declared content. Must be a content model
-		try	{
-			processContentModel( content );
-		}
-		catch( ReadException r )	{
-			r.setFatal();
-			throw r;
-		}
-	}
-
-	try	{
-		processPsStar();
-	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
-		}
-	}
-	
-	try	{
-		process( mMdc );
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
-
 	mElements->appendChild( declaration );
+	
+	return true;
 
 }
 
@@ -196,28 +152,35 @@ void ElementDeclParser	::	processTagMin( TElementPtr aElement )	{
 	
 }
 
-void ElementDeclParser	::	processDeclContent( TElementPtr aElement )	{
+bool ElementDeclParser	::	processDeclContent( TElementPtr aElement,
+																	   bool aException )	{
 
 	if ( process( kCDATA, false ) )	{
 		TElementPtr cdata = mDTD->createElement( kCDATA );
 		aElement->appendChild( cdata );
-		return;
+		return true;
 	}
 
 	if ( process( kRCDATA, false ) )	{
 		TElementPtr rcdata = mDTD->createElement( kRCDATA );
 		aElement->appendChild( rcdata );
-		return;
+		return true;
 	}
 		
 	if ( process( kEMPTY, false ) )	{
 		TElementPtr empty = mDTD->createElement( kEMPTY );
 		aElement->appendChild( empty );
-		return;
+		return true;
 	}
 
-	throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(),
-									"Declared content expected" );
+	if ( ! aException )	{
+		return false;
+	}
+	else	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Declared content expected" );
+	}
 
 }
 
@@ -303,19 +266,7 @@ TElementPtr ElementDeclParser	::	processModelGroup()	{
 
 	grpo->appendChild( firstPart );
 
-	TElementPtr occIndicator;
-	try	{
-		occIndicator = processOccIndicator();
-		occIndicator->appendChild( grpo );
-		return occIndicator;
-	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
-		}
-	}
-	
-	return grpo;
+	return processOccIndicator( grpo );
 	
 }
 
@@ -375,21 +326,21 @@ TElementPtr ElementDeclParser	::	processPrimContentToken()	{
 
 	TElementPtr primContentToken;
 
-	try	{
-		process( mRni );
-	}
-	catch( ReadException r )	{
+	if ( ! process( mRni, false ) )	{
 		// Not an rni. Must be an element token
 		primContentToken = processElementToken();
-		return primContentToken;
 	}
-	try	{
-		process( kPCDATA );
-		primContentToken = mDTD->createElement( mRni + kPCDATA );
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
+	else	{
+		if ( process( kPCDATA, false ) )	{
+			primContentToken =
+				mDTD->createElement( mRni + kPCDATA );
+		}
+		else	{
+			throw ReadException( mDocText->getLineNr(),
+											mDocText->getCharNr(),
+											"PCDATA expected",
+											GENERIC, true );
+		}
 	}
 	
 	return primContentToken;
@@ -399,48 +350,29 @@ TElementPtr ElementDeclParser	::	processPrimContentToken()	{
 TElementPtr ElementDeclParser	::	processElementToken()	{
 
 	TElementPtr elementToken = mDTD->createElement( processGI() );
-	try	{
-		TElementPtr occIndicator = processOccIndicator();
-		occIndicator->appendChild( elementToken );
-		return occIndicator;
-	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
-	
-	return elementToken;
+	return processOccIndicator( elementToken );
 	
 }
 
-TElementPtr ElementDeclParser	::	processOccIndicator()	{
+TElementPtr ElementDeclParser	::	processOccIndicator( TElementPtr aElementToken )	{
 
-	try	{
-		process( mOpt );
+	if ( process( mOpt, false ) )	{
 		TElementPtr occIndicator = mDTD->createElement( mOpt );
+		occIndicator->appendChild( aElementToken );
 		return occIndicator;
 	}
-	catch( ReadException r )	{
-		// Do  nothing
-	}
-	try	{
-		process( mPlus );
+	if ( process( mPlus, false ) )	{
 		TElementPtr occIndicator = mDTD->createElement( mPlus );
+		occIndicator->appendChild( aElementToken );
 		return occIndicator;
 	}
-	catch( ReadException r )	{
-		// Do  nothing
-	}
-	try	{
-		process( mRep );
+	if ( process( mRep, false ) )	{
 		TElementPtr occIndicator = mDTD->createElement( mRep );
+		occIndicator->appendChild( aElementToken );
 		return occIndicator;
-	}
-	catch( ReadException r )	{
-		// Do  nothing
 	}
 
-	throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(),
-									"Occurence indicator expected" );
+	return aElementToken;
 
 }
 
@@ -448,63 +380,64 @@ TElementPtr ElementDeclParser	::	processExceptions()	{
 	
 	TElementPtr exceptions = mDTD->createElement( "exceptions" );
 	
-	try	{
-		TElementPtr exclusions = processExclusions();
-		exceptions->appendChild( exclusions );
+	if ( processExclusions( exceptions ) )	{
 		try	{
 			processPsPlus();
-			TElementPtr inclusions = processInclusions();
-			exceptions->appendChild( inclusions );
 		}
 		catch( ReadException r )	{
 			// Was optional. Do nothing
 		}
 	}
-	catch( ReadException r )	{
-		// Not an exclusion. Try an inclusion
-		TElementPtr inclusions = processInclusions();
-		exceptions->appendChild( inclusions );
-	}
+	
+	processInclusions( exceptions );
 
 	return exceptions;
 	
 }
 
-TElementPtr ElementDeclParser	::	processExclusions()	{
+bool ElementDeclParser	::	processExclusions( TElementPtr aExceptions )	{
 	
-	process( kMinus );
+	if ( ! process( kMinus, false ) )	{
+		return false;
+	}
 
-	TElementPtr minus = mDTD->createElement( kMinus );
+	TElementPtr exclusions = mDTD->createElement( kMinus );
 
 	try	{
 		TElementPtr nameGroup = processNameGroup();
-		minus->appendChild( nameGroup );
+		exclusions->appendChild( nameGroup );
 	}
 	catch( ReadException r )	{
 		r.setFatal();
 		throw r;
 	}
+
+	aExceptions->appendChild( exclusions );
 	
-	return minus;
+	return true;
 	
 }
 
-TElementPtr ElementDeclParser	::	processInclusions()	{
+bool ElementDeclParser	::	processInclusions( TElementPtr aExceptions )	{
 
-	process( mPlus );
+	if ( ! process( mPlus ) )	{
+		return false;
+	}
 
-	TElementPtr plus = mDTD->createElement( mPlus );
+	TElementPtr inclusions = mDTD->createElement( mPlus );
 
 	try	{
 		TElementPtr nameGroup = processNameGroup();
-		plus->appendChild( nameGroup );
+		inclusions->appendChild( nameGroup );
 	}
 	catch( ReadException r )	{
 		r.setFatal();
 		throw r;
 	}
 
-	return plus;
+	aExceptions->appendChild( inclusions );
+
+	return true;
 	
 }
 
