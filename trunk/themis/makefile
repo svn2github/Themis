@@ -379,7 +379,7 @@ $(DOMLIBRARY_OBJECT_DIR)%.o: framework/DOM/%.cpp $(DOMLIBRARY_DEPENDS_DIR)%.d
 
 #DOM Test application
 domtest: domlib domtestdepends domtestobjects
-	@$(CC) -o $(BASE_INSTALL_DIR)DOMTest $(foreach file,$(notdir $(DOMTESTSOURCES:.cpp=.o)),$(DOMLIBRARY_OBJECT_DIR)$(file)) -Xlinker $(LDFLAGS) -L ./ -L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) -lbe -ldom
+	@$(CC) -o $(BASE_INSTALL_DIR)DOMTest $(foreach file,$(notdir $(DOMTESTSOURCES:.cpp=.o)),$(DOMLIBRARY_OBJECT_DIR)$(file)) -Xlinker $(LDFLAGS) -L ./ -L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) -lbe -ldom -lstdc++.r4
 	@echo "DOM Test application is now linked. Doing mimeset."
 	@mimeset -F $(BASE_INSTALL_DIR)DOMTest
 	@echo "DOM Test application compiled and linked successfully."
