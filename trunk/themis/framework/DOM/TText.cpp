@@ -9,7 +9,7 @@
 
 TText	::	TText( const TDocumentWeak aOwnerDocument,
 						  const TDOMString aText )	:
-						  		TCharacterData( TEXT_NODE, aOwnerDocument )	{
+						  		TCharacterData( TEXT_NODE, aOwnerDocument, aText )	{
 	
 	setData( aText );
 	

@@ -10,7 +10,9 @@
 TCharacterData	::	TCharacterData( const unsigned short aNodeType,
 													 const TDocumentWeak aOwnerDocument,
 													 const TDOMString aData )	:
-													 		TNode( aNodeType, aOwnerDocument )	{
+													 		TNode( aNodeType, aOwnerDocument, "", aData )	{
+
+	mData = aData;
 	
 }
 

@@ -427,7 +427,7 @@ TNodeShared TNode	::	cloneNode( bool aDeep ) const	{
 
 bool TNode	::	hasAttributes() const	{
 	
-	if ( !mAttributes && hasChildNodes() )	{
+	if ( mAttributes.get() && mAttributes->getLength() )	{
 		return true;
 	}
 	

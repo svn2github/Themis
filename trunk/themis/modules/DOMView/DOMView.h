@@ -13,7 +13,9 @@
 #include <Handler.h>
 #include <Window.h>
 #include <OutlineListView.h>
+#include <ListView.h>
 #include <ScrollView.h>
+
 #include "plugclass.h"
 
 #include <string>
@@ -24,6 +26,8 @@ class BStringItem;
 
 using namespace std;
 
+#define Selection 'slct'
+
 extern "C" __declspec( dllexport ) status_t Initialize( void * info = NULL );
 extern "C" __declspec( dllexport ) status_t Shutdown( bool now = false );
 extern "C" __declspec( dllexport ) PlugClass * GetObject();
@@ -33,13 +37,21 @@ class DOMWindow	:	public BWindow	{
 	private:
 		BOutlineListView * tree;
 		BScrollView * scrollTree;
+		BListView * attributes;
+		BScrollView * scrollAttr;
+		BListView * values;
+		BScrollView * scrollValue;
+
+		TDocumentShared doc;
 	
 	public:
 		DOMWindow( TDocumentShared document );
 		~DOMWindow();
+		void MessageReceived( BMessage * message );
 		bool QuitRequested();
 		void showTree( const TNodeShared aNode, BStringItem * parent );
 		void showDocument( TDocumentShared document );
+		TNodeShared findNode( TNodeShared node, int32 target, int32 & current );
 		
 	
 };

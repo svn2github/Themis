@@ -2483,7 +2483,7 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 					setContent( content );
 					startParsing( document );
 					
-					showDocument();
+					//showDocument();
 
 					if ( PlugMan )	{
 						BMessage * done = new BMessage( ReturnedData );
