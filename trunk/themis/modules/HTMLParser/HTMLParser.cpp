@@ -842,7 +842,6 @@ string HTMLParser	::	getAttribute()	{
 	if ( mContent[mPos] == '/' )	{
 		nextChar();
 		if ( mContent[mPos] == '>' )	{
-			cout << "End of tag. No attribute... Next character: " << mContent[mPos] << endl;
 			return result;
 		}
 	}
