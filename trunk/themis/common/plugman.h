@@ -103,6 +103,8 @@ class plugman: public BLooper, public MessageSystem {
 		//! Loads a specific plug-in into memory.
 		status_t LoadPlugin(uint32 which);
 		void BroadcastFinished();
+		BMessage *GetPluginList();
+	
 };
 
 #endif

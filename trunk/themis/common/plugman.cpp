@@ -253,7 +253,13 @@ plugman::~plugman() {
 	MsgSysUnregister(this);
 }
 bool plugman::QuitRequested() {
-
+//	{
+//		BMessage *test=GetPluginList();
+//		test->PrintToStream();
+//		delete test;
+//		
+//	}
+	
 	BMessage *msg=new BMessage(B_QUIT_REQUESTED);
 	msg->AddInt32("command",COMMAND_INFO);
 	quit_sem=create_sem(0,"plug-man quitter");
@@ -1161,3 +1167,29 @@ uint32 plugman::BroadcastTarget()
 {
 	return MS_TARGET_PLUG_IN_MANAGER;
 }
+BMessage *plugman::GetPluginList() 
+{
+	BMessage *msg=new BMessage();
+	BAutolock alock(Locker);
+	if (alock.IsLocked()) {
+		plugst *cur=head;
+		while (cur!=NULL) {
+			msg->AddString("plug_name",cur->name);
+			msg->AddInt32("plug_id",cur->plugid);
+			msg->AddString("plug_path",cur->path);
+			msg->AddBool("plug_in_memory",cur->inmemory);
+			if (cur->pobj!=NULL) {
+				msg->AddPointer("plug_object",cur->pobj);
+				msg->AddInt32("plug_broadcast_target",cur->pobj->BroadcastTarget());
+			}
+			
+			cur=cur->next;
+			
+		}
+		
+	}
+	return msg;
+	
+}
+
+
