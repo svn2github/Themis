@@ -2,8 +2,10 @@
 	See DOMView.h for some more information
 */
 
+// Standard C headers
 #include <stdio.h>
 
+// BeOS headers
 #include <String.h>
 #include <Rect.h>
 #include <ListItem.h>
@@ -11,10 +13,14 @@
 #include <MenuField.h>
 #include <MenuItem.h>
 
+// DOMView headers
 #include "DOMView.h"
+
+// Themis headers
 #include "commondefs.h"
 #include "plugman.h"
 
+// DOM headers
 #include "TDocument.h"
 #include "TNode.h"
 #include "TNodeList.h"
@@ -57,7 +63,7 @@ PlugClass * GetObject()	{
 	
 }
 
-DOMWindow	::	DOMWindow( TDocumentShared document )	:
+DOMWindow	::	DOMWindow( TDocumentPtr document )	:
 							BWindow( BRect( 100, 100, 450, 400 ), "DOMWindow", B_TITLED_WINDOW,
 								B_CURRENT_WORKSPACE )	{
 
@@ -183,13 +189,13 @@ void DOMWindow	::	MessageReceived( BMessage * message )	{
 			int32 index = 0;
 			message->FindInt32( "index", &index );
 			int32 current = 0;
-			TNodeShared found = findNode( doc, index, current );
+			TNodePtr found = findNode( doc, index, current );
 			attributes->RemoveItems( 0, attributes->CountItems() );
 			values->RemoveItems( 0, values->CountItems() );
 			if ( found->hasAttributes() )	{
-				TNamedNodeMapShared attrs = found->getAttributes();
+				TNamedNodeMapPtr attrs = found->getAttributes();
 				for ( unsigned int i = 0; i < attrs->getLength(); i++ )	{
-					TNodeShared attr = make_shared( attrs->item( i ) );
+					TNodePtr attr = attrs->item( i );
 					BStringItem * attrItem = new BStringItem( attr->getNodeName().c_str() );
 					attributes->AddItem( attrItem );
 					BStringItem * valueItem = new BStringItem( attr->getNodeValue().c_str() );
@@ -220,10 +226,10 @@ void DOMWindow	::	MessageReceived( BMessage * message )	{
 			
 			int textNr = 1;
 			if ( found->hasChildNodes() )	{
-				TNodeListShared children = found->getChildNodes();
+				TNodeListPtr children = found->getChildNodes();
 				selectedNode = found;
 				for ( unsigned int i = 0; i < children->getLength(); i++ )	{
-					TNodeShared child = make_shared( children->item( i ) );
+					TNodePtr child = children->item( i );
 					if ( child->getNodeType() == TEXT_NODE )	{
 						textMenu->SetEnabled( true );
 						BString * itemText = new BString( "Text part " );
@@ -248,8 +254,8 @@ void DOMWindow	::	MessageReceived( BMessage * message )	{
 		case TEXT_MENU_CHANGED:	{
 			int32 index = 0;
 			message->FindInt32( "index", &index );
-			TNodeListShared children = selectedNode->getChildNodes();
-			TNodeShared child = make_shared( children->item( index ) );
+			TNodeListPtr children = selectedNode->getChildNodes();
+			TNodePtr child = children->item( index );
 			text->SetText( child->getNodeValue().c_str(), child->getNodeValue().size() );
 		
 			break;	
@@ -268,13 +274,13 @@ bool DOMWindow	::	QuitRequested()	{
 	
 }
 
-void DOMWindow	::	showTree( const TNodeShared aNode, BStringItem * parent )	{
+void DOMWindow	::	showTree( const TNodePtr aNode, BStringItem * parent )	{
 	
-	TNodeListShared children = aNode->getChildNodes();
+	TNodeListPtr children = aNode->getChildNodes();
 	int length = children->getLength();
 	if ( length != 0 )	{
 		for ( int i = length - 1; i >= 0; i-- )	{
-			TNodeShared child = make_shared( children->item( i ) );
+			TNodePtr child = children->item( i );
 	
 			if ( child->getNodeType() == ELEMENT_NODE )	{
 				BStringItem * childItem = new BStringItem( child->getNodeName().c_str() );
@@ -299,14 +305,14 @@ void DOMWindow	::	showDocument()	{
 
 }
 
-void DOMWindow	::	setDocument( TDocumentShared document )	{
+void DOMWindow	::	setDocument( TDocumentPtr document )	{
 
 	doc = document;
 	showDocument();
 	
 }
 
-TNodeShared DOMWindow	::	findNode( TNodeShared node, int32 target, int32 & current )	{
+TNodePtr DOMWindow	::	findNode( TNodePtr node, int32 target, int32 & current )	{
 	
 	if ( node.get() && ( node->getNodeType() == ELEMENT_NODE ||
 								node->getNodeType() == DOCUMENT_NODE ) )	{
@@ -319,12 +325,11 @@ TNodeShared DOMWindow	::	findNode( TNodeShared node, int32 target, int32 & curre
 		// Get the next node
 		// I'm using getChildNodes instead of getFirstChild,
 		// because of a weird crash with getFirstChild. Not sure who is wrong here
-		TNodeListShared children = node->getChildNodes();
-		TNodeShared result = TNodeShared();
-		TNodeShared next = TNodeShared();
+		TNodeListPtr children = node->getChildNodes();
+		TNodePtr result = TNodePtr();
 		if ( children->getLength() )	{
 			current++;
-			TNodeShared next = make_shared( children->item( 0 ) );
+			TNodePtr next = children->item( 0 );
 			result = findNode( next, target, current );
 		}
 		if ( result.get() )	{
@@ -332,14 +337,14 @@ TNodeShared DOMWindow	::	findNode( TNodeShared node, int32 target, int32 & curre
 		}
 		else	{
 			current++;
-			next = make_shared( node->getNextSibling() );
+			TNodePtr next = node->getNextSibling();
 			return findNode( next, target, current );
 		}							
 	}
 	else	{
 		// Was not an element or a document node or didn't exist
 		if ( node.get() )	{
-			TNodeShared next = make_shared( node->getNextSibling() );
+			TNodePtr next = node->getNextSibling();
 			return findNode( next, target, current );
 		}
 		else	{
@@ -348,7 +353,7 @@ TNodeShared DOMWindow	::	findNode( TNodeShared node, int32 target, int32 & curre
 		}
 	}
 	
-	return TNodeShared();
+	return TNodePtr();
 	
 }
 
@@ -434,8 +439,8 @@ status_t DOMView	::	ReceiveBroadcast( BMessage * message )	{
 			void * document = NULL;
 			message->FindPointer( "data_pointer", &document );
 			if ( document )	{
-				TDocumentShared * temp = (TDocumentShared *) document;
-				TDocumentShared copy = *temp;
+				TDocumentPtr * temp = (TDocumentPtr *) document;
+				TDocumentPtr copy = *temp;
 				if ( !window )	{
 					window = new DOMWindow( copy );
 				}
@@ -462,11 +467,15 @@ int32 DOMView	::	Type()	{
 	return TARGET_DOM;
 	
 }
-uint32 DOMView::BroadcastTarget() 
-{
+
+uint32 DOMView::BroadcastTarget()	{
+
 	return MS_TARGET_DOM_VIEWER;
+
 }
-status_t DOMView::BroadcastReply(BMessage *msg) 
-{
+
+status_t DOMView::BroadcastReply(BMessage *msg)	{
+
 	return B_OK;
+
 }

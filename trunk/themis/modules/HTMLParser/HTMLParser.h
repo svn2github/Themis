@@ -40,7 +40,7 @@ class HTMLParser	:	public BHandler, public PlugClass	{
 		CachePlug * cache;
 		uint32 userToken;
 
-		TDocumentShared mDocument; // Stores the document to be build
+		TDocumentPtr mDocument; // Stores the document to be build
 		SGMLParser * parser;
 	
 	public:

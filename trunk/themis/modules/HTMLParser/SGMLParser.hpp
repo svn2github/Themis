@@ -35,7 +35,7 @@ class SGMLParser	:	public BaseParser	{
 	
 	private:
 		// Test function
-		void showTree( TNodeShared aNode, int aSpacing );
+		void showTree( TNodePtr aNode, int aSpacing );
 
 	protected:
 		// Declaration parsers
@@ -43,7 +43,7 @@ class SGMLParser	:	public BaseParser	{
 		DTDParser * mDtdParser;
 		DocTypeDeclParser * mDocTypeDecl;
 		ElementParser * mElementParser;
-		map<string, TDocumentShared> mDtds;
+		map<string, TDocumentPtr> mDtds;
 		string mDefaultDtd;
 		
 		// Functions
@@ -66,9 +66,9 @@ class SGMLParser	:	public BaseParser	{
 		// Destructor
 		~SGMLParser();
 		// Parsing functions
-		TDocumentShared parse();
-		TDocumentShared parse( const char * aDocument );
-		TDocumentShared parse( SGMLTextPtr aDocument );
+		TDocumentPtr parse();
+		TDocumentPtr parse( const char * aDocument );
+		TDocumentPtr parse( SGMLTextPtr aDocument );
 		void parseDTD();
 		void parseDTD( const char * aDtd );
 	

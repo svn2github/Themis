@@ -23,15 +23,15 @@ using namespace std;
 class DeclarationParser	:	public BaseParser	{
 	
 	public:
-		DeclarationParser( SGMLTextPtr aDocText, TDocumentShared aDTD );
+		DeclarationParser( SGMLTextPtr aDocText, TDocumentPtr aDTD );
 		virtual ~DeclarationParser();
 		void setDocText( SGMLTextPtr aDocText );
-		void setDTD( TDocumentShared aDTD );
+		void setDTD( TDocumentPtr aDTD );
 		void parse( const map<string, Position> & aEntityTexts );
 		void parse();	// If you don't need entities
 		virtual void processDeclaration();
-		void processExtEntitySpec( TElementShared & entity );
-		void processExternalId( TElementShared & entity );
+		void processExtEntitySpec( TElementPtr & entity );
+		void processExternalId( TElementPtr & entity );
 		string processPublicId();
 		string processSystemId();
 	

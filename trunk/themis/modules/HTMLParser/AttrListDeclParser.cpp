@@ -19,7 +19,7 @@
 //#include <be/kernel/OS.h>
 
 AttrListDeclParser	::	AttrListDeclParser( SGMLTextPtr aDocText,
-															TDocumentShared aDTD )
+															TDocumentPtr aDTD )
 							:	DeclarationParser( aDocText, aDTD )	{
 
 	//printf( "Constructing AttrListDeclParser\n" );
@@ -41,7 +41,7 @@ void AttrListDeclParser	::	processDeclaration()	{
 //	start_t = system_time();
 
 	// Define an element to store the attribute list declaration
-	TElementShared attrList = mDTD->createElement( "attrList" );
+	TElementPtr attrList = mDTD->createElement( "attrList" );
 	
 	process( mMdo );
 	process( kATTLIST );
@@ -55,7 +55,7 @@ void AttrListDeclParser	::	processDeclaration()	{
 	}
 	
 	try	{
-		TElementShared assElementType = processAssElementType();
+		TElementPtr assElementType = processAssElementType();
 		attrList->appendChild( assElementType );
 	}
 	catch( ReadException r )	{
@@ -72,7 +72,7 @@ void AttrListDeclParser	::	processDeclaration()	{
 	}
 
 	try	{
-		TElementShared attrDefList = processAttrDefList();
+		TElementPtr attrDefList = processAttrDefList();
 		attrList->appendChild( attrDefList );
 	}
 	catch( ReadException r )	{
@@ -104,23 +104,23 @@ void AttrListDeclParser	::	processDeclaration()	{
 	
 }
 
-TElementShared AttrListDeclParser	::	processAssElementType()	{
+TElementPtr AttrListDeclParser	::	processAssElementType()	{
 	
-	TElementShared assElementType = mDTD->createElement( "assElementType" );
+	TElementPtr assElementType = mDTD->createElement( "assElementType" );
 
 	try	{
 		string name = processGI();
-		TElementShared elementName = mDTD->createElement( name );
+		TElementPtr elementName = mDTD->createElement( name );
 		assElementType->appendChild( elementName );
 		//printf( "Element of attribute list: %s\n", name.c_str() );
 	}
 	catch( ReadException r )	{
 		// Not a generic identifier. Must be a name group
-		TElementShared nameGroup = processNameGroup();
-		TNodeListShared children = nameGroup->getChildNodes();
+		TElementPtr nameGroup = processNameGroup();
+		TNodeListPtr children = nameGroup->getChildNodes();
 		for ( unsigned int i = 0; i < children->getLength(); i++ )	{
-			TNodeShared child = make_shared( children->item( i ) );
-			TElementShared element = shared_static_cast<TElement>( child );
+			TNodePtr child = children->item( i );
+			TElementPtr element = shared_static_cast<TElement>( child );
 			assElementType->appendChild( element );
 		}
 	}
@@ -129,15 +129,15 @@ TElementShared AttrListDeclParser	::	processAssElementType()	{
 	
 }
 
-TElementShared AttrListDeclParser	::	processAttrDefList()	{
+TElementPtr AttrListDeclParser	::	processAttrDefList()	{
 
 //	bigtime_t start_t, end_t;
 	
 //	start_t = system_time();
 
-	TElementShared attrDefList = mDTD->createElement( "attrDefList" );
+	TElementPtr attrDefList = mDTD->createElement( "attrDefList" );
 
-	TElementShared attrDef = processAttrDef();
+	TElementPtr attrDef = processAttrDef();
 	attrDefList->appendChild( attrDef );
 	
 	bool adFound = true;
@@ -164,7 +164,7 @@ TElementShared AttrListDeclParser	::	processAttrDefList()	{
 	
 }
 
-TElementShared AttrListDeclParser	::	processAttrDef()	{
+TElementPtr AttrListDeclParser	::	processAttrDef()	{
 
 //	bigtime_t start_t, end_t;
 	
@@ -175,7 +175,7 @@ TElementShared AttrListDeclParser	::	processAttrDef()	{
 //	startval_t = system_time();
 
 	string name = processAttrName();
-	TElementShared attrDef = mDTD->createElement( name );
+	TElementPtr attrDef = mDTD->createElement( name );
 
 //	endval_t = system_time();
 
@@ -381,129 +381,6 @@ string AttrListDeclParser	::	processDeclValue()	{
 		// Do nothing
 	}
 
-/*
-	try	{
-		process( kCDATA );
-		//printf( "Declared value: %s\n", mCDATA.c_str() );
-		return kCDATA;
-	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
-	try	{
-		process( kENTITY );
-		//printf( "Declared value: %s\n", kENTITY.c_str() );
-		return kENTITY;
-	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
-	try	{
-		process( kENTITIES );
-		//printf( "Declared value: %s\n", kENTITIES.c_str() );
-		return kENTITIES;
-	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
-	try	{
-		process( kIDREFS );
-		//printf( "Declared value: %s\n", kIDREFS.c_str() );
-		return kIDREFS;
-	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
-	try	{
-		process( kIDREF );
-		//printf( "Declared value: %s\n", kIDREF.c_str() );
-		return kIDREF;
-	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
-	try	{
-		process( kID );
-		//printf( "Declared value: %s\n", kID.c_str() );
-		return kID;
-	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
-	try	{
-		process( kNAMES );
-		//printf( "Declared value: %s\n", mNAMES.c_str() );
-		return kNAMES;
-	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
-	try	{
-		process( kNAME );
-		//printf( "Declared value: %s\n", mNAME.c_str() );
-		return kNAME;
-	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
-	try	{
-		process( kNMTOKENS );
-		//printf( "Declared value: %s\n", mNMTOKENS.c_str() );
-		return kNMTOKENS;
-	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
-	try	{
-		process( kNMTOKEN );
-		//printf( "Declared value: %s\n", mNMTOKEN.c_str() );
-		return kNMTOKEN;
-	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
-	try	{
-		process( kNUMBERS );
-		//printf( "Declared value: %s\n", mNUMBERS.c_str() );
-		return kNUMBERS;
-	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
-	try	{
-		process( kNUMBER );
-		//printf( "Declared value: %s\n", mNUMBER.c_str() );
-		return kNUMBER;
-	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
-	try	{
-		process( kNUTOKENS );
-		//printf( "Declared value: %s\n", mNUTOKENS.c_str() );
-		return kNUTOKENS;
-	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
-	try	{
-		process( kNUTOKEN );
-		//printf( "Declared value: %s\n", mNUTOKEN.c_str() );
-		return kNUTOKEN;
-	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
-	try	{
-		processNameTokenGroup();
-		//printf( "Declared value: name token group\n" );
-		return "";
-	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
-*/
-
 	throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(), "Declared value expected" );
 	
 }
@@ -566,46 +443,6 @@ string AttrListDeclParser	::	processDefValue()	{
 			}
 		}
 	}
-
-/*
-	try	{
-		process( kFIXED );
-		processPsPlus();
-		processAttrValueSpec();
-		return "";
-	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
-	try	{
-		process( kREQUIRED );
-		return kREQUIRED;
-	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
-	try	{
-		process( kCURRENT );
-		return kCURRENT;
-	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
-	try	{
-		process( kCONREF );
-		return kCONREF;
-	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
-	try	{
-		process( kIMPLIED );
-		return kIMPLIED;
-	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
-*/
 
 	processAttrValueSpec();
 	

@@ -26,7 +26,7 @@
 #include "TElement.h"
 #include "TNodeList.h"
 
-DTDParser	::	DTDParser( const char * aFileName, TDocumentShared aDTD )
+DTDParser	::	DTDParser( const char * aFileName, TDocumentPtr aDTD )
 					:	BaseParser()	{
 	
 	//printf( "DTDParser constructed\n" );
@@ -68,15 +68,15 @@ DTDParser	::	~DTDParser()	{
 	
 }
 
-void DTDParser	::	setDTD( TDocumentShared aDTD )	{
+void DTDParser	::	setDTD( TDocumentPtr aDTD )	{
 	
 	mDTD = aDTD;
 
-	TNodeListShared list = mDTD->getChildNodes();
+	TNodeListPtr list = mDTD->getChildNodes();
 	unsigned int length = list->getLength();
 	for ( unsigned int i = 0; i < length; i++ )	{
-		TNodeShared node = make_shared( list->item( i ) );
-		TElementShared element = shared_static_cast<TElement>( node );
+		TNodePtr node = list->item( i );
+		TElementPtr element = shared_static_cast<TElement>( node );
 		if ( element->getNodeName() == "parEntities" )	{
 			mParEntities = element;
 		}
@@ -227,7 +227,7 @@ void DTDParser	::	processDsStar()	{
 
 }
 
-TDocumentShared DTDParser	::	parse()	{
+TDocumentPtr DTDParser	::	parse()	{
 	
 	while ( true )	{
 		try	{
@@ -250,12 +250,9 @@ TDocumentShared DTDParser	::	parse()	{
 	
 }
 
-TDocumentShared DTDParser	::	parse( const char * aFileName )	{
+TDocumentPtr DTDParser	::	parse( const char * aFileName )	{
 	
-	printf( "Loading new file\n" );
-
 	mDocText->reset( true );
-	printf( "Size after reset: %i\n", mDocText->getSize() );
 
 	ifstream file( aFileName );
 	

@@ -19,7 +19,7 @@
 #include "TNamedNodeMap.h"
 
 ElementParser	::	ElementParser( SGMLTextPtr aDocText,
-												  TDocumentShared aDTD )
+												  TDocumentPtr aDTD )
 						:	BaseParser()	{
 
 	//printf( "Constructing ElementParser\n" );
@@ -32,8 +32,7 @@ ElementParser	::	ElementParser( SGMLTextPtr aDocText,
 	commentParser = new CommentDeclParser( aDocText, mDTD );
 
 	// Document to store the element tree
-	mDocument = TDocumentShared( new TDocument() );
-	mDocument->setSmartPointer( mDocument );
+	mDocument = TDocumentPtr( new TDocument() );
 
 
 }
@@ -53,15 +52,15 @@ void ElementParser	::	setDocText( SGMLTextPtr aDocText )	{
 	
 }
 
-void ElementParser	::	setDTD( TDocumentShared aDTD )	{
+void ElementParser	::	setDTD( TDocumentPtr aDTD )	{
 
 	mDTD = aDTD;
 	
-	TNodeListShared list = mDTD->getChildNodes();
+	TNodeListPtr list = mDTD->getChildNodes();
 	unsigned int length = list->getLength();
 	for ( unsigned int i = 0; i < length; i++ )	{
-		TNodeShared node = make_shared( list->item( i ) );
-		TElementShared element = shared_static_cast<TElement>( node );
+		TNodePtr node = list->item( i );
+		TElementPtr element = shared_static_cast<TElement>( node );
 		if ( element->getNodeName() == "parEntities" )	{
 			mParEntities = element;
 		}
@@ -90,19 +89,19 @@ void ElementParser	::	parse( const string & aName )	{
 	
 	mName = aName;
 	
-	TElementShared elementDecl = getElementDecl( aName, mElements );
+	TElementPtr elementDecl = getElementDecl( aName, mElements );
 	processElementContent( elementDecl, mDocument );
 	
 }
 
-TDocumentShared ElementParser	::	getDocument() const	{
+TDocumentPtr ElementParser	::	getDocument() const	{
 	
 	return mDocument;
 	
 }
 
-void ElementParser	::	processElementContent( const TElementShared & aElementDecl,
-																	TNodeShared aParent )	{
+void ElementParser	::	processElementContent( const TElementPtr & aElementDecl,
+																	TNodePtr aParent )	{
 
 	bool contentFound = true;
 	while ( contentFound )	{
@@ -277,8 +276,8 @@ void ElementParser	::	processUnknownEndTag()	{
 	
 }
 
-void ElementParser	::	processElement( const TElementShared & aElementDecl,
-														 TNodeShared aParent )	{
+void ElementParser	::	processElement( const TElementPtr & aElementDecl,
+														 TNodePtr aParent )	{
 		
 	printf( "Trying to find: %s\n", aElementDecl->getNodeName().c_str() );
 	// Minimization
@@ -286,12 +285,12 @@ void ElementParser	::	processElement( const TElementShared & aElementDecl,
 	bool end = true;
 
 	// See if this element declaration is part of a name group
-	TNodeShared parent = make_shared( aElementDecl->getParentNode() );
-	TElementShared child = aElementDecl;
-	TElementShared exceptions;
+	TNodePtr parent = aElementDecl->getParentNode();
+	TElementPtr child = aElementDecl;
+	TElementPtr exceptions;
 	if ( parent->getNodeName() != "elements" )	{
 		// Is part of a name group
-		TNodeShared firstChild = make_shared( parent->getFirstChild() );
+		TNodePtr firstChild = parent->getFirstChild();
 		child = shared_static_cast<TElement>( firstChild );
 	}
 	// Get the start tag minimization
@@ -304,20 +303,20 @@ void ElementParser	::	processElement( const TElementShared & aElementDecl,
 		end = false;
 	}
 	// Get the exception list
-	TNodeListShared list = child->getChildNodes();
+	TNodeListPtr list = child->getChildNodes();
 	for ( unsigned int i = 0; i < list->getLength(); i++ )	{
-		TNodeShared item = list->item( i );
+		TNodePtr item = list->item( i );
 		if ( item->getNodeName() == "exceptions" )	{
 			exceptions = shared_static_cast<TElement>( item );
 		}
 	}
 
-	TNodeShared tag;
+	TNodePtr tag;
 	State save = mDocText->saveState();
 	try	{
 		processStartTag( aElementDecl );
 		// Add element to tree
-		TElementShared element =
+		TElementPtr element =
 			mDocument->createElement( aElementDecl->getNodeName() );
 		tag = shared_static_cast<TNode>( element );
 		aParent->appendChild( element );
@@ -337,8 +336,8 @@ void ElementParser	::	processElement( const TElementShared & aElementDecl,
 	processUnknownTags();
 
 	if ( child->hasChildNodes() )	{
-		TNodeShared node = make_shared( child->getFirstChild() );
-		TElementShared content	= shared_static_cast<TElement>( node );
+		TNodePtr node = child->getFirstChild();
+		TElementPtr content	= shared_static_cast<TElement>( node );
 		processContent( content, exceptions, tag );
 	}
 
@@ -367,7 +366,7 @@ void ElementParser	::	processElement( const TElementShared & aElementDecl,
 	
 }
 
-void ElementParser	::	processStartTag( const TElementShared & elementDecl )	{
+void ElementParser	::	processStartTag( const TElementPtr & elementDecl )	{
 	
 	try	{
 		process( mStago );
@@ -420,7 +419,7 @@ void ElementParser	::	processStartTag( const TElementShared & elementDecl )	{
 	
 }
 
-void ElementParser	::	processEndTag( const TElementShared & elementDecl )	{
+void ElementParser	::	processEndTag( const TElementPtr & elementDecl )	{
 	
 	process( mEtago );
 	
@@ -509,9 +508,9 @@ void ElementParser	::	processAttrSpec()	{
 	
 }
 
-void ElementParser	::	processContent( const TElementShared & aContent,
-														 const TElementShared & aExceptions,
-														 TNodeShared aParent )	{
+void ElementParser	::	processContent( const TElementPtr & aContent,
+														 const TElementPtr & aExceptions,
+														 TNodePtr aParent )	{
 	
 	// Moved to just before tag
 	//processExceptions( aExceptions, aParent );
@@ -565,7 +564,7 @@ void ElementParser	::	processContent( const TElementShared & aContent,
 				break;
 			}
 			printf( "At tag\n" );
-			TElementShared elementDecl = getElementDecl( contentName, mElements );
+			TElementPtr elementDecl = getElementDecl( contentName, mElements );
 			processElementContent( elementDecl, aParent );
 			printf( "Finished tag\n" );
 		}
@@ -573,25 +572,25 @@ void ElementParser	::	processContent( const TElementShared & aContent,
 
 }
 
-void ElementParser	::	processBrackets( const TElementShared & aContent,
-														  const TElementShared & aExceptions,
-														  TNodeShared aParent )	{
+void ElementParser	::	processBrackets( const TElementPtr & aContent,
+														  const TElementPtr & aExceptions,
+														  TNodePtr aParent )	{
 
 	printf( "At brackets\n" );
-	TNodeShared child = make_shared( aContent->getFirstChild() );
-	TElementShared subContent = shared_static_cast<TElement>( child );
+	TNodePtr child = aContent->getFirstChild();
+	TElementPtr subContent = shared_static_cast<TElement>( child );
 	processContent( subContent, aExceptions, aParent );
 	printf( "Finished brackets\n" );
 														  	
 }
 
-void ElementParser	::	processOptional( const TElementShared & aContent,
-														 const TElementShared & aExceptions,
-														 TNodeShared aParent )	{
+void ElementParser	::	processOptional( const TElementPtr & aContent,
+														 const TElementPtr & aExceptions,
+														 TNodePtr aParent )	{
 
 	printf( "At optional element\n" );
-	TNodeShared child = make_shared( aContent->getFirstChild() );
-	TElementShared subContent = shared_static_cast<TElement>( child );
+	TNodePtr child = aContent->getFirstChild();
+	TElementPtr subContent = shared_static_cast<TElement>( child );
 	try	{
 		processContent( subContent, aExceptions, aParent );
 	}
@@ -605,13 +604,13 @@ void ElementParser	::	processOptional( const TElementShared & aContent,
 														  	
 }
 
-void ElementParser	::	processPlus( const TElementShared & aContent,
-												   const TElementShared & aExceptions,
-												   TNodeShared aParent )	{
+void ElementParser	::	processPlus( const TElementPtr & aContent,
+												   const TElementPtr & aExceptions,
+												   TNodePtr aParent )	{
 
 	printf( "At plus element\n" );
-	TNodeShared child = make_shared( aContent->getFirstChild() );
-	TElementShared subContent = shared_static_cast<TElement>( child );
+	TNodePtr child = aContent->getFirstChild();
+	TElementPtr subContent = shared_static_cast<TElement>( child );
 	processContent( subContent, aExceptions, aParent );
 	bool plusFound = true;
 	while ( plusFound )	{
@@ -633,13 +632,13 @@ void ElementParser	::	processPlus( const TElementShared & aContent,
 													  	
 }
 
-void ElementParser	::	processStar( const TElementShared & aContent,
-												   const TElementShared & aExceptions,
-												   TNodeShared aParent )	{
+void ElementParser	::	processStar( const TElementPtr & aContent,
+												   const TElementPtr & aExceptions,
+												   TNodePtr aParent )	{
 
 	printf( "At star element\n" );
-	TNodeShared child = make_shared( aContent->getFirstChild() );
-	TElementShared subContent = shared_static_cast<TElement>( child );
+	TNodePtr child = aContent->getFirstChild();
+	TElementPtr subContent = shared_static_cast<TElement>( child );
 	bool starFound = true;
 	while ( starFound )	{
 		try	{
@@ -660,17 +659,17 @@ void ElementParser	::	processStar( const TElementShared & aContent,
 
 }
 
-void ElementParser	::	processOr( const TElementShared & aContent,
-												 const TElementShared & aExceptions,
-												 TNodeShared aParent )	{
+void ElementParser	::	processOr( const TElementPtr & aContent,
+												 const TElementPtr & aExceptions,
+												 TNodePtr aParent )	{
 
 	printf( "At or element\n" );
 
-	TNodeListShared children = aContent->getChildNodes();
+	TNodeListPtr children = aContent->getChildNodes();
 	string token = "";
 	for ( unsigned int i = 0; i < children->getLength(); i++ )	{
-		TNodeShared child = make_shared( children->item( i ) );
-		TElementShared element = shared_static_cast<TElement>( child );
+		TNodePtr child = children->item( i );
+		TElementPtr element = shared_static_cast<TElement>( child );
 		if ( element->getTagName() == token || token == "" )	{
 			try	{
 				processContent( element, aExceptions, aParent );
@@ -685,7 +684,7 @@ void ElementParser	::	processOr( const TElementShared & aContent,
 					}
 					case NO_TAG_FOUND:	{
 						printf( "NO TAG FOUND\n" );
-						TNodeListShared results = aContent->getElementsByTagName( "#PCDATA" );
+						TNodeListPtr results = aContent->getElementsByTagName( "#PCDATA" );
 						if ( results->getLength() != 0 )	{
 							token = "#PCDATA";
 						}
@@ -718,38 +717,38 @@ void ElementParser	::	processOr( const TElementShared & aContent,
 
 }
 
-void ElementParser	::	processAnd( const TElementShared & aContent,
-												   const TElementShared & aExceptions,
-												   TNodeShared aParent )	{
+void ElementParser	::	processAnd( const TElementPtr & aContent,
+												   const TElementPtr & aExceptions,
+												   TNodePtr aParent )	{
 
 	printf( "At seq element\n" );
-	TNodeListShared children = aContent->getChildNodes();
+	TNodeListPtr children = aContent->getChildNodes();
 	for ( unsigned int i = 0; i < children->getLength(); i++ )	{
-		TNodeShared child = make_shared( children->item( i ) );
-		TElementShared element = shared_static_cast<TElement>( child );
+		TNodePtr child = children->item( i );
+		TElementPtr element = shared_static_cast<TElement>( child );
 		processContent( element, aExceptions, aParent );
 	}
 	printf( "Finished seq element\n" );
 
 }
 
-void ElementParser	::	processComma( const TElementShared & aContent,
-														const TElementShared & aExceptions,
-														TNodeShared aParent )	{
+void ElementParser	::	processComma( const TElementPtr & aContent,
+														const TElementPtr & aExceptions,
+														TNodePtr aParent )	{
 
 	printf( "At comma element\n" );
-	TNodeListShared children = aContent->getChildNodes();
+	TNodeListPtr children = aContent->getChildNodes();
 	for ( unsigned int i = 0; i < children->getLength(); i++ )	{
-		TNodeShared child = make_shared( children->item( i ) );
-		TElementShared element = shared_static_cast<TElement>( child );
+		TNodePtr child = children->item( i );
+		TElementPtr element = shared_static_cast<TElement>( child );
 		element->setAttribute( "used", "false" );
 	}
 	bool progress = true;
 	while ( progress )	{
 		progress = false;
 		for ( unsigned int i = 0; i < children->getLength(); i++ )	{
-			TNodeShared child = make_shared( children->item( i ) );
-			TElementShared element = shared_static_cast<TElement>( child );
+			TNodePtr child = children->item( i );
+			TElementPtr element = shared_static_cast<TElement>( child );
 			if ( element->getAttribute( "used" ) == "true" )	{
 				// Already done. Skip to next
 				continue;
@@ -775,9 +774,9 @@ void ElementParser	::	processComma( const TElementShared & aContent,
 	
 }
 
-void ElementParser	::	processDataText( const TElementShared & aContent,
-														   const TElementShared & aExceptions,
-														   TNodeShared aParent )	{
+void ElementParser	::	processDataText( const TElementPtr & aContent,
+														   const TElementPtr & aExceptions,
+														   TNodePtr aParent )	{
 
 	printf( "At data text\n" );
 	string text = "";
@@ -805,8 +804,8 @@ void ElementParser	::	processDataText( const TElementShared & aContent,
 
 }
 
-void ElementParser	::	processExceptions( const TElementShared & aExceptions,
-															TNodeShared aParent )	{
+void ElementParser	::	processExceptions( const TElementPtr & aExceptions,
+															TNodePtr aParent )	{
 	
 	bool exceptionFound = true;
 	while ( exceptionFound )	{
@@ -825,28 +824,28 @@ void ElementParser	::	processExceptions( const TElementShared & aExceptions,
 	}
 
 }
-void ElementParser	::	processException( const TElementShared & aExceptions,
-															TNodeShared aParent )	{
+void ElementParser	::	processException( const TElementPtr & aExceptions,
+															TNodePtr aParent )	{
 	
 	if ( aExceptions.get() == 0 )	{
 		throw ReadException( mDocText->getLineNr(),
 										mDocText->getCharNr(), "No exceptions" );
 	}
-	TNodeShared plusNode = make_shared( aExceptions->getFirstChild() );
-	TElementShared plus = shared_static_cast<TElement>( plusNode );
+	TNodePtr plusNode = aExceptions->getFirstChild();
+	TElementPtr plus = shared_static_cast<TElement>( plusNode );
 	if ( plus->getNodeName() != mPlus )	{
 		throw ReadException( mDocText->getLineNr(),
 										mDocText->getCharNr(), "No plus exceptions" );
 	}
-	TNodeShared plusChild = make_shared( plus->getFirstChild() );
-	TNodeShared connectorNode = make_shared( plusChild->getFirstChild() );
-	TElementShared connector = shared_static_cast<TElement>( connectorNode );
+	TNodePtr plusChild = plus->getFirstChild();
+	TNodePtr connectorNode = plusChild->getFirstChild();
+	TElementPtr connector = shared_static_cast<TElement>( connectorNode );
 
-	TNodeListShared children = connector->getChildNodes();
+	TNodeListPtr children = connector->getChildNodes();
 	string token = "";
 	for ( unsigned int i = 0; i < children->getLength(); i++ )	{
-		TNodeShared child = make_shared( children->item( i ) );
-		TElementShared element = getElementDecl( child->getNodeName(), mElements );
+		TNodePtr child = children->item( i );
+		TElementPtr element = getElementDecl( child->getNodeName(), mElements );
 		if ( element->getTagName() == token || token == "" )	{
 			try	{
 				processElement( element, aParent );
@@ -861,7 +860,7 @@ void ElementParser	::	processException( const TElementShared & aExceptions,
 					}
 					case NO_TAG_FOUND:	{
 						printf( "NO TAG FOUND\n" );
-						TNodeListShared results = connector->getElementsByTagName( "#PCDATA" );
+						TNodeListPtr results = connector->getElementsByTagName( "#PCDATA" );
 						if ( results->getLength() != 0 )	{
 							token = "#PCDATA";
 						}
@@ -921,19 +920,19 @@ void ElementParser	::	processExceptionOtherContent()	{
 
 }
 
-TElementShared ElementParser	::	getElementDecl( const string & aName,
-																			TElementShared declarations ) const	{
+TElementPtr ElementParser	::	getElementDecl( const string & aName,
+																			TElementPtr declarations ) const	{
 	
 	//printf( "Trying to get declaration: %s\n", aName.c_str() );
 	
-	TNodeListShared children = declarations->getChildNodes();
+	TNodeListPtr children = declarations->getChildNodes();
 	for ( unsigned int i = 0; i < children->getLength(); i++ )	{
-		TNodeShared child = make_shared( children->item( i ) );
+		TNodePtr child = children->item( i );
 		if ( child->getNodeName() == aName )	{
 			return shared_static_cast<TElement>( child );
 		}
 		if ( child->getNodeName() == "()" )	{
-			TElementShared declaration = shared_static_cast<TElement>( child );
+			TElementPtr declaration = shared_static_cast<TElement>( child );
 			try	{
 				return getElementDecl( aName, declaration );
 			}
@@ -942,7 +941,7 @@ TElementShared ElementParser	::	getElementDecl( const string & aName,
 			}
 		}
 		if ( child->getNodeName() == "|" )	{
-			TElementShared declaration = shared_static_cast<TElement>( child );
+			TElementPtr declaration = shared_static_cast<TElement>( child );
 			try	{
 				return getElementDecl( aName, declaration );
 			}

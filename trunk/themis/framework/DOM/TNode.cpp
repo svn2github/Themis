@@ -1,9 +1,45 @@
-/* Node implementation
+/*
+	Copyright (c) 2001 Mark Hellegers. All Rights Reserved.
+	
+	Permission is hereby granted, free of charge, to any person
+	obtaining a copy of this software and associated documentation
+	files (the "Software"), to deal in the Software without
+	restriction, including without limitation the rights to use,
+	copy, modify, merge, publish, distribute, sublicense, and/or
+	sell copies of the Software, and to permit persons to whom
+	the Software is furnished to do so, subject to the following
+	conditions:
+	
+	   The above copyright notice and this permission notice
+	   shall be included in all copies or substantial portions
+	   of the Software.
+	
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+	KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+	WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+	PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+	OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+	OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+	
+	Original Author: 	Mark Hellegers (M.H.Hellegers@stud.tue.nl)
+	Project Start Date: October 18, 2000
+	Class Start Date: December 11, 2001
+*/
+
+/*
+	TNode implementation
 	See TNode.h for some more information
 */
 
+// Standard C headers
+#include <stdio.h>
+
+// Standard C++ headers
 #include <string>
 
+// DOM headers
 #include "TNode.h"
 #include "TNamedNodeMap.h"
 #include "TNodeList.h"
@@ -11,26 +47,29 @@
 #include "TDOMException.h"
 
 TNode	::	TNode( const unsigned short aNodeType,
-						   const TDocumentWeak aOwnerDocument,
+						   const TDocumentPtr aOwnerDocument,
 						   const TDOMString aNodeName,
 						   const TDOMString aNodeValue )	{
-	
+
 	mNodeType = aNodeType;
 	mOwnerDocument = aOwnerDocument;
 
 	mParentNode.reset();
-	mThisPointer.reset();
+	//mThisPointer.reset();
 	mNextSibling.reset();
 	mPreviousSibling.reset();
 	
-	mNodeList = vector<TNodeShared>();
-	mChildNodes = TNodeListShared( new TNodeList( &mNodeList ) );
-	mNodeListContainers = vector<TNodeListContainerShared>();
+	mNodeList = vector<TNodePtr>();
+	mChildNodes = TNodeListPtr( new TNodeList( &mNodeList ) );
+	mNodeListContainers = vector<TNodeListContainerPtr>();
 
 	switch ( mNodeType )	{
 		case ELEMENT_NODE:	{
 			mNodeName = aNodeName;
 			mNodeTypeString = "ELEMENT_NODE";
+			mAttributeList = vector<TNodePtr>();
+			// Can't do this here. Do it where it is accessed. Not ideal, I know
+			//mAttributes = TNamedNodeMapPtr( new TNamedNodeMap( &mAttributeList, shared_from_this() ) );
 			break;
 		}
 		case ATTRIBUTE_NODE:	{
@@ -98,11 +137,11 @@ TNode	::	TNode( const unsigned short aNodeType,
 
 TNode	::	~TNode()	{
 
-	//printf( "Destructor called of %s: %s\n", getNodeTypeString(), getNodeName().c_str() );
-
-	if ( mParentNode.get() != NULL )	{
+	TNodePtr parent = make_shared( mParentNode );
+	if ( parent.get() != NULL )	{
 		// Still attached to the tree
-		mParentNode.get()->removeChild( mThisPointer );
+		// Hmm, watch this code. Seems odd
+		parent->removeChild( shared_from_this() );
 	}
 
 	if ( mNodeType == ELEMENT_NODE )	{
@@ -110,16 +149,12 @@ TNode	::	~TNode()	{
 		mAttributes.reset();
 	}
 
-	TNodeShared item;
-
 	// Remove all items that are attached to this node
 	for ( int i = mNodeList.size() - 1; i >= 0; i-- )	{
-		item = mNodeList[ i ];
+		TNodePtr item = mNodeList[ i ];
 		removeChild( item );
 	}
 	
-	//delete mChildNodes;
-
 }
 
 unsigned short TNode	::	getNodeType() const	{
@@ -156,58 +191,62 @@ void TNode	::	setNodeValue( const TDOMString aNodeValue )	{
 	
 }
 
-TNodeListShared TNode	::	getChildNodes() const	{
+TNodeListPtr TNode	::	getChildNodes() const	{
 	
 	return mChildNodes;
 	
 }
 
-TNodeWeak TNode	::	getParentNode() const	{
+TNodePtr TNode	::	getParentNode() const	{
 	
-	return mParentNode;
+	return make_shared( mParentNode );
 	
 }
 
-TNodeWeak TNode	::	getFirstChild() const	{
+TNodePtr TNode	::	getFirstChild() const	{
 	
 	return mNodeList.front();
 	
 }
 
-TNodeWeak TNode	::	getLastChild() const	{
+TNodePtr TNode	::	getLastChild() const	{
 	
 	return mNodeList.back();
 	
 }
 
-TNodeWeak TNode	::	getNextSibling() const	{
+TNodePtr TNode	::	getNextSibling() const	{
 	
-	return mNextSibling;
-	
-}
-
-TNodeWeak TNode	::	getPreviousSibling() const	{
-	
-	return mPreviousSibling;
+	return make_shared( mNextSibling );
 	
 }
 
-TNamedNodeMapShared TNode	::	getAttributes() const	{
+TNodePtr TNode	::	getPreviousSibling() const	{
+	
+	return make_shared( mPreviousSibling );
+	
+}
+
+TNamedNodeMapPtr TNode	::	getAttributes()	{
+
+	if ( mNodeType == ELEMENT_NODE && mAttributes.get() == NULL )	{
+		mAttributes = TNamedNodeMapPtr( new TNamedNodeMap( &mAttributeList, shared_from_this() ) );
+	}
 	
 	return mAttributes;
 	
 }
 
-TDocumentWeak TNode	::	getOwnerDocument() const	{
+TDocumentPtr TNode	::	getOwnerDocument() const	{
 	
-	return mOwnerDocument;
+	return make_shared( mOwnerDocument );
 	
 }
 
-TNodeWeak TNode	::	insertBefore( TNodeShared aNewChild, TNodeShared aRefChild )	{
+TNodePtr TNode	::	insertBefore( TNodePtr aNewChild, TNodePtr aRefChild )	{
 	
 	if ( aNewChild.get() == NULL )	{
-		return TNodeWeak();
+		return TNodePtr();
 	}
 
 	if ( this == aNewChild.get() || isAncestor( aNewChild ) )	{
@@ -223,7 +262,7 @@ TNodeWeak TNode	::	insertBefore( TNodeShared aNewChild, TNodeShared aRefChild )	
 		appendChild( aRefChild );
 	}
 	else	{
-		vector<TNodeShared>::iterator iter;
+		vector<TNodePtr>::iterator iter;
 		iter = find( mNodeList.begin(), mNodeList.end(), aRefChild );
 		if ( iter != mNodeList.end() )	{
 			int j = mNodeList.size();
@@ -231,27 +270,29 @@ TNodeWeak TNode	::	insertBefore( TNodeShared aNewChild, TNodeShared aRefChild )	
 				if ( mNodeList[ i ] == aRefChild )	{
 
 					// If aNewChild is in the tree already remove it there first.
-					if ( aNewChild->mParentNode.get() != NULL )	{
-						aNewChild->mParentNode.get()->removeChild( aNewChild );
+					TNodePtr parent = aNewChild->getParentNode();
+					if ( parent.get() != NULL )	{
+						parent->removeChild( aNewChild );
 					}
 
 					// Insert aNewChild in the tree and adjust the pointers
 					mNodeList.insert( &mNodeList[ i ], aNewChild );
-					aNewChild->mParentNode = mThisPointer;
+					aNewChild->mParentNode = shared_from_this();
 					aNewChild->mPreviousSibling = aRefChild->mPreviousSibling;
 					aNewChild->mNextSibling = aRefChild;
 					aRefChild->mPreviousSibling = aNewChild;
 
 					// Update the previousSibling's nextSibling
-					if ( aNewChild->mPreviousSibling.get() != NULL )	{
-						aNewChild->mPreviousSibling.get()->mNextSibling = aNewChild;
+					TNodePtr previous = aNewChild->getPreviousSibling();
+					if ( previous.get() != NULL )	{
+						previous->mNextSibling = aNewChild;
 					}
 				}
 			}
-			aNewChild->notifyNodeChange( mThisPointer, NODE_ADDED );
+			notifyNodeChange( aNewChild, NODE_ADDED );
 		}
 		else	{
-			return TNodeWeak();
+			throw TDOMException( NOT_FOUND_ERR );
 		}
 	}
 	
@@ -259,10 +300,10 @@ TNodeWeak TNode	::	insertBefore( TNodeShared aNewChild, TNodeShared aRefChild )	
 	
 }						
 
-TNodeWeak TNode	::	replaceChild( TNodeShared aNewChild, TNodeShared aOldChild)	{
+TNodePtr TNode	::	replaceChild( TNodePtr aNewChild, TNodePtr aOldChild)	{
 	
 	if ( aNewChild.get() == NULL )	{
-		return TNodeWeak();
+		return TNodePtr();
 	}
 
 	if ( this == aNewChild.get() || isAncestor( aNewChild ) )	{
@@ -278,15 +319,16 @@ TNodeWeak TNode	::	replaceChild( TNodeShared aNewChild, TNodeShared aOldChild)	{
 		throw TDOMException( NOT_FOUND_ERR );
 	}
 	else	{
-		vector<TNodeShared>::iterator iter;
+		vector<TNodePtr>::iterator iter;
 		iter = find( mNodeList.begin(), mNodeList.end(), aOldChild );
 		if ( iter != mNodeList.end() )	{
 			int j = mNodeList.size();
 			for ( int i = 0; i < j; i++ )	{
 				if ( mNodeList[ i ] == aOldChild )	{
 					// If aNewChild is in the tree already remove it there first.
-					if ( aNewChild->mParentNode.get() != NULL )	{
-						aNewChild->mParentNode.get()->removeChild( aNewChild );
+					TNodePtr parent = aNewChild->getParentNode();
+					if ( parent.get() != NULL )	{
+						parent->removeChild( aNewChild );
 					}
 
 					// Remove aOldChild from list and add aNewChild in its place
@@ -294,10 +336,10 @@ TNodeWeak TNode	::	replaceChild( TNodeShared aNewChild, TNodeShared aOldChild)	{
 					mNodeList.insert( &mNodeList[ i ], aNewChild );
 
 					// Notify parent that node is removed
-					aOldChild->notifyNodeChange( mThisPointer, NODE_REMOVED );
+					notifyNodeChange( aOldChild, NODE_REMOVED );
 					
 					// Set aNewChild's parentNode, previous- and nextSibling to aOldChild's values
-					aNewChild->mParentNode = mThisPointer;
+					aNewChild->mParentNode = shared_from_this();
 					aNewChild->mPreviousSibling = aOldChild->mPreviousSibling;
 					aNewChild->mNextSibling = aOldChild->mNextSibling;
 
@@ -307,16 +349,18 @@ TNodeWeak TNode	::	replaceChild( TNodeShared aNewChild, TNodeShared aOldChild)	{
 					aOldChild->mParentNode.reset();
 
 					// Set neighbour siblings to point to aNewChild
-					if ( aNewChild->mPreviousSibling.get() != NULL )	{
-						aNewChild->mPreviousSibling.get()->mNextSibling = aNewChild;
+					TNodePtr previous = aNewChild->getPreviousSibling();
+					if ( previous.get() != NULL )	{
+						previous->mNextSibling = aNewChild;
 					}
-					if ( aNewChild->mNextSibling.get() != NULL )	{
-						aNewChild->mNextSibling.get()->mPreviousSibling = aNewChild;
+					TNodePtr next = aNewChild->getNextSibling();
+					if ( next.get() != NULL )	{
+						next->mPreviousSibling = aNewChild;
 					}
 				}
 			}
 			// Notify parent that node is added
-			aNewChild->notifyNodeChange( mThisPointer, NODE_ADDED );
+			notifyNodeChange( aNewChild, NODE_ADDED );
 		}
 		else	{
 			throw TDOMException( NOT_FOUND_ERR );
@@ -327,31 +371,30 @@ TNodeWeak TNode	::	replaceChild( TNodeShared aNewChild, TNodeShared aOldChild)	{
 	
 }
 
-TNodeWeak TNode	::	 removeChild( TNodeShared aOldChild )	{
+TNodePtr TNode	::	 removeChild( TNodePtr aOldChild )	{
 	
 	if ( aOldChild.get() == NULL )	{
 		// NULL is technically not in the tree
 		throw TDOMException( NOT_FOUND_ERR );
 	}
 	else	{
-		vector<TNodeShared>::iterator iter = find( mNodeList.begin(), mNodeList.end(), aOldChild );
+		vector<TNodePtr>::iterator iter = find( mNodeList.begin(), mNodeList.end(), aOldChild );
 		if ( iter != mNodeList.end() )	{
 			// Remove node
 			mNodeList.erase( iter );
 			
 			// Link up next and previous siblings
-			if ( aOldChild->mPreviousSibling.get() != NULL )	{
-				aOldChild->mPreviousSibling.get()->mNextSibling = aOldChild->mNextSibling;
+			TNodePtr previous = aOldChild->getPreviousSibling();
+			if ( previous.get() != NULL )	{
+				previous->mNextSibling = aOldChild->mNextSibling;
 			}
-			if ( aOldChild->mNextSibling.get() != NULL )	{
-				aOldChild->mNextSibling.get()->mPreviousSibling = aOldChild->mPreviousSibling;
+			TNodePtr next = aOldChild->getNextSibling();
+			if ( next.get() != NULL )	{
+				next->mPreviousSibling = aOldChild->mPreviousSibling;
 			}
 
-			// If mThisPointer is expired, all copies are removed and don't have to be checked anymore
-			if ( !mThisPointer.expired() )	{
-				// Notify parent that node is removed
-				aOldChild->notifyNodeChange( make_shared( mThisPointer ), NODE_REMOVED );
-			}
+			// Notify parent that node is removed
+			notifyNodeChange( aOldChild, NODE_REMOVED );
 
 			// Remove references to position in tree
 			aOldChild->mParentNode.reset();
@@ -365,46 +408,45 @@ TNodeWeak TNode	::	 removeChild( TNodeShared aOldChild )	{
 		}
 	}
 	
-	return TNodeWeak();
-	
 }
 
-TNodeWeak TNode	::	appendChild( TNodeShared aNodeChild )	{
+TNodePtr TNode	::	appendChild( TNodePtr aNodeChild )	{
 
 	if ( aNodeChild.get() == NULL )	{
-		return TNodeWeak();
+		return TNodePtr();
 	}
 
 	if ( this == aNodeChild.get() || isAncestor( aNodeChild ) )	{
 		throw TDOMException( HIERARCHY_REQUEST_ERR );
 	}
 
-	if ( !isChildAllowed( aNodeChild ) )	{
+	if ( ! isChildAllowed( aNodeChild ) )	{
 		throw TDOMException( HIERARCHY_REQUEST_ERR );
 	}
 
 	// If aNodeChild is in the tree already remove it there first.
-	if ( aNodeChild->mParentNode.get() != NULL )	{
-		aNodeChild->mParentNode.get()->removeChild( aNodeChild );
+	TNodePtr parent = aNodeChild->getParentNode();
+	if ( parent.get() != NULL )	{
+		parent->removeChild( aNodeChild );
 	}
 
-	TNodeWeak lastNode;
+	TNodePtr lastNode;
 	if ( mNodeList.size() > 0 )	{
-		lastNode = (TNodeWeak) mNodeList.back();
+		lastNode = mNodeList.back();
 	}
 	// If available, update the last node
 	if ( lastNode.get() != NULL )	{
-		lastNode.get()->mNextSibling = aNodeChild;
+		lastNode->mNextSibling = aNodeChild;
 	}
 
 	// Add aNodeChild in the tree
 	aNodeChild->mPreviousSibling = lastNode;
-	aNodeChild->mParentNode = mThisPointer;
+	aNodeChild->mParentNode = shared_from_this();
 	aNodeChild->mNextSibling.reset();
 	mNodeList.push_back( aNodeChild );
 	
 	// Notify parent that node is added
-	aNodeChild->notifyNodeChange( mThisPointer, NODE_ADDED );
+	notifyNodeChange( aNodeChild, NODE_ADDED );
 
 	return aNodeChild;
 	
@@ -412,20 +454,25 @@ TNodeWeak TNode	::	appendChild( TNodeShared aNodeChild )	{
 
 bool TNode	::	hasChildNodes() const	{
 	
-	return !( mNodeList.empty() );
+	return ! ( mNodeList.empty() );
 	
 }
 
-TNodeShared TNode	::	cloneNode( bool aDeep ) const	{
+TNodePtr TNode	::	cloneNode( bool aDeep ) const	{
+
 	// Still need to implement a deep clone
 	
-	TNodeShared clonedNode( new TNode( mNodeType, mOwnerDocument ) );
+	TNodePtr clonedNode( new TNode( mNodeType, mOwnerDocument ) );
 	
 	return clonedNode;
 	
 }
 
-bool TNode	::	hasAttributes() const	{
+bool TNode	::	hasAttributes()	{
+
+	if ( mNodeType == ELEMENT_NODE && mAttributes.get() == NULL )	{
+		mAttributes = TNamedNodeMapPtr( new TNamedNodeMap( &mAttributeList, shared_from_this() ) );
+	}
 	
 	if ( mAttributes.get() && mAttributes->getLength() )	{
 		return true;
@@ -435,7 +482,7 @@ bool TNode	::	hasAttributes() const	{
 
 }
 
-bool TNode	::	isSameNode( const TNodeShared aOther ) const	{
+bool TNode	::	isSameNode( const TNodePtr aOther ) const	{
 	
 	if ( this == aOther.get() )	{
 		return true;
@@ -445,22 +492,23 @@ bool TNode	::	isSameNode( const TNodeShared aOther ) const	{
 
 }
 
-bool TNode	::	isAncestor( const TNodeShared aNode ) const	{
+bool TNode	::	isAncestor( const TNodePtr aNode ) const	{
 
-	TNodeWeak ancestorNode = mThisPointer;
-	ancestorNode = ancestorNode.get()->mParentNode;
-	while ( ancestorNode.get() != NULL )	{
-		if ( ancestorNode.get() == aNode.get() )	{
+	TNodePtr ancestorNode = getParentNode();
+	if ( ancestorNode.get() != NULL )	{
+		if ( ancestorNode == aNode )	{
 			return true;
 		}
-		ancestorNode = ancestorNode.get()->mParentNode;
+		else	{
+			ancestorNode->isAncestor( aNode );
+		}
 	}
 	
 	return false;
 	
 }	
 
-bool TNode	::	isChildAllowed( const TNodeShared aNewChild ) const	{
+bool TNode	::	isChildAllowed( const TNodePtr aNewChild ) const	{
 	
 	switch ( mNodeType )	{
 		case DOCUMENT_NODE:	{
@@ -532,52 +580,57 @@ void TNode	::	setNodeName( const TDOMString aValue )	{
 	
 }
 
-void TNode	::	nodeChanged( TNodeShared aNode, NodeChange aChange )	{
+void TNode	::	nodeChanged( TNodePtr aNode, NodeChange aChange )	{
 	
-	vector<TNodeListContainerShared>::iterator current;
-	for ( current = mNodeListContainers.begin(); current != mNodeListContainers.end(); current++ )	{
-		if ( current->get()->getNodeType() == aNode->getNodeType() )	{
-			if ( current->get()->getQueryString() == aNode->getNodeName() || current->get()->getQueryString() == "*" )	{
+	// Check the tracking lists to see if this node fits in one of them
+	vector<TNodeListContainerPtr>::iterator iter;
+	for ( iter = mNodeListContainers.begin(); iter != mNodeListContainers.end(); iter++ )	{
+		TNodeListContainerPtr current = *iter;
+		if ( current->getNodeType() == aNode->getNodeType() )	{
+			if ( current->getQueryString() == aNode->getNodeName() || current->getQueryString() == "*" )	{
 				if ( aChange == NODE_ADDED )	{
-					current->get()->addNode( aNode );
+					current->addNode( aNode );
 				}
 				if ( aChange == NODE_REMOVED )	{
-					current->get()->removeNode( aNode );
+					current->removeNode( aNode );
 				}
 			}
 		}
 	}
 
-	if ( mParentNode.get() != NULL )	{
-		mParentNode.get()->nodeChanged( aNode, NODE_ADDED );
+	// Check the parent's tracking lists
+	TNodePtr parent = getParentNode();
+	if ( parent.get() != NULL )	{
+		parent->nodeChanged( aNode, aChange );
 	}
 
 }
 
-void TNode	::	notifyNodeChange( TNodeShared aNotifyNode, NodeChange aChange )	{
+void TNode	::	notifyNodeChange( TNodePtr aNode, NodeChange aChange )	{
 	
-	aNotifyNode->nodeChanged( make_shared( mThisPointer ), aChange );
-	int itemsInList = mNodeList.size();
-	TNodeWeak current;
-	for ( int i = 0; i < itemsInList; i++ )	{
-		current = mNodeList[ i ];
-		current.get()->notifyNodeChange( aNotifyNode, aChange );
+	nodeChanged( aNode, aChange );
+	
+	TNodeListPtr children = aNode->getChildNodes();
+	int length = children->getLength();
+	for ( int i = 0; i < length; i++ )	{
+		TNodePtr node = children->item( i );
+		notifyNodeChange( node, aChange );
 	}
 
 }
 
-vector<TNodeShared> TNode	::	collectNodes( TDOMString aName, unsigned short aNodeType )	{
+vector<TNodePtr> TNode	::	collectNodes( TDOMString aName, unsigned short aNodeType )	{
 	
-	vector<TNodeShared> result;
+	vector<TNodePtr> result;
 	int itemsInList = mNodeList.size();
-	TNodeShared current;
 	for ( int i = 0; i < itemsInList; i++ )	{
-		current = mNodeList[ i ];
-		if ( current.get()->getNodeType() == aNodeType && ( current.get()->getNodeName() == aName || aName == "*" ) )	{
+		TNodePtr current = mNodeList[ i ];
+		if ( current->getNodeType() == aNodeType && ( current->getNodeName() == aName || aName == "*" ) )	{
 			// This node must be added to the list.
 			result.push_back( current );
 		}
-		vector<TNodeShared> temp = current.get()->collectNodes( aName, aNodeType );
+		// Collect the nodes of the children
+		vector<TNodePtr> temp = current->collectNodes( aName, aNodeType );
 		for ( int j = 0; j < (int) temp.size(); j++ )	{
 			result.push_back( temp[ j ] );
 		}
@@ -590,15 +643,5 @@ vector<TNodeShared> TNode	::	collectNodes( TDOMString aName, unsigned short aNod
 const char * TNode	::	getNodeTypeString() const	{
 	
 	return mNodeTypeString.c_str();
-	
-}
-
-void TNode	::	setSmartPointer( TNodeShared pointer )	{
-	
-	mThisPointer = pointer;
-	if ( mNodeType == ELEMENT_NODE )	{
-		mAttributeList = vector<TNodeShared>();
-		mAttributes = TNamedNodeMapShared( new TNamedNodeMap( &mAttributeList, mThisPointer ) );
-	}
 	
 }

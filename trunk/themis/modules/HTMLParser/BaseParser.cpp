@@ -45,8 +45,7 @@ void BaseParser	::	setDocText( SGMLTextPtr aDocText )	{
 void BaseParser	::	createDTD()	{
 
 	// Document to store information about the dtd
-	mDTD = TDocumentShared( new TDocument() );
-	mDTD->setSmartPointer( mDTD );
+	mDTD = TDocumentPtr( new TDocument() );
 
 	// Element to store parameter entities
 	mParEntities = mDTD->createElement( "parEntities" );
@@ -171,12 +170,12 @@ void BaseParser	::	processParEntityReference()	{
 		// Must have been omitted
 	}
 
-	TNodeListShared children = mParEntities->getChildNodes();
+	TNodeListPtr children = mParEntities->getChildNodes();
 
 	for ( unsigned int i = 0; i < children->getLength(); i++ )	{
-		TNodeShared node = make_shared( children->item( i ) );
+		TNodePtr node = children->item( i );
 		if ( node->getNodeName() == name )	{
-			TElementShared child = shared_static_cast<TElement>( node );
+			TElementPtr child = shared_static_cast<TElement>( node );
 			// Check what kind of text it is
 			if ( child->getAttribute( "type" ) != kPUBLIC )	{
 				Position entityPosition = mEntityTexts[ name ];
@@ -192,7 +191,7 @@ void BaseParser	::	processParEntityReference()	{
 	
 }
 
-void BaseParser	::	processParLiteral( TElementShared & entity )	{
+void BaseParser	::	processParLiteral( TElementPtr & entity )	{
 
 	string text = "";
 	string literal = "";
@@ -391,28 +390,6 @@ void BaseParser	::	processPs()	{
 		// Do nothing
 	}
 
-/*
-	try	{
-		processParEntityReference();
-		return;
-	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
-		}
-	}
-		
-	try	{
-		processComment();
-		return;
-	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw;
-		}
-	}
-*/
-
 	throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(), "Ps expected" );
 	
 }
@@ -540,26 +517,26 @@ string BaseParser	::	processGI()	{
 	
 }
 
-TElementShared BaseParser	::	processNameGroup()	{
+TElementPtr BaseParser	::	processNameGroup()	{
 
 	process( mGrpo );
 
-	TElementShared grpo = mDTD->createElement( "()" );
+	TElementPtr grpo = mDTD->createElement( "()" );
 
 	processTsStar();
 	
 	string name = processName();
-	TElementShared firstPart = mDTD->createElement( name );
+	TElementPtr firstPart = mDTD->createElement( name );
 
-	TElementShared subGroup;
+	TElementPtr subGroup;
 	bool inGroup = true;
 	while ( inGroup )	{
 		try	{
 			processTsStar();
-			TElementShared connector = processConnector();
+			TElementPtr connector = processConnector();
 			processTsStar();
 			name = processName();
-			TElementShared element = mDTD->createElement( name );
+			TElementPtr element = mDTD->createElement( name );
 			if ( connector->getNodeName() == firstPart->getNodeName() )	{
 				firstPart->appendChild( element );
 			}
@@ -623,9 +600,9 @@ string BaseParser	::	processNameTokenGroup()	{
 	
 }
 
-TElementShared BaseParser	::	processConnector()	{
+TElementPtr BaseParser	::	processConnector()	{
 
-	TElementShared connector;
+	TElementPtr connector;
 
 	try	{
 		process( mAnd );

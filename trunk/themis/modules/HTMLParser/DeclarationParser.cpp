@@ -15,7 +15,7 @@
 #include "TNodeList.h"
 
 DeclarationParser	::	DeclarationParser( SGMLTextPtr aDocText,
-															TDocumentShared aDTD )
+															TDocumentPtr aDTD )
 							:	BaseParser()	{
 
 	//printf( "Constructing DeclarationParser\n" );
@@ -37,15 +37,15 @@ void DeclarationParser	::	setDocText( SGMLTextPtr aDocText )	{
 	
 }
 
-void DeclarationParser	::	setDTD( TDocumentShared aDTD )	{
+void DeclarationParser	::	setDTD( TDocumentPtr aDTD )	{
 
 	mDTD = aDTD;
 	
-	TNodeListShared list = mDTD->getChildNodes();
+	TNodeListPtr list = mDTD->getChildNodes();
 	unsigned int length = list->getLength();
 	for ( unsigned int i = 0; i < length; i++ )	{
-		TNodeShared node = make_shared( list->item( i ) );
-		TElementShared element = shared_static_cast<TElement>( node );
+		TNodePtr node = list->item( i );
+		TElementPtr element = shared_static_cast<TElement>( node );
 		if ( element->getNodeName() == "parEntities" )	{
 			mParEntities = element;
 		}
@@ -76,13 +76,13 @@ void DeclarationParser	::	processDeclaration()	{
 	
 }
 
-void DeclarationParser	::	processExtEntitySpec( TElementShared & entity )	{
+void DeclarationParser	::	processExtEntitySpec( TElementPtr & entity )	{
 
 	processExternalId( entity );
 	
 }
 
-void DeclarationParser	::	processExternalId( TElementShared & entity )	{
+void DeclarationParser	::	processExternalId( TElementPtr & entity )	{
 
 	try	{
 		process( kSYSTEM );

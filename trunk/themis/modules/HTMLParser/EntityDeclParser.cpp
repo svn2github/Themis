@@ -15,7 +15,7 @@
 #include "TElement.h"
 
 EntityDeclParser	::	EntityDeclParser( SGMLTextPtr aDocText,
-													  TDocumentShared aDTD )
+													  TDocumentPtr aDTD )
 								:	DeclarationParser( aDocText, aDTD )	{
 
 	//printf( "Constructing EntityDeclParser\n" );
@@ -37,7 +37,7 @@ map<string, Position> EntityDeclParser	::	getEntityTexts()	{
 void EntityDeclParser	::	processDeclaration()	{
 
 	// Create an element to store the entity
-	TElementShared entity;
+	TElementPtr entity;
 
 	process( mMdo );
 	process( kENTITY );
@@ -96,11 +96,11 @@ void EntityDeclParser	::	processDeclaration()	{
 
 }
 
-TElementShared EntityDeclParser	::	processEntityName()	{
+TElementPtr EntityDeclParser	::	processEntityName()	{
 	
 	try	{
 		string name = processGenEntityName();
-		TElementShared entity = mDTD->createElement( name );
+		TElementPtr entity = mDTD->createElement( name );
 		mCharEntities->appendChild( entity );
 		return entity;
 	}
@@ -111,7 +111,7 @@ TElementShared EntityDeclParser	::	processEntityName()	{
 	}
 	try	{
 		string name = processParEntityName();
-		TElementShared entity = mDTD->createElement( name );
+		TElementPtr entity = mDTD->createElement( name );
 		mParEntities->appendChild( entity );
 		return entity;
 	}
@@ -122,7 +122,7 @@ TElementShared EntityDeclParser	::	processEntityName()	{
 
 }
 
-void EntityDeclParser	::	processEntityText( TElementShared & entity )	{
+void EntityDeclParser	::	processEntityText( TElementPtr & entity )	{
 
 	try	{
 		processParLiteral( entity );
@@ -149,7 +149,7 @@ void EntityDeclParser	::	processEntityText( TElementShared & entity )	{
 
 }
 
-void EntityDeclParser	::	processDataText( TElementShared & entity )	{
+void EntityDeclParser	::	processDataText( TElementPtr & entity )	{
 
 	try	{
 		process( kCDATA );

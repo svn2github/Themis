@@ -8,10 +8,9 @@
 #ifndef DOMSUPPORT_H
 #define DOMSUPPORT_H
 
+// Boost headers
 #include "boost/shared_ptr.hpp"
 #include "boost/weak_ptr.hpp"
-
-#include <string>
 
 class TNode;
 class TElement;
@@ -55,7 +54,8 @@ enum ExceptionCode	{
 	INVALID_MODIFICATION_ERR,
 	NAMESPACE_ERR,
 	INVALID_ACCESS_ERR,
-	VALIDATION_ERR
+	VALIDATION_ERR,
+	TYPE_MISMATCH_ERR
 };
 
 enum TreePosition	{
@@ -90,29 +90,32 @@ enum NodeChange	{
 	NODE_REMOVED
 };
 
-// Convenience definitions
+// Typedefs used
 typedef boost::weak_ptr<TNode> TNodeWeak;
-typedef boost::shared_ptr<TNode> TNodeShared;
+typedef boost::shared_ptr<TNode> TNodePtr;
 
 typedef boost::weak_ptr<TDocument> TDocumentWeak;
-typedef boost::shared_ptr<TDocument> TDocumentShared;
+typedef boost::shared_ptr<TDocument> TDocumentPtr;
 
 typedef boost::weak_ptr<TElement> TElementWeak;
-typedef boost::shared_ptr<TElement> TElementShared;
+typedef boost::shared_ptr<TElement> TElementPtr;
 
 typedef boost::weak_ptr<TText> TTextWeak;
-typedef boost::shared_ptr<TText> TTextShared;
+typedef boost::shared_ptr<TText> TTextPtr;
 
 typedef boost::weak_ptr<TNamedNodeMap> TNamedNodeMapWeak;
-typedef boost::shared_ptr<TNamedNodeMap> TNamedNodeMapShared;
+typedef boost::shared_ptr<TNamedNodeMap> TNamedNodeMapPtr;
 
 typedef boost::weak_ptr<TAttr> TAttrWeak;
-typedef boost::shared_ptr<TAttr> TAttrShared;
+typedef boost::shared_ptr<TAttr> TAttrPtr;
 
 typedef boost::weak_ptr<TComment> TCommentWeak;
-typedef boost::shared_ptr<TComment> TCommentShared;
+typedef boost::shared_ptr<TComment> TCommentPtr;
 
-typedef boost::shared_ptr<TNodeListContainer> TNodeListContainerShared;
-typedef boost::shared_ptr<TNodeList> TNodeListShared;
+typedef boost::weak_ptr<TCharacterData> TCharacterDataWeak;
+typedef boost::shared_ptr<TCharacterData> TCharacterDataPtr;
+
+typedef boost::shared_ptr<TNodeListContainer> TNodeListContainerPtr;
+typedef boost::shared_ptr<TNodeList> TNodeListPtr;
 
 #endif

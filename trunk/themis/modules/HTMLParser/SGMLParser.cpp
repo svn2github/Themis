@@ -212,7 +212,7 @@ void SGMLParser	::	processDocElement()	{
 	
 }
 
-TDocumentShared SGMLParser	::	parse()	{
+TDocumentPtr SGMLParser	::	parse()	{
 	
 	parseDTD();
 	
@@ -241,9 +241,9 @@ TDocumentShared SGMLParser	::	parse()	{
 	
 }
 
-TDocumentShared SGMLParser	::	parse( const char * aDocument )	{
+TDocumentPtr SGMLParser	::	parse( const char * aDocument )	{
 
-	TDocumentShared result;
+	TDocumentPtr result;
 
 	// Load text
 	if ( aDocument != NULL )	{
@@ -267,7 +267,7 @@ TDocumentShared SGMLParser	::	parse( const char * aDocument )	{
 	
 }
 
-TDocumentShared SGMLParser	::	parse( SGMLTextPtr aDocument )	{
+TDocumentPtr SGMLParser	::	parse( SGMLTextPtr aDocument )	{
 
 	// Load text
 	mDocText = aDocument;
@@ -288,12 +288,11 @@ void SGMLParser	::	parseDTD()	{
 		mDtdParser->setDTD( mDTD );
 		mDocTypeDecl->setDTD( mDTD );
 		mElementParser->setDTD( mDTD );
-		printf( "Going to parse it\n" );
 		mDtdParser->parse( mDefaultDtd.c_str() );
-		mDtds.insert( map<string, TDocumentShared>::value_type( mDefaultDtd, mDTD ) );
+		mDtds.insert( map<string, TDocumentPtr>::value_type( mDefaultDtd, mDTD ) );
 	}
 	else	{
-		map<string, TDocumentShared>::iterator i = mDtds.find( mDefaultDtd );
+		map<string, TDocumentPtr>::iterator i = mDtds.find( mDefaultDtd );
 		mDTD = (*i).second;
 	}
 	
@@ -306,28 +305,27 @@ void SGMLParser	::	parseDTD( const char * aDtd )	{
 	
 }
 
-void SGMLParser	::	showTree( const TNodeShared aNode, int aSpacing )	{
+void SGMLParser	::	showTree( const TNodePtr aNode, int aSpacing )	{
 	
-	TNodeListShared children = aNode->getChildNodes();
+	TNodeListPtr children = aNode->getChildNodes();
 	int length = children->getLength();
 	if ( length != 0 )	{
 		for ( int i = 0; i < length; i++ )	{
-			TNodeShared child = make_shared( children->item( i ) );
+			TNodePtr child = children->item( i );
 			for ( int j = 0; j < aSpacing; j++ )	{
 				cout << "  ";
 			}
 			cout << "Child name: " << child->getNodeName().c_str() << endl;
 			if ( child->getNodeType() == ELEMENT_NODE )	{
 				// Check for attributes
-				TNamedNodeMapShared attributes = child->getAttributes();
+				TNamedNodeMapPtr attributes = child->getAttributes();
 				for ( unsigned int j = 0; j < attributes->getLength(); j++ )	{
-					TNodeWeak attr = attributes->item( j );
-					TNodeShared tempAttr = make_shared( attr );
+					TNodePtr attr = attributes->item( j );
 					for ( int j = 0; j < aSpacing + 1; j++ )	{
 						cout << "  ";
 					}
-					cout << "Attribute " << tempAttr->getNodeName();
-					cout << " with value " << tempAttr->getNodeValue() << endl;
+					cout << "Attribute " << attr->getNodeName();
+					cout << " with value " << attr->getNodeValue() << endl;
 				}
 			}
 			showTree( child, aSpacing + 1 );
@@ -337,14 +335,13 @@ void SGMLParser	::	showTree( const TNodeShared aNode, int aSpacing )	{
 
 int main( int argc, char * argv[] )	{
 	
-	if ( argc < 4 )	{
-		cout << "Please supply a dtd and a document to load and a second dtd\n";
+	if ( argc < 3 )	{
+		cout << "Please supply a dtd and a document to load\n";
 		return 1;
 	}
 	
 	SGMLParser * sgmlParser = new SGMLParser( argv[ 1 ], argv[ 2 ] );
-	TDocumentShared dtd = sgmlParser->parse();
-	sgmlParser->parseDTD( argv[ 3 ] );
+	TDocumentPtr dtd = sgmlParser->parse();
 
 	delete sgmlParser;
 	

@@ -35,10 +35,10 @@ class BaseParser	{
 	
 	protected:
 		// Variables
-		TDocumentShared mDocument;
-		TDocumentShared mDTD;
-		TElementShared mParEntities;
-		TElementShared mCharEntities;
+		TDocumentPtr mDocument;
+		TDocumentPtr mDTD;
+		TElementPtr mParEntities;
+		TElementPtr mCharEntities;
 		SGMLTextPtr mDocText;
 		
 		map<string, Position> mEntityTexts;
@@ -75,7 +75,7 @@ class BaseParser	{
 		void processEe();
 		void processComment();
 		void processParEntityReference();
-		void processParLiteral( TElementShared & entity );
+		void processParLiteral( TElementPtr & entity );
 		string processMinLiteral();
 		string processMinData();
 		string processName();
@@ -89,9 +89,9 @@ class BaseParser	{
 		string processRepParData();
 		string processRepCharData();
 		string processGI();
-		TElementShared processNameGroup();
+		TElementPtr processNameGroup();
 		string processNameTokenGroup();
-		TElementShared processConnector();
+		TElementPtr processConnector();
 		string processAttrValueSpec();
 		string processAttrValue();
 		string processAttrValueLit();

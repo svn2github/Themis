@@ -11,7 +11,7 @@
 #include "SGMLSupport.hpp"
 
 DocTypeDeclParser	::	DocTypeDeclParser( SGMLTextPtr aDocText,
-															 TDocumentShared aDTD )
+															 TDocumentPtr aDTD )
 							:	DeclarationParser( aDocText, aDTD )	{
 
 	//printf( "Constructing DocTypeDeclParser\n" );
@@ -47,7 +47,7 @@ void DocTypeDeclParser	::	processDeclaration()	{
 		throw r;
 	}
 	
-	TElementShared extId = mDTD->createElement( "externalId" );
+	TElementPtr extId = mDTD->createElement( "externalId" );
 	
 	try	{
 		processPsPlus();

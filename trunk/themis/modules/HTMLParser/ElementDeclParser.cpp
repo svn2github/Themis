@@ -17,7 +17,7 @@
 #include "TNamedNodeMap.h"
 
 ElementDeclParser	::	ElementDeclParser( SGMLTextPtr aDocText,
-															 TDocumentShared aDTD )
+															 TDocumentPtr aDTD )
 							:	DeclarationParser( aDocText, aDTD )	{
 
 	//printf( "Constructing ElementDeclParser\n" );
@@ -39,7 +39,7 @@ ElementDeclParser	::	~ElementDeclParser()	{
 void ElementDeclParser	::	processDeclaration()	{
 
 	// Define an element to store the element declaration
-	TElementShared element;
+	TElementPtr element;
 
 	process( mMdo );
 	process( kELEMENT );
@@ -69,11 +69,11 @@ void ElementDeclParser	::	processDeclaration()	{
 	}
 
 	// Find right element to put information in
-	TElementShared infoElement = element;
+	TElementPtr infoElement = element;
 	if ( element->hasChildNodes() )	{
 		// Name group. Assuming has connector as child
-		TNodeShared connector = make_shared( element->getFirstChild() );
-		TNodeShared child = make_shared( connector->getFirstChild() );
+		TNodePtr connector = element->getFirstChild();
+		TNodePtr child = connector->getFirstChild();
 		infoElement = shared_static_cast<TElement>( child );
 	}
 
@@ -127,13 +127,13 @@ void ElementDeclParser	::	processDeclaration()	{
 
 }
 
-TElementShared ElementDeclParser	::	processElementType()	{
+TElementPtr ElementDeclParser	::	processElementType()	{
 
 	string text = "";
 	
 	try	{
 		text = processGI();
-		TElementShared element = mDTD->createElement( text );
+		TElementPtr element = mDTD->createElement( text );
 		return element;
 	}
 	catch( ReadException r )	{
@@ -144,7 +144,7 @@ TElementShared ElementDeclParser	::	processElementType()	{
 
 	try	{
 		
-		TElementShared group = processNameGroup();
+		TElementPtr group = processNameGroup();
 		return group;
 	}
 	catch( ReadException r )	{
@@ -158,7 +158,7 @@ TElementShared ElementDeclParser	::	processElementType()	{
 	
 }
 
-void ElementDeclParser	::	processTagMin( TElementShared aElement )	{
+void ElementDeclParser	::	processTagMin( TElementPtr aElement )	{
 
 	try	{
 		process( kO );
@@ -196,44 +196,44 @@ void ElementDeclParser	::	processTagMin( TElementShared aElement )	{
 	
 }
 
-void ElementDeclParser	::	processDeclContent( TElementShared aElement )	{
+void ElementDeclParser	::	processDeclContent( TElementPtr aElement )	{
 
 	try	{
 		process( kCDATA );
-		TElementShared cdata = mDTD->createElement( "CDATA" );
+		TElementPtr cdata = mDTD->createElement( "CDATA" );
 		aElement->appendChild( cdata );
 	}
 	catch( ReadException r )	{
 		// Not CDATA. Try RCDATA
 		try	{
 			process( kRCDATA );
-			TElementShared rcdata = mDTD->createElement( "RCDATA" );
+			TElementPtr rcdata = mDTD->createElement( "RCDATA" );
 			aElement->appendChild( rcdata );
 		}
 		catch( ReadException r )	{
 			// Not RCDATA. Try EMPTY
 			process( kEMPTY );
-			TElementShared empty = mDTD->createElement( "EMPTY" );
+			TElementPtr empty = mDTD->createElement( "EMPTY" );
 			aElement->appendChild( empty );
 		}
 	}
 
 }
 
-void ElementDeclParser	::	processContentModel( TElementShared aElement )	{
+void ElementDeclParser	::	processContentModel( TElementPtr aElement )	{
 
 	try	{
 		process( kANY );
 	}
 	catch( ReadException r )	{
 		// Not ANY. Must be a model group
-		TElementShared modelGroup = processModelGroup();
+		TElementPtr modelGroup = processModelGroup();
 		aElement->appendChild( modelGroup );
 	}
 
 	try	{
 		processPsPlus();
-		TElementShared exceptions = processExceptions();
+		TElementPtr exceptions = processExceptions();
 		aElement->appendChild( exceptions );
 	}
 	catch( ReadException r )	{
@@ -242,11 +242,11 @@ void ElementDeclParser	::	processContentModel( TElementShared aElement )	{
 
 }
 
-TElementShared ElementDeclParser	::	processModelGroup()	{
+TElementPtr ElementDeclParser	::	processModelGroup()	{
 	
 	process( mGrpo );
 
-	TElementShared grpo = mDTD->createElement( "()" );
+	TElementPtr grpo = mDTD->createElement( "()" );
 
 	try	{
 		processTsStar();
@@ -257,7 +257,7 @@ TElementShared ElementDeclParser	::	processModelGroup()	{
 		}
 	}
 
-	TElementShared firstPart;
+	TElementPtr firstPart;
 	try	{
 		firstPart = processContentToken();
 	}
@@ -275,16 +275,16 @@ TElementShared ElementDeclParser	::	processModelGroup()	{
 		}
 	}
 
-	TElementShared subModelGroup;
+	TElementPtr subModelGroup;
 	bool smgFound = true;
 	while ( smgFound )	{
 		try	{
 			subModelGroup = processSubModelGroup();
 			if ( subModelGroup->getNodeName() == firstPart->getNodeName() )	{
-				firstPart->appendChild( make_shared( subModelGroup->getFirstChild() ) );
+				firstPart->appendChild( subModelGroup->getFirstChild() );
 			}
 			else	{
-				TNodeShared first = make_shared( subModelGroup->getFirstChild() );
+				TNodePtr first = subModelGroup->getFirstChild();
 				subModelGroup->insertBefore( firstPart, first );
 				firstPart = subModelGroup;
 			}
@@ -305,7 +305,7 @@ TElementShared ElementDeclParser	::	processModelGroup()	{
 
 	grpo->appendChild( firstPart );
 
-	TElementShared occIndicator;
+	TElementPtr occIndicator;
 	try	{
 		occIndicator = processOccIndicator();
 		occIndicator->appendChild( grpo );
@@ -321,9 +321,9 @@ TElementShared ElementDeclParser	::	processModelGroup()	{
 	
 }
 
-TElementShared ElementDeclParser	::	processSubModelGroup()	{
+TElementPtr ElementDeclParser	::	processSubModelGroup()	{
 
-	TElementShared connector = processConnector();
+	TElementPtr connector = processConnector();
 	
 	try	{
 		processTsStar();
@@ -334,7 +334,7 @@ TElementShared ElementDeclParser	::	processSubModelGroup()	{
 		}
 	}
 
-	TElementShared contentToken;
+	TElementPtr contentToken;
 	try	{	
 		contentToken = processContentToken();
 		connector->appendChild( contentToken );
@@ -357,9 +357,9 @@ TElementShared ElementDeclParser	::	processSubModelGroup()	{
 	
 }
 
-TElementShared ElementDeclParser	::	processContentToken()	{
+TElementPtr ElementDeclParser	::	processContentToken()	{
 
-	TElementShared contentToken;
+	TElementPtr contentToken;
 
 	try	{
 		contentToken = processPrimContentToken();
@@ -373,9 +373,9 @@ TElementShared ElementDeclParser	::	processContentToken()	{
 
 }
 
-TElementShared ElementDeclParser	::	processPrimContentToken()	{
+TElementPtr ElementDeclParser	::	processPrimContentToken()	{
 
-	TElementShared primContentToken;
+	TElementPtr primContentToken;
 
 	try	{
 		process( mRni );
@@ -398,12 +398,11 @@ TElementShared ElementDeclParser	::	processPrimContentToken()	{
 		
 }
 
-TElementShared ElementDeclParser	::	processElementToken()	{
+TElementPtr ElementDeclParser	::	processElementToken()	{
 
-	TElementShared elementToken = mDTD->createElement( processGI() );
-	TElementShared occIndicator;
+	TElementPtr elementToken = mDTD->createElement( processGI() );
 	try	{
-		occIndicator = processOccIndicator();
+		TElementPtr occIndicator = processOccIndicator();
 		occIndicator->appendChild( elementToken );
 		return occIndicator;
 	}
@@ -415,11 +414,11 @@ TElementShared ElementDeclParser	::	processElementToken()	{
 	
 }
 
-TElementShared ElementDeclParser	::	processOccIndicator()	{
+TElementPtr ElementDeclParser	::	processOccIndicator()	{
 
 	try	{
 		process( mOpt );
-		TElementShared occIndicator = mDTD->createElement( mOpt );
+		TElementPtr occIndicator = mDTD->createElement( mOpt );
 		return occIndicator;
 	}
 	catch( ReadException r )	{
@@ -427,7 +426,7 @@ TElementShared ElementDeclParser	::	processOccIndicator()	{
 	}
 	try	{
 		process( mPlus );
-		TElementShared occIndicator = mDTD->createElement( mPlus );
+		TElementPtr occIndicator = mDTD->createElement( mPlus );
 		return occIndicator;
 	}
 	catch( ReadException r )	{
@@ -435,7 +434,7 @@ TElementShared ElementDeclParser	::	processOccIndicator()	{
 	}
 	try	{
 		process( mRep );
-		TElementShared occIndicator = mDTD->createElement( mRep );
+		TElementPtr occIndicator = mDTD->createElement( mRep );
 		return occIndicator;
 	}
 	catch( ReadException r )	{
@@ -447,16 +446,16 @@ TElementShared ElementDeclParser	::	processOccIndicator()	{
 
 }
 
-TElementShared ElementDeclParser	::	processExceptions()	{
+TElementPtr ElementDeclParser	::	processExceptions()	{
 	
-	TElementShared exceptions = mDTD->createElement( "exceptions" );
+	TElementPtr exceptions = mDTD->createElement( "exceptions" );
 	
 	try	{
-		TElementShared exclusions = processExclusions();
+		TElementPtr exclusions = processExclusions();
 		exceptions->appendChild( exclusions );
 		try	{
 			processPsPlus();
-			TElementShared inclusions = processInclusions();
+			TElementPtr inclusions = processInclusions();
 			exceptions->appendChild( inclusions );
 		}
 		catch( ReadException r )	{
@@ -465,7 +464,7 @@ TElementShared ElementDeclParser	::	processExceptions()	{
 	}
 	catch( ReadException r )	{
 		// Not an exclusion. Try an inclusion
-		TElementShared inclusions = processInclusions();
+		TElementPtr inclusions = processInclusions();
 		exceptions->appendChild( inclusions );
 	}
 
@@ -473,14 +472,14 @@ TElementShared ElementDeclParser	::	processExceptions()	{
 	
 }
 
-TElementShared ElementDeclParser	::	processExclusions()	{
+TElementPtr ElementDeclParser	::	processExclusions()	{
 	
 	process( kMinus );
 
-	TElementShared minus = mDTD->createElement( kMinus );
+	TElementPtr minus = mDTD->createElement( kMinus );
 
 	try	{
-		TElementShared nameGroup = processNameGroup();
+		TElementPtr nameGroup = processNameGroup();
 		minus->appendChild( nameGroup );
 	}
 	catch( ReadException r )	{
@@ -492,14 +491,14 @@ TElementShared ElementDeclParser	::	processExclusions()	{
 	
 }
 
-TElementShared ElementDeclParser	::	processInclusions()	{
+TElementPtr ElementDeclParser	::	processInclusions()	{
 
 	process( mPlus );
 
-	TElementShared plus = mDTD->createElement( mPlus );
+	TElementPtr plus = mDTD->createElement( mPlus );
 
 	try	{
-		TElementShared nameGroup = processNameGroup();
+		TElementPtr nameGroup = processNameGroup();
 		plus->appendChild( nameGroup );
 	}
 	catch( ReadException r )	{
@@ -511,28 +510,27 @@ TElementShared ElementDeclParser	::	processInclusions()	{
 	
 }
 
-void ElementDeclParser	::	showTree( const TNodeShared aNode, int aSpacing )	{
+void ElementDeclParser	::	showTree( const TNodePtr aNode, int aSpacing )	{
 	
-	TNodeListShared children = aNode->getChildNodes();
+	TNodeListPtr children = aNode->getChildNodes();
 	int length = children->getLength();
 	if ( length != 0 )	{
 		for ( int i = 0; i < length; i++ )	{
-			TNodeShared child = make_shared( children->item( i ) );
+			TNodePtr child = children->item( i );
 			for ( int j = 0; j < aSpacing; j++ )	{
 				cout << "  ";
 			}
 			cout << "Child name: " << child->getNodeName().c_str() << endl;
 			if ( child->getNodeType() == ELEMENT_NODE )	{
 				// Check for attributes
-				TNamedNodeMapShared attributes = child->getAttributes();
+				TNamedNodeMapPtr attributes = child->getAttributes();
 				for ( unsigned int j = 0; j < attributes->getLength(); j++ )	{
-					TNodeWeak attr = attributes->item( j );
-					TNodeShared tempAttr = make_shared( attr );
+					TNodePtr attr = attributes->item( j );
 					for ( int j = 0; j < aSpacing + 1; j++ )	{
 						cout << "  ";
 					}
-					cout << "Attribute " << tempAttr->getNodeName();
-					cout << " with value " << tempAttr->getNodeValue() << endl;
+					cout << "Attribute " << attr->getNodeName();
+					cout << " with value " << attr->getNodeValue() << endl;
 				}
 			}
 			showTree( child, aSpacing + 1 );

@@ -23,13 +23,13 @@ using namespace std;
 class EntityDeclParser	:	public DeclarationParser	{
 	
 	public:
-		EntityDeclParser( SGMLTextPtr aDocText, TDocumentShared aDTD );
+		EntityDeclParser( SGMLTextPtr aDocText, TDocumentPtr aDTD );
 		~EntityDeclParser();
 		map<string, Position> getEntityTexts();
 		void processDeclaration();
-		TElementShared processEntityName();
-		void processEntityText( TElementShared & entity );
-		void processDataText( TElementShared & entity );
+		TElementPtr processEntityName();
+		void processEntityText( TElementPtr & entity );
+		void processDataText( TElementPtr & entity );
 		string processGenEntityName();
 		string processParEntityName();
 	

@@ -23,28 +23,28 @@ using namespace std;
 class ElementDeclParser	:	public DeclarationParser	{
 
 	private:
-		TElementShared mElements;
+		TElementPtr mElements;
 	
 	public:
-		ElementDeclParser( SGMLTextPtr aDocText, TDocumentShared aDTD );
+		ElementDeclParser( SGMLTextPtr aDocText, TDocumentPtr aDTD );
 		~ElementDeclParser();
 		virtual void processDeclaration();
-		TElementShared processElementType();
-		void processTagMin( TElementShared aElement );
-		void processDeclContent( TElementShared aElement );
-		void processContentModel( TElementShared aElement );
-		TElementShared processModelGroup();
-		TElementShared processSubModelGroup();
-		TElementShared processContentToken();
-		TElementShared processPrimContentToken();
-		TElementShared processElementToken();
-		TElementShared processOccIndicator();
-		TElementShared processExceptions();
-		TElementShared processExclusions();
-		TElementShared processInclusions();
+		TElementPtr processElementType();
+		void processTagMin( TElementPtr aElement );
+		void processDeclContent( TElementPtr aElement );
+		void processContentModel( TElementPtr aElement );
+		TElementPtr processModelGroup();
+		TElementPtr processSubModelGroup();
+		TElementPtr processContentToken();
+		TElementPtr processPrimContentToken();
+		TElementPtr processElementToken();
+		TElementPtr processOccIndicator();
+		TElementPtr processExceptions();
+		TElementPtr processExclusions();
+		TElementPtr processInclusions();
 
 		// Test function
-		void showTree( TNodeShared aNode, int aSpacing );
+		void showTree( TNodePtr aNode, int aSpacing );
 	
 };
 

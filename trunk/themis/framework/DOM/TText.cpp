@@ -1,17 +1,52 @@
-/* Text implementation
+/*
+	Copyright (c) 2002 Mark Hellegers. All Rights Reserved.
+	
+	Permission is hereby granted, free of charge, to any person
+	obtaining a copy of this software and associated documentation
+	files (the "Software"), to deal in the Software without
+	restriction, including without limitation the rights to use,
+	copy, modify, merge, publish, distribute, sublicense, and/or
+	sell copies of the Software, and to permit persons to whom
+	the Software is furnished to do so, subject to the following
+	conditions:
+	
+	   The above copyright notice and this permission notice
+	   shall be included in all copies or substantial portions
+	   of the Software.
+	
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+	KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+	WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+	PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+	OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+	OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+	
+	Original Author: 	Mark Hellegers (M.H.Hellegers@stud.tue.nl)
+	Project Start Date: October 18, 2000
+	Class Start Date: April 01, 2002
+*/
+
+/*
+	Text implementation
 	See TText.h for some more information
 */
 
+// Standard C++ headers
 #include <string>
 
+// DOM headers
 #include "TText.h"
+#include "TDocument.h"
 #include "TDOMException.h"
 
-TText	::	TText( const TDocumentWeak aOwnerDocument,
+// Namespaces used
+using namespace std;
+
+TText	::	TText( const TDocumentPtr aOwnerDocument,
 						  const TDOMString aText )	:
 						  		TCharacterData( TEXT_NODE, aOwnerDocument, aText )	{
-	
-	setData( aText );
 	
 }
 
@@ -19,10 +54,10 @@ TText	::	~TText()	{
 	
 }
 
-bool TText	::	getIsWhiteSpaceInElement() const	{
+bool TText	::	isWhiteSpaceInElement() const	{
 	
 	// I think they mean two spaces here, instead of just one.
-	if ( getData().find( "  " )	== string::npos )	{
+	if ( getData().find( "  " ) == string::npos )	{
 		// No ignorable whitespace
 		return false;
 	}
@@ -31,31 +66,31 @@ bool TText	::	getIsWhiteSpaceInElement() const	{
 	
 }
 
-TDOMString TText	::	getWholeText() const	{
+TDOMString TText	::	getWholeText()	{
 	
 	TDOMString wholeText;
 
-	TNodeShared startNode = make_shared( mThisPointer );
-	TNodeShared tempNode = make_shared( mThisPointer );
+	TNodePtr startNode = shared_from_this();
+	TNodePtr tempNode = shared_from_this();
 	while ( tempNode.get() && tempNode->getNodeType() == TEXT_NODE )	{
 		startNode = tempNode;
-		tempNode = make_shared( tempNode->getPreviousSibling() );
+		tempNode = tempNode->getPreviousSibling();
 	}
 
-	TNodeShared endNode = make_shared( mThisPointer );
-	tempNode = make_shared( mThisPointer );
+	TNodePtr endNode = shared_from_this();
+	tempNode = shared_from_this();
 
 	while ( tempNode.get() && tempNode->getNodeType() == TEXT_NODE )	{
 		endNode = tempNode;
-		tempNode = make_shared( tempNode->getNextSibling() );
+		tempNode = tempNode->getNextSibling();
 	}
 
-	TTextShared startText = shared_static_cast<TText> ( startNode );
-	TTextShared endText = shared_static_cast<TText> ( endNode );
+	TTextPtr startText = shared_static_cast<TText> ( startNode );
+	TTextPtr endText = shared_static_cast<TText> ( endNode );
 		
 	wholeText = startText->getData();
 	while ( startText != endText )	{
-		startText = shared_static_cast<TText> ( make_shared( startText->getNextSibling() ) );
+		startText = shared_static_cast<TText> ( startText->getNextSibling() );
 		wholeText += startText->getData();
 	}
 	
@@ -63,7 +98,7 @@ TDOMString TText	::	getWholeText() const	{
 	
 }
 
-TTextShared TText	::	splitText( const unsigned long aOffset )	{
+TTextPtr TText	::	splitText( const unsigned long aOffset )	{
 	
 	if ( aOffset > (unsigned long) ( getLength() - 1 ) )	{
 		// Offset is larget than the actual length of the text. No go
@@ -71,38 +106,39 @@ TTextShared TText	::	splitText( const unsigned long aOffset )	{
 		throw TDOMException( INDEX_SIZE_ERR );
 	}
 	
-	 TDOMString resultData = substringData( aOffset, getLength() - aOffset );
-	 TTextShared result = TTextShared( new TText( getOwnerDocument(), resultData ) );
-	 result->setSmartPointer( result );
-	 deleteData( aOffset, getLength() - aOffset );
+	TDOMString resultData = substringData( aOffset, getLength() - aOffset );
+	TTextPtr result = getOwnerDocument()->createText( resultData );
+	getParentNode()->insertBefore( result, getNextSibling() );
+	
+	deleteData( aOffset, getLength() - aOffset );
 	 
-	 return result;
+	return result;
 	 
 }
 
-TTextWeak TText	::	replaceWholeText( const TDOMString aContent )	{
+TTextPtr TText	::	replaceWholeText( const TDOMString aContent )	{
 	
-	TNodeShared startNode = make_shared( mThisPointer );
-	TNodeShared tempNode = make_shared( mThisPointer );
+	TNodePtr startNode = shared_from_this();
+	TNodePtr tempNode = shared_from_this();
 	while ( tempNode.get() && tempNode->getNodeType() == TEXT_NODE )	{
 		startNode = tempNode;
-		tempNode = make_shared( tempNode->getPreviousSibling() );
+		tempNode = tempNode->getPreviousSibling();
 	}
 	
-	TNodeShared endNode = make_shared( mThisPointer );
-	tempNode = make_shared( mThisPointer );
+	TNodePtr endNode = shared_from_this();
+	tempNode = shared_from_this();
 	while ( tempNode.get() && tempNode->getNodeType() == TEXT_NODE )	{
 		endNode = tempNode;
-		tempNode = make_shared( tempNode->getNextSibling() );
+		tempNode = tempNode->getNextSibling();
 	}
 	
 	TDOMString currentText = getWholeText();
-	TNodeShared parentNode = make_shared( getParentNode() );
+	TNodePtr parentNode = getParentNode();
 
 	while ( startNode != endNode )	{
-		tempNode = make_shared( startNode->getNextSibling() );
-		if ( startNode.get() != mThisPointer.get() )	{
-			parentNode.get()->removeChild( startNode );
+		tempNode = startNode->getNextSibling();
+		if ( startNode.get() != this )	{
+			parentNode->removeChild( startNode );
 			//delete temp;
 		}
 		startNode = tempNode;
@@ -110,13 +146,13 @@ TTextWeak TText	::	replaceWholeText( const TDOMString aContent )	{
 	
 	if ( currentText == "" )	{
 		// No text at all. Remove this node and return NULL
-		TNodeShared parent = make_shared( getParentNode() );
-		parent->removeChild( make_shared( mThisPointer ) );
-		return TTextWeak();
+		TNodePtr parent = getParentNode();
+		parent->removeChild( shared_from_this() );
+		return TTextPtr();
 	}
 	
 	setData( aContent );
 	
-	return shared_static_cast<TText> ( make_shared( mThisPointer ) );
+	return shared_static_cast<TText> ( shared_from_this() );
 	
 }

@@ -23,7 +23,7 @@ using namespace std;
 class CommentDeclParser	:	public DeclarationParser	{
 	
 	public:
-		CommentDeclParser( SGMLTextPtr aDocText, TDocumentShared aDTD );
+		CommentDeclParser( SGMLTextPtr aDocText, TDocumentPtr aDTD );
 		~CommentDeclParser();
 		virtual void processDeclaration();
 	

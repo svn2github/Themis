@@ -27,63 +27,63 @@ class ElementParser	:	public BaseParser	{
 	
 	private:
 		string mName;
-		TElementShared mElements;
-		TDocumentShared mDocument;
+		TElementPtr mElements;
+		TDocumentPtr mDocument;
 		CommentDeclParser * commentParser;
 	
 	public:
-		ElementParser( SGMLTextPtr aDocText, TDocumentShared aDTD );
+		ElementParser( SGMLTextPtr aDocText, TDocumentPtr aDTD );
 		virtual ~ElementParser();
 		void setDocText( SGMLTextPtr aDocText );
-		void setDTD( TDocumentShared aDTD );
+		void setDTD( TDocumentPtr aDTD );
 		void parse( const map<string, Position> & aEntityTexts, const string & aName );
 		void parse( const string & aName );	// If you don't need entities
-		TDocumentShared getDocument() const;
-		void processElementContent( const TElementShared & aElementDecl,
-												   TNodeShared aParent );
+		TDocumentPtr getDocument() const;
+		void processElementContent( const TElementPtr & aElementDecl,
+												   TNodePtr aParent );
 		void processUnknownTags();
 		void processUnknownStartTag();
 		void processUnknownEndTag();
-		void processElement( const TElementShared & aElementDecl, TNodeShared aParent );
-		void processStartTag( const TElementShared & elementDecl );
-		void processEndTag( const TElementShared & elementDecl );
+		void processElement( const TElementPtr & aElementDecl, TNodePtr aParent );
+		void processStartTag( const TElementPtr & elementDecl );
+		void processEndTag( const TElementPtr & elementDecl );
 		string processGenIdSpec();
 		void processAttrSpecList();
 		void processAttrSpec();
-		void processContent( const TElementShared & aContent,
-										const TElementShared & aExceptions,
-										TNodeShared aParent );
-		void processBrackets( const TElementShared & aContent,
-										 const TElementShared & aExceptions,
-										 TNodeShared aParent );
-		void processOptional( const TElementShared & aContent,
-										const TElementShared & aExceptions,
-										TNodeShared aParent );
-		void processPlus( const TElementShared & aContent,
-								  const TElementShared & aExceptions,
-								  TNodeShared aParent );
-		void processStar( const TElementShared & aContent,
-								  const TElementShared & aExceptions,
-								  TNodeShared aParent );
-		void processOr( const TElementShared & aContent,
-								const TElementShared & aExceptions,
-								TNodeShared aParent );
-		void processAnd( const TElementShared & aContent,
-								  const TElementShared & aExceptions,
-								  TNodeShared aParent );
-		void processComma( const TElementShared & aContent,
-									   const TElementShared & aExceptions,
-									   TNodeShared aParent );
-		void processDataText( const TElementShared & aContent,
-										 const TElementShared & aExceptions,
-										 TNodeShared aParent );
-		void processExceptions( const TElementShared & aExceptions, TNodeShared aParent );
-		void processException( const TElementShared & aExceptions, TNodeShared aParent );
+		void processContent( const TElementPtr & aContent,
+										const TElementPtr & aExceptions,
+										TNodePtr aParent );
+		void processBrackets( const TElementPtr & aContent,
+										 const TElementPtr & aExceptions,
+										 TNodePtr aParent );
+		void processOptional( const TElementPtr & aContent,
+										const TElementPtr & aExceptions,
+										TNodePtr aParent );
+		void processPlus( const TElementPtr & aContent,
+								  const TElementPtr & aExceptions,
+								  TNodePtr aParent );
+		void processStar( const TElementPtr & aContent,
+								  const TElementPtr & aExceptions,
+								  TNodePtr aParent );
+		void processOr( const TElementPtr & aContent,
+								const TElementPtr & aExceptions,
+								TNodePtr aParent );
+		void processAnd( const TElementPtr & aContent,
+								  const TElementPtr & aExceptions,
+								  TNodePtr aParent );
+		void processComma( const TElementPtr & aContent,
+									   const TElementPtr & aExceptions,
+									   TNodePtr aParent );
+		void processDataText( const TElementPtr & aContent,
+										 const TElementPtr & aExceptions,
+										 TNodePtr aParent );
+		void processExceptions( const TElementPtr & aExceptions, TNodePtr aParent );
+		void processException( const TElementPtr & aExceptions, TNodePtr aParent );
 		void processExceptionOtherContent();
 		void processComments();
 		void processComment();
-		TElementShared getElementDecl( const string & aName,
-														TElementShared declarations ) const;
+		TElementPtr getElementDecl( const string & aName,
+												   TElementPtr declarations ) const;
 
 };
 

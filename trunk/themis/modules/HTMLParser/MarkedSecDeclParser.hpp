@@ -23,7 +23,7 @@ using namespace std;
 class MarkedSecDeclParser	:	public DeclarationParser	{
 	
 	public:
-		MarkedSecDeclParser( SGMLTextPtr aDocText, TDocumentShared aDTD );
+		MarkedSecDeclParser( SGMLTextPtr aDocText, TDocumentPtr aDTD );
 		~MarkedSecDeclParser();
 		void processDeclaration();
 		void processStatusKeyWordSpec();

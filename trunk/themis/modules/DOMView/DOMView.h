@@ -9,6 +9,10 @@
 #ifndef DOMVIEW_H
 #define DOMVIEW_H
 
+// Standard C++ headers
+#include <string>
+
+// BeOS headers
 #include <SupportDefs.h>
 #include <Handler.h>
 #include <Window.h>
@@ -18,14 +22,16 @@
 #include <PopUpMenu.h>
 #include <TextView.h>
 
+// Themis headers
 #include "plugclass.h"
 
-#include <string>
-
+// DOM headers
 #include "DOMSupport.h"
 
+// Declarations of BeOS classes
 class BStringItem;
 
+// Namespaces used
 using namespace std;
 
 #define SELECTION 'slct'
@@ -49,18 +55,18 @@ class DOMWindow	:	public BWindow	{
 
 		BList * items;
 
-		TDocumentShared doc;
-		TNodeShared selectedNode;
+		TDocumentPtr doc;
+		TNodePtr selectedNode;
 	
 	public:
-		DOMWindow( TDocumentShared document );
+		DOMWindow( TDocumentPtr document );
 		~DOMWindow();
 		void MessageReceived( BMessage * message );
 		bool QuitRequested();
-		void showTree( const TNodeShared aNode, BStringItem * parent );
+		void showTree( const TNodePtr aNode, BStringItem * parent );
 		void showDocument();
-		void setDocument( TDocumentShared document );
-		TNodeShared findNode( TNodeShared node, int32 target, int32 & current );
+		void setDocument( TDocumentPtr document );
+		TNodePtr findNode( TNodePtr node, int32 target, int32 & current );
 		
 	
 };
