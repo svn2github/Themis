@@ -371,28 +371,6 @@ void CookieManager::CheckIndicies() {
 	  found=false;
       //duplicate and modify the next block as necessary to add more indices
       //begin block
-      //BEOS:TYPE is where the file was originally found
-      //double check to make sure that the mime type index exists
-      printf("\t\tlooking for \"BEOS:TYPE\" index...");
-      fflush(stdout);
-      while((ent=fs_read_index_dir(d)))
-       {
-        if (strcasecmp(ent->d_name,"BEOS:TYPE")==0)
-         {
-          printf("found it.\n");
-          found=true;
-          break;
-         }
-       }
-      if (!found)
-       {
-        printf("created it.\n");
-        fs_create_index(vol.Device(),"BEOS:TYPE",B_STRING_TYPE,0);
-       }
-      fs_rewind_index_dir(d);
-      found=false;
-      //end block
-      //begin block
       //Themis:creceivedate 
       printf("\t\tlooking for \"Themis:creceivedate\" index...");
       fflush(stdout);
