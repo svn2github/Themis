@@ -46,7 +46,7 @@ Project Start Date: October 18, 2000
 #define CreateCacheObject 'ccob'
 #define CacheObjectNotFound 'conf'
 #define UpdateCachedObject 'ucob'
-#define ClearCache 'clca'
+#define CacheClearFiles 'clca'
 #define CachedObject 'cobj'
 
 //There are different methods of caching data according to the http rfc.
@@ -90,12 +90,15 @@ Project Start Date: October 18, 2000
 #define ReloadData 'rldt'
 #define ProtocolConnectionClosed '_pcc'
 #define UnexpectedDisconnect 'unds'
+#define ProtocolConnectionFailed '_pcf'
+#define ProtocolTransactionStatus '_pts'
 
 //This is to update the displayed URL; usually done from the protocol.
 #define UpdateDisplayedURL 'udur'
 
 //plug in management
 #define PlugInLoaded 'pild'
+#define PlugInUnLoaded 'piul'
 
 #define AddInitInfo '_aii'
 #define RemoveInitInfo '_rii'

@@ -223,8 +223,34 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 		}break;
 		case COMMAND_INFO: {
 			switch(msg->what) {
+				case B_QUIT_REQUESTED: {
+					HTTP->Lock();
+					 if (HTTP->CacheSys!=NULL)
+					 	HTTP->CacheSys->Unregister(HTTP->CacheToken);
+					HTTP->CacheSys=NULL;
+					HTTP->Unlock();
+				}break;
 				case LoadingNewPage: {
 					printf("Do something useful when winview says we're loading a new page.\n");
+				}break;
+				case PlugInUnLoaded: {
+					uint32 type=0;
+					type=msg->FindInt32("type");
+					switch(type) {
+						case (TARGET_CACHE|TYPE_RAM|TYPE_DISK): {
+							HTTP->Lock();
+							HTTP->CacheToken=0;
+							HTTP->CacheSys=NULL;
+							HTTP->Unlock();
+							printf("Cache system unloaded.\n");
+						}break;
+						default: {
+							
+							//do nothing
+						}
+						
+					}
+					
 				}break;
 				case PlugInLoaded: {
 					int32 pid=0;
@@ -233,6 +259,14 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 						PlugClass *pobj=NULL;
 						msg->FindPointer("plugin",(void**)&pobj);
 						if (pobj!=NULL) {
+							if ((pobj->Type()&TARGET_CACHE)!=0) {
+								HTTP->Lock();
+										HTTP->CacheSys=(CachePlug*)pobj;
+										HTTP->CacheToken=HTTP->CacheSys->Register(Type(),"HTTP Protocol Add-on");
+										printf("*** Loaded CacheToken & object: %lu %p\n",HTTP->CacheToken,HTTP->CacheSys);
+								HTTP->Unlock();
+							}
+							
 							if (((pobj->Type()&TARGET_HANDLER)!=0) || ((pobj->Type()&TARGET_PARSER)!=0)) {
 								if (PlugMan!=NULL) {
 									BMessage *amsg=new BMessage(GetSupportedMIMEType);
@@ -260,7 +294,7 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 		default:
 			return PLUG_DOESNT_HANDLE;
 	}
-	
+	printf("http_protocol::ReceiveBroadcast() exiting\n");
 }
 bool http_protocol::IsPersistent(){
 	return true;
@@ -306,7 +340,7 @@ http_protocol::http_protocol(BMessage *info)
 	 	info->FindPointer("tcp_layer_ptr",(void**)&TCP);
 	}
 	
-		HTTP=new httplayer(TCP);
+		HTTP=new httplayer(TCP,this);
 		HTTP->Proto=this;
 	HTTP->Start();
 	HOH=new http_opt_handler;
@@ -314,7 +348,7 @@ http_protocol::http_protocol(BMessage *info)
  }
 http_protocol::~http_protocol() {
 	printf("http_protocol destructor\n");
-	Stop();
+//	Stop();
 	printf("Locking HTTP Layer.\n");
 	HTTP->Lock();
 	printf("Stopping HTTP Layer.\n");
@@ -337,7 +371,14 @@ int32 http_protocol::SpawnThread(BMessage *info)
  }
 void http_protocol::Stop()
  {
+ 	HTTP->Lock();
+	 if (HTTP->CacheSys!=NULL) {
+	 	printf("Unregistering from cache system.\n");
+		 
+	 	HTTP->CacheSys->Unregister(HTTP->CacheToken);
+	 }
 	 
+	printf("done unregistering.\n");
  }
 void http_protocol::AddMenuItems(BMenu *menu) {
 	printf("http_protocol AddMenuItems\n");

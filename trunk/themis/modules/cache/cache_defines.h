@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2000 Z3R0 One. All Rights Reserved.
+Copyright (c) 2002 Raymond "Z3R0 One" Rodgers. All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -23,17 +23,17 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
+Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
 #ifndef _cache_defines
 #define _cache_defines
-
-#define PlugIDdef 'cash'
+#include "commondefs.h"
+#define PlugIDdef CachePlugin
 //cash == cache simple but fun pun
 
 #define PlugNamedef "Cache Manager"
-#define PlugVersdef .25
+#define PlugVersdef .50
 
 #define UpdateCache 'upca'
 

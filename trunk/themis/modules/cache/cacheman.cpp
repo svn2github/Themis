@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2000 Z3R0 One. All Rights Reserved.
+Copyright (c) 2002 Raymond "Z3R0 One" Rodgers. All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -23,19 +23,19 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
+Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
 #include "cacheman.h"
-#include "../../common/commondefs.h"
-#include "cache_defines.h"
-#include <stdio.h>
+#include "commondefs.h"
+#include "plugman.h"
+#include "ramcacheobject.h"
 #include <kernel/fs_index.h>
+#include <stdio.h>
 #include <kernel/OS.h>
 #include <string.h>
 #include <String.h>
 #include <AppKit.h>
-#include <Message.h>
 #include <Messenger.h>
 #include <MessageRunner.h>
 #include <Statable.h>
@@ -43,235 +43,463 @@ Project Start Date: October 18, 2000
 #include <fs_attr.h>
 #include <Node.h>
 #include <Path.h>
+
+//this is to define an object that will be removed from memory almost immediately.
+#define TemporaryObjectID -2
+
+
 cacheman::cacheman(BMessage *info)
-         :BHandler("cache_manager"),
-          PlugClass(info)
- {
-  if (FindCacheDir()==B_OK)
-   printf("Found or created the cache directory.\n");
-  printf("cache path: %s\n",cachepath.Path());
-//  uses_heartbeat=true;
-  CheckIndices();
-  CheckMIME();
-  BPath trashpath;
-  if (find_directory(B_TRASH_DIRECTORY,&trashpath)==B_OK) {
-  	trashdir=new BDirectory(trashpath.Path());
-  } else {
-  	trashdir=new BDirectory("/boot/home/Desktop/Trash");
-  }
- }
-bool cacheman::IsHandler()
- {
-  return true;
- }
-BHandler *cacheman::Handler()
- {
-  return this;
- }
-cacheman::~cacheman()
- {
+	:CachePlug(info) {
+	ASp=NULL;
+	AppSettings=NULL;
+	CSettings=NULL;
+	max_disk_cache_kb=max_ram_cache_kb=0;
+	/*
+	Find and set the settings information if available.
+	*/
+	if (InitInfo!=NULL)
+		InitInfo->FindPointer("settings_message_ptr",(void**)&ASp);
+	if (ASp!=NULL) {
+		AppSettings=*ASp;
+		CSettings=new BMessage;
+		if (AppSettings->HasMessage("disk_cache_settings")) {
+			AppSettings->FindMessage("disk_cache_settings",CSettings);
+			if (CSettings!=NULL) {
+				BString temp;
+//				CSettings->PrintToStream();
+				CSettings->FindString("cache_path",&temp);
+				cachepath.SetTo(temp.String());
+				if (CSettings->HasInt32("max_disk_cache_kb"))
+					max_disk_cache_kb=CSettings->FindInt32("max_disk_cache_kb");
+				else
+					max_disk_cache_kb=20480;
+				if (CSettings->HasInt32("max_ram_cache_kb"))
+					max_ram_cache_kb=CSettings->FindInt32("max_ram_cache_kb");
+				else
+					max_ram_cache_kb=10240;
+			}
+			
+		} else {
+			FindCacheDir();
+			max_disk_cache_kb=20480;
+			max_ram_cache_kb=10240;
+			CSettings->AddInt32("max_ram_cache_kb",max_ram_cache_kb);
+			CSettings->AddInt32("max_disk_cache_kb",max_disk_cache_kb);
+			CSettings->AddString("cache_path",cachepath.Path());
+		}
+		
+	} else {
+			FindCacheDir();
+	}
+	InternalCacheUserToken=0;
+	objlist=NULL;
+	userlist=NULL;
+	CheckIndices();
+	CheckMIME();
+	InternalCacheUserToken=Register(Type(),"Disk Cache Manager");
+	BPath trashpath;
+	if (find_directory(B_TRASH_DIRECTORY,&trashpath)==B_OK) {
+		trashdir=new BDirectory(trashpath.Path());
+	} else {
+		trashdir=new BDirectory("/boot/home/Desktop/Trash");
+	}
+	printf("Total Cache Size: %ld\n",GetCacheSize());
+	printf("RAM Cache Size: %ld\nDisk CacheSize: %ld\n",GetCacheSize(TYPE_RAM),GetCacheSize(TYPE_DISK));
+}
+
+cacheman::~cacheman() 
+{
+	Unregister(InternalCacheUserToken);
+	if (userlist!=NULL) {
+		CacheUser *cur=NULL;
+		while (userlist!=NULL) {
+			cur=userlist->Next();
+			delete userlist;
+			userlist=cur;
+		}
+	}
+	if (objlist!=NULL) {
+		CacheObject *cur=NULL;
+		while (objlist!=NULL) {
+			cur=objlist->Next();
+			delete objlist;
+			objlist=(DiskCacheObject*)cur;
+		}
+		
+	}
  	if (trashdir!=NULL)
  		delete trashdir;
- }
-int32 cacheman::Type() 
-{
-	return DISK_CACHE;
+	
 }
-status_t cacheman::ReceiveBroadcast(BMessage *msg)
+void cacheman::Unregister(uint32 usertoken) 
 {
-	printf("cache has received a broadcast\n");
-	MessageReceived(msg);
-	return PLUG_HANDLE_GOOD;
+	ClearAllRequests(usertoken);
+	CachePlug::Unregister(usertoken);
+}
+
+CacheObject *cacheman::FindObject(int32 objecttoken) 
+{
+	CacheObject *cur=objlist;
+	while (cur!=NULL) {
+		if (cur->Token()==objecttoken)
+			break;
+		cur=cur->Next();
+	}
+	return (DiskCacheObject*)cur;
+}
+CacheObject *cacheman::FindObject(const char *URL) 
+{
+	CacheObject *cur=objlist;
+	while (cur!=NULL) {
+		if (strcmp(URL, cur->URL())==0){
+			break;
+		}
+		cur=cur->Next();
+	}
+	return (DiskCacheObject*)cur;
+}
+
+void cacheman::ClearRequests(uint32 usertoken, int32 objecttoken) 
+{
+	CacheObject *object=FindObject(objecttoken);
+	if (object!=NULL) {
+		if (object->IsUsedBy(usertoken))
+			object->RemoveUser(usertoken);
+		if (object->CountUsers()==0) {
+			if (object->Previous()!=NULL) {
+				object->Previous()->Remove(object);
+			} else {
+				objlist=object->Next();
+				objlist->SetPrevious(NULL);
+			}
+			delete object;
+		}
+	}
+}
+void cacheman::ClearAllRequests(uint32 usertoken) 
+{
+	CacheObject *object=objlist;
+	while (object!=NULL) {
+		if (object->IsUsedBy(usertoken))
+			object->RemoveUser(usertoken);
+		object=object->Next();
+	}
+	
+}
+void cacheman::ClearCache(uint32 which) 
+{
+/*
+	mmsg->PrintToStream();
+	printf("Clearing cache...\n");
+	bool specific=false;
+	BString url;
+	if (mmsg->HasString("url")) {
+		mmsg->FindString("url",&url);
+		specific=true;
+	}
+*/	
+	CacheObject *object=objlist;
+	while(object!=NULL) {
+		object->ClearFile();
+		objlist=object->Next();
+		delete object;
+		object=objlist;
+	}
+	
+	BVolumeRoster volr;
+	BVolume vol;
+	for (int i=0;i<5;i++)
+	//the query repeats 5 times to make sure all appropriate files are removed
+	{
+		while (volr.GetNextVolume(&vol)==B_OK)
+		{
+			BQuery query;
+			query.Clear();
+			query.SetVolume(&vol);
+			query.PushAttr("BEOS:TYPE");
+			query.PushString(ThemisCacheMIME);
+			query.PushOp(B_EQ);
+/*
+			if (specific)
+			{
+				query.PushAttr("Themis:URL");
+				query.PushString(url.String());
+				query.PushOp(B_EQ);
+				query.PushOp(B_AND);
+			}
+*/			
+			query.Fetch();
+			snooze(100000);
+			BEntry ent;
+			char fname[B_FILE_NAME_LENGTH];
+			while (query.GetNextEntry(&ent)==B_OK)
+			{
+				ent.GetName(fname);
+				printf("\t\t%s: ",fname);
+				if ((ent.InitCheck()==B_OK) && (ent.Exists()))
+				{
+					if(ent.Remove()==B_OK)
+						printf("removed\n");
+					else
+						printf("error\n");
+				}
+			}
+		}
+		volr.Rewind();
+	}
+}
+void cacheman::ClearContent(uint32 usertoken, int32 objecttoken) {
+	CacheObject *object=FindObject(objecttoken);
+	if (object!=NULL) {
+		object->ClearContent(usertoken);
+	}
 	
 }
 
-void cacheman::MessageReceived(BMessage *mmsg)
- {
-// 	mmsg->PrintToStream();
-  switch(mmsg->what)
-   {
-   	case LoadingNewPage: {
-   		//this clears the files marked true in Themis:clearonnew
-   	printf("cache::MessageReceived Loading New Page\n");
-      BEntry ent(cachepath.Path(),true);
-      uint32 count=0;
-      struct stat devstat;
-      ent.GetStat(&devstat);
-      BVolume vol(devstat.st_dev);
-      BQuery query;
-      query.SetVolume(&vol);
-      query.PushAttr("BEOS:TYPE");
-      query.PushString(ThemisCacheMIME);
-      query.PushOp(B_EQ);
-      query.PushAttr("Themis:clearonnew");
-      query.PushInt32(1);
-      query.PushOp(B_EQ);
-      query.PushOp(B_AND);
-      int32 plen=query.PredicateLength();
-      char *pc=new char [plen+1];
-      memset(pc,0,plen+1);
-      query.GetPredicate(pc,plen);
-      printf("predicate: %s\n",pc);
-      delete pc;
-      query.Fetch();
-      ent.Unset();
-      char fname[255];
-/*
-      while (query.GetNextEntry(&ent,false)==B_OK) {
-      	count++;
-      	printf("count %lu\t",count);
-      	ent.GetName(fname);
-      	printf("name: %s\n",fname);
-//      	ent.Remove();
-      	ent.Unset();
-      }
-*/
-      printf("\n%lu cached file(s) removed due to new URL entered by user.\n",count);
-   	}break;
-    case FindCachedObject:
-     {
-      BEntry ent(cachepath.Path(),true);
-      struct stat devstat;
-      ent.GetStat(&devstat);
-      BVolume vol(devstat.st_dev);
-      BQuery query;
-      query.SetVolume(&vol);
-      query.PushAttr("Themis:URL");
-      BString url;
-      mmsg->FindString("url",&url);
-      query.PushString(url.String());
-      query.PushOp(B_EQ);
-      query.Fetch();
-      ent.Unset();
-      entry_ref ref;
-      BNode node;
-      BMessage reply(CacheObjectNotFound);
-      struct attr_info ai;
-      char attname[B_ATTR_NAME_LENGTH+1];
-        memset(attname,0,B_ATTR_NAME_LENGTH+1);
-      unsigned char *data=NULL;
-      bool found=false;
-      bool set=false;
-      BString fname;//field name
-      while (query.GetNextEntry(&ent,false)==B_OK)
-       {
-       	if (trashdir->Contains(&ent))
-       		continue;
-       	if (!set) {
-       		set=true;
-       		found=true;
-       		reply.what=CachedObject;
-       	}
-        ent.GetRef(&ref);
-        reply.AddRef("ref",&ref);
-        ent.Unset();
-        node.SetTo(&ref);
-        node.Lock();
-        while (node.GetNextAttrName(attname)==B_OK)
-         {
-          node.GetAttrInfo(attname,&ai);
-          if (data!=NULL)
-           delete data;
-          data=new unsigned char[ai.size+1];
-          memset(data,0,ai.size+1);
-          switch(ai.type)
-           {
-            case B_INT64_TYPE:
-             {
-              if (strcasecmp(attname,"Themis:content-length")==0)
-               {
-                off_t clen=0;
-                node.ReadAttr("Themis:content-length",B_INT64_TYPE,0,&clen,sizeof(clen));
-                reply.AddInt64("content-length",clen);
-                continue;
-               }
-             }break;
-            case B_STRING_TYPE:
-             {
-               if (strcasecmp(attname,"Themis:URL")==0)
-                {
-                 node.ReadAttr("Themis:URL",B_STRING_TYPE,0,data,ai.size);
-                 fname="url";
-                }
-               if (strcasecmp(attname,"Themis:name")==0)
-                {
-                 node.ReadAttr("Themis:name",B_STRING_TYPE,0,data,ai.size);
-                 fname="name";
-                }
-               if (strcasecmp(attname,"Themis:host")==0)
-                {
-                 node.ReadAttr("Themis:host",B_STRING_TYPE,0,data,ai.size);
-                 fname="host";
-                }
-               if (strcasecmp(attname,"Themis:mime_type")==0)
-                {
+BMessage *cacheman::GetInfo(uint32 usertoken, int32 objecttoken){
+	CacheObject *object=FindObject(objecttoken);
+	if (object!=NULL) {
+		return object->GetInfo();
+	}
+	
+	return NULL;
+}
+
+
+ssize_t cacheman::Write(uint32 usertoken, int32 objecttoken, void *data, size_t size){
+	CacheObject *object=FindObject(objecttoken);
+	if (object!=NULL) {
+		return object->Write(usertoken,data,size);
+	}
+	return B_ERROR;
+}
+
+ssize_t cacheman::Read(uint32 usertoken, int32 objecttoken, void *data, size_t size){
+	CacheObject *object=FindObject(objecttoken);
+	if (object!=NULL) {
+		if (!object->IsUsedBy(usertoken))
+			object->AddUser(FindUser(usertoken));
+		return object->Read(usertoken,data,size);
+	}
+	return B_ERROR;
+}
+
+int32 cacheman::Type() 
+{
+	return TYPE_DISK|TYPE_RAM|TARGET_CACHE;
+}
+bool cacheman::AcquireWriteLock(uint32 usertoken, int32 objecttoken) 
+{
+	CacheObject *object=FindObject(objecttoken);
+	if (object!=NULL)
+		return object->AcquireWriteLock(usertoken);
+	return false;
+}
+void cacheman::ReleaseWriteLock(uint32 usertoken,int32 objecttoken) 
+{
+	CacheObject *object=FindObject(objecttoken);
+	if (object!=NULL)
+		object->ReleaseWriteLock(usertoken);
+}
+
+void cacheman::Quit(bool fast) 
+{
+//	printf("cacheman::Quit(%s)\n",fast?"true":"false");
+//	if (!fast) {
+		if (AppSettings!=NULL) {
+			if (!AppSettings->HasMessage("disk_cache_settings")) {
+				AppSettings->AddMessage("disk_cache_settings",CSettings);
+			} else {
+				AppSettings->ReplaceMessage("disk_cache_settings",CSettings);
+			}
+		}
+//	}
+}
+
+status_t cacheman::ReceiveBroadcast(BMessage *msg) 
+{
+	uint32 command=0;
+	msg->FindInt32("command",(int32*)&command);
+	switch(command) {
+		case COMMAND_STORE: {
+			switch(msg->what) {
+				case CreateCacheObject:
+				 {
+					uint32 cache_type=TYPE_DISK;
+					if (msg->HasInt32("cache_type")) {
+						cache_type=msg->FindInt32("cache_type");
+					}
+					BString url;
+					msg->FindString("url",&url);
+					uint32 usertoken=0;
+					usertoken=msg->FindInt32("cache_user_token");
+					PlugClass *pobj=NULL;
+					uint32 replyid=0;
+					if (msg->HasPointer("ReplyToPointer"))
+						msg->FindPointer("ReplyToPointer",(void**)&pobj);
+					else
+						replyid=msg->FindInt32("ReplyTo");
+					if ((pobj==NULL) && (replyid!=0))
+						pobj=PlugMan->FindPlugin(replyid);
+					int32 objecttoken=CreateObject(usertoken,url.String(),cache_type);
+					BMessage reply(CachedObject);
+					reply.AddInt32("command", COMMAND_INFO);
+					reply.AddInt32("cache_object_token",objecttoken);
+					pobj->BroadcastReply(&reply);
+				}break;				
+			}
+			
+		}break;
+		case COMMAND_INFO_REQUEST: {
+			switch(msg->what) {
+
+				case FindCachedObject: {
+					PlugClass *pobj=NULL;
+					uint32 replyid=0;
+					uint32 usertoken=0;
+					BString url;
+					if (msg->HasPointer("ReplyToPointer"))
+						msg->FindPointer("ReplyToPointer",(void**)&pobj);
+					else
+						replyid=msg->FindInt32("ReplyTo");
+					if ((pobj==NULL) && (replyid!=0))
+						pobj=PlugMan->FindPlugin(replyid);
+			//		if (msg->HasBool("cache_item")) {
+						if (msg->HasInt32("cache_user_token")) {
+							usertoken=msg->FindInt32("cache_user_token");
+							msg->FindString("url",&url);
+							int32 objecttoken=FindObject(usertoken,url.String());
+							BMessage reply;
+							reply.AddInt32("command",COMMAND_INFO);
+//							reply.AddInt32("cache_system",Type());
+							if (objecttoken>B_ERROR) {
+								reply.what=CachedObject;
+								reply.AddInt32("cache_object_token",objecttoken);
+							} else {
+								reply.what=CacheObjectNotFound;
+							}
+							printf("cache reply:\n");
+							reply.PrintToStream();
+							pobj->BroadcastReply(&reply);
+							
+						}
+						
+		//			}
 					
-                 node.ReadAttr("Themis:mime_type",B_STRING_TYPE,0,data,ai.size);
-					printf("**** CACHE: MIME TYPE FOUND: %s ****\n",data);
-                 fname="mime_type";
-                }
-               if (strcasecmp(attname,"Themis:path")==0)
-                {
-                 node.ReadAttr("Themis:path",B_STRING_TYPE,0,data,ai.size);
-                 fname="path";
-                }
-               if (strcasecmp(attname,"Themis:etag")==0)
-                {
-                 node.ReadAttr("Themis:etag",B_STRING_TYPE,0,data,ai.size);
-                 fname="etag";
-                }
-               if (strcasecmp(attname,"Themis:last-modified")==0)
-                {
-                 node.ReadAttr("Themis:last-modified",B_STRING_TYPE,0,data,ai.size);
-                 fname="last-modified";
-                }
-               if (strcasecmp(attname,"Themis:expires")==0)
-                {
-                 node.ReadAttr("Themis:expires",B_STRING_TYPE,0,data,ai.size);
-                 fname="expires";
-                }
-               if (strcasecmp(attname,"Themis:content-md5")==0)
-                {
-                 node.ReadAttr(attname,B_STRING_TYPE,0,data,ai.size);
-                 fname="content-md5";
-                }
-                 reply.AddString(fname.String(),(char*)data);
-                 fname="";
-                 continue;
-             }break;
-            case B_INT32_TYPE:
-             {
-             }break;
-           }
-          delete data;
-          data=NULL;
-         }
-        node.Unlock();
-        node.Unset();
-        //fix this later so that it should get more specific before returning
-       }
-	   PlugClass *pobj=NULL;
-		 mmsg->FindPointer("ReplyToPointer",(void**)&pobj);
-		 if (pobj!=NULL) {
-		 	reply.AddInt32("command",COMMAND_INFO);
-			 
-		 	pobj->BroadcastReply(&reply);
-			 
-		 } else
-	       mmsg->SendReply(&reply);
-     }break;
-    case CreateCacheObject:
-     {
-      BMessage *msg=new BMessage(*mmsg);
-      printf("CreateCacheObject\n");
-      BMessage reply(B_ERROR);
-      type_code type;
-      int32 count,index;
-     // char name[B_OS_NAME_LENGTH];
-      char *name=NULL;
-      if (msg->CountNames(B_ANY_TYPE)>=1)
-       {
-        printf("msg contains items\n");
+				}break;
+				default:
+					return PLUG_DOESNT_HANDLE;
+			}
+			
+		}break;
+		default:
+			return PLUG_DOESNT_HANDLE;
+	}
+	return PLUG_HANDLE_GOOD;
+}
+int32 cacheman::FindObject(uint32 usertoken, const char *URL) 
+{
+	CacheUser *user=FindUser(usertoken);
+	CacheObject *object=FindObject(URL);
+	if (object!=NULL) {
+		if (!object->IsUsedBy(usertoken))
+			object->AddUser(user);
+		return object->Token();
+	}
+	BEntry ent(cachepath.Path(),true);
+	struct stat devstat;
+	ent.GetStat(&devstat);
+	BVolume vol(devstat.st_dev);
+	BQuery query;
+	query.SetVolume(&vol);
+	query.PushAttr("Themis:URL");
+	query.PushString(URL,true);//set the second argument to false to make query case sensitive
+	query.PushOp(B_EQ);
+	/*
+		Copy the predicate for future use; we do a quick query to determine if we have
+	more than one file that meets the query's specifications, and decide what to do then.
+	In general, and in my (Z3R0 One's) opinion, we should only take the first object that
+	meets the query's specifications. However, what do we do if we encounter a two URLs
+	that differ only by the capitalization of a letter or two? I made this query
+	case insensitive because the server name shouldn't matter whether it's capitalized or
+	not, however the actual URI generally does matter... What to do, what to do...
+	*/
+	size_t predlen=0;
+	predlen=query.PredicateLength();
+	char *predicate=NULL;
+	predicate=new char[predlen+1];
+	memset(predicate,0,predlen+1);
+	query.GetPredicate(predicate,predlen);
+	query.Fetch();
+	ent.Unset();
+	entry_ref ref;
+	bool found=false;
+	int32 count=0;
+	while (query.GetNextEntry(&ent,false)==B_OK) {
+		if (trashdir->Contains(&ent))
+			continue;
+		ent.GetRef(&ref);
+		count++;
+	}
+	if (count>0) {
+		query.Clear();
+		query.SetPredicate(predicate);
+		query.Fetch();
+		if (count==1) {
+//			query.GetNextRef(&ref);
+			BPath path(&ref);
+			printf("cache man: found url at %s\n",path.Path());
+			object=new DiskCacheObject(object_token_value++,URL, ref);
+			object->AddUser(user);
+			if (objlist==NULL) {
+				objlist=object;
+			} else {
+				objlist->SetNext(object);
+			}
+			
+		} else {
+			//just get the first one... or the best match...
+//			query.GetNextRef(&ref);
+			object=new DiskCacheObject(object_token_value++,URL, ref);
+			object->AddUser(user);
+			if (objlist==NULL) {
+				objlist=object;
+			} else {
+				objlist->SetNext(object);
+			}
+		}
+		
+	}
+	
+	memset(predicate,0,predlen);
+	delete predicate;
+	predicate=NULL;
+	printf("Cache: cache object found: %p\n",object);
+	if (object!=NULL)
+		return object->Token();
+	return B_ENTRY_NOT_FOUND;
+}
+CacheUser *cacheman::FindUser(uint32 usertoken) 
+{
+	CacheUser *cur=userlist;
+	while (cur!=NULL) {
+		if (cur->Token()==usertoken) {
+			break;
+		}
+		cur=cur->Next();
+	}
+	return cur;
+}
+
+int32 cacheman::CreateObject(uint32 usertoken, const char *URL, uint32 type) 
+{
+	CacheUser *user=FindUser(usertoken);
+	CacheObject *object=FindObject(URL);
+	if (object!=NULL) {
+		if (!object->IsUsedBy(usertoken))
+			object->AddUser(user);
+		return object->Token();
+	}
         bigtime_t reqtime=real_time_clock_usecs();
         BPath pth(cachepath);
         BString fname;
@@ -282,334 +510,57 @@ void cacheman::MessageReceived(BMessage *mmsg)
           BEntry ent(pth.Path(),true);
           ent.GetRef(&ref);
          }
-        BFile *file=new BFile(&ref,B_CREATE_FILE|B_READ_WRITE);//|B_ERASE_FILE
-        BNode *node=new BNode(&ref);
-        node->Lock();
-        BNodeInfo *ni=new BNodeInfo(node);
-        ni->SetType(ThemisCacheMIME);
-        delete ni;
-//		memset(name,0,B_OS_NAME_LENGTH+1);
-        printf("cache: About to loop...\n");
- //       msg->PrintToStream();
- 		//memset(name,0,B_OS_NAME_LENGTH);
-#if (B_BEOS_VERSION > 0x0504)
-        for (index=0;msg->GetInfo(B_ANY_TYPE,index,(const char**)&name,&type,&count)==B_OK; index++)
-#else
-        for (index=0;msg->GetInfo(B_ANY_TYPE,index,&name,&type,&count)==B_OK; index++)
-#endif
-         {
-          printf("cache - message: %s %c%c%c%c %ld\n",name,type>>24,type>>16,type>>8,type,count);
-          for (int i=0;i<count;i++) {
-			  
-           switch(type)
-            {
-			 case B_INT64_TYPE:
-			  {
-               if (strcasecmp(name,"content-length")==0)
-                {
-				 off_t clen;
-                 msg->FindInt64(name,&clen);
-                 printf("writing %s: %Ld\n",name,clen);
-                 node->WriteAttr("Themis:content-length",B_INT64_TYPE,0,&clen,sizeof(clen));
-                 continue;
-                }
-				  
-			  }break;
-             case B_INT32_TYPE:
-              {
- 
-              if (strcasecmp(name,"what")==0)
-                continue;
-               if (strcasecmp(name,"when")==0)
-                continue;
-              }break;
-             case B_STRING_TYPE:
-              {
-               if (strcasecmp(name,"url")==0)
-                {
-                 msg->FindString(name,&fname);//let's reuse stuff! 
-                 printf("writing %s: %s\n",name,fname.String());
-                 node->WriteAttr("Themis:URL",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
-                 continue;
-                }
-               if (strcasecmp(name,"name")==0)
-                {
-                 msg->FindString(name,&fname);
-                 printf("writing %s: %s\n",name,fname.String());
-                 node->WriteAttr("Themis:name",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
-                 continue;
-                }
-               if (strcasecmp(name,"host")==0)
-                {
-                 msg->FindString(name,&fname);
-                 printf("writing %s: %s\n",name,fname.String());
-                 node->WriteAttr("Themis:host",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
-                 continue;
-                }
-               if (strcasecmp(name,"content-type")==0)
-                {
-                 msg->FindString(name,&fname);
-                 printf("writing %s: %s\n",name,fname.String());
-                 node->WriteAttr("Themis:mime_type",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
-                 continue;
-                }
-               if (strcasecmp(name,"path")==0)
-                {
-                 msg->FindString(name,&fname);
-                 printf("writing %s: %s\n",name,fname.String());
-                 node->WriteAttr("Themis:path",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
-                 continue;
-                }
-               if (strcasecmp(name,"etag")==0)
-                {
-                 msg->FindString(name,&fname);
-                 printf("writing %s: %s\n",name,fname.String());
-                 node->WriteAttr("Themis:etag",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
-                 continue;
-                }
-               if (strcasecmp(name,"last-modified")==0)
-                {
-                 msg->FindString(name,&fname);
-                 printf("writing %s: %s\n",name,fname.String());
-                 node->WriteAttr("Themis:last-modified",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
-                 continue;
-                }
-               if (strcasecmp(name,"expires")==0)
-                {
-                 msg->FindString(name,&fname);
-                 printf("writing %s: %s\n",name,fname.String());
-                 node->WriteAttr("Themis:expires",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
-                 continue;
-                }
-               if (strcasecmp(name,"content-md5")==0)
-                {
-                 msg->FindString(name,&fname);
-                 printf("writing %s: %s\n",name,fname.String());
-                 node->WriteAttr("Themis:content-md5",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
-                 continue;
-                }
-              }break;
-			   
-            }
-		  }
-		  name=NULL;
-		  
-         }
-       node->Unlock();
-        node->Sync();
-        delete node;
-        delete file;
-		PlugClass *plug=NULL;
-			printf("cache CreateCacheObject about to return.\n");
-			        reply.what=CachedObject;
-				if (msg->HasPointer("ReplyToPointer")) {
-					reply.AddInt32("command",COMMAND_INFO);
-					printf("Replying to a plugin.\n");
-					msg->FindPointer("ReplyToPointer",(void**)&plug);
-					if (plug!=NULL)
-						plug->BroadcastReply(&reply);
-				} else {	
-					printf("Replying via BMessage.\n");
-			        reply.AddRef("ref",&ref);
-				}
-       }
-      delete msg;
-      mmsg->SendReply(&reply);
-	 }break;
-    case UpdateCachedObject:
-     {
-      type_code type;
-      int32 count=0,index=0;
-     	BMessage *msg=new BMessage(*mmsg);
-     	entry_ref ref;
-     	msg->FindRef("ref",&ref);
-     	BFile *file=new BFile(&ref,B_READ_WRITE);
-//     	file->SetSize(0);
-     	delete file;
-        BNode *node=new BNode(&ref);
-        node->Lock();
-        BNodeInfo *ni=new BNodeInfo(node);
-        ni->SetType(ThemisCacheMIME);
-        delete ni;
-        char *name=NULL;
-        BMessage reply(*msg);
-        printf("cache (update): About to loop...\n");
- //       msg->PrintToStream();
- 		BString fname;
-#if (B_BEOS_VERSION > 0x0504)
-        for (index=0;msg->GetInfo(B_ANY_TYPE,index,(const char**)&name,&type,&count)==B_OK; index++)
-#else
-        for (index=0;msg->GetInfo(B_ANY_TYPE,index,&name,&type,&count)==B_OK; index++)
-#endif
-         {
-          printf("cache (update) - message: %s %c%c%c%c %ld\n",name,type>>24,type>>16,type>>8,type,count);
-          for (int i=0;i<count;i++)
-           switch(type)
-            {
-			 case B_INT64_TYPE:
-			  {
-               if (strcasecmp(name,"content-length")==0)
-                {
-				 off_t clen;
-                 msg->FindInt64(name,&clen);
-                 printf("writing %s: %Ld\n",name,clen);
-                 node->RemoveAttr("Themis:content-length");
-                 node->WriteAttr("Themis:content-length",B_INT64_TYPE,0,&clen,sizeof(clen));
-                 continue;
-                }
-				  
-			  }break;
-             case B_INT32_TYPE:
-              {
-               if (strcasecmp(name,"what")==0)
-                continue;
-               if (strcasecmp(name,"when")==0)
-                continue;
-              }break;
-             case B_STRING_TYPE:
-              {
-               if (strcasecmp(name,"url")==0)
-                {
-                 msg->FindString(name,&fname);//let's reuse stuff! 
-                 printf("writing %s: %s\n",name,fname.String());
-                 node->RemoveAttr("Themis:URL");
-                 node->WriteAttr("Themis:URL",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
-                 continue;
-                }
-               if (strcasecmp(name,"name")==0)
-                {
-                 msg->FindString(name,&fname);
-                 printf("writing %s: %s\n",name,fname.String());
-                 node->RemoveAttr("Themis:Name");
-                 node->WriteAttr("Themis:name",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
-                 continue;
-                }
-               if (strcasecmp(name,"host")==0)
-                {
-                 msg->FindString(name,&fname);
-                 printf("writing %s: %s\n",name,fname.String());
-                 node->RemoveAttr("Themis:host");
-                 node->WriteAttr("Themis:host",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
-                 continue;
-                }
-               if (strcasecmp(name,"content-type")==0)
-                {
-                 msg->FindString(name,&fname);
-                 printf("writing %s: %s\n",name,fname.String());
-                 node->RemoveAttr("Themis:mime_type");
-                 node->WriteAttr("Themis:mime_type",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
-                 continue;
-                }
-               if (strcasecmp(name,"path")==0)
-                {
-                 msg->FindString(name,&fname);
-                 printf("writing %s: %s\n",name,fname.String());
-                 node->RemoveAttr("Themis:path");
-                 node->WriteAttr("Themis:path",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
-                 continue;
-                }
-               if (strcasecmp(name,"etag")==0)
-                {
-                 msg->FindString(name,&fname);
-                 printf("writing %s: %s\n",name,fname.String());
-                 node->RemoveAttr("Themis:etag");
-                 node->WriteAttr("Themis:etag",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
-                 continue;
-                }
-               if (strcasecmp(name,"last-modified")==0)
-                {
-                 msg->FindString(name,&fname);
-                 printf("writing %s: %s\n",name,fname.String());
-                 node->RemoveAttr("Themis:last-modified");
-                 node->WriteAttr("Themis:last-modified",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
-                 continue;
-                }
-               if (strcasecmp(name,"expires")==0)
-                {
-                 msg->FindString(name,&fname);
-                 printf("writing %s: %s\n",name,fname.String());
-                 node->RemoveAttr("Themis:expires");
-                 node->WriteAttr("Themis:expires",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
-                 continue;
-                }
-               if (strcasecmp(name,"content-md5")==0)
-                {
-                 msg->FindString(name,&fname);
-                 printf("writing %s: %s\n",name,fname.String());
-                 node->RemoveAttr("Themis:content-md5");
-                 node->WriteAttr("Themis:content-md5",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
-                 continue;
-                }
-              }break;
-            }
-		  name=NULL;
-         }
-        node->Unlock();
-        node->Sync();
-        delete node;
-        reply.what=B_OK;
-      delete msg;
-	  printf("cache (update) done; sending reply.\n");
-      mmsg->SendReply(&reply);
-     }break;
-    case ClearCache:
-     {
-      mmsg->PrintToStream();
-      printf("Clearing cache...\n");
-	  bool specific=false;
-	  BString url;
-	  if (mmsg->HasString("url")) {
-	  	mmsg->FindString("url",&url);
-		specific=true;
-	  }
-	  
-      BVolumeRoster volr;
-      BVolume vol;
-      for (int i=0;i<5;i++)
-      //the query repeats 5 times to make sure all appropriate files are removed
-       {
-        while (volr.GetNextVolume(&vol)==B_OK)
-         {
-          BQuery query;
-          query.Clear();
-          query.SetVolume(&vol);
-          query.PushAttr("BEOS:TYPE");
-          query.PushString(ThemisCacheMIME);
-          query.PushOp(B_EQ);
-		  if (specific)
-		  {
-		  	query.PushAttr("Themis:URL");
-			query.PushString(url.String());
-			query.PushOp(B_EQ);
-		  	query.PushOp(B_AND);
-		  }
-		  
-          query.Fetch();
-          snooze(100000);
-          BEntry ent;
-          char fname[B_FILE_NAME_LENGTH];
-          while (query.GetNextEntry(&ent)==B_OK)
-           {
-            ent.GetName(fname);
-            printf("\t\t%s: ",fname);
-            if ((ent.InitCheck()==B_OK) && (ent.Exists()))
-             {
-              if(ent.Remove()==B_OK)
-               printf("removed\n");
-              else
-               printf("error\n");
-             }
-           }
-         }
-        volr.Rewind();
-       }
-     }break;
-    default:
-     {
-      BHandler::MessageReceived(mmsg);
-     }
-   }
- }
+	switch (type) {
+		case TYPE_RAM: {
+			object=new RAMCacheObject(object_token_value++,URL);
+		}break;
+		default:{
+			object=new DiskCacheObject(object_token_value++,URL,ref);
+		}break;
+	}
+	
+	object->AddUser(user);
+	object->AcquireWriteLock(usertoken);
+	if (objlist==NULL) {
+		objlist=object;
+	} else {
+		objlist->SetNext(object);
+	}
+	return object->Token();
+}
+status_t cacheman::UpdateAttr(uint32 usertoken, int32 objecttoken, const char *name, type_code type, void *data, size_t size) 
+{
+}
+status_t cacheman::WriteAttr(uint32 usertoken, int32 objecttoken, const char *attrname, type_code type,void *data,size_t size)
+{
+	CacheObject *object=FindObject(objecttoken);
+	if (object!=NULL) {
+		if (!object->IsUsedBy(usertoken))
+			object->AddUser(FindUser(usertoken));
+		if (object->HasWriteLock(usertoken))	
+			return object->WriteAttr(usertoken,attrname,type,data,size);
+	}
+	
+	return B_ERROR;
+}
+
+status_t cacheman::ReadAttr(uint32 usertoken, int32 objecttoken, const char *attrname, type_code type, void *data, size_t size)
+{
+	CacheObject *object=FindObject(objecttoken);
+	if (object!=NULL) {
+		if (!object->IsUsedBy(usertoken))
+			object->AddUser(FindUser(usertoken));
+		return object->ReadAttr(usertoken,attrname,type,data,size);
+	}
+	
+	return B_ERROR;
+}
+
+bool cacheman::HasAttr(uint32 usertoken, int32 objecttoken, const char *name, type_code *type, size_t *size)
+{
+}
+
+
 status_t cacheman::CheckMIME()
  {
   //MIME type goodness...
@@ -1227,6 +1178,43 @@ status_t cacheman::FindCacheDir()
   status_t stat;
   if ((stat=find_directory(B_USER_SETTINGS_DIRECTORY,&path))==B_OK)
    {
+	path.Append("Themis");
+	FindCache_SetEntry:
+	BEntry entry(path.Path(),true);
+	if (entry.Exists()) {
+		if (entry.IsDirectory()) {
+			path.Append("cache");
+			FindCache_SetEntry2:
+			entry.SetTo(path.Path(),true);
+			if (entry.Exists()) {
+				if (entry.IsDirectory()) {
+					goto FindCache_SetPath;
+				} else {
+					path.GetParent(&path);
+					path.Append("_cache_");
+					goto FindCache_SetEntry2;
+				}
+				
+			} else {
+				goto FindCache_CreateDirectory;
+			}
+			
+		} else {
+			path.GetParent(&path);
+			path.Append("ThemisWeb");
+			goto FindCache_SetEntry;
+		}
+		
+	} else {
+		path.Append("cache");
+		FindCache_CreateDirectory:
+		stat=create_directory(path.Path(),0700);
+		FindCache_SetPath:
+		cachepath=path;
+		stat=B_OK;
+	}
+	
+/*
     if((stat=path.Append("Themis"))==B_OK)
      {
       BEntry entry(path.Path(),true);
@@ -1238,6 +1226,7 @@ status_t cacheman::FindCacheDir()
            {
             if ((stat=path.Append("cache"))==B_OK)
              {
+             	entry.SetTo(path.Path(),true);
               if (entry.Exists())
                {
                 if (entry.IsDirectory())
@@ -1316,6 +1305,171 @@ status_t cacheman::FindCacheDir()
       return stat;
      }
     return stat;
+*/
    }
   return stat; 
  }
+ssize_t cacheman::GetObjectSize(uint32 usertoken, int32 objecttoken){
+	CacheObject *object=FindObject(objecttoken);
+	if (object!=NULL)
+		return object->Size();
+}
+
+ssize_t cacheman::GetCacheSize(uint32 which){
+	off_t totalsize=0;
+	CacheObject *object=objlist,*last=NULL;
+	uint32 type=0;
+	switch(which) {
+		case TYPE_DISK:
+			type=TYPE_DISK;
+			
+			break;
+		case TYPE_RAM:
+			type=TYPE_RAM;
+			break;
+		default:
+			type=TYPE_DISK|TYPE_RAM;
+	}
+	if ((type&TYPE_DISK)!=0) {
+		BEntry ent(cachepath.Path(),true);
+		struct stat devstat;
+		ent.GetStat(&devstat);
+		BVolume vol(devstat.st_dev);
+		BQuery query;
+		query.SetVolume(&vol);
+		query.PushAttr("BEOS:TYPE");
+		query.PushString(ThemisCacheMIME);
+		query.PushOp(B_EQ);
+		query.Fetch();
+		entry_ref ref;
+		while (query.GetNextEntry(&ent)==B_OK) {
+			if (trashdir->Contains(&ent))
+				continue;
+			ent.GetRef(&ref);
+			ent.Unset();
+			if (object==NULL) {
+				object=new DiskCacheObject(TemporaryObjectID,NULL,ref);
+			} else {
+				object->SetNext(new DiskCacheObject(TemporaryObjectID,NULL,ref));
+			}
+		}
+	}
+	
+	while (object!=NULL) {
+		switch(type) {
+			case TYPE_RAM:
+				if (object->Type()==TYPE_RAM)
+					totalsize+=object->Size();
+				break;
+			case TYPE_DISK:
+				if (object->Type()==TYPE_DISK)
+					totalsize+=object->Size();
+					break;
+			default:
+				totalsize+=object->Size();
+		}
+		object=object->Next();
+	}
+	object=objlist;
+	last=NULL;
+	while (object!=NULL) {
+		if (object->Token()==TemporaryObjectID) {
+			if (last==NULL) {
+				objlist=object->Next();
+				delete object;
+				object=objlist;
+			} else {
+				last->Remove(object);
+			delete object;
+			object=last->Next();
+			}
+			continue;
+		}
+		
+		last=object;
+		object=object->Next();
+	}
+	return (ssize_t)totalsize;
+}
+
+status_t cacheman::SetObjectAttr(uint32 usertoken,int32 objecttoken, BMessage *info){
+	CacheObject *object=FindObject(objecttoken);
+	if (object!=NULL) {
+		if (object->HasWriteLock(usertoken)) {
+			status_t status=B_OK;
+			if (info!=NULL) {
+				printf("cacheman::SetObjectAttr\n");
+				info->PrintToStream();
+				type_code type;
+				int32 ecount=0, tcount=0, index=0;
+				char *name=NULL;
+				ecount=info->CountNames(B_ANY_TYPE);
+				BString aname,str;
+				if (ecount>=1) {
+#if (B_BEOS_VERSION > 0x0504)
+					for (index=0;info->GetInfo(B_ANY_TYPE,index,(const char**)&name,&type,&tcount)==B_OK;index++)
+#else
+					for (index=0;info->GetInfo(B_ANY_TYPE,index,&name,&type,&tcount)==B_OK;index++)
+#endif
+						{
+							for (int32 i=0; i<tcount; i++) {
+								switch(type) {
+									case B_INT64_TYPE: {
+										if (strcasecmp(name,"content-length")==0) {
+											off_t clen=0L;
+											info->FindInt64(name,i,&clen);
+											object->WriteAttr(usertoken,"Themis:content-length",type,&clen,sizeof(clen));
+										}
+										
+									}break;
+									case B_STRING_TYPE:{
+										str.Truncate(0,false);
+										aname.Truncate(0,false);
+										info->FindString(name,i,&str);
+										if (strcasecmp(name,"url")==0) {
+											aname="Themis:URL";
+										}
+										if (strcasecmp(name,"name")==0) {
+											aname="Themis:name";
+										}
+										if (strcasecmp(name,"host")==0) {
+											aname="Themis:host";
+										}
+										if ((strcasecmp(name,"content-type")==0) || (strcasecmp(name,"mime-type")==0)) {
+											aname="Themis:mime_type";
+										}
+										if (strcasecmp(name,"path")==0) {
+											aname="Themis:path";
+										}
+										if (strcasecmp(name,"etag")==0) {
+											aname="Themis:etag";
+										}
+										if (strcasecmp(name,"last-modified")==0) {
+											aname="Themis:last-modified";
+										}
+										if (strcasecmp(name,"expires")==0) {
+											aname="Themis:expires";
+										}
+										if (strcasecmp(name,"content-md5")==0) {
+											aname="Themis:content-md5";
+										}
+										printf("writing \"%s\":%s\n",aname.String(),str.String());
+										object->WriteAttr(usertoken,aname.String(),type,(char*)str.String(),str.Length()+1);
+									}break;
+								}
+								
+							}
+							
+						}
+
+				}
+				
+			} else
+				status=B_ERROR;
+			return status;
+		}
+		
+	}
+	return B_ERROR;
+}
+		 

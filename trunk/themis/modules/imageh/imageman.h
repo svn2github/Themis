@@ -35,6 +35,7 @@ Project Start Date: October 18, 2000
 #include "plugclass.h"
 #include "smt.h"
 #include "image.h"
+#include "cacheplug.h"
 
 extern "C" __declspec(dllexport)status_t Initialize(void *info=NULL);
 extern "C" __declspec(dllexport)status_t Shutdown(bool now=false);
@@ -53,6 +54,9 @@ class ImageMan: public PlugClass {
 		smt_st *AddMIMEType(char *type);
 		smt_st *mimes;
 		Image *imagelist;
+		uint32 cache_user_token;
+		CachePlug *CacheSys;
+		
 	public:
 		ImageMan(BMessage *info=NULL);
 		~ImageMan();

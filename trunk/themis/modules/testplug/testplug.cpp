@@ -34,6 +34,7 @@ Project Start Date: October 18, 2000
 #include "plugman.h"
 #include <TranslationUtils.h>
 #include <DataIO.h>
+#include "cacheplug.h"
 #define PlugIDdef 'test'
 #define PlugNamedef "Test Plug-in"
 #define PlugVersdef 1.0
@@ -44,6 +45,7 @@ testplug *TP;
 status_t Initialize(void *info) {
   AppSettings=NULL;
 	TP=NULL;
+	CachePlug *cobj;
   if (info!=NULL) {
 	  
 	BMessage *imsg=(BMessage *)info;
@@ -105,6 +107,10 @@ imagewin::~imagewin()
 testplug::testplug(BMessage *info):PlugClass(info)
 {
 	whead=NULL;
+	CacheSys=NULL;
+	CacheSys=(CachePlug*)PlugMan->FindPlugin(CachePlugin);
+	if (CacheSys!=NULL)
+		cache_user_token=CacheSys->Register(Type(),"Test Plug-in");
 }
 
 testplug::~testplug(){
@@ -154,24 +160,73 @@ status_t testplug::ReceiveBroadcast(BMessage *msg){
 	switch(command) {
 		case COMMAND_INFO: {
 			switch(msg->what) {
+				case PlugInLoaded: {
+					PlugClass *pobj=NULL;
+					msg->FindPointer("plugin",(void**)&pobj);
+					if (pobj!=NULL) {
+						if ((pobj->Type()&TARGET_CACHE)!=0) {
+							CacheSys=(CachePlug*)pobj;
+							cache_user_token=CacheSys->Register(Type(),"Test Plug-in");
+						}
+					}
+				}break;
+				case PlugInUnLoaded: {
+					uint32 type=0;
+					type=msg->FindInt32("type");
+					switch(type) {
+						case (TARGET_CACHE|TYPE_RAM|TYPE_DISK): {
+							cache_user_token=0;
+							CacheSys=NULL;
+						}break;
+						default: {
+							
+							//do nothing
+						}
+						
+					}
+					
+				}break;
+				case B_QUIT_REQUESTED: {
+				}break;
 				case ReturnedData: {
 					BString mime;
 					BString url;
 					uint64 br=0,cl=0;
-					BPositionIO *data=NULL;
+					BMallocIO *data=NULL;
 					msg->FindString("mimetype",&mime);
 					printf("testplug: checking mime type - ");
 					fflush(stdout);
+						int32 objtoken=0;
 					
 					if ((mime.ICompare("image/png")==0) || (mime.ICompare("image/jpeg")==0)) {
 						printf("supported\n");
 						msg->FindInt64("content-length",(int64*)&cl);
 						msg->FindInt64("bytes-received",(int64*)&br);
-						msg->FindPointer("data_pointer",(void**)&data);
 						msg->FindString("url",&url);
 						printf("content-length: %lu\n",cl);
 						printf("bytes received: %lu\n",br);
-						printf("data pointer: %p\n",data);
+//						printf("data pointer: %p\n",data);
+							if (CacheSys!=NULL) {
+								if (msg->HasInt32("cache_object_token"))
+									objtoken=msg->FindInt32("cache_object_token");
+								else
+									objtoken=CacheSys->FindObject(cache_user_token,url.String());
+								if (objtoken<0)
+									return PLUG_HANDLE_GOOD;
+								printf("creating imagedata\n");
+								data=new BMallocIO();
+								ssize_t size=CacheSys->GetObjectSize(cache_user_token,objtoken);
+								printf("cache object size is: %ld\n",size);
+								unsigned char *dta=new unsigned char[size];
+								memset(dta,0,size);
+								size=CacheSys->Read(cache_user_token,objtoken,dta,size);
+								printf("read %ld bytes from cache.\n",size);
+								data->Write(dta,size);
+								printf("wrote data to imagedata\n");
+								memset(dta,0,size);
+								delete dta;
+								dta=NULL;
+							}
 						
 						iwind *cur=NULL;
 						if ((cl==0) && (br>0)) {
@@ -179,6 +234,7 @@ status_t testplug::ReceiveBroadcast(BMessage *msg){
 							cur=whead;
 							if (cur==NULL) {
 								whead=new iwind;
+								whead->objecttoken=objtoken;
 								cur=whead;
 								cur->url=url;
 									BString title("Themis - TestPlug Image: ");
@@ -196,6 +252,7 @@ status_t testplug::ReceiveBroadcast(BMessage *msg){
 								}
 								if (cur==NULL) {
 									cur=new iwind;
+									cur->objecttoken=objtoken;
 									last->next=cur;
 									cur->url=url;
 									BString title("Themis - TestPlug Image: ");
@@ -221,12 +278,14 @@ status_t testplug::ReceiveBroadcast(BMessage *msg){
 								cur=whead;
 								if (cur==NULL) {
 									cur=new iwind;
+									cur->objecttoken=objtoken;
 									whead=cur;
 								} else {
 									while (cur->next!=NULL)
 										cur=cur->next;
 									cur->next=new iwind;
 									cur=cur->next;
+									cur->objecttoken=objtoken;
 								}
 								cur->url=url;
 								printf("creating an image window by the name of %s\n",url.String());

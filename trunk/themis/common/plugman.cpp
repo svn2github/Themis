@@ -236,6 +236,14 @@ plugman::~plugman() {
 	
 }
 bool plugman::QuitRequested() {
+
+	BMessage *msg=new BMessage(B_QUIT_REQUESTED);
+	msg->AddInt32("command",COMMAND_INFO);
+	BMessage container;
+	container.AddMessage("message",msg);
+	delete msg;
+	Broadcast(TARGET_PLUGMAN,ALL_TARGETS,&container);
+
 	UnloadAllPlugins(true);
 	return true;
 }
@@ -884,8 +892,11 @@ status_t plugman::UnloadPlugin(uint32 which,bool clean) {
 	printf("PlugMan: Unload plugin %c%c%c%c\n",which>>24,which>>16,which>>8,which);
 	
 		plugst *cur=head,*prev=NULL;
+		uint32 type=0,id=0;
 	while (cur!=NULL) {
 		if (cur->plugid==which) {
+			type=cur->type;
+			id=cur->plugid;
 			if (clean) {
 				if (prev==NULL) {
 					head=cur->next;
@@ -966,6 +977,14 @@ status_t plugman::UnloadPlugin(uint32 which,bool clean) {
 							delete Heartbeat_mr;
 							Heartbeat_mr=NULL;
 						}
+	BMessage *msg=new BMessage(PlugInUnLoaded);
+	msg->AddInt32("type",type);
+	msg->AddInt32("command",COMMAND_INFO);
+	msg->AddInt32("plugid",id);
+	BMessage container;
+	container.AddMessage("message",msg);
+	delete msg;
+	Broadcast(TARGET_PLUGMAN,ALL_TARGETS,&container);
 	return B_OK;
 }
 void plugman::AddPlug(plugst *plug) {
@@ -992,7 +1011,7 @@ void plugman::AddPlug(plugst *plug) {
 	BMessage container;
 	container.AddMessage("message",msg);
 	Broadcast(TARGET_PLUGMAN,ALL_TARGETS,&container);
-	printf("Sending PlugInLoaded message to Window\n");
+	printf("Sending PlugInLoaded message\n");
 	
 	BMessenger *msgr=new BMessenger(NULL,Window,NULL);
 	msgr->SendMessage(msg);

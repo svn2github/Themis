@@ -26,74 +26,35 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
+#ifndef _disk_cache_object_
+#define _disk_cache_object_
 
-#ifndef TESTPLUG_H
-#define TESTPLUG_H
-#include "plugclass.h"
-extern "C" __declspec(dllexport)status_t Initialize(void *info=NULL);
-extern "C" __declspec(dllexport)status_t Shutdown(bool now=false);
-extern "C" __declspec(dllexport)PlugClass *GetObject(void);
-#include <SupportDefs.h>
-#include <Window.h>
-#include <String.h>
-#include <View.h>
-#include <Bitmap.h>
-#include "cacheplug.h"
-class iview: public BView 
-{
-	public:
-		iview(BRect frame,char *name,uint32 resize,uint32 flags);
-		~iview();
-		void Draw(BRect updr);
-	
-		BBitmap *image;
-};
-class imagewin: public BWindow  
-{
-	public:
-		imagewin(char *title);
-		~imagewin();
-		iview *view;
-		bool QuitRequested(){
-			return true;
-		}
-		
-	
-};
-
-struct iwind 
-{
-	imagewin *win;
-	BString url;
-	int32 objecttoken;
-	iwind *next;
-	iwind() {
-		objecttoken=B_ERROR;
-		win=NULL;
-		next=NULL;
-	}
-	
-};
-
-
-class testplug: public PlugClass {
+#include "cacheobject.h"
+#include <File.h>
+#include <Message.h>
+#include <Entry.h>
+class DiskCacheObject: public CacheObject {
 	private:
-		iwind *whead;
+		entry_ref ref;
+		BFile *file;
+		void OpenFile();
+		void CloseFile();
+		bool refset;
 	public:
-		uint32 cache_user_token;
-		CachePlug *CacheSys;
-		testplug(BMessage *info=NULL);
-		~testplug();
-		void MessageReceived(BMessage *msg);
-		bool IsHandler();
-		BHandler *Handler();
-		bool IsPersistent();
-		uint32 PlugID();
-		char *PlugName();
-		float PlugVersion();
-		void Heartbeat();
-		status_t ReceiveBroadcast(BMessage *msg);
-		int32 Type();
+		DiskCacheObject(int32 objecttoken, const char *URL);
+		DiskCacheObject(int32 objecttoken, const char *URL, entry_ref aref);
+		~DiskCacheObject();
+		void SetRef(entry_ref aref);
+		ssize_t Read(uint32 usertoken, void *buffer, size_t size);
+		ssize_t Write(uint32 usertoken, void *buffer, size_t size);
+		ssize_t WriteAttr(uint32 usertoken, const char *attrname, type_code type,void *data,size_t size);
+		ssize_t ReadAttr(uint32 usertoken,  const char *attrname, type_code type, void *data, size_t size);
+		status_t RemoveAttr(uint32 usertoken, const char *attrname);
+		void ClearContent(uint32 usertoken);
+		BMessage *GetInfo();
+		void ClearFile();
+		uint32 Type();
+		off_t Size();
 };
 
 #endif

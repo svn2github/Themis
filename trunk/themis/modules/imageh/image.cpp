@@ -42,6 +42,7 @@ Image::Image(Image *otherimage,bool truecopy) {
 		imagebmp=NULL;
 	url=NULL;
 	next=prev=NULL;
+	cache_object_token=0;
 }
 Image::Image(BBitmap *bmp, char *URL) {
 	printf("ImageHandler: Image %s\n",URL);
@@ -59,6 +60,7 @@ Image::Image(BBitmap *bmp, char *URL) {
 	} else
 		imagebmp=NULL;
 	next=prev=NULL;
+	cache_object_token=0;
 }
 Image::~Image() {
 	if (imagebmp!=NULL)
@@ -119,3 +121,13 @@ char* Image::URL() {
 	return url;
 }
 
+int32 Image::SetCacheToken(int32 token) 
+{
+	cache_object_token=token;
+	return cache_object_token;
+}
+
+int32 Image::CacheToken() 
+{
+	return cache_object_token;
+}

@@ -73,8 +73,9 @@ add a command to makelinks.sh to create this link in your plug-in's directory.
 #define CONTENT_VIDEO	0xc
 #define CONTENT_COOKIE	0xe
 #define CONTENT_DATA	0x10
-#define TYPE_DISK	0x404
-#define TYPE_RAM	0x406
+#define TYPE_ALL 0x404
+#define TYPE_DISK	0x406
+#define TYPE_RAM	0x408
 #define PROTO_HTTP	0x804
 #define PROTO_FTP	0x806
 #define PROTO_SMTP	0x808
@@ -283,9 +284,9 @@ class PlugClass {
 		virtual BView *View();
 		virtual BView *Parent();
 		
-		entry_ref *SetRef(entry_ref *nuref);
-		entry_ref *Ref();
-		entry_ref *ref;//an entry for the plugin
+		entry_ref SetRef(entry_ref nuref);
+		entry_ref Ref();
+		entry_ref plug_ref;//an entry for the plugin
 		
 		virtual void AddMenuItems(BMenu *menu);//this is a signal for plug-ins to add any menus or items
 		virtual void RemoveMenuItems();

@@ -173,6 +173,17 @@ void winview::MessageReceived(BMessage *msg) {
 			if (url.Length()==0) {
 				return;
 			}
+			url=workurl;
+			if ((url.FindFirst("://")==B_ERROR) || (url.FindFirst("://")>=6)) {
+				url.Prepend("http://");
+				printf("url: %s\n",url.String());
+				printf("workurl: %s\n",workurl);
+				delete workurl;
+				workurl=new char[url.Length()+1];
+				memset(workurl,0,url.Length()+1);
+				url.CopyInto(workurl,0,url.Length());
+			}
+			
 //			if (pobj!=NULL) {
 				BMessage *info=new BMessage;
 //				info->AddPointer("tcp_layer_ptr",TCP);

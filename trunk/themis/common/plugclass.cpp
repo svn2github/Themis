@@ -165,13 +165,13 @@ BView *PlugClass::Parent(){
 	return NULL;
 }
 
-entry_ref *PlugClass::SetRef(entry_ref *nuref){
-	ref=nuref;
-	return ref;
+entry_ref PlugClass::SetRef(entry_ref nuref){
+	plug_ref=nuref;
+	return plug_ref;
 }
 
-entry_ref *PlugClass::Ref(){
-	return ref;
+entry_ref PlugClass::Ref(){
+	return plug_ref;
 }
 /*
 These functions signal the plug-in that it's either safe to add or remove menu items from

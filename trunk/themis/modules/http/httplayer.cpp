@@ -35,7 +35,6 @@ Project Start Date: October 18, 2000
 #include "stripwhite.h"
 #include "authvw.h"
 #include "http_proto.h"
-
 httplayer *meHTTP;
 tcplayer *__TCP;
 void ConnectClosed(connection *conn)
@@ -58,12 +57,20 @@ void UnlockHTTP(void)
 {
 	meHTTP->Unlock();
 }
-httplayer::httplayer(tcplayer *_TCP) 
+httplayer::httplayer(tcplayer *_TCP,http_protocol *protoclass) 
 {
+	Proto=protoclass;
+	CacheToken=0;
+	CacheSys=(CachePlug*)(Proto->PlugMan->FindPlugin(CachePlugin));
+	if (CacheSys!=NULL) {
+		CacheToken=CacheSys->Register(Proto->Type(),"HTTP Protocol Add-on");
+	}
+	printf("CacheToken & object: %lu %p\n",CacheToken,CacheSys);
 	lock=new BLocker("http lock",false);
 	lock->Lock();
 	printf("HTTP object at %p\nhttp tcp: %p\n",this,_TCP);
-	
+	TRoster=new BTranslatorRoster();
+	TRoster->AddTranslators(NULL);
 
 	TCP=NULL;
 	if (_TCP!=NULL)
@@ -80,7 +87,6 @@ httplayer::httplayer(tcplayer *_TCP)
 	httplayer_sem=create_sem(1,"httplayer_sem");
 	use_useragent=0;
 	PluginManager=NULL;
-	CachePlug=NULL;
 	lock->Unlock();
 }
 httplayer::~httplayer() 
@@ -118,6 +124,7 @@ httplayer::~httplayer()
 	delete_sem(reqhandle_sem);
 	delete_sem(httplayer_sem);
 	delete lock;
+	delete TRoster;
 }
 
 void httplayer::ConnectionClosed(connection *conn) 
@@ -467,14 +474,6 @@ http_request *httplayer::AddRequest(BMessage *info) {
 					}
 				}break;
 				case ReloadData: {
-					if (CachePlug==NULL) {
-						CachePlug=(PlugClass*)PluginManager->FindPlugin(CachePlugin);
-						if (CachePlug==NULL) {
-							//hmm... we must not have the cache plug-in... no biggie... act normal
-						} else {
-							//clear the cache of this URL, and any related.
-						}
-					}
 				}break;
 				default: {
 					printf("\t\t*** Unknown protocol action requested! %ld (%c%c%c%c)\n",what,what>>24,what>>16,what>>8,what);
@@ -483,9 +482,6 @@ http_request *httplayer::AddRequest(BMessage *info) {
 		}
 		if (PluginManager==NULL) {
 			info->FindPointer("plug_manager",(void**)&PluginManager);
-		}
-		if (CachePlug==NULL) {
-			CachePlug=(PlugClass*)PluginManager->FindPlugin(CachePlugin);
 		}
 		http_request *request=new http_request;
 		if (info->HasInt32("browser_string"))
@@ -950,10 +946,10 @@ void httplayer::ProcessHeaders(http_request *request,void *buffer,int size) {
 							}
 							if (request->cache!=UsesCache)
 								request->cache=UsesCache;
-							if (request->data!=NULL) {
-								delete request->data;
-								request->data=NULL;
-							}
+//							if (request->data!=NULL) {
+//								delete request->data;
+//								request->data=NULL;
+//							}
 							ResubmitRequest(request);
 							delete eohc;
 							return;
@@ -1068,6 +1064,109 @@ void httplayer::DoneWithHeaders(http_request *request) {
 	result=NULL;
 	if (request->status==401)
 		request->cache=DoesNotUseCache;
+	printf("cacheinfo: %p\t cache object token: %ld\thttp status: %ld\n",request->cacheinfo,request->cache_object_token,request->status);
+	switch(request->cache) {
+		case UsesCache: {
+			if ((request->cacheinfo==NULL) && (request->cache_object_token==B_ERROR)){
+				//obviously we didn't find this item in the cache earlier...
+				//so create the item...
+				if (CacheSys!=NULL) {
+					
+					BMessage creator(CreateCacheObject);
+					creator.AddString("url",request->url);
+					creator.AddString("host",request->host);
+					creator.AddString("path",request->uri);
+					header_st *curhead=request->headers;
+					while (curhead!=NULL) {
+						creator.AddString(curhead->name,curhead->value);
+						curhead=curhead->next;
+					}
+					creator.AddInt32("ReplyTo",Proto->PlugID());
+					creator.AddPointer("ReplyToPointer",Proto);
+					printf("12345 about to create cache item 54321\n");
+/*
+Even though the CacheObject is created in the next step, the actual disk file isn't created
+until/unless data is written to the object; including by writing attributes out.
+*/
+					request->cache_object_token=CacheSys->CreateObject(CacheToken,request->url);
+					CacheSys->SetObjectAttr(CacheToken,request->cache_object_token,&creator);
+					request->cacheinfo=CacheSys->GetInfo(CacheToken,request->cache_object_token);
+					if (request->cacheinfo!=NULL)
+						request->cacheinfo->PrintToStream();
+				}
+				
+			} else {
+				printf("checkpoint!\n");
+				if ((request->cacheinfo!=NULL) && (request->cache_object_token!=B_ERROR) && (request->status==200)) {
+					BMessage updater(CreateCacheObject);
+					updater.AddString("url",request->url);
+					updater.AddString("host",request->host);
+					updater.AddString("path",request->uri);
+					header_st *curhead=request->headers;
+					while (curhead!=NULL) {
+						updater.AddString(curhead->name,curhead->value);
+						curhead=curhead->next;
+					}
+					while (!CacheSys->AcquireWriteLock(CacheToken,request->cache_object_token))
+						printf("waiting for write lock on cache for %s\n",request->url);
+					CacheSys->ClearContent(CacheToken,request->cache_object_token);
+					CacheSys->SetObjectAttr(CacheToken,request->cache_object_token,&updater);
+				}
+				
+			}
+			
+			
+		}break;
+		case DoesNotUseCache: {
+			//basically, if we're not supposed to create a cache file, create a RAM cache file anyway
+			if ((request->cacheinfo==NULL) && (request->cache_object_token==B_ERROR)){
+				//obviously we didn't find this item in the cache earlier...
+				//so create the item...
+				if (CacheSys!=NULL) {
+					
+					BMessage creator(CreateCacheObject);
+					creator.AddString("url",request->url);
+					creator.AddString("host",request->host);
+					creator.AddString("path",request->uri);
+					header_st *curhead=request->headers;
+					while (curhead!=NULL) {
+						creator.AddString(curhead->name,curhead->value);
+						curhead=curhead->next;
+					}
+					creator.AddInt32("ReplyTo",Proto->PlugID());
+					creator.AddPointer("ReplyToPointer",Proto);
+					printf("12345 about to create cache item 54321\n");
+					request->cache_object_token=CacheSys->CreateObject(CacheToken,request->url,TYPE_RAM);
+					CacheSys->SetObjectAttr(CacheToken,request->cache_object_token,&creator);
+					request->cacheinfo=CacheSys->GetInfo(CacheToken,request->cache_object_token);
+					if (request->cacheinfo!=NULL)
+						request->cacheinfo->PrintToStream();
+				}
+				
+			} else {
+				printf("checkpoint!\n");
+				if ((request->cacheinfo!=NULL) && (request->cache_object_token!=B_ERROR) && (request->status==200)) {
+					BMessage updater(CreateCacheObject);
+					updater.AddString("url",request->url);
+					updater.AddString("host",request->host);
+					updater.AddString("path",request->uri);
+					header_st *curhead=request->headers;
+					while (curhead!=NULL) {
+						updater.AddString(curhead->name,curhead->value);
+						curhead=curhead->next;
+					}
+					while (!CacheSys->AcquireWriteLock(CacheToken,request->cache_object_token))
+						printf("waiting for write lock on cache for %s\n",request->url);
+					CacheSys->ClearContent(CacheToken,request->cache_object_token);
+					CacheSys->SetObjectAttr(CacheToken,request->cache_object_token,&updater);
+				}
+				
+			}
+		}break;
+		default:
+			printf("Unknown cache setting for file.\n");
+	}
+/*
 	if (request->cache!=DoesNotUseCache) {
 		header_st *curhead;
 		if (request->secure)
@@ -1097,11 +1196,11 @@ void httplayer::DoneWithHeaders(http_request *request) {
 			nocache=true;
 		delete container;
 		printf("broadcast called, cache received? %s\n",nocache?"no":"yes");
-/*
+/ * 
 	Yes, it looks weird that we're acquiring the cache_sem again, but this makes sure
 	that we get a response back from the cache before we continue. We only want to release
 	the sem in this function before reacquiring it if there are no cache plug-ins.
-*/
+* /
 		if (nocache)
 			release_sem(cache_sem);
 		printf("if cache received, I should block here until a response has been received\n");
@@ -1110,6 +1209,7 @@ void httplayer::DoneWithHeaders(http_request *request) {
 			if (nocache==false) {
 				printf("response received\n");
 				reply=Proto->cache_reply;
+				reply->what=0;
 				Proto->cache_reply=NULL;
 			} else
 				printf("no cache plug-in responded\n");
@@ -1118,6 +1218,12 @@ void httplayer::DoneWithHeaders(http_request *request) {
 			if (reply==NULL) {
 				request->data=new BMallocIO;
 			} else {
+				if (reply->HasString("mime_type")) {
+					BString mime;
+					reply->FindString("mime_type",&mime);
+					request->cacheinfo->AddString("mimetype",mime.String());
+				}
+				
 				if (reply->HasRef("ref")) {
 					entry_ref ref;
 					reply->FindRef("ref",&ref);
@@ -1160,8 +1266,8 @@ void httplayer::DoneWithHeaders(http_request *request) {
 				ui->AddString(curhead->name,curhead->value);
 				curhead=curhead->next;
 			}
-			BMessenger *msgr=new BMessenger(CachePlug->Handler(),NULL,NULL);
-			msgr->SendMessage(ui/*,reply*/);
+//			BMessenger *msgr=new BMessenger(CachePlug->Handler(),NULL,NULL);
+//			msgr->SendMessage(ui/*,reply* /);
 //			reply->PrintToStream();
 //			delete request->cacheinfo;
 //			request->cacheinfo=reply;
@@ -1185,20 +1291,22 @@ void httplayer::DoneWithHeaders(http_request *request) {
 			((BMallocIO*)request->data)->SetSize(1);
 		}
 	}
+*/
 	if ((request->bytesremaining==-1) && (request->http_v_major==1) && (request->http_v_minor==0)) {
 		request->receivetilclosed=true;
 	}
 	if (request->status==304) {
 		BMessage *msg=new BMessage(ReturnedData);
 		msg->AddInt32("command",COMMAND_INFO);
-		msg->AddPointer("data_pointer",request->data);
+		msg->AddInt32("cache_object_token",request->cache_object_token);
+		msg->AddInt32("cache_system",request->cache_system_type);
 		msg->AddString("url",request->url);
 		msg->AddBool("request_done",true);
 		char *result=NULL;
 		BString mime;
 		printf("Need to read file from cache\n");
 		request->cacheinfo->PrintToStream();
-		request->cacheinfo->FindString("mime_type",&mime);
+		request->cacheinfo->FindString("mime-type",&mime);
 		msg->AddString("mimetype",mime);
 		
 		result=mime.LockBuffer(0);
@@ -1208,12 +1316,11 @@ void httplayer::DoneWithHeaders(http_request *request) {
 		else
 			request->bytesreceived=((BMallocIO*)request->data)->BufferLength();
 */		
-		request->data->Seek(0,SEEK_END);
-		request->bytesreceived=request->data->Position();
+				request->bytesreceived=CacheSys->GetObjectSize(CacheToken,request->cache_object_token);
+		
 		printf("request->bytesreceived: %ld\n",request->bytesreceived);
 		
-		request->contentlen=request->bytesreceived;
-		request->data->Seek(0,SEEK_SET);
+//		request->contentlen=request->bytesreceived;
 		
 		int32 target=0;
 		if (result!=NULL) {
@@ -1244,7 +1351,10 @@ void httplayer::DoneWithHeaders(http_request *request) {
 		
 		
 		result=NULL;
-		msg->AddInt64("content-length",request->bytesreceived);
+		if (request->contentlen==0)
+			msg->AddInt64("content-length",request->bytesreceived);
+		else
+			msg->AddInt64("content-length",request->contentlen);
 		msg->AddInt64("bytes-received",request->bytesreceived);
 		BMessage container;
 		container.AddMessage("message",msg);
@@ -1282,7 +1392,9 @@ void httplayer::ProcessChunkedData(http_request *request,void *buffer, int size)
 		} 
 			
 		oldchunk=request->chunkbytesremaining;
-		request->data->Write((unsigned char*)buffer,request->chunkbytesremaining);
+		CacheSys->Write(CacheToken,request->cache_object_token,(unsigned char*)buffer,request->chunkbytesremaining);
+		
+//		request->data->Write((unsigned char*)buffer,request->chunkbytesremaining);
 		request->bytesreceived+=request->chunkbytesremaining;
 		
 		char *kk=new char[request->chunkbytesremaining+1];
@@ -1343,7 +1455,8 @@ void httplayer::ProcessChunkedData(http_request *request,void *buffer, int size)
 	} else {
 		if (size<request->chunkbytesremaining) {
 			//size is less than chunkbytesremaining
-			request->data->Write((unsigned char*)buffer,size);
+//			request->data->Write((unsigned char*)buffer,size);
+				CacheSys->Write(CacheToken,request->cache_object_token,(unsigned char*)buffer,size);
 			request->bytesreceived+=size;
 			
 			request->chunkbytesremaining-=size;
@@ -1351,7 +1464,8 @@ void httplayer::ProcessChunkedData(http_request *request,void *buffer, int size)
 			//size == chunkbytesremaining
 //			printf("size==chunkbytesremaining\n");
 			
-			request->data->Write((unsigned char*)buffer,size);
+//			request->data->Write((unsigned char*)buffer,size);
+				CacheSys->Write(CacheToken,request->cache_object_token,(unsigned char*)buffer,size);
 			request->bytesreceived+=size;
 			request->chunkbytesremaining=0;
 			request->chunk++;
@@ -1372,7 +1486,8 @@ if (!lock->IsLocked()) {
 	if (request->chunked) {
 		ProcessChunkedData(request,buffer,size);
 	} else {
-		request->data->Write((unsigned char*)buffer,size);
+//		request->data->Write((unsigned char*)buffer,size);
+				CacheSys->Write(CacheToken,request->cache_object_token,(unsigned char*)buffer,size);
 		request->bytesremaining-=size;
 		request->bytesreceived+=size;
 		if (request->bytesremaining<=0) {
@@ -1392,7 +1507,8 @@ if (!lock->IsLocked()) {
 //	printf("ProcessData done.\n");
 	BMessage *msg=new BMessage(ReturnedData);
 	msg->AddInt32("command",COMMAND_INFO);
-	msg->AddPointer("data_pointer",request->data);
+	msg->AddInt32("cache_object_token",request->cache_object_token);
+//	msg->AddPointer("data_pointer",request->data);
 	msg->AddString("url",request->url);
 	if (request->done)
 		msg->AddBool("request_done",true);
@@ -1484,27 +1600,58 @@ void httplayer::CloseRequest(http_request *request,bool quick) {
 	
 	else {
 		//debugger("Stop here.");
-		
-		off_t pos=request->data->Position();
-		request->data->Seek(0,SEEK_END);
-		printf("CloseRequest bytes received: %Ld\n",request->data->Position());
-		if (request->data->Position()>0L)
-			msg->AddInt64("bytes-received",request->data->Position());
-		else
-			msg->AddInt64("bytes-received",0L);
-		request->data->Seek(pos,SEEK_SET);
+			off_t csize=0;
+			csize=CacheSys->GetObjectSize(CacheToken,request->cache_object_token);
+			if (request->bytesreceived!=csize)
+				request->bytesreceived=csize;
+			msg->AddInt64("bytes-received",request->bytesreceived);
 	}
 	
 	msg->AddString("url",request->url);
 	msg->AddInt32("From",Proto->PlugID());
 	msg->AddPointer("FromPointer",Proto);
-	msg->AddPointer("data_pointer",request->data);
+	msg->AddInt32("cache_object_token",request->cache_object_token);
+//	msg->AddPointer("data_pointer",request->data);
 	char *resultstr=NULL;
 	resultstr=FindHeader(request,"content-type");
 	int32 target=0;
 	if (resultstr!=NULL) {
-		msg->AddString("mimetype",resultstr);
+		translator_info *outinfo=NULL;
+		BMessage extinfo;
+		int32 count=0;
+		TRoster->GetTranslators(request->data,&extinfo,&outinfo,&count);
+		printf("supporting translators: %ld\n",count);
+		if (count>0) {
+			printf("suspected mimetype: %s\n",outinfo[0].MIME);
+			bool found=false;
+			for (int32 i=0; i<count; i++) {
+				if (strcasecmp(outinfo[i].MIME,resultstr)==0)
+					break;
+			}
+			if (!found) {
+				//take the best guess based on BeOS being right...
+				msg->AddString("mimetype",outinfo[0].MIME);
+			} else 
+				msg->AddString("mimetype",resultstr);
+			delete []outinfo;
+		} else 
+			msg->AddString("mimetype",resultstr);
+	} else {
+		translator_info *outinfo=NULL;
+		BMessage extinfo;
+		int32 count=0;
+		TRoster->GetTranslators(request->data,&extinfo,&outinfo,&count);
+		printf("supporting translators: %ld\n",count);
+		if (count>0) {
+			printf("suspected mimetype: %s\n",outinfo[0].MIME);
+			msg->AddString("mimetype",outinfo[0].MIME);
+			//really should send an update to the cache here...
+			delete []outinfo;
+		} else
+			msg->AddString("mimetype","application/octet-stream");
+		//if we don't know the file type for some reason, assume it's app data rather than text.
 	}
+	
 	resultstr=NULL;
 	if ((request->contentlen!=0) && (request->bytesreceived==request->contentlen))
 		msg->AddBool("request_done",true);
@@ -1529,6 +1676,9 @@ void httplayer::CloseRequest(http_request *request,bool quick) {
 		msg->AddInt64("content-length",request->contentlen);
 	BMessage container;
 	container.AddMessage("message",msg);
+	printf("http_request::CloseRequest()\n");
+	container.PrintToStream();
+	msg->PrintToStream();
 	delete msg;
 	Proto->PlugMan->Broadcast(Proto->PlugID(),ALL_TARGETS,&container);
 //	release_sem(connhandle_sem);
@@ -1612,10 +1762,10 @@ char *httplayer::BuildRequest(http_request *request){
 			}
 			printf("Checking cache status.\n");
 	
-			BMessage *cachestatus=CheckCacheStatus(request);
-			if (cachestatus!=NULL) {
-				request->cacheinfo=cachestatus;
-				if (request->cacheinfo!=NULL) {
+			/*BMessage *cachestatus=*/CheckCacheStatus(request);
+			if (request->cacheinfo!=NULL) {
+			//	request->cacheinfo=cachestatus;
+			//	if (request->cacheinfo!=NULL) {
 					if (request->cacheinfo->HasString("etag"))  {
 						BString str;
 						request->cacheinfo->FindString("etag",&str);
@@ -1626,7 +1776,7 @@ char *httplayer::BuildRequest(http_request *request){
 						request->cacheinfo->FindString("last-modified",&str);
 						reqstr<<"If-Modified-Since: "<<str<<"\r\n";
 					}
-				}
+			//	}
 			}
 			printf("(cache status) done.\n");
 	
@@ -1788,6 +1938,7 @@ void httplayer::FindURI(char **url,char **host,uint16 *port,char **uri,bool *sec
 }
 void httplayer::Done(http_request *request) {
 	printf("Marking request as done.\n\tchunked:%s\n\tbytes remaining: %ld\n",request->chunked?"yes":"no",request->chunked?request->chunkbytesremaining:request->bytesremaining);
+	CacheSys->ReleaseWriteLock(CacheToken,request->cache_object_token);	
 	atomic_add(&request->done,1);
 }
 
@@ -1860,11 +2011,6 @@ BMessage *httplayer::CheckCacheStatus(http_request *request) {
 	printf("httplayer::CheckCacheStatus\n");
 	if (request!=NULL) {
 		
-		if (CachePlug==NULL)
-			PluginManager->FindPlugin(CachePlugin);
-		if (CachePlug==NULL)
-			return NULL;//if it's still null, it means the plug-in isn't loaded.
-		BMessenger *msgr=new BMessenger(CachePlug->Handler(),NULL,NULL);
 		BMessage *msg=new BMessage(FindCachedObject);
 		msg->AddString("url",request->url);
 		BMessage *reply=NULL;
@@ -1874,10 +2020,11 @@ BMessage *httplayer::CheckCacheStatus(http_request *request) {
 		msg->AddPointer("ReplyToPointer",Proto);
 		msg->AddInt32("command",COMMAND_INFO_REQUEST);
 		msg->AddBool("cache_item",true);
+		if (CacheSys!=NULL)
+			msg->AddInt32("cache_user_token",CacheToken);
 		container->AddMessage("message",msg);
 		
 		delete msg;
-		delete msgr;
 		bool nocache=false;
 		if (PluginManager->Broadcast(Proto->PlugID(),TARGET_CACHE,container)!=B_OK)
 			nocache=true;
@@ -1902,9 +2049,17 @@ BMessage *httplayer::CheckCacheStatus(http_request *request) {
 		if (reply->what==CacheObjectNotFound){
 			delete reply;
 			return NULL;
+		} else {
+			printf("cacheinfo: %p\n");
+			if (request->cacheinfo!=NULL)
+				delete request->cacheinfo;
+			request->cache_object_token=reply->FindInt32("cache_object_token");
+			request->cacheinfo=CacheSys->GetInfo(CacheToken,request->cache_object_token);
+			printf("56789 cache info\n");
+			request->cacheinfo->PrintToStream();
 		}
-		reply->PrintToStream();
-		return reply;
+		delete reply;
+		return request->cacheinfo;
 	} else
 		return NULL;
 }

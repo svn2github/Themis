@@ -405,8 +405,10 @@ connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, b
 			goto NewConnectStruct;
 		}
 		printf("found existing connection, it's available.\n");
+			printf("Connected? %s\n",cur->open?"yes":"no");
 		
 		if (!Connected(cur,true)) {
+			printf("Connecting...\n");
 			cur->socket=socket(AF_INET,SOCK_STREAM,sockproto);
 			sockaddr_in servaddr;
 			memcpy(&servaddr.sin_addr,*cur->pptr,sizeof(struct in_addr));

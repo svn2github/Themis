@@ -38,9 +38,11 @@ Project Start Date: October 18, 2000
 #include <be/kernel/OS.h>
 #include <stdio.h>
 #include <String.h>
+#include "cacheplug.h"
 #include "plugclass.h"
 #include "plugman.h"
 #include "commondefs.h"
+#include <TranslatorRoster.h>
 int32 LockHTTP(int32 timeout=-1);
 
 struct auth_realm {
@@ -114,6 +116,8 @@ struct header_st {
 class authwin;
 
 struct http_request {
+	uint32 cache_system_type;
+	int32 cache_object_token;
 	auth_realm *a_realm;//authentication realm
 	authwin *awin;
 	char *url;
@@ -144,6 +148,7 @@ struct http_request {
 	uint32 storagesize;
 	bool receivetilclosed;
 	http_request() {
+		cache_object_token=B_ERROR;
 		a_realm=NULL;
 		awin=NULL;
 		url=uri=host=NULL;
@@ -234,7 +239,7 @@ class http_protocol;
 class httplayer {
 	private:
 		auth_req *Basic;
-		PlugClass *CachePlug;
+		CachePlug *CacheSys;
 		plugman *PluginManager;
 		http_request *requests_head;
 		BFile *file;
@@ -250,11 +255,12 @@ class httplayer {
 		void ClearHeaders(http_request *request);	
 		sem_id connhandle_sem;
 		sem_id cache_sem;
-	
+		uint32 CacheToken;
 		sem_id reqhandle_sem;
 		sem_id httplayer_sem;
 		char *BuildRequest(http_request *request);
 		void Done(http_request *request);
+		BTranslatorRoster *TRoster;
 	public:
 		int32 Lock(int32 timeout=-1);
 		BLocker *lock;
@@ -273,7 +279,7 @@ class httplayer {
 		bool ResubmitRequest(http_request *request);
 		void ConnectionClosed(connection *conn);
 		void DReceived(connection *conn);
-		httplayer(tcplayer *_TCP);
+		httplayer(tcplayer *_TCP,http_protocol *protoclass);
 		~httplayer();
 		void Start();
 		sem_id http_mgr_sem;

@@ -73,6 +73,10 @@ PlugClass *GetObject(void) {
 ImageMan::ImageMan(BMessage *info)
 	:PlugClass(info) {
 	imagelist=NULL;
+	CacheSys=NULL;
+	CacheSys=(CachePlug*)PlugMan->FindPlugin(CachePlugin);
+	if (CacheSys!=NULL)
+		cache_user_token=CacheSys->Register(Type(),"Image Handler");
 	mimes=NULL;
 	TRoster=new BTranslatorRoster();
 	TRoster->AddTranslators(NULL);
@@ -172,6 +176,34 @@ status_t ImageMan::ReceiveBroadcast(BMessage *msg) {
 	switch(command) {
 		case COMMAND_INFO: {
 			switch(msg->what) {
+				case PlugInLoaded: {
+					PlugClass *pobj=NULL;
+					msg->FindPointer("plugin",(void**)&pobj);
+					if (pobj!=NULL) {
+						if ((pobj->Type()&TARGET_CACHE)!=0) {
+							CacheSys=(CachePlug*)pobj;
+							cache_user_token=CacheSys->Register(Type(),"Image Handler");
+						}
+					}
+				}break;
+				case PlugInUnLoaded: {
+					uint32 type=0;
+					type=msg->FindInt32("type");
+					switch(type) {
+						case (TARGET_CACHE|TYPE_RAM|TYPE_DISK): {
+							cache_user_token=0;
+							CacheSys=NULL;
+						}break;
+						default: {
+							
+							//do nothing
+						}
+						
+					}
+					
+				}break;
+				case B_QUIT_REQUESTED: {
+				}break;
 				case LoadingNewPage: {
 /*
 since we're going to be looking at a new page, with new images, clear
@@ -201,17 +233,42 @@ out our stored images.
 					if (TypeSupported((char*)mime.String())) {
 						printf("Supported: %s\n",mime.String());
 						if (done) {
-							BPositionIO *imagedata=NULL;
 							msg->FindString("url",&url);
-							msg->FindPointer("data_pointer",(void**)&imagedata);
+							BMallocIO *imagedata=NULL;
+							int32 objtoken=0;
+							if (CacheSys!=NULL) {
+								if (msg->HasInt32("cache_object_token"))
+									objtoken=msg->FindInt32("cache_object_token");
+								else
+									objtoken=CacheSys->FindObject(cache_user_token,url.String());
+								if (objtoken<0)
+									return PLUG_HANDLE_GOOD;
+								printf("creating imagedata\n");
+								imagedata=new BMallocIO();
+								ssize_t size=CacheSys->GetObjectSize(cache_user_token,objtoken);
+								printf("cache object size is: %ld\n",size);
+								unsigned char *data=new unsigned char[size];
+								memset(data,0,size);
+								size=CacheSys->Read(cache_user_token,objtoken,data,size);
+								printf("read %ld bytes from cache.\n",size);
+								imagedata->Write(data,size);
+								printf("wrote data to imagedata\n");
+								memset(data,0,size);
+								delete data;
+								data=NULL;
+							}
+							
+//							msg->FindPointer("data_pointer",(void**)&imagedata);
 							if (imagedata!=NULL) {
 								
 								BBitmap *bmp=BTranslationUtils::GetBitmap(imagedata);
+								printf("bmp: %p\n",bmp);
 								if (imagelist==NULL) {
 									imagelist=new Image(bmp,(char*)url.String());
 									printf("image size:\n");
 									BRect r;
 									imagelist->GetSize(&r);
+									imagelist->SetCacheToken(objtoken);
 									r.PrintToStream();
 								} else {
 									
@@ -227,8 +284,12 @@ out our stored images.
 									}
 									if (cur!=NULL) {
 										cur->SetBitmap(bmp);
-									} else
-										imagelist->SetNext((new Image(bmp,(char*)url.String())));
+									} else {
+										cur=new Image(bmp,(char*)url.String());
+										cur->SetCacheToken(objtoken);
+										imagelist->SetNext(cur);
+									}
+									
 								}
 								
 							}

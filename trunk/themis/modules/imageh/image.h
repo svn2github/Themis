@@ -37,10 +37,13 @@ class Image {
 		BBitmap *imagebmp;
 		char *url;
 		Image *next,*prev;
+		int32 cache_object_token;
 	public:
 		Image(Image *otherimage, bool truecopy=false);
 		Image(BBitmap *bmp=NULL, char *URL=NULL);
 		~Image();
+		int32 SetCacheToken(int32 token);
+		int32 CacheToken();
 		BBitmap *Bitmap();
 		void SetBitmap(BBitmap *bmp);
 		void GetSize(BRect *size);

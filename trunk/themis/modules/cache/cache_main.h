@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2000 Z3R0 One. All Rights Reserved.
+Copyright (c) 2002 Raymond "Z3R0 One" Rodgers. All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -23,22 +23,13 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
+Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
-#ifndef _cache_main
-#define _cache_main
-#include <SupportKit.h>
-#include <AppKit.h>
-#include "plugclass.h"
-#include "cache_defines.h"
+#ifndef _cache_main_
+#define _cache_main_
 extern "C" __declspec(dllexport)status_t Initialize(void *info=NULL);
-extern "C" __declspec(dllexport)status_t Shutdown(bool now=false);
-extern "C" __declspec(dllexport)BHandler* GetHandler();
+extern "C" __declspec(dllexport)status_t Shutdown(bool fast=false);
 extern "C" __declspec(dllexport)PlugClass *GetObject(void);
-extern "C" __declspec(dllexport)char *GetPluginName(void);
-extern "C" __declspec(dllexport)int32 GetPluginID(void);
-extern "C" __declspec(dllexport)float GetPluginVers(void);
-extern "C" __declspec(dllexport)bool IsPersistant(void);
 
 #endif

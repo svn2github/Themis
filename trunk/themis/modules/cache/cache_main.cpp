@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2000 Z3R0 One. All Rights Reserved.
+Copyright (c) 2002 Raymond "Z3R0 One" Rodgers. All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -23,51 +23,33 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
+Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
-
-#include "cache_main.h"
 #include "cacheman.h"
+#include "cache_main.h"
 cacheman *CacheMan;
 status_t Initialize(void *info)
  {
-  CacheMan=new cacheman;
-  if (CacheMan)
-   return B_OK;
-  return B_ERROR;
+ 	if (info!=NULL) {
+		CacheMan=new cacheman((BMessage *)info);
+	} else
+		CacheMan=new cacheman;
+	if (CacheMan)
+		return B_OK;
+	return B_ERROR;
  }
-status_t Shutdown(bool now=false)
+status_t Shutdown(bool fast)
  {
-//  if ((BHandler*)CacheMan->Looper()!=NULL)
-//   (BHandler*)(CacheMan->Looper())->RemoveHandler(CacheMan);
-  if (now)
-  	if (CacheMan!=NULL)
-	   delete CacheMan;
+  	if (CacheMan!=NULL) {
+		CacheMan->Quit(fast);
+		delete CacheMan;
+		CacheMan=NULL;
+	}
+	
   return B_OK;
- }
-
-BHandler* GetHandler()
- {
-  return CacheMan;
  }
 PlugClass *GetObject(void)
  {
   return CacheMan;
- }
-char *GetPluginName(void)
- {
-  return CacheMan->PlugName();
- }
-int32 GetPluginID(void)
- {
-  return CacheMan->PlugID();
- }
-float GetPluginVers(void)
- {
-  return CacheMan->PlugVersion();
- }
-bool IsPersistant(void)
- {
-  return true;
  }

@@ -46,10 +46,10 @@ FRAMEWORKSOURCES= \
 COMMONSOURCES= \
 	common/plugclass.cpp \
 	common/tcplayer.cpp \
-	common/plugman.cpp 
-#	common/cacheplug.cpp \
-#	common/cacheuser.cpp \
-#	common/cacheobject.cpp
+	common/plugman.cpp \
+	common/cacheplug.cpp \
+	common/cacheuser.cpp \
+	common/cacheobject.cpp
 #	common/lockres.cpp
 #add similar lines for new plugins, libraries, etc.
 HTTPADDONSOURCES= \
@@ -61,8 +61,9 @@ HTTPADDONSOURCES= \
 #the above lines are commented out in part or whole because the new sources are not yet ready to go into the repository
 CACHEADDONSOURCES= \
 	cache/cacheman.cpp \
-	cache/cache_main.cpp 
-#	cache/diskcacheobject.cpp
+	cache/cache_main.cpp \
+	cache/diskcacheobject.cpp \
+	cache/ramcacheobject.cpp
 COOKIEADDONSOURCES= \
 	cookie/cookiemain.cpp \
 	cookie/cookieman.cpp
@@ -348,7 +349,7 @@ $(COMMON_OBJECT_DIR)%.o: common/%.cpp $(COMMON_DEPENDS_DIR)%.d
 cacheaddon: $(BASE_ADDON_INSTALL_DIR)cache.so
 $(BASE_ADDON_INSTALL_DIR)cache.so: $(COMMONOBJ) $(foreach file,$(notdir $(CACHEADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)cache/$(file)) #cacheaddondepends cacheaddonobjects
 	@echo "Linking cache add-on" 
-	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)cache.so $(foreach file,$(notdir $(CACHEADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)cache/$(file)) $(COMMON_OBJECT_DIR)plugclass.o $(COMMON_OBJECT_DIR)plugman.o -nostart -Xlinker $(LDFLAGS) -soname=cache.so -L ./ -L $(BELIBRARIES)  -lbe -ltextencoding -lroot
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)cache.so $(foreach file,$(notdir $(CACHEADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)cache/$(file)) $(COMMON_OBJECT_DIR)plugclass.o $(COMMON_OBJECT_DIR)plugman.o $(COMMON_OBJECT_DIR)cacheplug.o  $(COMMON_OBJECT_DIR)cacheobject.o $(COMMON_OBJECT_DIR)cacheuser.o -nostart -Xlinker $(LDFLAGS) -soname=cache.so -L ./ -L $(BELIBRARIES)  -lbe -ltextencoding -lroot
 	@echo "Cache add-on is now linked. Doing mimeset."
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)cache.so
 	@echo "Cache plug-in compiled and linked successfully."

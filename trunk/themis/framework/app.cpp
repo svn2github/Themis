@@ -57,17 +57,17 @@ App::App(const char *appsig)
 	win=new Win(r,"Themis",B_DOCUMENT_WINDOW,B_QUIT_ON_WINDOW_CLOSE|B_ASYNCHRONOUS_CONTROLS,B_CURRENT_WORKSPACE);
 	PluginManager->Window=win;
 	BMessenger *msgr=new BMessenger(PluginManager,NULL,NULL);
-		BMessage *msg=new BMessage(AddInitInfo);
-		msg->AddPointer("tcp_layer_ptr",TCP);
-		msg->AddPointer("settings_message_ptr",&AppSettings);
-		{
+	BMessage *msg=new BMessage(AddInitInfo);
+	msg->AddPointer("tcp_layer_ptr",TCP);
+	msg->AddPointer("settings_message_ptr",&AppSettings);
+	{
 		BMessage reply;	
 		msgr->SendMessage(msg,&reply);
-			if (reply.what==B_ERROR)
-				printf("Problem setting plug-in initialization info.\n");
-		}
+		if (reply.what==B_ERROR)
+			printf("Problem setting plug-in initialization info.\n");
+	}
 	delete msgr;
-		delete msg;
+	delete msg;
 	PluginManager->BuildRoster(true);
 }
 App::~App(){
