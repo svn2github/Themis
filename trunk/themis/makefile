@@ -234,7 +234,7 @@ endif
 #			domtest
 #			domloadtest
 #			testplug
-all: framework addons domtest domloadtest
+all: framework addons
 	@echo "Themis application and add-ons built successfully."
 addons: httpaddon cacheaddon htmlpaddon cookieaddon jsaddon
 	@echo "All add-ons built successfully."
@@ -302,7 +302,7 @@ frameworkobjects: $(foreach file,$(FRAMEWORKSOURCES),$(FRAMEWORK_OBJECT_DIR)$(no
 
 $(FRAMEWORK_DEPENDS_DIR)%.d: framework/%.cpp
 	@echo "Framework: Updating dependency file $(notdir $@)"
-	@set -e;VAR1=$(shell echo "$(FRAMEWORK_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(FRAMEWORK_OBJECT_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
+	@set -e;VAR1=$(shell echo "$(FRAMEWORK_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(FRAMEWORK_OBJECT_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/depends\/framework\/\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
 
 $(FRAMEWORK_OBJECT_DIR)%.o: framework/%.cpp $(FRAMEWORK_DEPENDS_DIR)%.d
 	@echo "Framework: Updating object file $(notdir $@)"
@@ -318,7 +318,7 @@ commonobjects: $(foreach file,$(COMMONSOURCES),$(COMMON_OBJECT_DIR)$(notdir $(fi
 
 $(COMMON_DEPENDS_DIR)%.d: common/%.cpp common/%.h
 	@echo "Common: Updating dependency file $(notdir $@)"
-	@set -e;VAR1=$(shell echo "$(COMMON_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(COMMON_OBJECT_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
+	@set -e;VAR1=$(shell echo "$(COMMON_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(COMMON_OBJECT_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/depends\/common\/\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
 
 $(COMMON_OBJECT_DIR)%.o: common/%.cpp $(COMMON_DEPENDS_DIR)%.d
 	@echo "Common: Updating object file $(notdir $@)"
@@ -342,7 +342,7 @@ cacheaddonobjects: $(COMMON_OBJECT_DIR)plugman.o $(COMMON_OBJECT_DIR)plugclass.o
 	
 $(BASE_ADDONS_DEPENDS_DIR)cache/%.d:  $(BASE_ADDON_SOURCE_DIR)cache/%.cpp $(BASE_ADDON_SOURCE_DIR)cache/%.h
 	@echo "Cache: Updating dependency file $(notdir $@)"
-	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)cache/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)cache/"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
+	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)cache/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)cache/"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/depends\/add-ons\/cache\/\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
 $(BASE_ADDONS_OBJECT_DIR)cache/%.o: $(BASE_ADDON_SOURCE_DIR)cache/%.cpp $(BASE_ADDONS_DEPENDS_DIR)cache/%.d
 	@echo "Cache: Updating object file $(notdir $@)"
 	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
@@ -366,7 +366,7 @@ testplugobjects: $(COMMON_OBJECT_DIR)plugman.o $(COMMON_OBJECT_DIR)plugclass.o\
 	
 $(BASE_ADDONS_DEPENDS_DIR)testplug/%.d:  $(BASE_ADDON_SOURCE_DIR)testplug/%.cpp $(BASE_ADDON_SOURCE_DIR)testplug/%.h
 	@echo "testplug: Updating dependency file $(notdir $@)"
-	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)testplug/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)testplug/"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
+	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)testplug/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)testplug/"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/depends\/add-ons\/testplug\/\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
 
 $(BASE_ADDONS_OBJECT_DIR)testplug/%.o: $(BASE_ADDON_SOURCE_DIR)testplug/%.cpp $(BASE_ADDONS_DEPENDS_DIR)testplug/%.d
 	@echo "testplug: Updating object file $(notdir $@)"
@@ -390,7 +390,7 @@ imagehobjects: $(COMMON_OBJECT_DIR)plugman.o $(COMMON_OBJECT_DIR)plugclass.o\
 	
 $(BASE_ADDONS_DEPENDS_DIR)imageh/%.d:  $(BASE_ADDON_SOURCE_DIR)imageh/%.cpp $(BASE_ADDON_SOURCE_DIR)imageh/%.h
 	@echo "ImageH: Updating dependency file $(notdir $@)"
-	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)imageh/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)imageh/"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
+	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)imageh/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)imageh/"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/depends\/add-ons\/imageh\/\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
 
 $(BASE_ADDONS_OBJECT_DIR)imageh/%.o: $(BASE_ADDON_SOURCE_DIR)imageh/%.cpp $(BASE_ADDONS_DEPENDS_DIR)imageh/%.d
 	@echo "ImageH: Updating object file $(notdir $@)"
@@ -416,7 +416,7 @@ htmlparserobjects: $(COMMON_OBJECT_DIR)plugman.o $(COMMON_OBJECT_DIR)plugclass.o
 	
 $(BASE_ADDONS_DEPENDS_DIR)HTMLParser/%.d:  $(BASE_ADDON_SOURCE_DIR)HTMLParser/%.cpp $(BASE_ADDON_SOURCE_DIR)HTMLParser/%.h
 	@echo "HTML Parser: Updating dependency file $(notdir $@)"
-	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)HTMLParser/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)HTMLParser/"|sed 's/\//\\\//g'); $(CC) -Icommon -Iframework/DOM -I./ -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
+	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)HTMLParser/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)HTMLParser/"|sed 's/\//\\\//g'); $(CC) -Icommon -Iframework/DOM -I./ -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/depends\/add-ons\/HTMLParser\/\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
 
 $(BASE_ADDONS_OBJECT_DIR)HTMLParser/%.o: $(BASE_ADDON_SOURCE_DIR)HTMLParser/%.cpp $(BASE_ADDONS_DEPENDS_DIR)HTMLParser/%.d
 	@echo "HTML Parser: Updating object file $(notdir $@)"
@@ -440,7 +440,7 @@ domvobjects: $(COMMON_OBJECT_DIR)plugman.o $(COMMON_OBJECT_DIR)plugclass.o\
 	
 $(BASE_ADDONS_DEPENDS_DIR)DOMView/%.d:  $(BASE_ADDON_SOURCE_DIR)DOMView/%.cpp $(BASE_ADDON_SOURCE_DIR)DOMView/%.h
 	@echo "DOM View: Updating dependency file $(notdir $@)"
-	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)DOMView/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)DOMView/"|sed 's/\//\\\//g'); $(CC) -Icommon -Iframework/DOM -I./ -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
+	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)DOMView/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)DOMView/"|sed 's/\//\\\//g'); $(CC) -Icommon -Iframework/DOM -I./ -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/depends\/add-ons\/DOMView\/\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
 
 $(BASE_ADDONS_OBJECT_DIR)DOMView/%.o: $(BASE_ADDON_SOURCE_DIR)DOMView/%.cpp $(BASE_ADDONS_DEPENDS_DIR)DOMView/%.d
 	@echo "DOM View: Updating object file $(notdir $@)"
@@ -466,7 +466,7 @@ httpaddonobjects: $(COMMON_OBJECT_DIR)plugman.o $(COMMON_OBJECT_DIR)plugclass.o 
 	
 $(BASE_ADDONS_DEPENDS_DIR)http/%.d:  $(BASE_ADDON_SOURCE_DIR)http/%.cpp  $(BASE_ADDON_SOURCE_DIR)http/%.h
 	@echo "HTTP: Updating dependency file $(notdir $@)"
-	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)http/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)http/"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
+	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)http/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)http/"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/depends\/add-ons\/http\/\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
 
 $(BASE_ADDONS_OBJECT_DIR)http/%.o: $(BASE_ADDON_SOURCE_DIR)http/%.cpp $(BASE_ADDONS_DEPENDS_DIR)http/%.d
 	@echo "HTTP: Updating object file $(notdir $@)"
@@ -487,7 +487,7 @@ cookieaddonobjects: $(COMMON_OBJECT_DIR)plugman.o $(COMMON_OBJECT_DIR)plugclass.
 	@echo "Cookie add-on objects are done."
 $(BASE_ADDONS_DEPENDS_DIR)cookie/%.d:  $(BASE_ADDON_SOURCE_DIR)cookie/%.cpp  $(BASE_ADDON_SOURCE_DIR)cookie/%.h
 	@echo "Cookie: Updating dependency file $(notdir $@)"
-	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)cookie/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)cookie/"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
+	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)cookie/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)cookie/"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/depends\/add-ons\/cookie\/\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
 
 $(BASE_ADDONS_OBJECT_DIR)cookie/%.o: $(BASE_ADDON_SOURCE_DIR)cookie/%.cpp $(BASE_ADDONS_DEPENDS_DIR)cookie/%.d
 	@echo "Cookie: Updating object file $(notdir $@)"
@@ -512,7 +512,7 @@ jsaddonobjects: $(COMMON_OBJECT_DIR)plugman.o $(COMMON_OBJECT_DIR)plugclass.o  \
 	@echo "Javascript add-on objects are done."
 $(BASE_ADDONS_DEPENDS_DIR)js/%.d:  $(BASE_ADDON_SOURCE_DIR)js/%.cpp $(BASE_ADDON_SOURCE_DIR)js/%.h
 	@echo "Javascript: Updating dependency file $(notdir $@)"
-	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)js/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)js/"|sed 's/\//\\\//g'); $(CC) -DXP_UNIX -Icommon -Ijavascript -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
+	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)js/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)js/"|sed 's/\//\\\//g'); $(CC) -DXP_UNIX -Icommon -Ijavascript -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/depends\/add-ons\/js\/\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
 
 $(BASE_ADDONS_OBJECT_DIR)js/%.o: $(BASE_ADDON_SOURCE_DIR)js/%.cpp $(BASE_ADDONS_DEPENDS_DIR)js/%.d
 	@echo "Javascript: Updating object file $(notdir $@)"
@@ -534,7 +534,7 @@ domlibobjects: $(foreach file,$(DOMLIBRARYSOURCES),$(DOMLIBRARY_OBJECT_DIR)$(not
 	
 $(DOMLIBRARY_DEPENDS_DIR)%.d: framework/DOM/$(notdir %).cpp framework/DOM/$(notdir %).h framework/DOM/DOMSupport.h framework/DOM/TComment.h
 	@echo "DOM: Updating dependency file $(notdir $@)"
-	@set -e;VAR1=$(shell echo "$(DOMLIBRARY_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(DOMLIBRARY_OBJECT_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -I./ -M $(CPPFLAGS) $(COMPILE_FLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
+	@set -e;VAR1=$(shell echo "$(DOMLIBRARY_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(DOMLIBRARY_OBJECT_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -I./ -M $(CPPFLAGS) $(COMPILE_FLAGS) $< | sed 's/\($*\)\.o[ :]*/depends\/lib\/DOM\/\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
 
 $(DOMLIBRARY_OBJECT_DIR)%.o: framework/DOM/%.cpp $(DOMLIBRARY_DEPENDS_DIR)%.d
 	@echo "DOM: Updating object file $(notdir $@)"
