@@ -40,7 +40,8 @@ sem_id TCPManager::process_sem_2=0;
 
 TCPManager::TCPManager() {
 	Init();
-	lock=new BLocker(true);
+//	lock=new BLocker(true);
+	Connection::TCPMan=this;
 	Connection::ListLock=new BLocker(true);
 	process_sem_1=create_sem(0,"tcp_manager_sem1");
 	process_sem_2=create_sem(1,"tcp_manager_sem2");
@@ -79,7 +80,11 @@ TCPManager::~TCPManager() {
 		while (Connection::CountConnections()>0) {
 			connection=Connection::ConnectionAt(0);
 			if ((Connection::HasConnection(connection)) || (connection!=NULL))
+			{
+				Connection::ConnectionList->RemoveItem(connection);
 				delete connection;
+				connection=NULL;
+			}
 		}
 	}
 	printf("done.\n");
@@ -91,7 +96,7 @@ TCPManager::~TCPManager() {
 	printf("done.\n");
 #else
 #endif	
-	delete lock;
+//	delete lock;
 	delete Connection::ListLock;
 	delete_sem(process_sem_1);
 	delete_sem(process_sem_2);
@@ -108,7 +113,7 @@ TCPManager *TCPManager::ManagerPointer() {
 
 void TCPManager::Init() {
 	_quitter_=0;
-	Connection::TCPMan=this;
+	Connection::TCPMan=NULL;
 	total_bytes_received=0L;
 	total_bytes_sent=0L;
 	sessions_reused=0L;
@@ -164,11 +169,14 @@ int32 TCPManager::_Manager_Thread() {
 			if (connect_count>0) {
 				current_time=real_time_clock();
 				for (int32 i=0; i<connect_count; i++) {
-					lock->Lock();
+					lock.Lock();
 					
 					connection=Connection::ConnectionAt(i);
 					if (!Connection::HasConnection(connection))
+					{
+						lock.Unlock();
 						continue;
+					}
 					if (connection->IsConnected()) {
 						if (!connection->NotifiedConnect()) {
 							connection->ConnectionEstablished();
@@ -182,21 +190,28 @@ int32 TCPManager::_Manager_Thread() {
 					} else {
 						if (!connection->NotifiedDisconnect()) {
 							connection->NotifyDisconnect();
+							Connection::ConnectionList->RemoveItem(connection);
 							delete connection;
+							connection=NULL;
+							lock.Unlock();
 							continue;
 						}
 						
 					}
 					if (!Connection::HasConnection(connection))
+					{
+						lock.Unlock();
 						continue;
+					}
 					last_used=connection->LastUsed();
 					if ((last_used!=0) && ((current_time-last_used)>=time_out)) {
 						connection->TimeOut();
 						Disconnect(connection);
+						lock.Unlock();
 						continue;
 					}
 					
-					lock->Unlock();
+					lock.Unlock();
 					
 				}
 				
@@ -255,7 +270,9 @@ void TCPManager::Disconnect(Connection *connection) {
 //		connection->StopUsing();
 		if (Connection::HasConnection(connection)) {
 			connection->Disconnect();
+			Connection::ConnectionList->RemoveItem(connection);
 			delete connection;
+			connection=NULL;
 		}
 	}
 }

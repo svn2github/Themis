@@ -240,6 +240,7 @@ bool App::QuitRequested(){
 		TCPMan->Quit();
 	}
 #endif
+	fMessageDaemon->Stop();
 	
 	printf( "end of App::QuitRequested()\n" );
 	return true;

@@ -34,7 +34,7 @@ MessageDaemon::MessageDaemon():MessageSystem("Message System Daemon") {
 }
 
 MessageDaemon::~MessageDaemon() {
-	Stop();
+//	Stop();
 	printf("~MessageSystem(): Clients: %ld\t%p\n",broadcast_target_count,MsgSysClients);
 	printf("Message System Statistics:\n==========================\nMessages Sent: %lu\nMessage Targets: %lu\n",_messages_sent_,_message_targets_);
 	printf("==========================\n");
@@ -45,6 +45,7 @@ void MessageDaemon::Start()
 {
 	BAutolock alock(msgsyslock);
 	if (alock.IsLocked()) {
+		_Quit_Thread_=0;
 		process_sem=create_sem(0,"broadcast_process_sem");
 		transmit_sem=create_sem(1,"broadcast_transmit_sem");
 		_ProcessThread_=spawn_thread(_ProcessBroadcasts_,"broadcast_system_thread",B_LOW_PRIORITY,NULL);

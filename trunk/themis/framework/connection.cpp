@@ -200,7 +200,7 @@ Connection::~Connection() {
 	
 #endif	
 //	delete lock;
-	RemoveFromList(this);
+//	RemoveFromList(this);
 	if (owner!=NULL) {
 		owner->DestroyingConnectionObject(this);
 		owner=NULL;
@@ -319,6 +319,7 @@ void Connection::ConnectionEstablished(){
 			if (owner!=NULL)
 				owner->ConnectionEstablished(this);
 			atomic_add(&notified_connect,1);
+			printf("connection %p: notified connect %ld\n",this,notified_connect);
 		}
 			
 	}
