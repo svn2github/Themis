@@ -280,7 +280,7 @@ status_t plugman::UnloadAllPlugins(bool clean) {
 	}
 	
 }
-status_t plugman::Broadcast(int32 targets,BMessage *msg) {
+status_t plugman::Broadcast(int32 source,int32 targets,BMessage *msg) {
 	plugst *cur=head;
 	status_t ret=B_OK;
 	BMessage *subm=new BMessage;
@@ -288,6 +288,11 @@ status_t plugman::Broadcast(int32 targets,BMessage *msg) {
 	
 	msg->FindMessage("message",subm);
 	while (cur!=NULL) {
+		if (source==cur->plugid) {
+			cur=cur->next;
+			continue;
+		}
+		
 		if (targets!=ALL_TARGETS) {
 			if ((cur->type&targets)>=1){
 				iloaded=false;
@@ -314,6 +319,22 @@ status_t plugman::Broadcast(int32 targets,BMessage *msg) {
 		}
 		cur=cur->next; 
 	}
+	BMessenger *msgr=NULL;
+	//send broadcast to other non-plugin targets
+	if ((source!=TARGET_DOM) && ((targets&TARGET_DOM!=0) || (targets&ALL_TARGETS!=0))) {
+		//send broadcast to DOM object.
+	}
+	if ((source!=TARGET_WINDOW) && ((targets&TARGET_WINDOW!=0) || (targets&ALL_TARGETS!=0))) {
+		//send broadcast to Window object.
+	}
+	if ((source!=TARGET_VIEW) && ((targets&TARGET_VIEW!=0) || (targets&ALL_TARGETS!=0))) {
+		//send broadcast to [top] View object.
+	}
+	if ((source!=TARGET_APPLICATION) && ((targets&TARGET_APPLICATION!=0) || (targets&ALL_TARGETS!=0))) {
+		//send broadcast to App object.
+		be_app_messenger.SendMessage(subm);
+	}
+	
 	delete subm;
 	return ret;
 	
@@ -719,6 +740,8 @@ void plugman::MessageReceived(BMessage *msg) {
 						printf("\tSecondary ID: %c%c%c%c\n",nuplug->pobj->SecondaryID()>>24,nuplug->pobj->SecondaryID()>>16,nuplug->pobj->SecondaryID()>>8,nuplug->pobj->SecondaryID());
 					if (!nuplug->pobj->IsPersistent()) {
 						status_t (*Shutdown)(bool);
+						printf("Plug-in is not persistent.\n");
+						
 						if (get_image_symbol(nuplug->sysid,"Shutdown",B_SYMBOL_TYPE_TEXT,(void**)&Shutdown)==B_OK)
 							(*Shutdown)(true);
 						else
@@ -830,7 +853,9 @@ void plugman::MessageReceived(BMessage *msg) {
 //	Unlock();
 }
 status_t plugman::UnloadPlugin(uint32 which,bool clean) {
-	plugst *cur=head,*prev=NULL;
+	printf("PlugMan: Unload plugin %c%c%c%c\n",which>>24,which>>16,which>>8,which);
+	
+		plugst *cur=head,*prev=NULL;
 	while (cur!=NULL) {
 		if (cur->plugid==which) {
 			if (clean) {
@@ -938,7 +963,12 @@ void plugman::AddPlug(plugst *plug) {
 		msg->AddPointer("plugin",plug->pobj);
 	BMessage container;
 	container.AddMessage("message",msg);
-	Broadcast(ALL_TARGETS,&container);
+	Broadcast(TARGET_PLUGMAN,ALL_TARGETS,&container);
+	printf("Sending PlugInLoaded message to Window\n");
+	
+	BMessenger *msgr=new BMessenger(NULL,Window,NULL);
+	msgr->SendMessage(msg);
+	delete msgr;
 	delete msg;
 	
 }

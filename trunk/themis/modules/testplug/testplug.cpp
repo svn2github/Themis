@@ -32,6 +32,8 @@ Project Start Date: October 18, 2000
 #include "commondefs.h"
 #include <stdio.h>
 #include "plugman.h"
+#include <TranslationUtils.h>
+#include <DataIO.h>
 #define PlugIDdef 'test'
 #define PlugNamedef "Test Plug-in"
 #define PlugVersdef 1.0
@@ -69,12 +71,50 @@ PlugClass *GetObject(void) {
 	return TP;
 	
 }
+iview::iview(BRect frame,char *name,uint32 resize,uint32 flags)
+	:BView(frame,name,resize,flags) 
+{
+	image=NULL;
+	SetViewColor(0,0,0);
+	
+}
+void iview::Draw(BRect updr) 
+{
+	if (image!=NULL) {
+		DrawBitmapAsync(image,updr,updr);
+	}
+	
+}
 
-testplug::testplug(BMessage *info):PlugClass(info)
+iview::~iview() 
+{
+	delete image;
+	image=NULL;
+}
+imagewin::imagewin(char *title)
+	:BWindow(BRect(100,100,200,200),title,B_TITLED_WINDOW,B_NOT_ZOOMABLE,B_CURRENT_WORKSPACE)
+{
+	view=new iview(Bounds(),title,B_FOLLOW_ALL,B_WILL_DRAW);
+	AddChild(view);
+	Show();
+}
+imagewin::~imagewin()
 {
 }
 
+testplug::testplug(BMessage *info):PlugClass(info)
+{
+	whead=NULL;
+}
+
 testplug::~testplug(){
+	iwind *cur=whead;
+	while (cur!=NULL) {
+		whead=cur->next;
+		delete cur;
+		cur=whead;
+	}
+	
 }
 
 void testplug::MessageReceived(BMessage *msg){
@@ -112,6 +152,90 @@ status_t testplug::ReceiveBroadcast(BMessage *msg){
 	msg->PrintToStream();
 	
 	switch(command) {
+		case COMMAND_INFO: {
+			switch(msg->what) {
+				case ReturnedData: {
+					BString mime;
+					BString url;
+					int64 br=0,cl=0;
+					BPositionIO *data=NULL;
+					msg->FindString("mimetype",&mime);
+					if ((mime.ICompare("image/png")==0) || (mime.ICompare("image/gif")==0) || (mime.ICompare("image/jpeg")==0)) {
+						msg->FindInt64("content-length",&cl);
+						msg->FindInt64("bytes-received",&br);
+						msg->FindPointer("data_pointer",(void**)&data);
+						iwind *cur=NULL;
+						if ((cl==0) && (br>0)) {
+							//unknown size...
+							cur=whead;
+							if (cur==NULL) {
+								whead=new iwind;
+								cur=whead;
+								cur->url=url;
+								cur->win=new imagewin((char*)url.String());
+							} else {
+								cur=whead;
+								iwind *last=NULL;
+								while (cur!=NULL) {
+									if (cur->url==url)
+										break;
+									if (cur->next==NULL)
+										last=cur;
+									cur=cur->next;
+								}
+								if (cur==NULL) {
+									cur=new iwind;
+									last->next=cur;
+									cur->url=url;
+									cur->win=new imagewin((char*)url.String());
+									
+								}
+								
+							}
+							if (cur->win->view->image!=NULL) {
+								delete cur->win->view->image;
+								cur->win->view->image=NULL;
+							} 
+							cur->win->Lock();
+							
+							cur->win->view->image=BTranslationUtils::GetBitmap(data);
+							cur->win->view->DrawBitmapAsync(cur->win->view->image);
+							cur->win->Unlock();
+							
+							
+						} else {
+							if (br==cl) {
+								cur=whead;
+								if (cur==NULL) {
+									cur=new iwind;
+									whead=cur;
+								} else {
+									while (cur->next!=NULL)
+										cur=cur->next;
+									cur->next=new iwind;
+									cur=cur->next;
+								}
+								cur->url=url;
+								printf("creating an image window by the name of %s\n",url.String());
+								
+								cur->win=new imagewin((char*)url.String());
+								cur->win->Lock();
+								
+								cur->win->view->image=BTranslationUtils::GetBitmap(data);
+								cur->win->view->DrawBitmapAsync(cur->win->view->image);
+								cur->win->Unlock();
+								
+							}
+							
+						}
+						
+						
+					}
+					
+				}break;
+			}
+			
+		}break;
 		case COMMAND_INFO_REQUEST: {
 			int32 replyto=0;
 			msg->FindInt32("ReplyTo",&replyto);
@@ -132,7 +256,7 @@ status_t testplug::ReceiveBroadcast(BMessage *msg){
 				} else {	
 					BMessage container;
 					container.AddMessage("message",&types);
-					PlugMan->Broadcast(replyto,&container);
+					PlugMan->Broadcast(PlugID(),replyto,&container);
 				}
 				
 			}

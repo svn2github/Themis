@@ -64,6 +64,8 @@ add a command to makelinks.sh to create this link in your plug-in's directory.
 #define TARGET_DOM	'_dom'
 #define TARGET_WINDOW '_wnd'
 #define TARGET_VIEW '_vue'
+#define TARGET_APPLICATION '_app'
+#define TARGET_PLUGMAN '_plm'
 #define CONTENT_IMAGE	0x4
 #define CONTENT_TEXT	0x6
 #define CONTENT_SCRIPT	0x8
@@ -189,6 +191,43 @@ add a command to makelinks.sh to create this link in your plug-in's directory.
 	receives, and Broadcast a reply back to that target.
 
 	This command should always be replied to with a COMMAND_INFO command.
+*/
+#define COMMAND_ASSUME_RESPONSIBILITY 0x108
+/*
+	This command means that the sender of the message will assume responsibility for
+	the payload of the original message. In other words, it should be sent as a reply
+	to a broadcast message, such as when a file is transferred by a protocol, a handler
+	will assume control over the request's existance. The originator of this
+	sequence of events should receive a "Owner" in the message that assumes responsibility.
+	It should then only release the resource at termination of the application/plug-in,
+	or upon COMMAND_RELEASE_RESOURCE. "Owner" should be the 32 bit integer PlugID value
+	of the plug-in. The DOM, Window, and View should return their Type()/TARGET_* values.
+	If the DOM, Window, or View should be set as the owner (unlikely), then the
+	receiver of the broadcast should use its stored pointer(s) to these objects.
+*/
+#define COMMAND_RELEASE_RESOURCE 0x109
+/*
+	This command tells a resource controller, to delete the resource item specified.
+	Typically, there should be a URL specified in the BMessage to refer to the specific
+	item. By default, the resource controller should assume this message means delete
+	everything in memory regarding the specified resource. If the message contains
+	a boolean value "save-resource", all of the resource should be released, except the
+	actual pointer to the resource. If the message contains a boolean value "all", it should
+	release all resources at its disposal, with the possible exception of the resource pointers.
+	(This last part should only be done if "save-resource" is also specified.)
+
+	For example, the HTTP protocol receives a COMMAND_RELEASE_RESOURCE message. It should
+	delete the appropriate request structure and data container object for the specified
+	URL. If no URL is specified, but a boolean value of "all" is present and true, then
+	the HTTP layer should clear all of its requests. If "save-resource" is specified and
+	true, then only the structure data regarding the target URL(s) is deleted, the 
+	data container objects are not.
+
+			**** NOTE ****
+
+	Be aware that using the "save-resource" function can result in a memory leak if
+	the data containers are not later deleted by the object sending the COMMAND_RELEASE_RESOURCE
+	message.
 */
 int32 strtoval(char *proto); //plug-in identifier converter 4 char string to int32
 class plugman;

@@ -34,8 +34,48 @@ extern "C" __declspec(dllexport)status_t Initialize(void *info=NULL);
 extern "C" __declspec(dllexport)status_t Shutdown(bool now=false);
 extern "C" __declspec(dllexport)PlugClass *GetObject(void);
 #include <SupportDefs.h>
+#include <Window.h>
+#include <String.h>
+#include <View.h>
+#include <Bitmap.h>
+class iview: public BView 
+{
+	public:
+		iview(BRect frame,char *name,uint32 resize,uint32 flags);
+		~iview();
+		void Draw(BRect updr);
+	
+		BBitmap *image;
+};
+class imagewin: public BWindow  
+{
+	public:
+		imagewin(char *title);
+		~imagewin();
+		iview *view;
+		bool QuitRequested(){
+			return true;
+		}
+		
+	
+};
+
+struct iwind 
+{
+	imagewin *win;
+	BString url;
+	iwind *next;
+	iwind() {
+		win=NULL;
+		next=NULL;
+	}
+	
+};
+
+
 class testplug: public PlugClass {
 	private:
+		iwind *whead;
 	public:
 		testplug(BMessage *info=NULL);
 		~testplug();

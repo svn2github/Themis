@@ -131,7 +131,7 @@ struct connection {
 		pptr=NULL;
 	}
 	~connection() {
-		printf("Connection going away, socket %ld",socket);
+		printf("Connection going away, socket %ld\n",socket);
 		fflush(stdout);
 		char addr[200];
 		uint16 port;
@@ -221,7 +221,7 @@ class tcplayer {
 		void CloseConnection(connection *target);
 		int32 Send(connection **conn,unsigned char *data,int32 size);
 		int32 Receive(connection **conn,unsigned char *data,int32 size);
-		void RequestDone(connection *target);//this clears the request bit.
+		void RequestDone(connection *target,bool close=false);//this clears the request bit.
 	
 		bool DataWaiting(connection *conn);
 /*

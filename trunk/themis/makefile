@@ -302,7 +302,7 @@ $(BASE_ADDONS_OBJECT_DIR)cache/%.o: $(BASE_ADDON_SOURCE_DIR)cache/%.cpp $(BASE_A
 #testplug add-on
 testplug: testplugdepends testplugobjects
 	@echo "Linking testplug" 
-	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)testplug.so $(foreach file,$(notdir $(TESTPLUGSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)testplug/$(file)) $(COMMON_OBJECT_DIR)plugclass.o $(COMMON_OBJECT_DIR)plugman.o -nostart -Xlinker $(LDFLAGS) -soname=testplug.so -L ./ -L $(BELIBRARIES)  -lbe -ltextencoding -lroot
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)testplug.so $(foreach file,$(notdir $(TESTPLUGSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)testplug/$(file)) $(COMMON_OBJECT_DIR)plugclass.o $(COMMON_OBJECT_DIR)plugman.o -nostart -Xlinker $(LDFLAGS) -soname=testplug.so -L ./ -L $(BELIBRARIES)  -lbe -ltextencoding -lroot -ltranslation
 	@echo "testplug add-on is now linked. Doing mimeset."
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)cache.so
 	@echo "Cache plug-in compiled and linked successfully."

@@ -65,7 +65,7 @@ class http_protocol:public ProtocolPlugClass
      float PlugVersion(void);
      status_t Go(void);
      int32 SpawnThread(BMessage *info);
-     bool IsPersistant();
+     bool IsPersistent();
      void Stop();
      int32 GetURL(BMessage *info);
      static int32 ThreadFunc(void *info);

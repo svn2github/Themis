@@ -135,6 +135,7 @@ struct http_request {
 	bool chunked;
 	int32 bytesremaining;
 	uint64 contentlen;
+	uint64 bytesreceived;
 	int32 chunkbytesremaining;
 	int32 cache;
 	int32 chunk;
@@ -151,6 +152,7 @@ struct http_request {
 		cache=UsesCache;
 		cacheinfo=NULL;
 		contentlen=0;
+		bytesreceived=0;
 		bytesremaining=-1;
 		conn=NULL;
 		headers=NULL;

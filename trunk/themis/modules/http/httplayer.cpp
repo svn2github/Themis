@@ -482,6 +482,7 @@ http_request *httplayer::AddRequest(BMessage *info) {
 		if (url.Length()==0)
 			return NULL;
 		request->url=new char[url.Length()+1];
+		memset(request->url,0,url.Length()+1);
 		strcpy(request->url,url.String());
 		FindURI(&request->url,&request->host,&request->port,&request->uri,&request->secure);
 		printf("[http->addrequest] Host: %s\n",request->host);
@@ -518,10 +519,13 @@ http_request *httplayer::AddRequest(BMessage *info) {
 		}
 		char *requeststr=BuildRequest(request);
 		SendRequest(request,requeststr);
+		printf("Request sent. About to delete requeststr\n");
 		delete requeststr;
+		printf("requeststr deleted. returning request %p (EOF AddRequest)\n",request);
+		requeststr=NULL;
 		return request;
-	}else
-	return NULL;
+	} else
+		return NULL;
 }
 char *httplayer::FindEndOfHeader(char *buffer, char **eohc) {
 	if (buffer==NULL)
@@ -1101,22 +1105,6 @@ void httplayer::DoneWithHeaders(http_request *request) {
 	if ((request->bytesremaining==-1) && (request->http_v_major==1) && (request->http_v_minor==0)) {
 		request->receivetilclosed=true;
 	}
-	BMessage *msg=new BMessage(ReturnedData);
-	msg->AddInt32("command",COMMAND_INFO);
-	msg->AddPointer("data_pointer",request->data);
-	msg->AddString("url",request->url);
-	result=FindHeader(request,"content-type");
-	if (result!=NULL)
-		msg->AddString("mimetype",result);
-	result=NULL;
-	if (request->contentlen!=0)
-		msg->AddInt64("content-length",request->contentlen);
-	BMessage container;
-	container.AddMessage("message",msg);
-	delete msg;
-	printf("Sending broadcast to handlers and parsers.\n");
-	
-	Proto->PlugMan->Broadcast(TARGET_PARSER|TARGET_HANDLER,&container);
 	
 }
 
@@ -1147,7 +1135,7 @@ void httplayer::ProcessChunkedData(http_request *request,void *buffer, int size)
 			
 		oldchunk=request->chunkbytesremaining;
 		request->data->Write((unsigned char*)buffer,request->chunkbytesremaining);
-		request->contentlen+=request->chunkbytesremaining;
+		request->bytesreceived+=request->chunkbytesremaining;
 		
 		char *kk=new char[request->chunkbytesremaining+1];
 		memset(kk,0,request->chunkbytesremaining+1);
@@ -1208,7 +1196,7 @@ void httplayer::ProcessChunkedData(http_request *request,void *buffer, int size)
 		if (size<request->chunkbytesremaining) {
 			//size is less than chunkbytesremaining
 			request->data->Write((unsigned char*)buffer,size);
-			request->contentlen+=size;
+			request->bytesreceived+=size;
 			
 			request->chunkbytesremaining-=size;
 		} else {
@@ -1216,25 +1204,29 @@ void httplayer::ProcessChunkedData(http_request *request,void *buffer, int size)
 //			printf("size==chunkbytesremaining\n");
 			
 			request->data->Write((unsigned char*)buffer,size);
-			request->contentlen+=size;
+			request->bytesreceived+=size;
 			request->chunkbytesremaining=0;
 			request->chunk++;
 		}
 		
 	}
-	printf("Chunked File Transfer: %lu bytes received.\n",request->contentlen);
-	
 //	printf("ProcessChunkedData done.\n");
 }
 
 void httplayer::ProcessData(http_request *request, void *buffer, int size) {
 //	printf("\tProcessData()\n");
-
+volatile int32 ilocked=0;
+if (!lock->IsLocked()) {
+	ilocked=1;
+	lock->Lock();
+	
+}
 	if (request->chunked) {
 		ProcessChunkedData(request,buffer,size);
 	} else {
 		request->data->Write((unsigned char*)buffer,size);
 		request->bytesremaining-=size;
+		request->bytesreceived+=size;
 		if (request->bytesremaining<=0) {
 			if (request->receivetilclosed) {
 				if (TCP->Connected(request->conn,true)) {
@@ -1250,6 +1242,51 @@ void httplayer::ProcessData(http_request *request, void *buffer, int size) {
 		
 	}
 //	printf("ProcessData done.\n");
+	BMessage *msg=new BMessage(ReturnedData);
+	msg->AddInt32("command",COMMAND_INFO);
+	msg->AddPointer("data_pointer",request->data);
+	msg->AddString("url",request->url);
+	char *result=NULL;
+	result=FindHeader(request,"content-type");
+	int32 target=0;
+	if (result!=NULL) {
+		msg->AddString("mimetype",result);
+		char *slash=strchr(result,'/');
+		if (strncasecmp("text",result,slash-result)==0) {
+			if (strncasecmp("html",slash+1,strlen(result)-((slash+1)-result))==0) {
+				target=HTML_PARSER;
+			} else
+				target=TARGET_HANDLER|CONTENT_TEXT|TARGET_PARSER;
+		}
+		if (strncasecmp("image",result,slash-result)==0) {
+			target=IMAGE_HANDLER;
+		}
+		if (strncasecmp("audio",result,slash-result)==0) {
+			target=AUDIO_HANDLER;
+		}
+		if (strncasecmp("video",result,slash-result)==0) {
+			target=VIDEO_HANDLER;
+		}
+		if (strncasecmp("application",result,slash-result)==0) {
+			target=TARGET_PARSER|TARGET_HANDLER;
+		}
+		slash=NULL;
+	} else 
+		target=TARGET_PARSER|TARGET_HANDLER;
+	
+	
+	result=NULL;
+	if (request->contentlen!=0)
+		msg->AddInt64("content-length",request->contentlen);
+	msg->AddInt64("bytes-received",request->bytesreceived);
+	BMessage container;
+	container.AddMessage("message",msg);
+	delete msg;
+	printf("Sending broadcast to handlers and parsers.\n");
+	
+	Proto->PlugMan->Broadcast(Proto->PlugID(),target,&container);
+	if (ilocked)
+		lock->Unlock();
 	
 }
 void httplayer::CloseRequest(http_request *request) {
@@ -1258,7 +1295,12 @@ void httplayer::CloseRequest(http_request *request) {
 	Done(request);
 	if (request->conn!=NULL) {
 		TCP->Lock();
-		TCP->RequestDone(request->conn);
+		char *result=FindHeader(request,"Connection");
+		if ((result!=NULL) && (strcasecmp("close",result)==0))
+			TCP->RequestDone(request->conn,true);
+		else
+			TCP->RequestDone(request->conn);
+		result=NULL;
 		TCP->Unlock();
 		atomic_add(&request->conn_released,1);
 		request->conn=NULL;
@@ -1550,7 +1592,10 @@ int32 httplayer::LayerManager() {
 						if (current->headersdone!=1) {
 							ProcessHeaders(current,buffer,bytes);
 						} else {
+							printf("http layermanager: about to process data for url %s\n",current->url);
 							ProcessData(current,buffer,bytes);
+							printf("http layermanager: post processdata, %s\n",current->url);
+							
 						}
 					}
 				}
@@ -1638,13 +1683,13 @@ char *httplayer::GetSupportedTypes() {
 	}
 	cur=NULL;
 	output << "\r\n";
-	printf("output: %s\n",output.String());
+//	printf("output: %s\n",output.String());
 	
 	char *out=new char[output.Length()+1];
 	memset(out,0,output.Length()+1);
 	
 	strcpy(out,output.String());
-	printf("Supported MIME TYPE String: %s\n",out);
+//	printf("Supported MIME TYPE String: %s\n",out);
 	
 	return out;
 }

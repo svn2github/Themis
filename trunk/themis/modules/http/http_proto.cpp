@@ -103,8 +103,8 @@ status_t http_protocol::BroadcastReply(BMessage *msg){
 		case COMMAND_INFO: {
 			switch(msg->what) {
 				case SupportedMIMEType: {
-					printf("Add types in following message to MIME Type list.\n");
-					msg->PrintToStream();
+//					printf("Add types in following message to MIME Type list.\n");
+//					msg->PrintToStream();
 					BString str;
 					int32 count=0;
 					type_code type;
@@ -128,7 +128,8 @@ status_t http_protocol::BroadcastReply(BMessage *msg){
 						cur3=NULL;
 						cur=new smt_st;
 						cur->type=new char[str.Length()+1];
-						str.CopyInto(cur->type,0,str.Length());
+						memset(cur->type,0,str.Length()+1);
+						strcpy(cur->type,str.String());
 						if (smthead==NULL) {
 							smthead=cur;
 						} else {
@@ -198,6 +199,7 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 			printf("http proto: action is %c%c%c%c\n",action>>24,action>>16,action>>8,action);
 			if (action==LoadingNewPage) {
 //				printf("http proto: PlugMan %p\n",PlugMan);
+/*
 				if (PlugMan!=NULL) {
 					BMessage *amsg=new BMessage(GetSupportedMIMEType);
 					amsg->AddInt32("ReplyTo",Type());
@@ -205,7 +207,6 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 					amsg->AddInt32("command",COMMAND_INFO_REQUEST);
 					amsg->AddBool("supportedmimetypes",true);
 //					printf("http proto: just before adding message to container.\n");
-					amsg->PrintToStream();
 					
 					BMessage container;
 					container.AddMessage("message",amsg);
@@ -213,6 +214,7 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 					amsg=NULL;
 					PlugMan->Broadcast(TARGET_PARSER|TARGET_HANDLER,&container);
 				}
+*/
 			}
 //			printf("[http proto retrieve 2] message:\n");
 //			rmsg->PrintToStream();
@@ -229,6 +231,31 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 		}break;
 		case COMMAND_INFO: {
 			switch(msg->what) {
+				case PlugInLoaded: {
+					int32 pid=0;
+					msg->FindInt32("plugid",&pid);
+					if (pid!=PlugID()) {
+						PlugClass *pobj=NULL;
+						msg->FindPointer("plugin",(void**)&pobj);
+						if (pobj!=NULL) {
+							if (((pobj->Type()&TARGET_HANDLER)!=0) || ((pobj->Type()&TARGET_PARSER)!=0)) {
+								if (PlugMan!=NULL) {
+									BMessage *amsg=new BMessage(GetSupportedMIMEType);
+									amsg->AddInt32("ReplyTo",Type());
+									amsg->AddPointer("ReplyToPointer",this);
+									amsg->AddInt32("command",COMMAND_INFO_REQUEST);
+									amsg->AddBool("supportedmimetypes",true);
+									pobj->ReceiveBroadcast(amsg);
+									delete amsg;
+									amsg=NULL;
+								}
+							}
+							pobj=NULL;
+						}
+						
+					}
+					
+				}break;
 				default: {
 					msg->PrintToStream();
 					//display the message info, but otherwise ignore it
@@ -240,7 +267,7 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 	}
 	
 }
-bool http_protocol::IsPersistant(){
+bool http_protocol::IsPersistent(){
 	return true;
 }
 char* http_protocol::PlugName(void)

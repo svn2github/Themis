@@ -64,7 +64,7 @@ class plugman: public BLooper {
 		PlugClass *FindPlugin(uint32);
 		void *FindPlugin(node_ref &nref);
 		void MessageReceived(BMessage *msg);
-		status_t Broadcast(int32 targets,BMessage *msg);
+		status_t Broadcast(int32 source,int32 targets,BMessage *msg);
 		void BuildRoster(bool clean=true);
 		status_t LoadPlugin(uint32 which);
 	

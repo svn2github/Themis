@@ -558,7 +558,9 @@ if (target->open) {
 	closesocket(target->socket);
 	target->socket=-1;
 }
-
+if (target->socket!=-1)
+	target->socket=-1;
+	
 //mtx->unlock();
 	target->open=false;
 #ifdef USEOPENSSL
@@ -792,11 +794,13 @@ int32 tcplayer::Receive(connection **conn, unsigned char *data, int32 size) {
 	return got;
 }
 
-void tcplayer::RequestDone(connection *conn) {
+void tcplayer::RequestDone(connection *conn,bool close) {
 	if (conn!=NULL) {
 		atomic_add(&conn->requests,-1);
 		if (conn->requests>0)
 			conn->requests=0;
+		if (close)
+			CloseConnection(conn);
 	}
 }
 
@@ -858,188 +862,62 @@ bool tcplayer::IsValid(connection *conn) {
 	return truth;
 }
 bool tcplayer::Connected(connection *conn,bool skipvalid) {
-	if (skipvalid) {
-		bool oldstatus=conn->open;
-		
-//	printf("is valid\n");
-/*		if ((FD_ISSET(conn->socket,&fds)) && (FD_ISSET(conn->socket,&fdr))) {//(send(conn->socket,&test,1,0)>=0) {
-			conn->open=true;
-		}
-		else
-			conn->open=false;
+	if (conn!=NULL) {
+		if (skipvalid) {//no need to check validation
+			CheckConnectStatus://connection status checking starts here.
+			if (conn->socket<0)
+				return false;
+			bool oldstatus=conn->open;
+			int iret=0;
+			bool bOK=true;
+			int option=1;
+			setsockopt(conn->socket,SOL_SOCKET,SO_NONBLOCK,&option,sizeof(option));
+			struct timeval timeout={0,10000};
+			fd_set readsocketset;
+			FD_ZERO(&readsocketset);
+			FD_SET(conn->socket,&readsocketset);
+			iret=select(32,&readsocketset,NULL,NULL,&timeout);
+			bOK=(iret>0);
+			if (bOK){
+				bOK = FD_ISSET(conn->socket, &readsocketset );
+			}
+#ifndef USENETSERVER
+/*
+	Check to see if we're using a network stack other than net_server
+	in preparation for OpenBeOS. This means this code should work on both
+	BONE and OpenBeOS. In theory.
 */
-//		printf("connected: %d\n",conn->open);
-	int iret=0;
-	bool bOK=true;
-	int option=1;
-	//mtx->lock();
-	setsockopt(conn->socket,SOL_SOCKET,SO_NONBLOCK,&option,sizeof(option));
-	//mtx->unlock();
-//		printf("checking connection status...");
-//		fflush(stdout);
-		
-//		if (err<0)
-//			printf("err %d\n",err);
-		
-		struct timeval timeout={0,10000};
-		fd_set readsocketset;
-		//mtx->lock();
-		FD_ZERO(&readsocketset);
-		FD_SET(conn->socket,&readsocketset);
-		iret=select(32,&readsocketset,NULL,NULL,&timeout);
-		//mtx->unlock();
-		bOK=(iret>0);
-		
-		if (bOK){
-		//mtx->lock();
-		bOK = FD_ISSET(conn->socket, &readsocketset );
-		//mtx->unlock();
-		}
-		
-        if( bOK ) 
-        { 
-                char szBuffer[1] = ""; 
-#ifdef BONE_VERSION
-                //mtx->lock();
-                iret = recv( conn->socket, szBuffer, 1, MSG_PEEK ); 
-                //mtx->unlock();
-//				printf("iret: %d\n",iret);
-//				if (iret==0)
-//					printf("error: %d\n",errno);
-			
-                bOK = ( iret > 0 ); 
-                if( !bOK ) 
-                { 
-                        int iError = errno;
-//						printf("socket %ld error\n",conn->socket);
-						if  ((iError==ENETUNREACH )||(iError==ECONNREFUSED)||(iError==ECONNRESET)||(iError==EBADF)||(iret==0))
-						{
-							
-                        conn->open = false; //Graceful disconnect from other side. 
+			if (bOK) {
+				char szBuffer[1] = "";
+				iret = recv( conn->socket, szBuffer, 1, MSG_PEEK ); 
+				bOK = ( iret > 0 ); 
+				if( !bOK ) { 
+					int iError = errno;
+					if  ((iError==ENETUNREACH )||(iError==ECONNREFUSED)||(iError==ECONNRESET)||(iError==EBADF)||(iret==0)) {
+						conn->open = false; //Graceful disconnect from other side. 
 						CloseConnection(conn);
-							
-						}
-						
-                }
+					}
+				}
 				else
 					conn->open=true; 
-#else
-/*
-	char nul='\0';
-	iret=send(conn->socket,&nul,1,0);
-	if (iret==-1) {
-		conn->open=false;
-		}else {
-			conn->open=true;
-		}
-*/
+			}
 #endif
-        }
-		option=0;
-//		printf("%s\n",conn->open ? "connected":"disconnected");
-		//mtx->lock();
-		setsockopt(conn->socket,SOL_SOCKET,SO_NONBLOCK,&option,sizeof(option));
-		//mtx->unlock();
-		if (oldstatus)
-			if (!conn->open)
-				printf("1:Connection %p on socket %ld closed\n",conn,conn->socket);
-		
-	return conn->open;
-		
-	}
-	else{
-		if ( IsValid(conn)) {
-		bool oldstatus=conn->open;
-		
-//	printf("is valid\n");
-/*		if ((FD_ISSET(conn->socket,&fds)) && (FD_ISSET(conn->socket,&fdr))) {//(send(conn->socket,&test,1,0)>=0) {
-			conn->open=true;
+			option=0;
+			setsockopt(conn->socket,SOL_SOCKET,SO_NONBLOCK,&option,sizeof(option));
+			if (oldstatus)
+				if (!conn->open)
+					printf("Connection %p on socket %ld closed\n",conn,conn->socket);
+		} else {
+			if ( IsValid(conn))
+				goto CheckConnectStatus; //validation successful
+			else
+				return false; //validation check failed... don't check
 		}
-		else
-			conn->open=false;
-*/
-//		printf("connected: %d\n",conn->open);
-	int iret=0;
-	bool bOK=true;
-	int option=1;
-//		printf("checking connection status...");
-//		fflush(stdout);
-	//mtx->lock();	
-	/*int err=*/setsockopt(conn->socket,SOL_SOCKET,SO_NONBLOCK,&option,sizeof(option));
-	//mtx->unlock();
-//		if (err<0)
-//			printf("err %d\n",err);
-		
-		struct timeval timeout={0,10000};
-		//mtx->lock();
-		fd_set readsocketset;
-		FD_ZERO(&readsocketset);
-		FD_SET(conn->socket,&readsocketset);
-		iret=select(32,&readsocketset,NULL,NULL,&timeout);
-		//mtx->unlock();
-		bOK=(iret>0);
-		
-		if (bOK){
-		//mtx->lock();
-		bOK = FD_ISSET(conn->socket, &readsocketset );
-		//mtx->unlock();
-		}
-		
-        if( bOK ) 
-        { 
-                char szBuffer[1] = ""; 
-#ifdef BONE_VERSION
-        //mtx->lock();
-                iret = recv( conn->socket, szBuffer, 1, MSG_PEEK ); 
-        //mtx->unlock();
-//				printf("iret: %d\n",iret);
-//				if (iret==0)
-//					printf("error: %d\n",errno);
-			
-                bOK = ( iret > 0 ); 
-                if( !bOK ) 
-                { 
-                        int iError = errno;
-//						printf("socket %ld error\n",conn->socket);
-						if  ((iError==ENETUNREACH )||(iError==ECONNREFUSED)||(iError==ECONNRESET)||(iError==EBADF)||(iret==0))
-						{
-							
-                        conn->open = false; //Graceful disconnect from other side. 
-						CloseConnection(conn);
-							
-						}
-						
-                }
-				else
-					conn->open=true; 
-#else
-/*
-	char nul='\0';
-	iret=send(conn->socket,&nul,1,0);
-	if (iret==-1) {
-		conn->open=false;
-		}else {
-			conn->open=true;
-		}
-*/
-#endif
-        }
-		option=0;
-//		printf("%s\n",conn->open ? "connected":"disconnected");
-		//mtx->lock();
-		setsockopt(conn->socket,SOL_SOCKET,SO_NONBLOCK,&option,sizeof(option));
-		//mtx->unlock();
-		if (oldstatus)
-			if (!conn->open)
-				printf("2:Connection %p on socket %ld closed\n",conn,conn->socket);
-		
-	return conn->open;
-		
+		//return the actual status
+		return conn->open;
 	}
-	}
-	
+	//conn is NULL, so this is obviously invalid
 	return false;
-	
 }
 /*
 //found this code at http://www.codeguru.com/network/ChatSource.shtml
