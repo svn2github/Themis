@@ -979,10 +979,10 @@ void httplayer::FindURI(char **url,char **host,uint16 *port,char **uri,bool *sec
   *host=new char[master.Length()+1];
   strcpy(*host,master.String());
   nuuril+=strlen(*host)+strlen(*uri)+((*secure)?1:0);
-  int32 width=1;
-  int32 pcopy=*port;
-  while (pcopy>0) {
-  	pcopy%=10;
+  int32 width=0;
+  float pcopy=(*port)*1.0;
+  while (pcopy>1.0) {
+  	pcopy/=10.0;
   	width++;
   }
   printf("%d is %ld characters wide.\n",*port,width);
