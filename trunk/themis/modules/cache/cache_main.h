@@ -32,7 +32,7 @@ Project Start Date: October 18, 2000
 #include <AppKit.h>
 #include "plugclass.h"
 #include "cache_defines.h"
-extern "C" __declspec(dllexport)status_t Initialize(bool go=false);
+extern "C" __declspec(dllexport)status_t Initialize(void *info=NULL);
 extern "C" __declspec(dllexport)status_t Shutdown(bool now=false);
 extern "C" __declspec(dllexport)BHandler* GetHandler();
 extern "C" __declspec(dllexport)PlugClass *GetObject(void);

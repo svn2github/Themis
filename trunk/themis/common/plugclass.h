@@ -58,11 +58,19 @@ class PlugClass
    
    volatile int8 Cancel;
    virtual uint32 PlugID();
+   virtual uint32 SecondaryID();
   /*
    plugid is the plugin's individual id, it's a 4 char constant #define'd.
    For example:
 	   #define JavaPlugin 'java'
 	   #define OpenSSLPlugin 'ossl'
+   Some types of plugins might have a secondary ID number. In these cases, the
+   primary ID number (PlugID) indicates the category of the plugin, and the
+   secondary indicates a specific item. For example:
+
+	HTML Plugins should return 'html' as the PlugID and a unique identifier
+        for each tag; the "<HTML>" tag plugin might return 'html' for both, while
+        the "<TITLE>" tag plugin might return 'html' and 'titl'.
   */
    virtual char *PlugName();//returns a pointer to a string constant in each plugin
    virtual float PlugVersion();//returns the plugin version, if applicable

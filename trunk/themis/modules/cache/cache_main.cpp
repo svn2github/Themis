@@ -30,7 +30,7 @@ Project Start Date: October 18, 2000
 #include "cache_main.h"
 #include "cacheman.h"
 cacheman *CacheMan;
-status_t Initialize(bool go)
+status_t Initialize(void *info)
  {
   CacheMan=new cacheman;
   if (CacheMan)
@@ -41,7 +41,9 @@ status_t Shutdown(bool now=false)
  {
 //  if ((BHandler*)CacheMan->Looper()!=NULL)
 //   (BHandler*)(CacheMan->Looper())->RemoveHandler(CacheMan);
-//  delete CacheMan;
+  if (now)
+  	if (CacheMan!=NULL)
+	   delete CacheMan;
   return B_OK;
  }
 

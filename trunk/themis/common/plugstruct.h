@@ -45,6 +45,7 @@ struct plugst
   PlugClass *pobj;//plugin object
   PlugClass *(*GetObject)(void);
   entry_ref ref;
+  node_ref nref;
   char path[B_PATH_NAME_LENGTH+B_FILE_NAME_LENGTH];
   plugst *next;
   plugst *prev;

@@ -59,20 +59,23 @@ BHandler *cacheman::Handler()
 cacheman::~cacheman()
  {
  }
-void cacheman::MessageReceived(BMessage *msg)
+void cacheman::MessageReceived(BMessage *mmsg)
  {
-  switch(msg->what)
+// 	mmsg->PrintToStream();
+  switch(mmsg->what)
    {
     case FindCachedObject:
      {
      }break;
     case CreateCacheObject:
      {
+      BMessage *msg=new BMessage(*mmsg);
       printf("CreateCacheObject\n");
       BMessage reply(B_ERROR);
       type_code type;
       int32 count,index;
-      char name[B_OS_NAME_LENGTH];
+     // char name[B_OS_NAME_LENGTH];
+      char *name;
       if (msg->CountNames(B_ANY_TYPE)>=1)
        {
         printf("msg contains items\n");
@@ -92,10 +95,16 @@ void cacheman::MessageReceived(BMessage *msg)
         BNodeInfo *ni=new BNodeInfo(node);
         ni->SetType(ThemisCacheMIME);
         delete ni;
-        
-        msg->PrintToStream();
-        for (index=0;msg->GetInfo(B_ANY_TYPE,index,(const char**)name,&type,&count)==B_OK; index++)
+        printf("cache: About to loop...\n");
+ //       msg->PrintToStream();
+ 		//memset(name,0,B_OS_NAME_LENGTH);
+#if (B_BEOS_VERSION>B_BEOS_VERSION_5)
+        for (index=0;msg->GetInfo(B_ANY_TYPE,index,(const char**)&name,&type,&count)==B_OK; index++)
+#else
+        for (index=0;msg->GetInfo(B_ANY_TYPE,index,/*(char**)*/&name,&type,&count)==B_OK; index++)
+#endif
          {
+          printf("cache - message: %s %ld %ld\n",name,type,count);
           for (int i=0;i<count;i++)
            switch(type)
             {
@@ -111,35 +120,41 @@ void cacheman::MessageReceived(BMessage *msg)
                if (strcasecmp(name,"url")==0)
                 {
                  msg->FindString(name,&fname);//let's reuse stuff! :)
+                 printf("writing %s: %s\n",name,fname.String());
                  node->WriteAttr("Themis:URL",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
                  continue;
                 }
                if (strcasecmp(name,"name")==0)
                 {
                  msg->FindString(name,&fname);
+                 printf("writing %s: %s\n",name,fname.String());
                  node->WriteAttr("Themis:name",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
                  continue;
                 }
                if (strcasecmp(name,"host")==0)
                 {
                  msg->FindString(name,&fname);
+                 printf("writing %s: %s\n",name,fname.String());
                  node->WriteAttr("Themis:host",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
                  continue;
                 }
-               if (strcasecmp(name,"mime")==0)
+               if (strcasecmp(name,"content-type")==0)
                 {
                  msg->FindString(name,&fname);
+                 printf("writing %s: %s\n",name,fname.String());
                  node->WriteAttr("Themis:mime_type",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
                  continue;
                 }
                if (strcasecmp(name,"path")==0)
                 {
                  msg->FindString(name,&fname);
+                 printf("writing %s: %s\n",name,fname.String());
                  node->WriteAttr("Themis:path",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
                  continue;
                 }
               }break;
             }
+          // memset(name,0,B_OS_NAME_LENGTH); 
          }
         node->Unlock();
         node->Sync();
@@ -148,14 +163,15 @@ void cacheman::MessageReceived(BMessage *msg)
         reply.what=B_OK;
         reply.AddRef("ref",&ref);
        }
-      msg->SendReply(&reply);
+      delete msg;
+      mmsg->SendReply(&reply);
      }break;
     case UpdateCachedObject:
      {
      }break;
     case ClearCache:
      {
-      msg->PrintToStream();
+      mmsg->PrintToStream();
       printf("Clearing cache...\n");
       BVolumeRoster volr;
       BVolume vol;
@@ -192,7 +208,7 @@ void cacheman::MessageReceived(BMessage *msg)
      }break;
     default:
      {
-      BHandler::MessageReceived(msg);
+      BHandler::MessageReceived(mmsg);
      }
    }
  }

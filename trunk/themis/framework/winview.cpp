@@ -110,6 +110,7 @@ void winview::MessageReceived(BMessage *msg)
         info->AddPointer("top_view",this);
         info->AddPointer("window",Window());
         info->AddPointer("parser",Parser);
+        info->AddPointer("plug_manager",PluginManager);
         info->AddString("target_url",url.String());
         printf("info: %p\n",info);
         info->PrintToStream();

@@ -92,10 +92,11 @@ plugman::plugman(entry_ref &appdirref):BLooper("plug-in manager",B_LOW_PRIORITY)
       printf("App add-ons directory missing, and couldn't be created! (%s)\n",err.String());
      }
     }
+   if (appaddondir->Contains("add-ons",B_DIRECTORY_NODE))
+     appaddondir->SetTo(appaddondir,"add-ons");
    if (appaddondir->InitCheck()==B_OK)
     {
      node_ref nref;
-     appaddondir->SetTo(appaddondir,"add-ons");
      appaddondir->GetNodeRef(&nref);
      stat=watch_node(&nref,B_WATCH_DIRECTORY,this,this);
      BString status;
@@ -223,6 +224,40 @@ void plugman::MessageReceived(BMessage *msg)
   msg->PrintToStream();
   switch(msg->what)
    {
+    case B_NODE_MONITOR:
+     {
+      printf("Node monitor!\n");
+      int32 opcode;
+      dev_t device;
+      ino_t directory, node;
+      const char *name;
+      entry_ref ref;
+      node_ref nref;
+      if (msg->FindInt32("opcode",&opcode)==B_OK)
+       {
+        switch(opcode)
+         {
+          case B_ENTRY_CREATED:
+           {
+            msg->FindInt32("device",&ref.device);
+            msg->FindInt64("directory",&ref.directory);
+            msg->FindString("name",&name);
+            ref.set_name(name);
+           }break;
+          case B_ENTRY_REMOVED:
+           {
+            msg->FindInt32("device",&nref.device);
+            msg->FindInt64("node",&nref.node);
+            plugst *tmp=(plugst*)FindPlugin(nref);
+            if (tmp!=NULL)
+             {
+              printf("Unloading plugin %s\n",tmp->pobj->PlugName());
+              UnloadPlugin(tmp->plugid);
+             }
+           }break;
+         }
+       }
+     }break;
     case CheckFile:
      {
       int32 count=0;
@@ -260,6 +295,7 @@ void plugman::MessageReceived(BMessage *msg)
          continue;//all add-on's have an executable mimetype
         plugst *nuplug=new plugst;
         nuplug->ref=ref;
+        node.GetNodeRef(&nuplug->nref);
         ent->GetPath(&path);
         printf("Attempting to load plugin at %s\n",path.Path());
         nuplug->sysid=load_add_on(path.Path());
@@ -269,12 +305,12 @@ void plugman::MessageReceived(BMessage *msg)
           delete nuplug;
           continue;
          }
-        status_t (*Initialize)(bool go);
+        status_t (*Initialize)(void *info);
         if (get_image_symbol(nuplug->sysid,"Initialize",B_SYMBOL_TYPE_TEXT,(void**)&Initialize)==B_OK)
          {
           printf("\tInitializing...");
           fflush(stdout);
-          if ((*Initialize)(false)!=B_OK)
+          if ((*Initialize)(NULL)!=B_OK)
            {
             printf("failure, aborting\n");
             unload_add_on(nuplug->sysid);
@@ -300,17 +336,40 @@ void plugman::MessageReceived(BMessage *msg)
           if (FindPlugin(nuplug->pobj->PlugID())!=NULL)
            {
             printf("plug-in already loaded.\n");
+            status_t (*Shutdown)(bool);
+            if (get_image_symbol(nuplug->sysid,"Shutdown",B_SYMBOL_TYPE_TEXT,(void**)&Shutdown)==B_OK)
+             (*Shutdown)(true);
+            else
+             printf("plug-in has no Shutdown function; couldn't shutdown nicely.\n");
             unload_add_on(nuplug->sysid);
+            nuplug->pobj=NULL;//yeah, I know it's about to be deleted, but...
             delete nuplug;
             continue;
            }
           strcpy(nuplug->path,path.Path());
           nuplug->plugid=nuplug->pobj->PlugID();
+         // printf("%c%c%c%c\n",nuplug->pobj->PlugID()>>24,nuplug->pobj->PlugID()>>16,nuplug->pobj->PlugID()>>8,nuplug->pobj->PlugID());
           printf("Loaded \"%s\" (%c%c%c%c) V. %1.2f\n",nuplug->pobj->PlugName(),
-          (char)nuplug->pobj->PlugID()>>24,(char)nuplug->pobj->PlugID()>>16,(char)nuplug->pobj->PlugID()>>8,(char)nuplug->pobj->PlugID(),
+          nuplug->pobj->PlugID()>>24,nuplug->pobj->PlugID()>>16,nuplug->pobj->PlugID()>>8,nuplug->pobj->PlugID(),
           nuplug->pobj->PlugVersion());
+          if (nuplug->pobj->SecondaryID()!=0)
+           printf("\tSecondary ID: %c%c%c%c\n",nuplug->pobj->SecondaryID()>>24,nuplug->pobj->SecondaryID()>>16,nuplug->pobj->SecondaryID()>>8,nuplug->pobj->SecondaryID());
           if (!nuplug->pobj->IsPersistant())
            {
+            status_t (*Shutdown)(bool);
+            if (get_image_symbol(nuplug->sysid,"Shutdown",B_SYMBOL_TYPE_TEXT,(void**)&Shutdown)==B_OK)
+             (*Shutdown)(true);
+            else
+             printf("plug-in has no Shutdown function; couldn't shutdown nicely.\n");
+            unload_add_on(nuplug->sysid);//this will probably trigger a crash
+            nuplug->inmemory=false;
+            nuplug->pobj=NULL;
+           }
+          else
+           {
+            nuplug->inmemory=true;
+            if (nuplug->pobj->IsHandler())
+             AddHandler((BHandler*)nuplug->pobj->Handler());
            }
          }
         else
@@ -331,12 +390,12 @@ void plugman::MessageReceived(BMessage *msg)
      BLooper::MessageReceived(msg);
    }
  }
-void *plugman::FindPlugin(uint32 which)
+void *plugman::FindPlugin(uint32 which, uint32 secondary)
  {
   plugst *tmp=head;
   while(tmp!=NULL)
    {
-    if (tmp->pobj->PlugID()==which)
+    if ((tmp->plugid)==which)
      {
       printf("plugman::FindPlugin: found it\n");
       break;
@@ -345,9 +404,27 @@ void *plugman::FindPlugin(uint32 which)
    }
   if (tmp==NULL)
    return NULL;
-//  if (tmp->pobj!=NULL)
+  if (!tmp->inmemory)
+   {
+  	if (LoadPlugin(tmp->plugid)!=B_OK)
+  		return NULL;
+   if (tmp->pobj->IsHandler())
+    AddHandler((BHandler*)tmp->pobj->Handler());
+   }
    return tmp->pobj;
-//  return tmp->handler;
+ }
+void *plugman::FindPlugin(node_ref &nref)
+ {
+  plugst *tmp=head;
+  while (tmp!=NULL)
+   {
+    if (tmp->nref==nref)
+     {
+      break;
+     }
+    tmp=tmp->next;
+   }
+  return tmp;
  }
 void plugman::AddPlug(plugst *plug)
  {
@@ -379,7 +456,12 @@ status_t plugman::UnloadAllPlugins(bool clean)
      {
       tmp=cur->next;
       if (cur->inmemory)
-       unload_add_on(cur->sysid);
+       {
+        status_t (*Shutdown)(bool);
+        if (get_image_symbol(cur->sysid,"Shutdown",B_SYMBOL_TYPE_TEXT,(void**)&Shutdown)==B_OK)
+          (*Shutdown)(true);
+        unload_add_on(cur->sysid);
+       }
       delete cur;
       cur=tmp;
       continue;
@@ -389,11 +471,69 @@ status_t plugman::UnloadAllPlugins(bool clean)
  }
    status_t plugman::UnloadPlugin(uint32 which)
     {
+     plugst *cur=head,*prev=NULL;
+     while (cur!=NULL)
+      {
+       if (cur->plugid==which)
+        {
+         if (prev==NULL)
+          {
+           head=cur->next;
+           if (head!=NULL)
+            head->prev=NULL;
+          }
+         else
+          {
+           prev->next=cur->next;
+           if (cur->next!=NULL)
+            cur->next->prev=prev;
+          }
+         if (cur->inmemory)
+          {
+           status_t (*Shutdown)(bool);
+           if (get_image_symbol(cur->sysid,"Shutdown",B_SYMBOL_TYPE_TEXT,(void**)&Shutdown)==B_OK)
+             (*Shutdown)(true);
+           unload_add_on(cur->sysid);
+          }
+         delete cur;
+         break;
+        }
+       prev=cur;
+       cur=cur->next;
+      }
      return B_OK;
     }
    status_t plugman::LoadPlugin(uint32 which)
     {
-     return B_OK;
+     plugst *cur=head,*tmp;
+     bool found=false;
+     while (cur!=NULL)
+      {
+       if (cur->plugid==which)
+        {
+         if (!cur->inmemory)
+          {
+           cur->sysid=load_add_on(cur->path);
+           if (cur->sysid<=B_ERROR)
+            {
+             return B_ERROR;
+            }
+           status_t (*Initialize)(void *info);
+           get_image_symbol(cur->sysid,"Initialize",B_SYMBOL_TYPE_TEXT,(void**)&Initialize);
+           get_image_symbol(cur->sysid,"GetObject",B_SYMBOL_TYPE_TEXT,(void**)&(cur->GetObject));
+           (*Initialize)(NULL);
+           cur->pobj=(*cur->GetObject)();
+          }
+         else
+          {
+           //plugin is already in memory
+          }
+         found=true;
+         break;
+        }
+       cur=cur->next;
+      }
+     return (found ? B_OK:B_ERROR);
     }
    status_t plugman::LoadPluginFor(const char *mimetype)
     {

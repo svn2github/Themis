@@ -52,7 +52,8 @@ class plugman: public BLooper
    ~plugman();
    void MessageReceived(BMessage *msg);
    bool QuitRequested();
-   void *FindPlugin(uint32 which);
+   void *FindPlugin(uint32 which,uint32 secondary=0);
+   void *FindPlugin(node_ref &nref);
    status_t UnloadAllPlugins(bool clean=true);
    status_t UnloadPlugin(uint32 which);
    status_t LoadPlugin(uint32 which);

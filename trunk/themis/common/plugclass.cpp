@@ -49,6 +49,11 @@ uint32 PlugClass::PlugID()
   return 'none';
  }
 
+uint32 PlugClass::SecondaryID()
+ {
+  return 'none';
+ }
+
 char *PlugClass::PlugName()
  {
   return "Not A Plug-in";

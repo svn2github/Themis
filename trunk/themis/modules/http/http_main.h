@@ -33,7 +33,7 @@ Project Start Date: October 18, 2000
 #include "protocol_plugin.h"
 //namespace Themis_Networking
 // {
-  extern "C" __declspec(dllexport)status_t Initialize(bool go=false);
+  extern "C" __declspec(dllexport)status_t Initialize(void *info=NULL);
   extern "C" __declspec(dllexport)status_t Shutdown(bool now=false);
   extern "C" __declspec(dllexport)protocol_plugin* GetObject(void);
   
@@ -61,6 +61,7 @@ class http_protocol:public ProtocolPlugClass
      unsigned char *GetDoc(BString &host,int &port,BString &uri);
      unsigned char *GetDoc(const char* url);
      unsigned char *GetURL(const char* url);
+     BMessage *GetURL_(BMessage *info);
      int32 GetURL(BMessage *info);
      static int32 ThreadFunc(void *info);
    };
