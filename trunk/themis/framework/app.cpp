@@ -273,7 +273,7 @@ void App::MessageReceived(BMessage *msg){
 			printf( "APP WINDOW_CLOSE\n" );
 			Win* closewin;
 			msg->FindPointer( "win_to_close", ( void** )&closewin );
-			printf( "windowcount: %d\n", CountWindows() );
+			printf( "mainwindowcount: %d\n", GetMainWindowCount() );
 			
 			if( closewin == NULL )
 			{
@@ -281,7 +281,7 @@ void App::MessageReceived(BMessage *msg){
 				break;
 			}
 						
-			if( CountWindows() == 1 )
+			if( GetMainWindowCount() == 1 )
 			{
 				printf( "CountWindows() == 1\n" );
 				closewin->SetQuitConfirmed( true );
@@ -412,7 +412,7 @@ void App::MessageReceived(BMessage *msg){
 			{
 				// get the current windows url ( for case 2 )
 				BString currenturl;
-				for( int32 i = 0; i < CountWindows(); i++ )
+				for( int32 i = 0; i < GetMainWindowCount(); i++ )
 				{
 					if( WindowAt( i )->IsActive() == true )
 					{
@@ -601,6 +601,30 @@ void App::InitSettings(char *settings_path) {
 	// end: find a DTD
 	
 	AppSettings->PrintToStream();
+}
+
+int32
+App::GetMainWindowCount()
+{
+	printf( "App::GetMainWindowCount()\n" );
+	
+	int32 count = 0;
+	
+	Win* win = FirstWindow();
+	if( win == NULL )
+		return 0;
+	else
+		count++;
+	
+	while( win->NextWindow() != NULL )
+	{
+		win = win->NextWindow();
+		count++;
+	}
+	
+	printf( "Number of main windows: %li\n", count );
+	
+	return count;
 }
 
 int16

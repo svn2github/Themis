@@ -83,6 +83,7 @@ class App:public BApplication, public MessageSystem {
 		void ReadyToRun();
 		void ArgvReceived(int32 argc, char **argv);
 		void Pulse();
+		int32						GetMainWindowCount();
 		int16						GetNewUniqueID();
 		Win*						FirstWindow();
 		void						SetFirstWindow( Win* newfirst );

@@ -96,7 +96,8 @@ Win::Win(
 	filemenu->AddItem( quitwentry );
 	BMenuItem* quitentry = new BMenuItem( "Quit Themis", new BMessage( B_QUIT_REQUESTED ), 'Q' );
 	filemenu->AddItem( quitentry );
-	quitentry->SetTarget( this );
+	quitentry->SetTarget( be_app );
+
 	// optionsmenu
 	optionsmenu=new BMenu( "Options" );
 	menubar->AddItem(optionsmenu);
@@ -867,11 +868,12 @@ void Win::MessageReceived(BMessage *msg) {
 			be_app_messenger.SendMessage( msg );
 			break;
 		}
-		default: {
+		default:
+		{
 			BWindow::MessageReceived(msg);
+			break;
 		}
 	}
-//	Unlock();
 }
 uint32 Win::BroadcastTarget() {
 	printf("Win\n");
