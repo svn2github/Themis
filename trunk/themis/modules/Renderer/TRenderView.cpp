@@ -1,30 +1,46 @@
+/* See header for more info */
+
 #include <stdio.h>
 
 #include <List.h>
 #include <Message.h>
 
+#include "Elements.h"
 #include "Globals.h"
 #include "TRenderView.h"
+#include "Utils.h"
 
-TRenderView::TRenderView(BRect frame) : BView(frame,"God",B_FOLLOW_ALL_SIDES,B_WILL_DRAW) , UIElement(frame)
+#define TEXT "Heya girls ! As you can see if you type enough text"
+
+TRenderView::TRenderView(BRect frame) : BView(frame,"God",B_FOLLOW_ALL_SIDES,B_WILL_DRAW | B_FRAME_EVENTS) , UIElement(frame)
 {	
 	SetViewColor(255,255,255);
-	SetLowColor(255,255,255);
+	SetLowColor(RgbFor(255,255,255));
 	SetHighColor(0,0,0);
 	
 	currentMouseOver = this;
+	parentView 		 = this;
 	
 	UIElement::frame = Bounds();
 	
 	//====================== ADD WHAT YOU WANT FOR TESTING=========================
-//	ColorRect *rect = new ColorRect(BRect(30,30,190,60),17,204,179);
-//	AddChildElement(rect);
-//	rect->AddChildElement(new TextElement(BRect(40,40,120,50),"This is a TextElement",(BFont *)be_plain_font));
+	rgb_color color = MakeRgbFromHexa("#EB2323");
+	ColorRectElement *rect = new ColorRectElement(BRect(25,25,220,90),color);
+	EAddChild(rect);
+	TextLinkElement *el = new TextLinkElement(BRect(30,30,190,60),TEXT,(BFont *)be_plain_font,HighColor());
+	rect->EAddChild(el);
 	//=============================================================================
 }
 
 TRenderView::~TRenderView()
 {}
+
+void TRenderView::SetLowColor( rgb_color color)
+{
+	UIElement::lowcolor = color;
+	
+	BView::SetLowColor(color);
+}
 
 void TRenderView::Draw(BRect updateRect)
 {
@@ -32,10 +48,10 @@ void TRenderView::Draw(BRect updateRect)
 	if (nextLayer)
 		for (int32 i=0; i<nextLayer->CountItems(); i++)
 			if (((UIElement *)nextLayer->ItemAt(i))->frame.Intersects(updateRect))
-				((UIElement *)nextLayer->ItemAt(i))->DrawElement(this);
+				((UIElement *)nextLayer->ItemAt(i))->EDraw();
 
-	/*Many drawing there (mostly when drawing BBitmaps) are done asynchronously for speed
-	 (DrawBitmapAsync() for instance) so we got to Sync(). */
+	/*Many drawing above (mostly when drawing BBitmaps) are done asynchronously for speed
+	 (DrawBitmapAsync() for instance) so we got to Sync() for safety. */
 	Sync();
 	
 	BView::Draw(updateRect);
@@ -44,41 +60,43 @@ void TRenderView::Draw(BRect updateRect)
 void TRenderView::FrameResized(float width, float height)
 {
 	UIElement::frame = Bounds();
+	
+	EFrameResized(width,height);
 }
 
 void TRenderView::MouseDown(BPoint point)
 {
-	//Forward message to element
-	BMessage message(G_MOUSE_DOWN);
-	message.AddPoint(G_CURSOR_POSITION,point);
-	FindElementFor(point)->PostTMessage(&message);	
-	BView::MouseDown(point);
+	FindElementFor(point)->EMouseDown(point);
+}
+
+void TRenderView::MouseUp(BPoint point)
+{
+	FindElementFor(point)->EMouseUp(point);
 }
 
 void TRenderView::MouseMoved(BPoint point, uint32 transit, const BMessage *message)
 {
 	UIElement *onTop = FindElementFor(point);
-
-	/*We need to maintain the currentMouseOver var and to tell UIElements when Mouse
-	  enters and leave their frame. We Update the frontmost element if it needs to. (if it's bool  
-	  needUpdateOnMouseOver is true) */
-	if (currentMouseOver != onTop){
-		if (currentMouseOver->needUpdateOnMouseOver){
-			BMessage msg(G_MOUSE_MOVED);
-			msg.AddPointer(TRENDERVIEW_POINTER,this);
-			msg.AddPoint(G_CURSOR_POSITION,point);
-			msg.AddBool(G_CURSOR_TRANSFER,false);			
-			currentMouseOver->PostTMessage(&msg);
-		}	
-		if (onTop->needUpdateOnMouseOver){
-			BMessage msg(G_MOUSE_MOVED);
-			msg.AddPointer(TRENDERVIEW_POINTER,this);
-			msg.AddPoint(G_CURSOR_POSITION,point);
-			msg.AddBool(G_CURSOR_TRANSFER,true);		
-			onTop->PostTMessage(&msg);	
-		}			
+	
+	if (onTop == currentMouseOver)
+		onTop->EMouseMoved(point,B_INSIDE_VIEW,message);
+	else {
+		onTop->EMouseMoved(point,B_ENTERED_VIEW,message);
+		currentMouseOver->EMouseMoved(point,B_EXITED_VIEW,message);
 		currentMouseOver = onTop;
 	}
-	
-	BView::MouseMoved(point,transit,message);
 }
+
+void TRenderView::MessageReceived(BMessage *message)
+{
+	switch(message->what){
+		case R_WELCOME:{
+			BRect rect;
+			message->FindRect("rect",&rect);
+			FrameResized(rect.Width(),rect.Height());
+			}break;
+		default:
+			BView::MessageReceived(message);
+	}
+}
+

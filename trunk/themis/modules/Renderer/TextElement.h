@@ -1,3 +1,9 @@
+/*	Themis Renderer
+
+	Olivier MILLA (Methedras) methedras@online.fr
+	
+	This code falls under the General Themis License.
+*/
 #include <Font.h>
 #include <String.h>
 
@@ -11,16 +17,32 @@ class TextElement : public UIElement
 {
 	public:
 						TextElement(BRect frame, const char *text, BFont *font,
-									rgb_color high, rgb_color low, float size = 0);
-									//Maybe TRenderView *parent should be passed too
+									rgb_color high, float size = 0);
 									
 		virtual 		~TextElement();
+		
+		virtual void	EDraw();
+		virtual	void	EFrameResized(float width, float height);
 				
 	protected:
-				BString 	text;
+				//The text as given by the parser and the one cut in lines
+				//to enter the element's frame.
+				BString	 	text;
+				char		**linedText;
+				
 				BFont   	font;
-				rgb_color	low;
+				
+				//Saved here to avoid GetHeight() call at each Drawing
+				font_height	fh;
+				
+				//high color (low being into all UIElements)				
 				rgb_color	high;
+				
+				//Funcs and datas which are here to create the linedText array
+				int32		TextForFrame(char *text);
+		inline	int32		LineStartingAt(int32 n);
+								
+				BList		endsOfLines;
 };
 
 #endif

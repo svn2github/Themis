@@ -1,3 +1,9 @@
+/*	Themis Renderer
+
+	Olivier MILLA (Methedras) methedras@online.fr
+	
+	This code falls under the General Themis License.
+*/
 #include <GraphicsDefs.h>
 #include <SupportDefs.h>
 
@@ -11,19 +17,9 @@
 #define RGB_GREEN					0,255,0
 #define RGB_BLUE					0,0,255
 
-//Some globals BMessages what
-#define	G_MOUSE_MOVED				'gmmd'
-	#define	TRENDERVIEW_POINTER		"TRenderViewPointer"
-	#define G_CURSOR_POSITION		"Position"
-	#define	G_CURSOR_TRANSFER		"transfer" /*true when message is sent to 
-												 the Element that has the 
-												 cursor entering it's frame, 
-												 false to the one which 
-												 frame is being left by the 
-												 cursor*/
-#define G_MOUSE_DOWN				'gmdn'
-	//G_CURSOR_POSITION can be used here too
-	
+//Interface with UI
+#define	R_WELCOME					'rwoe'
+
 //TextElement Specific
 #define TE_COLOR_PATTERNS 			'crps'
 	#define	LOW_RED					"LR"
@@ -33,19 +29,5 @@
 	#define HIGH_GREEN				"HG"
 	#define HIGH_BLUE				"HB"
 
-//Some very useful functions
-inline void SetColor(rgb_color *to, rgb_color *from)
-{
-	to->red   = from->red;
-	to->green = from->green;
-	to->blue  = from->blue;
-}
-
-inline void SetColor(rgb_color *to, uchar red, uchar green, uchar blue)
-{
-	to->red   = red;
-	to->green = green;
-	to->blue  = blue;
-}
 
 #endif

@@ -1,0 +1,31 @@
+/*	Themis Renderer
+
+	Olivier MILLA (Methedras) methedras@online.fr
+	
+	This code falls under the General Themis License.
+*/
+#include "UIElement.h"
+
+#ifndef _TABLE_ELEMENT_H_
+#define _TABLE_ELEMENT_H_
+
+class TableElement : public UIElement
+{
+	public:
+							TableElement(BRect frame, int cellpadding, 
+										 int cellspacing, rgb_color bgcolor, 
+										 rgb_color bordercolor);
+		virtual 			~TableElement();
+		
+		virtual	void		EDraw();
+	
+	private:
+				int 		cellpadding;
+				int 		cellspacing;
+				int			rows;
+				int			columns;
+				rgb_color	bordercolor;
+};
+
+#endif
+
