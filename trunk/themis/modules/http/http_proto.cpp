@@ -236,12 +236,16 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 		}
 		
 	}
-	if (command==COMMAND_RETRIEVE)
+
+//	if (command==COMMAND_RETRIEVE)
 //		printf("HTTP_PROTO: command is retrieve\n");
-	if (command==COMMAND_INFO)
+//	if (command==COMMAND_INFO)
 //		printf("HTTP_PROTO: command is info\n");
+	
 	switch (command) {
 		case COMMAND_RETRIEVE: {
+			printf("HTTP_PROTO: COMMAND_RETRIEVE\n");
+			
 			int32 action=0;
 			BMessage *rmsg=new BMessage(*msg);
 //			printf("[http proto retrieve 1] message:\n");
@@ -272,6 +276,7 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 			//rmsg=NULL;
 		}break;
 		case COMMAND_INFO: {
+			printf("HTTP_PROTO: COMMAND_INFO\n");
 //			printf("HTTP_PROTO: Info what: %ld\n",msg->what);
 			switch(msg->what) {
 				case B_QUIT_REQUESTED: {
