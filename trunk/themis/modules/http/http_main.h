@@ -31,7 +31,6 @@ Project Start Date: October 18, 2000
 #include <SupportKit.h>
 #include <AppKit.h>
 #include <KernelKit.h>
-#include <NetEndpoint.h>
 #include "protocol_plugin.h"
 //namespace Themis_Networking
 // {

@@ -34,8 +34,8 @@ TYPE= SHARED
 #	in folder names do not work well with this makefile.
 SRCS=  \
 	http_main.cpp \
-	plugman.cpp \
-	plugclass.cpp
+	../../common/plugclass.cpp \
+	plugman.cpp
 
 #	specify the resource files to use
 #	full path or a relative path to the resource file can be used.

@@ -140,9 +140,6 @@ void winview::MessageReceived(BMessage *msg)
 //    write_port(httpport,FetchItem,data,size);
 //   }
 //  delete data;
-//        pobj->SetURL(url.String());
-        
-//        obj->GetURL();
        }
      }break;
     default:

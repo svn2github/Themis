@@ -38,9 +38,6 @@ Project Start Date: October 18, 2000
 #include <Message.h>
 #include <Messenger.h>
 #include <MessageRunner.h>
-#if B_BEOS_VERSION>B_BEOS_VERSION_5
-#include <sys/socket.h>
-#endif
 cacheman::cacheman(BMessage *info)
          :BHandler("cache_manager"),
           PlugClass(info)
@@ -101,10 +98,10 @@ void cacheman::MessageReceived(BMessage *mmsg)
         printf("cache: About to loop...\n");
  //       msg->PrintToStream();
  		//memset(name,0,B_OS_NAME_LENGTH);
-#ifdef BONE_VERSION //(B_BEOS_VERSION>B_BEOS_VERSION_5)
+#if (B_BEOS_VERSION > 0x0504)
         for (index=0;msg->GetInfo(B_ANY_TYPE,index,(const char**)&name,&type,&count)==B_OK; index++)
 #else
-        for (index=0;msg->GetInfo(B_ANY_TYPE,index,/*(char**)*/&name,&type,&count)==B_OK; index++)
+        for (index=0;msg->GetInfo(B_ANY_TYPE,index,&name,&type,&count)==B_OK; index++)
 #endif
          {
           printf("cache - message: %s %ld %ld\n",name,type,count);
