@@ -16,8 +16,9 @@ TNode	::	TNode( const unsigned short aNodeType, const TDOMString aNodeName = "",
 	mParentNode = NULL;
 	mNextSibling = NULL;
 	mPreviousSibling = NULL;
-
+	
 	mNodeList = new BList();
+	mChildNodes = new TNodeList( mNodeList );
 
 	switch ( mNodeType )	{
 		case ELEMENT_NODE:	{
@@ -114,7 +115,9 @@ TNode	::	~TNode()	{
 		delete item;
 	}
 
+	delete mChildNodes;
 	delete mNodeList;
+
 }
 
 unsigned short TNode	::	getNodeType() const	{
