@@ -792,6 +792,7 @@ void tcplayer::KillConnection(connection *target) {
 }
 int32 tcplayer::Send(connection **conn,unsigned char *data, int32 size) {
 printf("Send\n");
+
 	if ((*conn)->requests>0) {
 			char host[250];
 			int16 port;
@@ -805,9 +806,10 @@ printf("Send\n");
 		
 	}
 	else
+
 	 atomic_add(&(*conn)->requests,1);
 	
-	
+//	printf("Checking connection status.\n");
 	if (!Connected((*conn))) {
 printf("Not connected (send)\n");
 		
@@ -820,7 +822,7 @@ printf("Not connected (send)\n");
 			*conn=ConnectTo((*conn)->proto_id,host,port,false);
 #endif
 	}
-	
+//	printf("post connection status check.\n");
 	ssize_t sent=0;
 #ifdef USEOPENSSL
 	if ((*conn)->usessl) {
@@ -844,6 +846,38 @@ printf("Not connected (send)\n");
 		(*conn)->last_trans_time=real_time_clock();
 	}
 //	atomic_add(&(*conn)->requests,-1);
+//	if (sent==-1)
+//		printf("Error condition: %ld\n",errno);
+#ifdef USENETSERVER
+	if (sent<=0) {
+//		printf("connection terminated.\n");
+		(*conn)->open=false;
+			char host[250];
+			int16 port;
+			(*conn)->address->GetAddr(host,(unsigned short*)&port);
+#ifdef USEOPENSSL
+			*conn=ConnectTo((*conn)->proto_id,host,port,(*conn)->usessl,true);
+#else
+			*conn=ConnectTo((*conn)->proto_id,host,port,false,true);
+#endif
+			atomic_add(&(*conn)->requests,1);
+#ifdef USEOPENSSL
+	if ((*conn)->usessl) {
+		//mtx->lock();
+		sent=SSL_write((*conn)->ssl,(const char*)data,size);
+		//mtx->unlock();
+//		CHK_SSL(sent);
+	}
+	else {
+#endif
+		//mtx->lock();
+		sent=send((*conn)->socket,data,size,0);
+		//mtx->unlock();
+#ifdef USEOPENSSL
+	}
+#endif	 
+	}
+#endif
 	return sent;
 }
 int32 tcplayer::Receive(connection **conn, unsigned char *data, int32 size) {
@@ -918,6 +952,14 @@ int32 tcplayer::Receive(connection **conn, unsigned char *data, int32 size) {
 	//mtx->lock();
 	setsockopt((*conn)->socket,SOL_SOCKET,SO_NONBLOCK,&option,sizeof(option));
 	//mtx->unlock();
+//	if (got==-1)
+//		printf("Error condition: %ld\n",errno);
+#ifdef USENETSERVER
+	if (got<=0) {
+//		printf("connection terminated.\n");
+		(*conn)->open=false;
+	}
+#endif
 	return got;
 }
 
@@ -1053,6 +1095,15 @@ bool tcplayer::Connected(connection *conn,bool skipvalid) {
 				else
 					conn->open=true; 
 #else
+/*
+	char nul='\0';
+	iret=send(conn->socket,&nul,1,0);
+	if (iret==-1) {
+		conn->open=false;
+		}else {
+			conn->open=true;
+		}
+*/
 #endif
         }
 		option=0;
@@ -1133,6 +1184,15 @@ bool tcplayer::Connected(connection *conn,bool skipvalid) {
 				else
 					conn->open=true; 
 #else
+/*
+	char nul='\0';
+	iret=send(conn->socket,&nul,1,0);
+	if (iret==-1) {
+		conn->open=false;
+		}else {
+			conn->open=true;
+		}
+*/
 #endif
         }
 		option=0;
