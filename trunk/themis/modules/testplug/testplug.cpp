@@ -75,7 +75,7 @@ PlugClass *GetObject(void) {
 	return TP;
 	
 }
-testplug::testplug(BMessage *info):PlugClass(info)//,MessageSystem()
+testplug::testplug(BMessage *info):PlugClass(info,"Test Plug-in")//,MessageSystem()
 {
 //	MsgSysRegister(this);
 	CacheSys=NULL;

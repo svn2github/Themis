@@ -35,6 +35,7 @@ Project Start Date: October 18, 2000
 #include <Locker.h>
 #include <DataIO.h>
 #include <kernel/OS.h>
+#include <List.h>
 /*!
 \brief Object Oriented linked list representation of cached data.
 	The CacheObject class represents the actual cached file, whether it is on disk
@@ -46,6 +47,8 @@ class CacheObject {
 	protected:
 		//! Object oriented linked list containing cache user information.
 		CacheUser *userlist;
+		BList *ulist;
+	
 		//! The cache user object that has write permission on this particular cache object.
 		CacheUser *writelockowner;
 		//! The URL of this particular cache object.

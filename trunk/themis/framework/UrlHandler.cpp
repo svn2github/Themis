@@ -13,7 +13,7 @@
 extern plugman* PluginManager;
 
 UrlHandler::UrlHandler()
-	: MessageSystem()
+	: MessageSystem("URL Handler")
 {
 	printf( "UrlHandler::UrlHandler()\n" );
 

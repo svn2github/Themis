@@ -50,6 +50,8 @@ MessageSystem::MessageSystem(const char *msg_sys_name)
 	_msg_receiver_sem_=create_sem(0,"message_receiver_sem");
 	_ms_receiver_quit_=0;
 	_msg_receiver_running_=0;
+	_msg_receiver_thread_=0;
+	
 //	_msg_receiver_thread_=spawn_thread(MS_Start_Thread,MS_Name,B_LOW_PRIORITY,this);
 //	resume_thread(_msg_receiver_thread_);
 }
@@ -69,7 +71,11 @@ MessageSystem::~MessageSystem()
 int32 MessageSystem::MS_Start_Thread(void *arg) 
 {
 	MessageSystem *obj=(MessageSystem*)arg;
-	return obj->_ProcessMessage_(obj);
+	int32 retval=obj->_ProcessMessage_(obj);
+	printf("thread returned: %ld\n",retval);
+	
+	return retval;
+	
 }
 const char * MessageSystem::MsgSysObjectName() {
 	return MS_Name;
@@ -215,6 +221,9 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 
 void MessageSystem::Broadcast(uint32 targets,BMessage *msg) 
 {
+	BAutolock alock(&local_msg_sys_lock);
+	if (alock.IsLocked()) {
+		
 	if (acquire_sem(transmit_sem)==B_OK) {
 //		printf("MessageSystem::Broadcast\n");
 		if (msg!=NULL) {
@@ -250,49 +259,65 @@ can be sent to the sender of the current message. Useful information.
 		release_sem(process_sem);
 //		printf("sem released, message should be processing now.\n");
 	}
+	}
 	
 }
 int32 MessageSystem::_ProcessMessage_(void *arg) 
 {
+	BAutolock alock(&_processmessage_lock_);
 	MessageSystem *me=(MessageSystem*)arg;
-	volatile int32 count=0;
-	BMessage *msg;
-	while (!me->_ms_receiver_quit_) {
-//		if (acquire_sem(me->_msg_receiver_sem_)==B_OK) {
-			if (_ms_receiver_quit_)
+	if (alock.IsLocked()) {
+		me->_processmessage_lock_.Lock();
+		volatile int32 count=0;
+		me->_processmessage_lock_.Unlock();
+		BMessage *msg;
+		me->_ms_receiver_quit_=0;
+		while (!me->_ms_receiver_quit_) {
+			//	printf("me: %p\t%s\n",me,MsgSysObjectName());
+			if (me->_ms_receiver_quit_)
 				break;
 			if (me->_msg_receiver_running_==0)
 				atomic_add(&me->_msg_receiver_running_,1);
+			//printf("count messages\n");
 			me->_message_queue_.Lock();
 			if (!me->_message_queue_.IsEmpty()) {
 				count=me->_message_queue_.CountMessages();
+				//printf("count: %ld\n",count);
 			}
 			me->_message_queue_.Unlock();
 			if (count>0) {
-				while (count!=0) {
-					if (_ms_receiver_quit_)
+				//printf("processing messages\n");
+				while (count>0) {
+					if (me->_ms_receiver_quit_)
 						break;
 					me->_message_queue_.Lock();
+					//				printf("Retrieving message\n");
 					msg=me->_message_queue_.NextMessage();
 					count=me->_message_queue_.CountMessages();
 					me->_message_queue_.Unlock();
-					me->ReceiveBroadcast(msg);
-					delete msg;
-					msg=NULL;
-					
+					if (msg!=NULL) {		
+						me->ReceiveBroadcast(msg);
+						delete msg;
+						msg=NULL;
+					}
 				}
-				
 			}
-			
-			
-//		}
-		if (me->_message_queue_.IsEmpty())
-			break;
-		
+			if (me->_message_queue_.IsEmpty()){
+				//		printf("no more messages\n");
+				break;
+			}
+		}
 	}
-	me->_msg_receiver_running_=0;
+	//printf("exiting thread\n");
+	me->_processmessage_lock_.Lock();
+	//	printf("setting to not running\n");
+	atomic_add(&me->_msg_receiver_running_,-1);
+	if (me->_msg_receiver_running_!=0)
+		me->_msg_receiver_running_=0;
+	me->_processmessage_lock_.Unlock();
+	me->_msg_receiver_thread_=0;
 	exit_thread(0L);
-
+	return 0L;
 }
 
 status_t MessageSystem::ReceiveBroadcast(BMessage *msg)

@@ -258,6 +258,10 @@ This is the number of targets that received the most recently broadcast message.
 
 */
 		int32 _ProcessMessage_(void *arg);
+		BLocker _processmessage_lock_;
+	
+		BLocker local_msg_sys_lock;
+	
 	public:
 		static const int32 DEBUG_INFO_MSG='dbim';
 		const char *MsgSysObjectName();

@@ -43,6 +43,8 @@ CacheObject::CacheObject(int32 token,const char *URL) {
 	} else
 	 url=NULL;
 	 next=prev=NULL;
+	 ulist=new BList();
+	
 }
 CacheObject::~CacheObject() {
 	if (url!=NULL) {
@@ -62,6 +64,8 @@ CacheObject::~CacheObject() {
 	}
 	creation_time=last_access_time=0;
 	next=prev=NULL;
+	delete ulist;
+	
 //	delete lock;
 //	lock=NULL;
 }
@@ -69,6 +73,17 @@ bool CacheObject::IsUsedBy(uint32 usertoken) {
 	BAutolock alock(lock);
 	bool found=false;
 	if (alock.IsLocked()) {
+		CacheUser *cur;
+		for (int32 i=0; i<ulist->CountItems(); i++) {
+			cur=(CacheUser*)ulist->ItemAt(i);
+			if (cur->Token()==usertoken) {
+				found=true;
+				break;
+			}
+			
+		}
+		
+/*
 		CacheUser *cur=userlist;
 		while (cur!=NULL) {
 			if (cur->Token()==usertoken) {
@@ -77,6 +92,7 @@ bool CacheObject::IsUsedBy(uint32 usertoken) {
 			}
 			cur=cur->Next();
 		}
+*/
 	}
 	
 	return found;
@@ -84,7 +100,19 @@ bool CacheObject::IsUsedBy(uint32 usertoken) {
 void CacheObject::RemoveUser(uint32 usertoken) {
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
+		if (IsUsedBy(usertoken)) {
+			CacheUser *cur=FindUser(usertoken);
+			if (cur!=NULL) {
+				ulist->RemoveItem(cur);
+				UpdateAccessTime();
+				if (writelockowner==cur)
+					writelockowner=NULL;
+				delete cur;
+			}
+					
+		}
 		
+/*		
 		CacheUser *cur=userlist;
 		while (cur!=NULL) {
 			if (cur->Token()==usertoken) {
@@ -112,12 +140,19 @@ void CacheObject::RemoveUser(uint32 usertoken) {
 			}
 			cur=cur->Next();
 		}
+*/
 	}
 	
 }
 void CacheObject::AddUser(uint32 usertoken) {
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
+		if (!IsUsedBy(usertoken)) {
+			ulist->AddItem(new CacheUser(usertoken));
+			UpdateAccessTime();
+		}
+		
+	/*
 		if (userlist==NULL) {
 			userlist=new CacheUser(usertoken);
 			UpdateAccessTime();
@@ -131,6 +166,7 @@ void CacheObject::AddUser(uint32 usertoken) {
 			}
 			
 		}
+		*/
 	}
 	
 }
@@ -138,6 +174,14 @@ void CacheObject::AddUser(CacheUser *user)
 {
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
+		if (FindUser(user->Token())==NULL) {
+			ulist->AddItem(new CacheUser(user));
+			
+			UpdateAccessTime();
+			
+		}
+		
+/*
 		if (userlist==NULL) {
 			userlist=new CacheUser(user);
 			UpdateAccessTime();
@@ -152,7 +196,7 @@ void CacheObject::AddUser(CacheUser *user)
 			
 		}
 	
-
+*/
 	}
 		
 }
@@ -161,6 +205,29 @@ bool CacheObject::AcquireWriteLock(uint32 usertoken) {
 	bool successful=false;
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
+		CacheUser *user=FindUser(usertoken);
+		
+		if (user==NULL) {
+			
+			AddUser(usertoken);
+			FindUser(usertoken);
+		}
+		
+		if (writelockowner==NULL) {
+			writelockowner=user;
+			successful=true;
+			
+		} else {
+			if (writelockowner==user) {
+				successful=true;
+				
+			}
+			
+		}
+		UpdateAccessTime();
+		
+		
+	/*
 		if (writelockowner==NULL) {
 			CacheUser *cur=userlist;
 			while (cur!=NULL) {
@@ -182,6 +249,7 @@ bool CacheObject::AcquireWriteLock(uint32 usertoken) {
 			}
 			
 		}
+		*/
 	}
 	
 	return successful;	
@@ -261,11 +329,8 @@ int32 CacheObject::CountUsers()
 	int32 count=0;
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
-		CacheUser *cur=userlist;
-		while (cur!=NULL) {
-			count++;
-			cur=cur->Next();
-		}
+		count=ulist->CountItems();
+		
 	}
 	
 	return count;
@@ -274,11 +339,8 @@ CacheUser *CacheObject::GetUser(int32 which)
 {
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
-		if (which>=CountUsers())
-			return NULL;
-		CacheUser *user=userlist;
-		for (int32 i=0; i<which; i++)
-			user=user->Next();
+		CacheUser *user=(CacheUser*)ulist->ItemAt(which);
+		
 		return user;
 	}
 	return NULL;
@@ -286,15 +348,18 @@ CacheUser *CacheObject::GetUser(int32 which)
 
 CacheUser *CacheObject::FindUser(uint32 usertoken) 
 {
-	CacheUser *cur=userlist;
+	CacheUser *cur=NULL;
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
-		while (cur!=NULL) {
-			if (cur->Token()==usertoken) {
-				break;
+		if (IsUsedBy(usertoken)) {
+			for (int32 i=0; i<ulist->CountItems(); i++) {
+				cur=(CacheUser*)ulist->ItemAt(i);
+				if (cur->Token()==usertoken)
+					break;
 			}
-			cur=cur->Next();
+			
 		}
+		
 	}
 	
 	return cur;

@@ -185,5 +185,6 @@ float Renderer::PlugVersion()
 
 int32 Renderer::Type()
 {
-	return MS_TARGET_RENDERER;
+	return 'trdr';
+	//MS_TARGET_RENDERER;
 }

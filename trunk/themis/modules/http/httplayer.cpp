@@ -83,6 +83,7 @@ httplayer::httplayer(TCPManager *_TCP,http_protocol *protoclass)
 	if (CacheSys!=NULL) {
 		CacheToken=CacheSys->Register(Proto->Type(),"HTTP Protocol Add-on");
 	}
+	Proto->Debug("HTTP layer starting up");
 #ifdef DEBUG
 	printf("CacheToken & object: %lu %p\n",CacheToken,CacheSys);
 #endif
@@ -431,7 +432,7 @@ void httplayer::KillRequest(http_request *request) {
 
 http_request *httplayer::AddRequest(BMessage *info) {
 #ifdef DEBUG
-	printf("AddRequest\n");
+	Proto->Debug("AddRequest");
 #endif
 	info->PrintToStream();
 //	BAutolock alock(lock);

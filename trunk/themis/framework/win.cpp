@@ -57,7 +57,7 @@ Win::Win(
 	window_type type,
 	uint32 flags,
 	uint32 wspace )
-    : BWindow( frame, title, type, flags, wspace ), MessageSystem()
+    : BWindow( frame, title, type, flags, wspace ), MessageSystem("Themis Window")
 {
 	MsgSysRegister(this);
 	// size limits
