@@ -153,7 +153,7 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 			}	
 		}
 	}
-	printf("Renderer: ReceiveBroadcast is exiting\n");
+//	printf("Renderer: ReceiveBroadcast is exiting\n");
 	
 	return PLUG_HANDLE_GOOD;
 }

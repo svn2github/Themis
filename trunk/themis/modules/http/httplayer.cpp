@@ -1235,6 +1235,8 @@ void httplayer::DoneWithHeaders(http_request *request,bool nocaching) {
 	if (nocaching==false) {
 	switch(request->cache) {
 		case UsesCache: {
+			printf( "HTTP_LAYER: Creating DISK cache file\n" );
+			
 			if ((request->cacheinfo==NULL) && (request->cache_object_token==B_ERROR)){
 				//obviously we didn't find this item in the cache earlier...
 				//so create the item...
@@ -1252,17 +1254,28 @@ void httplayer::DoneWithHeaders(http_request *request,bool nocaching) {
 					creator.AddInt32("ReplyTo",Proto->PlugID());
 					creator.AddPointer("ReplyToPointer",Proto);
 #ifdef DEBUG
-					printf("12345 about to create cache item 54321\n");
+					printf("HTTP_LAYER: about to create cache item\n");
 #endif
 /*
 Even though the CacheObject is created in the next step, the actual disk file isn't created
 until/unless data is written to the object; including by writing attributes out.
 */
 					request->cache_object_token=CacheSys->CreateObject(CacheToken,request->url);
+					
+					if( request->cache_object_token )
+						printf( "HTTP_LAYER: request->cache_object_token valid!\n" );
+					
 					CacheSys->SetObjectAttr(CacheToken,request->cache_object_token,&creator);
 					request->cacheinfo=CacheSys->GetInfo(CacheToken,request->cache_object_token);
 					if (request->cacheinfo!=NULL)
+					{
+						printf( "HTTP_LAYER: printing request->cacheinfo:\n" );
 						request->cacheinfo->PrintToStream();
+					}
+					else
+					{
+						printf( "HTTP_LAYER: request->cacheinfo NOT VALID\n" );
+					}
 				}
 				
 			} else {
@@ -1290,6 +1303,8 @@ until/unless data is written to the object; including by writing attributes out.
 			
 		}break;
 		case DoesNotUseCache: {
+			printf( "HTTP_LAYER: Creating RAM cache file\n" );
+			
 			//basically, if we're not supposed to create a cache file, create a RAM cache file anyway
 			if ((request->cacheinfo==NULL) && (request->cache_object_token==B_ERROR)){
 				//obviously we didn't find this item in the cache earlier...
@@ -1341,13 +1356,15 @@ until/unless data is written to the object; including by writing attributes out.
 		}break;
 		default: {
 #ifdef DEBUG
-			printf("Unknown cache setting for file.\n");
+			printf("HTTP_LAYER: Unknown cache setting for file.\n");
 #endif
 		}
 		
 	}
 	}
+
 /*
+
 	if (request->cache!=DoesNotUseCache) {
 		header_st *curhead;
 		if (request->secure)
@@ -1373,10 +1390,11 @@ until/unless data is written to the object; including by writing attributes out.
 			printf("trying to create cache object.\n");
 		acquire_sem(cache_sem);//this keeps the http layer from proceeding before a BroadcastReply is called if there is a cache add-on loaded
 		printf("sem acquired, sending broadcast\n");
-		if (PluginManager->Broadcast(Proto->PlugID(),TARGET_CACHE,container)!=B_OK)
+		if (PluginManager->Broadcast( Proto->PlugID(), TARGET_CACHE,container)!=B_OK)
 			nocache=true;
 		delete container;
 		printf("broadcast called, cache received? %s\n",nocache?"no":"yes");
+
 / * 
 	Yes, it looks weird that we're acquiring the cache_sem again, but this makes sure
 	that we get a response back from the cache before we continue. We only want to release
@@ -1472,7 +1490,9 @@ until/unless data is written to the object; including by writing attributes out.
 			((BMallocIO*)request->data)->SetSize(1);
 		}
 	}
+
 */
+
 	if ((request->bytesremaining==-1) && (request->http_v_major==1) && (request->http_v_minor==0)) {
 		request->receivetilclosed=true;
 	}
@@ -1552,6 +1572,7 @@ until/unless data is written to the object; including by writing attributes out.
 		msg->AddInt64("bytes-received",request->bytesreceived);
 		printf("HTTP Layer - Done With Headers Broadcast:\n");
 		msg->PrintToStream();
+		
 		Proto->Broadcast(target,msg);
 		
 		delete msg;
