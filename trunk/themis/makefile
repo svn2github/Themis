@@ -58,6 +58,7 @@ FRAMEWORKSOURCES= \
 	framework/infowin.cpp \
 	framework/aboutview.cpp \
 	framework/aboutwin.cpp \
+	framework/prefswin.cpp \
 	framework/appaboutview.cpp \
 	framework/ThemisNavView.cpp \
 	framework/ThemisStatusView.cpp \
