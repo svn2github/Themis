@@ -1,0 +1,30 @@
+========
+17 June 2001
+========
+
+makelinks.sh
+Added new links for plugclass.cpp to both the cache and http modules.
+
+common/commondefs.h
+Added new protocol specific command values.
+
+common/plugclass.cpp common/plugclass.h
+Changed the Cancel variable from int8 to int32, and added a Stop function that uses atomic_add to change the value of Cancel.
+
+documentation/plugin_api.txt
+Updated (as in added some of the necessary info to) this file so that others may begin hacking away on plugins properly.
+
+framework/app.cpp
+The QuitRequested function will now wait for the PluginManager to die properly. This will ensure that the plugins are unloaded prior to the application quitting. This should potentially eliminate some memory leaks.
+
+framework/plugman.cpp
+The QuitRequested function will now call UnloadAllPlugins with the "clean" parameter set to true to unload every last plugin loaded. Also corrected the plugin load portion of MessageReceived to properly mark in memory plugins as being in memory.
+
+framework/winview.cpp framework/winview.h
+Made the stop button a little more permanent; it's still in an arbitrary location at the moment, but it now has a class wide pointer variable. There is also some testing code commented out in the MessageReceived function.
+
+modules/http/http_defines.h
+Changed the plugin version number, added two internal command values.
+
+modules/http/http_main.cpp modules/http/http_main.h
+Massive changes. Added license to the cpp file. Added new class http_worker which will perform http transactions in separate threads. The main http_protocol thread is now simply a manager for the http_worker class; it accepts new requests through a port called "http_protocol_port" and creates new http_workers to handle the transactions. See http_protocol::GetURL() for information on how to create appropriate messages to generate http_workers.
