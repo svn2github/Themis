@@ -215,29 +215,39 @@ status_t ImageMan::ReceiveBroadcast(BMessage *msg) {
 						{
 							last->next=new image_info_st;
 							last=last->next;
-							msg->FindPointer("element",&last->renderer_bitmap_element);
-							last->url=new char[strlen(url)+1];
-							memset((char*)last->url,0,strlen(url)+1);
-							strcpy((char*)last->url,url);
-							//see if we have the image in the cache already...
-							if (CacheSys!=NULL)
+							
+						} else {
+							if (image_list==NULL) //which it should
 							{
-								last->cache_object_token=CacheSys->FindObject(cache_user_token,url);
-								if (last->cache_object_token>=0)
-								{//yes, we have it the cache!
-								
-								} else {
-									BMessage request(LoadingNewPage);
-									request.AddString("target_url",url);
-									request.AddInt32("command",COMMAND_RETRIEVE);
-									Broadcast(MS_TARGET_PROTOCOLS,&request);
-									
-								}
-								
+								image_list=new image_info_st;
+								last=image_list;
 								
 							}
 							
 						}
+						msg->FindPointer("element",&last->renderer_bitmap_element);
+						last->url=new char[strlen(url)+1];
+						memset((char*)last->url,0,strlen(url)+1);
+						strcpy((char*)last->url,url);
+						//see if we have the image in the cache already...
+						if (CacheSys!=NULL)
+						{
+							last->cache_object_token=CacheSys->FindObject(cache_user_token,url);
+							if (last->cache_object_token>=0)
+							{//yes, we have it the cache!
+								last->bitmap=BTranslatorRoster::GetBitmap(CacheSys->ObjectIOPointer(cache_user_token,last->cache_object_token);
+								//if it's an animated image, we'll need to more processing first...
+							} else {//request the image from the appropriate protocol
+								BMessage request(LoadingNewPage);
+								request.AddString("target_url",url);
+								request.AddInt32("command",COMMAND_RETRIEVE);
+								Broadcast(MS_TARGET_PROTOCOLS,&request);
+								
+							}
+							
+							
+						}
+						
 						
 					}
 					
