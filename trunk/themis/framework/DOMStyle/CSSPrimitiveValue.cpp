@@ -42,6 +42,9 @@
 #include "Rect.hpp"
 #include "RGBColor.hpp"
 
+// DOM Core headers
+#include "TDOMException.h"
+
 CSSPrimitiveValue	::	CSSPrimitiveValue( const TDOMString aCssText,
 															unsigned short aPrimitiveType )
 							:	CSSValue( aCssText, CSS_PRIMITIVE )	{
@@ -90,7 +93,7 @@ void CSSPrimitiveValue	::	setStringValue( unsigned short aStringType,
 															   TDOMString aStringValue )	{
 
 	// Keeping it simple for now.
-	if ( mPrimitiveType == aUnitType )	{
+	if ( mPrimitiveType == aStringType )	{
 		mStringValue = aStringValue;
 	}
 	else	{
@@ -102,7 +105,7 @@ void CSSPrimitiveValue	::	setStringValue( unsigned short aStringType,
 TDOMString CSSPrimitiveValue	:: getStringValue()	{
 
 	// Keeping it simple for now.
-	if ( mPrimitiveType != aUnitType )	{
+	if ( mPrimitiveType != CSS_STRING )	{
 		throw TDOMException( INVALID_ACCESS_ERR );
 	}
 
@@ -113,7 +116,7 @@ TDOMString CSSPrimitiveValue	:: getStringValue()	{
 CounterPtr CSSPrimitiveValue	::	getCounterValue()	{
 
 	// Keeping it simple for now.
-	if ( mPrimitiveType != aUnitType )	{
+	if ( mPrimitiveType != CSS_COUNTER )	{
 		throw TDOMException( INVALID_ACCESS_ERR );
 	}
 
@@ -124,7 +127,7 @@ CounterPtr CSSPrimitiveValue	::	getCounterValue()	{
 RectPtr CSSPrimitiveValue	::	getRectValue()	{
 
 	// Keeping it simple for now.
-	if ( mPrimitiveType != aUnitType )	{
+	if ( mPrimitiveType != CSS_RECT )	{
 		throw TDOMException( INVALID_ACCESS_ERR );
 	}
 
@@ -135,7 +138,7 @@ RectPtr CSSPrimitiveValue	::	getRectValue()	{
 RGBColorPtr CSSPrimitiveValue	::	getRGBColorValue()	{
 
 	// Keeping it simple for now.
-	if ( mPrimitiveType != aUnitType )	{
+	if ( mPrimitiveType != CSS_RGBCOLOR )	{
 		throw TDOMException( INVALID_ACCESS_ERR );
 	}
 
