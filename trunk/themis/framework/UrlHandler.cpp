@@ -7,6 +7,7 @@
 #include "plugman.h"
 #include "UrlHandler.h"
 #include "../common/commondefs.h"
+#include "../modules/Renderer/TRenderView.h"
 
 extern plugman* PluginManager;
 
@@ -174,15 +175,20 @@ UrlHandler::ReceiveBroadcast(
 					
 					/*
 					 * Set the UrlEntrys state to loading complete. (To be implemented.)
-					 * Tell the HTML parser to start parsing the loaded data.
+					 * Tell the document parser to start parsing the loaded data.
 					 * Broadcast message is the following:
-					 * 		- uin32		"what" = UH_PARSE_HTML_START
+					 * 		- uin32		"what" = UH_PARSE_DOC_START
 					 *		- int32		"command" = COMMAND_INFO
 					 * 		- bool		"request_done" 	// Probably removable, as I can check here.
 					 * 		- string	"mimetype"
 					 * 		- string	"url"
 					 * 		- int32		"view_id"
 					 */
+					 
+					 /*
+					  * With Marks idea of grouping modules/add-ons, I guess this broadcast should go to
+					  * MS_TARGET_PARSER if i am not mistaken, right?
+					  */
 					
 					break;
 				}
@@ -193,21 +199,19 @@ UrlHandler::ReceiveBroadcast(
 					
 					msg->PrintToStream();
 					
-					int16 id = 0;
+					int32 id = 0;
 					int64 contentlength = 0;
 					int64 bytes_received = 0;
 					int64 size_delta = 0;
 					bool request_done = false;
 					bool secure = false;	
 					
-					// We need to change everything to int32 later!
-					
 					// Due to every kind of data delivered with 'ReturnedData' we make a little sanity
 					// check here to avoid problems.
-					if( msg->HasInt16( "view_uid" ) == false )
+					if( msg->HasInt32( "view_id" ) == false )
 						break;
 					
-					msg->FindInt16( "view_uid", &id );
+					msg->FindInt32( "view_id", &id );
 					msg->FindInt64( "bytes-received", &bytes_received);
 					msg->FindInt64( "size-delta", &size_delta);
 					msg->FindBool( "request_done", &request_done );
@@ -248,7 +252,7 @@ UrlHandler::ReceiveBroadcast(
 						// Broadcast the loading progress notify to the windows.
 						BMessage* notify = new BMessage( UH_WIN_LOADING_PROGRESS );
 						notify->AddInt32( "command", COMMAND_INFO );
-						notify->AddInt32( "view_id", ( int32 )id );
+						notify->AddInt32( "view_id", id );
 						Broadcast( MS_TARGET_WINDOW, notify );
 						delete notify;
 					}
@@ -284,34 +288,58 @@ UrlHandler::ReceiveBroadcast(
 					
 					/*
 					 * I was planning to move all urlparsing and handler decision making from the windows
-					 * URL_OPEN/BUTTON_RELOAD switch in here. Is this ok? But for that, I could use some
-					 * little assistance, as I'd like to break some currently working things then, too. :))
+					 * URL_OPEN/BUTTON_RELOAD switch in here.
 					 */
 					
 					break;
 				}
-				case UH_PARSE_HTML_FINISHED :
+				case UH_PARSE_DOC_FINISHED :
 				{
-					printf( "URLHANDLER: UH_PARSE_HTML_FINISHED\n" );
+					printf( "URLHANDLER: UH_PARSE_DOC_FINISHED\n" );
 					
 					/*
-					 * The HTML parser delivers us with the pointer to the DOM tree data AND with the
-					 * view-ID of the parsed site, when it is finished with parsing the HTML data.
-					 * Then I will fetch the RenderView pointer from the tab which is holding the
-					 * RenderView with the appropriate view ID.
+					 * The document parser delivers us with the pointer to the DOM tree data AND with the
+					 * view-ID of the parsed site, when it is finished with parsing the document data.
 					 * When everything is fine, I will Broadcast a message to the renderer with
-					 * 'UH_RENDER_START' including the DOM tree and RenderView pointer.
+					 * 'UH_RENDER_START' including the DOM tree and the view id.
 					 * Additionally the UrlEntrys state is set to html_parsed. (To be implemented.)
-					 * Note: The RenderView object is initialized with its unique ID in the windows
-					 * MessageReceived() URL_OPEN/BUTTON_RELOAD case and then attached to the appropriate
-					 * tab.
 					 *
 					 * Broadcast message to be sent is the following:
 					 * 		- uint32	"what" = UH_RENDER_START
 					 *		- int32		"command" = COMMAND_INFO
-					 * 		- pointer	"renderview_pointer"
 					 * 		- pointer	"dom_tree_pointer"
+					 *		- int32		"view_id"
 					 */
+					
+					if( msg->HasString( "type" ) )
+					{
+						BString str;
+						msg->FindString( "type", &str );
+						if( strncmp( "dom", str.String(), 3 ) == 0 )
+						{
+							void* dom_ptr = NULL;
+							msg->FindPointer( "dom_tree_pointer", &dom_ptr );
+							if( dom_ptr == NULL )
+							{
+								printf( "URLHANDLER: dom_tree_pointer invalid!!\n" );
+								break;
+							}
+							
+							int32 view_id = 0;
+							msg->FindInt32( "view_id", &view_id );
+							
+							BMessage* render = new BMessage( UH_RENDER_START );
+							render->AddInt32( "command", COMMAND_INFO );
+							render->AddPointer( "dom_tree_pointer", dom_ptr );
+							render->AddInt32( "view_id", view_id );
+							
+							printf( "  URLHANDLER: sending UH_RENDER_START\n" );
+							
+							Broadcast( MS_TARGET_RENDERER, render );
+							
+							delete render;							
+						}
+					}
 						
 					break;
 				}
@@ -330,9 +358,6 @@ UrlHandler::ReceiveBroadcast(
 					/*
 					 * The renderer just informs us about that it has finished rendering the page.
 					 * So we set the UrlEntrys state to rendered. (To be implemented.)
-					 * Note: While the renderer is cycling through the DOM tree and drawing into
-					 * the RenderView, it needs to make sure that it locks the window the RenderView
-					 * is attached to. (BView::LockLooper() could come in handy there.)
 					 *
 					 * The Broadcast I expect here is the following:
 					 * 		- uint32	"what" = UH_RENDER_FINISHED

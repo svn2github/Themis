@@ -18,11 +18,11 @@
 #include "win.h"
 #include "app.h"
 
-ThemisTab::ThemisTab( BView *view, int16 uid )
+ThemisTab::ThemisTab( BView* view )
 	: BTab( view )
 {
-	fUniqueID = uid;
-	
+	fViewID = 0;
+		
 	int8 histdepth;
 	AppSettings->FindInt8( "TabHistoryDepth", &histdepth );
 	fHistory = new TabHistory( histdepth );
@@ -245,8 +245,15 @@ ThemisTab::GetHistory()
 	return fHistory;
 }
 
-int16
-ThemisTab::UniqueID()
+int32
+ThemisTab::GetViewID()
 {
-	return fUniqueID;
+	return fViewID;
+}
+
+void
+ThemisTab::SetViewID(
+	int32 id )
+{
+	fViewID = id;
 }

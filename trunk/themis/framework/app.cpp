@@ -44,25 +44,17 @@ using namespace _Themis_Networking_;
 plugman *PluginManager;
 BMessage *AppSettings;
 
-App::App(const char *appsig)
-	:BApplication(appsig),MessageSystem() {
-	MDaemon=new MessageDaemon();
-	MsgSysRegister(this);
-	AppSettings=new BMessage;
-	LoadSettings();
-	app_info ai;
-	qr_called=0;
-	AWin=NULL;
-	PWin=NULL;
-	fUniqueIDCounter = 0;
-	GetAppInfo(&ai);
-	entry_ref appdirref;
-	BEntry *ent=new BEntry(&ai.ref);
-	ent->GetParent(ent);
-	ent->GetRef(&appdirref);
-	delete ent;
-	PluginManager=new plugman(appdirref);
+App::App(
+	const char* appsig )
+	: BApplication( appsig ), MessageSystem()
+{
+	fQR_called = 0;
+	fAboutWin = NULL;
+	fPrefsWin = NULL;
+	fIDCounter = 0;
 	fUrlHandler = NULL;
+	fLocker = new BLocker();
+	
 #ifndef NEWNET
 	TCP=new tcplayer;
 	TCP->Start();
@@ -70,6 +62,21 @@ App::App(const char *appsig)
 	TCPMan=new TCPManager;
 	TCPMan->Start();
 #endif
+
+	fMessageDaemon=new MessageDaemon();
+	MsgSysRegister(this);
+
+	AppSettings=new BMessage;
+	LoadSettings();
+
+	app_info ai;
+	GetAppInfo(&ai);
+	entry_ref appdirref;
+	BEntry *ent=new BEntry(&ai.ref);
+	ent->GetParent(ent);
+	ent->GetRef(&appdirref);
+	delete ent;
+	PluginManager=new plugman(appdirref);
 
 	// init the GlobalHistory, and fill it with the settings data (if available)
 	printf( "APP Getting GlobalHistoryData\n" );
@@ -120,8 +127,12 @@ App::App(const char *appsig)
 
 App::~App(){
 	printf("app destructor\n");
+	
+	if( fLocker )
+		delete fLocker;
+	
 	MsgSysUnregister(this);
-	if (!qr_called)
+	if (!fQR_called)
 		QuitRequested();
 	// delete GlobalHistory before AppSettings gets deleted
 	delete fGlobalHistory;
@@ -136,15 +147,15 @@ App::~App(){
 		AppSettings=NULL;
 	}
 	printf("~app end\n");
-	delete MDaemon;
+	delete fMessageDaemon;
 }
 
 void App::AboutRequested()
 {
-	if (AWin==NULL) {
-		AWin=new aboutwin(BRect(200,200,800,500),"About Themis",B_TITLED_WINDOW,B_ASYNCHRONOUS_CONTROLS|B_NOT_MINIMIZABLE);
+	if (fAboutWin==NULL) {
+		fAboutWin=new aboutwin(BRect(200,200,800,500),"About Themis",B_TITLED_WINDOW,B_ASYNCHRONOUS_CONTROLS|B_NOT_MINIMIZABLE);
 	} else {
-		AWin->Activate(true);
+		fAboutWin->Activate(true);
 	}
 }
 
@@ -179,7 +190,7 @@ bool App::QuitRequested(){
 	
 	printf( "App::QuitRequested()\n" );
 	SetPulseRate(0);
-	atomic_add(&qr_called,1);
+	atomic_add(&fQR_called,1);
 	status_t stat;
 	Win* w=NULL;
 	BMessenger *msgr=NULL;
@@ -241,7 +252,7 @@ void App::MessageReceived(BMessage *msg){
 		case ABOUTWIN_CLOSE :
 		{
 			printf( "APP ABOUTWIN_CLOSE\n" );
-			AWin = NULL;
+			fAboutWin = NULL;
 			break;
 		}
 		case B_QUIT_REQUESTED :
@@ -288,13 +299,13 @@ void App::MessageReceived(BMessage *msg){
 		case PREFSWIN_CLOSE :
 		{
 			printf( "APP PREFSWIN_CLOSE\n" );
-			PWin = NULL;
+			fPrefsWin = NULL;
 			break;
 		}
 		case PREFSWIN_SHOW :
 		{
 			printf( "PREFSWIN_SHOW\n" );
-			if( PWin == NULL)
+			if( fPrefsWin == NULL)
 			{
 				BPoint point;
 				AppSettings->FindPoint( "PrefsWindowPoint", &point );
@@ -303,7 +314,7 @@ void App::MessageReceived(BMessage *msg){
 				rect.top = point.y;
 				rect.right = rect.left + 500;
 				rect.bottom = rect.top + 265;
-				PWin = new prefswin(
+				fPrefsWin = new prefswin(
 					rect,
 					"Preferences",
 					B_TITLED_WINDOW_LOOK,
@@ -311,7 +322,7 @@ void App::MessageReceived(BMessage *msg){
 					B_NOT_RESIZABLE | B_ASYNCHRONOUS_CONTROLS | B_NOT_MINIMIZABLE | B_NOT_ZOOMABLE );
 			}
 			else
-				PWin->Activate(true);
+				fPrefsWin->Activate(true);
 				
 			break;
 		}
@@ -696,16 +707,16 @@ App::GetMainWindowCount()
 	return count;
 }
 
-int16
-App::GetNewUniqueID()
+int32
+App::GetNewID()
 {
-	fUniqueIDCounter += 1;
+	fIDCounter += 1;
 		
-	// i innerly hope that nobody will ever reach the 32k+ id limit,
-	// who still has the first tab/window/site open :)
-	if( fUniqueIDCounter > 32766 )
+	// i innerly hope that nobody will ever reach the id limit,
+	// who still has the first site open :)
+	if( fIDCounter > 2000000000 )
 	{
-		fUniqueIDCounter = 0;
+		fIDCounter = 0;
 		BString astring;
 		astring <<
 		"Congratulations!\n\nYou are a hardcore Themis user!\n\n" <<
@@ -715,7 +726,23 @@ App::GetNewUniqueID()
 		alert->Go();
 	}		
 	
-	return fUniqueIDCounter;
+	return fIDCounter;
+}
+
+TRenderView*
+App::GetRenderViewFor(
+	int32 id )
+{
+	/*
+	 * Cycle through every window, searching every tabview/tab for the given
+	 * ID, and return a pointer to this view. Otherwise, return NULL.
+	 */
+	
+	fLocker->Lock();
+	
+	
+	fLocker->Unlock();
+	return NULL;
 }
 
 Win*

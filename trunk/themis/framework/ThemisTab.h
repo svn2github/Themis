@@ -17,7 +17,7 @@
 class ThemisTab : public BTab
 {
 	public:
-									ThemisTab( BView *view, int16 uid );
+									ThemisTab( BView* view );
 									~ThemisTab();
 									
 		virtual void				DrawTab(
@@ -31,10 +31,13 @@ class ThemisTab : public BTab
 		
 		TabHistory*					GetHistory();
 										
-		int16						UniqueID();
+		int32						GetViewID();
+		
+		void						SetViewID(
+										int32 id );
 		
 	private:
-		int16						fUniqueID;
+		int32						fViewID;
 		
 		TabHistory*					fHistory;
 };

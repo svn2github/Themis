@@ -34,6 +34,7 @@ Project Start Date: October 18, 2000
 #include "msgsystem.h"
 #include "ThemisNavView.h"
 #include "ThemisStatusView.h"
+#include "ThemisTab.h"
 #include "ThemisTabView.h"
 #include "ThemisUrlPopUpWindow.h"
 #include "FakeSite.h"
@@ -44,13 +45,15 @@ Project Start Date: October 18, 2000
 This is the main browser window.
 */
 
+class ThemisTab;
+
 class Win : public BWindow, public MessageSystem
 {
 	private:
 		bool						startup;
 //		HTMLParser*					Parser;
 		uint32						protocol;
-  		int16						fUniqueID;
+// 		int16						fUniqueID;
   		Win*						fNextWindow;
   		BRect						fOldFrame;
   		bool						fMaximized;
@@ -78,14 +81,19 @@ class Win : public BWindow, public MessageSystem
 		uint32						BroadcastTarget();
 		void						CreateTabView();
 		void						CreateUrlPopUpWindow();
-		FakeSite*					GetViewPointer( int16 tab_uid, int16 view_uid );
+		
+		ThemisTab*					FindTabFor(
+										int32 id );		
+		
+//		FakeSite*					GetViewPointer( int16 tab_uid, int16 view_uid );
+
 		void						LoadInterfaceGraphics();
 		Win*						NextWindow();
 		status_t					ReceiveBroadcast(BMessage *message);
 		void						ReInitInterface();
 		void						SetNextWindow( Win* nextwin );
 		void						SetQuitConfirmed( bool state );
-		int16						UniqueID();
+//		int16						UniqueID();
 		void						UrlTypedHandler( bool show_all );
 						
 		BMenuBar*					menubar;
