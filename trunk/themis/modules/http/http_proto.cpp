@@ -311,7 +311,7 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 						PlugClass *pobj=NULL;
 						msg->FindPointer("plugin",(void**)&pobj);
 						if (pobj!=NULL) {
-							if ((pobj->Type()&TARGET_CACHE)!=0) {
+							if (pobj->PlugID()=='cash') {
 //								HTTP->Lock();
 										HTTP->CacheSys=(CachePlug*)pobj;
 										HTTP->CacheToken=HTTP->CacheSys->Register(Type(),"HTTP Protocol Add-on");

@@ -139,7 +139,11 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 //							broadcaster->broadcast_status_code|=cur->ptr->ReceiveBroadcast(msg);
 							_message_targets_++;
 								cur->ptr->_message_queue_.Lock();
-								cur->ptr->_message_queue_.AddMessage(new BMessage(*msg));
+								BMessage *copy=new BMessage(*msg);
+							
+								cur->ptr->_message_queue_.AddMessage(copy);
+								printf("message copy %p added to queue for %s\n",cur->ptr->MsgSysObjectName());
+							
 								cur->ptr->_message_queue_.Unlock();
 								if (cur->ptr->_msg_receiver_running_==0) {
 							//		status_t status;

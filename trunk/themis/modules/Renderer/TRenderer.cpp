@@ -3,7 +3,6 @@
 
 #include "Globals.h"
 #include "TRenderer.h"
-
 #define 	THREAD_NAMES	7
 
 const char *THREAD_NAME[] = {
@@ -73,13 +72,22 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 	switch (message->FindInt32("command")){
 		case COMMAND_INFO:{
 			switch (message->what){
+			
 				case PlugInLoaded:{
 					PlugClass *objet = NULL;
 					message->FindPointer("plugin",(void **)&objet);
 					if (objet != NULL)
-						if ((objet->Type() & TARGET_CACHE) != 0)
-							cache = (CachePlug *)objet;
+					{
+						if (objet->PlugID() == 'cash')
+						{
+									cache = (CachePlug *)objet;
+									cacheUserToken = cache->Register( Type(), "Themis Renderer" );
+						}
+						
+					}
+					
 					}break;
+					
 				case PlugInUnLoaded:{
 					if (((uint32)(message->FindInt32("type")) & TARGET_CACHE) != 0)
 						cache = NULL;
@@ -139,6 +147,7 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 			}	
 		}
 	}
+	printf("Renderer: ReceiveBroadcast is exiting\n");
 	
 	return PLUG_HANDLE_GOOD;
 }

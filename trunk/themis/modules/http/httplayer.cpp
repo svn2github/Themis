@@ -2272,7 +2272,11 @@ int32 httplayer::LayerManager() {
 					if (quit)
 						break;
 					if (!current->done) {
+#ifndef NEWNET
+						if (current->datawaiting) {
+#else
 						if ((current->datawaiting) && (current->conn->DataSize()>0L)) {
+#endif
 							memset(buffer,0,size);
 							bytes=0;
 	#ifndef NEWNET

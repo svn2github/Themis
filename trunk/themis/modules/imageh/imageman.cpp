@@ -256,7 +256,7 @@ status_t ImageMan::ReceiveBroadcast(BMessage *msg) {
 					PlugClass *pobj=NULL;
 					msg->FindPointer("plugin",(void**)&pobj);
 					if (pobj!=NULL) {
-						if ((pobj->Type()&TARGET_CACHE)!=0) {
+						if (pobj->PlugID()=='cash') {
 							CacheSys=(CachePlug*)pobj;
 							cache_user_token=CacheSys->Register(Type(),"Image Handler");
 						}

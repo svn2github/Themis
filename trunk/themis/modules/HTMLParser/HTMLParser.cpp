@@ -168,7 +168,7 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * aMessage )	{
 					PlugClass * plug = NULL;
 					aMessage->FindPointer(  "plugin", (void **) &plug );
 					if ( plug != NULL )	{
-							if ( ( plug->Type() & TARGET_CACHE ) != 0 )	{
+							if (  plug->PlugID() == 'cash' )	{
 								mCache = (CachePlug *) plug;
 								mUserToken = mCache->Register( Type(), "HTML Parser" );
 							}

@@ -139,7 +139,7 @@ status_t FileProtocol	::	ReceiveBroadcast( BMessage * message )	{
 					PlugClass * plug = NULL;
 					message->FindPointer(  "plugin", (void **) &plug );
 					if ( plug != NULL )	{
-						if ( ( plug->Type() & TARGET_CACHE ) != 0 )	{
+						if (  plug->PlugID() == 'cash' )	{
 							cache = (CachePlug *) plug;
 							userToken = cache->Register( Type(), "File Protocol" );
 						}
