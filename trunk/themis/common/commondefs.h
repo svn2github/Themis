@@ -127,6 +127,8 @@ to allow interoperability in some parts of the application.
 #define BUTTON_HOME				'bhom'
 #define CLOSE_OTHER_TABS		'clot'
 #define CLOSE_URLPOPUP			'clpu'
+#define DTD_CHANGED				'dtdc'
+#define DTD_CHANGED_PARSER		'dtdp'
 #define RE_INIT_INTERFACE		'riif'
 #define SHOW_PREFERENCES		'shpr'
 #define TAB_ADD					'tadd'
