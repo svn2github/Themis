@@ -65,6 +65,7 @@ FRAMEWORKSOURCES= \
 	framework/ThemisNavView.cpp \
 	framework/ThemisStatusView.cpp \
 	framework/ThemisTab.cpp \
+	framework/GlobalHistory.cpp \
 	framework/TabHistory.cpp \
 	framework/TPictureButton.cpp \
 	framework/ThemisTabView.cpp \
