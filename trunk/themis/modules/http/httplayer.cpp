@@ -1781,19 +1781,19 @@ BMessage *httplayer::CheckCacheStatus(http_request *request) {
 		msg->AddString("url",request->url);
 		BMessage *reply=NULL;
 		acquire_sem(cache_sem);
-		BMessage container;
+		BMessage *container=new BMessage;
 		msg->AddInt32("ReplyTo",Proto->PlugID());
 		msg->AddPointer("ReplyToPointer",Proto);
 		msg->AddInt32("command",COMMAND_INFO_REQUEST);
 		msg->AddBool("cache_item",true);
-		container.AddMessage("message",msg);
+		container->AddMessage("message",msg);
 		
 		delete msg;
 		delete msgr;
 		bool nocache=false;
-		if (PluginManager->Broadcast(Proto->PlugID(),TARGET_CACHE,&container)!=B_OK)
+		if (PluginManager->Broadcast(Proto->PlugID(),TARGET_CACHE,container)!=B_OK)
 			nocache=true;
-		
+		delete container;
 /*
 	Yes, it looks weird that we're acquiring the cache_sem again, but this makes sure
 	that we get a response back from the cache before we continue. We only want to release

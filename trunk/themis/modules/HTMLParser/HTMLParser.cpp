@@ -2481,10 +2481,11 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 		}
 		default:	{
 			message->PrintToStream();
+			return PLUG_DOESNT_HANDLE;
 		}
 	}
 	
-	return B_OK;
+	return PLUG_HANDLE_GOOD;
 	
 }
 

@@ -164,7 +164,7 @@ DOMWindow	::	DOMWindow( TDocumentShared document )	:
 	attrBox->AddChild( scrollAttr );
 	attrBox->AddChild( scrollValue );
 	Show();
-
+	
 }
 
 DOMWindow	::	~DOMWindow()	{
@@ -448,10 +448,11 @@ status_t DOMView	::	ReceiveBroadcast( BMessage * message )	{
 		}
 		default:	{
 			message->PrintToStream();
+			return PLUG_DOESNT_HANDLE;
 		}
 	}
 	
-	return B_OK;
+	return PLUG_HANDLE_GOOD;
 	
 }
 

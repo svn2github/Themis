@@ -144,6 +144,7 @@ status_t http_protocol::BroadcastReply(BMessage *msg){
 				}break;
 				case CachedObject: 
 				case CacheObjectNotFound: {
+					printf("http: reply from cache received.\n");
 					cache_reply=new BMessage(*msg);
 					release_sem(HTTP->cache_sem);
 				}break;

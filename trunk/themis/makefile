@@ -216,6 +216,8 @@ endif
 #			help
 #			dist
 #			domlib
+#			core
+#			domvaddon
 #			libs
 #			domtest
 #			domloadtest
@@ -236,6 +238,10 @@ cleanlibs:
 cleanaddon:
 	@rm -rf objects/add-ons objects/common depends/add-ons depends/common Themis/add-ons
 	@echo Done.
+core: framework cacheaddon httpaddon htmlpaddon
+	@echo Done building the core application files.
+core2: core testplug domvaddon
+	@echo Done building the core and special selection files.
 help:
 	@echo "To compile, type \"make <target>\", where \"<target>\" is one or more of the following:"
 	@echo "	all		All of Themis"
@@ -255,6 +261,9 @@ help:
 	@echo "	domlib		DOM library"
 	@echo "	libs		Just the ibraries"
 	@echo "	domtest		DOM test application"
+	@echo "	domvaddon	DOMView add-on"
+	@echo "	core		Framework, HTTP, HTMLParser and cache add-ons"
+	@echo "	core2		Framework, HTTP, cache, testplug, HTMLParser and DOMView add-ons"
 	@echo "	domloadtest	DOM LoadTest application"
 	@echo "	testplug	A sample/test plug-in"
 	@echo "*** NOTE ***"

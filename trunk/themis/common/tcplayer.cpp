@@ -835,10 +835,14 @@ int32 tcplayer::Receive(connection **conn, unsigned char *data, int32 size) {
 void tcplayer::RequestDone(connection *conn,bool close) {
 	if (conn!=NULL) {
 		atomic_add(&conn->requests,-1);
-		if (conn->requests>0)
-			conn->requests=0;
-		if ((close) && (!conn->closedcbdone))
-			CloseConnection(conn);
+		if (conn->closedcbdone==0) {
+			
+			if (conn->requests>0)
+				conn->requests=0;
+			if ((close) && (!conn->closedcbdone))
+				CloseConnection(conn);
+		}
+		
 	}
 }
 

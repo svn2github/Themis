@@ -303,7 +303,7 @@ status_t plugman::Broadcast(int32 source,int32 targets,BMessage *msg) {
 					iloaded=true;
 					
 				}
-				
+				printf("Sending broadcast to: %s\n",cur->pobj->PlugName());
 				ret=cur->pobj->ReceiveBroadcast(subm);
 				if ((cur->type&targets>=1) && (ret!=PLUG_HANDLE_GOOD))
 					final_ret|=B_ERROR;
@@ -313,7 +313,7 @@ status_t plugman::Broadcast(int32 source,int32 targets,BMessage *msg) {
 							if (iloaded==true)
 								UnloadPlugin(cur->plugid);
 
-				printf("Broadcast sent to: %s\t%ld\n",cur->pobj->PlugName(),ret);
+				printf("Broadcast sent to: %s\t%ld (%c%c%c%c)\n",cur->pobj->PlugName(),ret,ret>>24,ret>>16,ret>>8,ret);
 			}
 		} else {
 			if (!cur->inmemory)
@@ -457,7 +457,7 @@ void plugman::MessageReceived(BMessage *msg) {
 							LoadPlugin(cur->plugid);
 							iloaded=true;
 						}
-						printf("plugman: sending broadcast to %c%c%c%c\n",cur->plugid>>24,cur->plugid>>16,cur->plugid>>8, cur->plugid);
+						printf("plugman: sending broadcast to %s\n",cur->pobj->PlugName());
 						
 						ret=cur->pobj->ReceiveBroadcast(subm);
 						if (ret==PLUG_HANDLE_GOOD) {
@@ -469,7 +469,7 @@ void plugman::MessageReceived(BMessage *msg) {
 						}
 						
 						
-						printf("Broadcast sent to: %s\t%ld\n",cur->pobj->PlugName(),ret);
+						printf("Broadcast sent to: %s\t%ld(%c%c%c%c)\n",cur->pobj->PlugName(),ret,ret>>24,ret>>16,ret>>8,ret);
 					}
 				} else {
 					if (!cur->inmemory)

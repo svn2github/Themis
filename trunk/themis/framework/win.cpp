@@ -90,12 +90,12 @@ void Win::MessageReceived(BMessage *msg) {
 //	Unlock();
 }
 void Win::WindowActivated(bool active) {
-//	BWindow::WindowActivated(active);
 	if (startup) {
 		startup=false;
 		printf("WindowActivated\n");
 		
 	}
+	BWindow::WindowActivated(active);
 }
 void Win::WorkspacesChanged(uint32 oldws, uint32 newws) 
 {
