@@ -43,4 +43,8 @@ using namespace std;
 */
 typedef string TDOMString;
 
+// Boost headers
+#include "boost/shared_ptr.hpp"
+#include "boost/weak_ptr.hpp"
+
 #endif

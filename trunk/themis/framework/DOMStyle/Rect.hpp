@@ -32,7 +32,13 @@
 #define RECT_HPP
 
 // DOM Style headers
-#include "CSSPrimitiveValue.hpp"
+#include "DOMStyleSupport.hpp"
+
+// Declarations
+class CSSPrimitiveValue;
+
+// Typedefs
+typedef boost::shared_ptr<CSSPrimitiveValue> CSSPrimitiveValuePtr;
 
 /// Rect implementation of the DOM CSS.
 
@@ -43,6 +49,16 @@
 */
 
 class Rect	{
+
+	private:
+		/// The top of the rect.
+		CSSPrimitiveValuePtr mTop;
+		/// The right of the rect.
+		CSSPrimitiveValuePtr mRight;
+		/// The bottom of the rect.
+		CSSPrimitiveValuePtr mBottom;
+		/// The left of the rect.
+		CSSPrimitiveValuePtr mLeft;
 
 	public:
 		/// Constructor of the Rect class.
@@ -66,16 +82,16 @@ class Rect	{
 		~Rect();
 		
 		/// A function to get the top value of the rect.
-		CSSPrimitiveValuePtr getTop();
+		CSSPrimitiveValuePtr getTop() const;
 
 		/// A function to get the right value of the rect.
-		CSSPrimitiveValuePtr getRight();
+		CSSPrimitiveValuePtr getRight() const;
 
 		/// A function to get the bottom value of the rect.
-		CSSPrimitiveValuePtr getBottom();
+		CSSPrimitiveValuePtr getBottom() const;
 
 		/// A function to get the left value of the rect.
-		CSSPrimitiveValuePtr getLeft();
+		CSSPrimitiveValuePtr getLeft() const;
 		
 };
 

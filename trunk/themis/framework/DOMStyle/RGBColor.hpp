@@ -34,6 +34,12 @@
 // DOM Style headers
 #include "CSSPrimitiveValue.hpp"
 
+// Declarations
+class CSSPrimitiveValue;
+
+// Typedefs
+typedef boost::shared_ptr<CSSPrimitiveValue> CSSPrimitiveValuePtr;
+
 /// RGBColor implementation of the DOM CSS.
 
 /**
@@ -44,6 +50,14 @@
 
 class RGBColor	{
 
+	private:
+		/// The red component of the color
+		CSSPrimitiveValuePtr mRed;
+		/// The green component of the color
+		CSSPrimitiveValuePtr mGreen;
+		/// The blue component of the color
+		CSSPrimitiveValuePtr mBlue;
+	
 	public:
 		/// Constructor of the RGBColor class.
 		/**
@@ -65,13 +79,13 @@ class RGBColor	{
 		~RGBColor();
 		
 		/// A function to get the red value of the color.
-		CSSPrimitiveValuePtr getRed();
+		CSSPrimitiveValuePtr getRed() const;
 
 		/// A function to get the green value of the color.
-		CSSPrimitiveValuePtr getGreen();
+		CSSPrimitiveValuePtr getGreen() const;
 
 		/// A function to get the blue value of the color.
-		CSSPrimitiveValuePtr getBlue();
+		CSSPrimitiveValuePtr getBlue() const;
 		
 };
 

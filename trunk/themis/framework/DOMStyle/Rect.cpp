@@ -25,54 +25,52 @@
 	
 	Original Author: 	Mark Hellegers (M.H.Hellegers@stud.tue.nl)
 	Project Start Date: October 18, 2000
-	Class Implementation Start Date: March 08, 2004
+	Class Implementation Start Date: March 09, 2004
 */
 
 /*
-	CSSValueList implementation
-	See CSSValueList.hpp for more information
+	Rect implementation
+	See Rect.hpp for more information
 */
 
 // Standard C headers
 #include <stdio.h>
 
-// Standard C++ headers
-#include <vector>
-
 // DOM Style headers
-#include "CSSValueList.hpp"
-#include "CSSValue.hpp"
+#include "Rect.hpp"
+#include "CSSPrimitiveValue.hpp"
 
-CSSValueList	::	CSSValueList( const TDOMString aCSSText,
-											 const vector<CSSValuePtr> * aValueList )
-					:	CSSValue( aCSSText, CSS_VALUE_LIST )	{
+Rect	::	Rect( CSSPrimitiveValuePtr aTop, CSSPrimitiveValuePtr aRight, 
+					CSSPrimitiveValuePtr aBottom, CSSPrimitiveValuePtr aLeft )	{
 	
-	printf( "Creating CSSValueList\n" );
-	
-	mValueList = aValueList;
+	printf( "Creating Rect\n" );
 	
 }
 
-CSSValueList	::	~CSSValueList()	{
+Rect	::	~Rect()	{
 
 }
 
-unsigned long CSSValueList	::	getLength() const	{
-	
-	if ( mValueList )	{
-		return mValueList->size();
-	}
-	
-	return 0;
+CSSPrimitiveValuePtr Rect	::	getTop() const	{
+
+	return mTop;
 	
 }
 
-CSSValuePtr CSSValueList	::	item( unsigned long aIndex )	{
-	
-	if ( mValueList && aIndex < mValueList->size() )	{
-		return (*mValueList)[ aIndex ];
-	}
-	
-	return CSSValuePtr();
+CSSPrimitiveValuePtr Rect	::	getRight() const	{
 
+	return mRight;
+	
+}
+
+CSSPrimitiveValuePtr Rect	::	getBottom() const	{
+
+	return mBottom;
+	
+}
+
+CSSPrimitiveValuePtr Rect	::	getLeft() const	{
+
+	return mLeft;
+	
 }

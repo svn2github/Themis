@@ -39,6 +39,8 @@
 // DOM Style headers
 #include "CSSPrimitiveValue.hpp"
 #include "Counter.hpp"
+#include "Rect.hpp"
+#include "RGBColor.hpp"
 
 CSSPrimitiveValue	::	CSSPrimitiveValue( const TDOMString aCssText,
 															unsigned short aPrimitiveType )

@@ -25,54 +25,46 @@
 	
 	Original Author: 	Mark Hellegers (M.H.Hellegers@stud.tue.nl)
 	Project Start Date: October 18, 2000
-	Class Implementation Start Date: March 08, 2004
+	Class Implementation Start Date: March 09, 2004
 */
 
 /*
-	CSSValueList implementation
-	See CSSValueList.hpp for more information
+	RGBColor implementation
+	See RGBColor.hpp for more information
 */
 
 // Standard C headers
 #include <stdio.h>
 
-// Standard C++ headers
-#include <vector>
-
 // DOM Style headers
-#include "CSSValueList.hpp"
-#include "CSSValue.hpp"
+#include "RGBColor.hpp"
+#include "CSSPrimitiveValue.hpp"
 
-CSSValueList	::	CSSValueList( const TDOMString aCSSText,
-											 const vector<CSSValuePtr> * aValueList )
-					:	CSSValue( aCSSText, CSS_VALUE_LIST )	{
+RGBColor	::	RGBColor( CSSPrimitiveValuePtr aRed, CSSPrimitiveValuePtr aGreen,
+								   CSSPrimitiveValuePtr aBlue )	{
 	
-	printf( "Creating CSSValueList\n" );
-	
-	mValueList = aValueList;
+	printf( "Creating RGBColor\n" );
 	
 }
 
-CSSValueList	::	~CSSValueList()	{
+RGBColor	::	~RGBColor()	{
 
 }
 
-unsigned long CSSValueList	::	getLength() const	{
-	
-	if ( mValueList )	{
-		return mValueList->size();
-	}
-	
-	return 0;
+CSSPrimitiveValuePtr RGBColor	::	getRed() const	{
+
+	return mRed;
 	
 }
 
-CSSValuePtr CSSValueList	::	item( unsigned long aIndex )	{
-	
-	if ( mValueList && aIndex < mValueList->size() )	{
-		return (*mValueList)[ aIndex ];
-	}
-	
-	return CSSValuePtr();
+CSSPrimitiveValuePtr RGBColor	::	getGreen() const	{
 
+	return mGreen;
+	
+}
+
+CSSPrimitiveValuePtr RGBColor	::	getBlue() const	{
+
+	return mBlue;
+	
 }

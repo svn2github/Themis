@@ -34,10 +34,6 @@
 // DOM Style headers
 #include "DOMStyleSupport.hpp"
 
-// Boost headers
-#include "boost/shared_ptr.hpp"
-#include "boost/weak_ptr.hpp"
-
 // Declarations
 class Counter;
 
