@@ -23,8 +23,8 @@ class TText	:	public TCharacterData	{
 		~TText();
 		bool getIsWhiteSpaceInElement() const; // Still have to look at this. Is not implemented well
 		TDOMString getWholeText() const;
-		TText * splitText( const unsigned long aOffset );
-		TText * replaceWholeText( const TDOMString aContent ); // Not done yet. Returns NULL
+		TTextShared splitText( const unsigned long aOffset );
+		TTextWeak replaceWholeText( const TDOMString aContent ); // Not done yet. Returns NULL
 		
 };
 

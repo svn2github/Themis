@@ -8,8 +8,6 @@
 #ifndef TNODE_H
 #define TNODE_H
 
-#include <List.h>
-
 #include <stdio.h>
 
 #include <vector>

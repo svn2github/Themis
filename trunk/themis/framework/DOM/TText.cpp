@@ -31,26 +31,27 @@ TDOMString TText	::	getWholeText() const	{
 	
 	TDOMString wholeText;
 
-	const TNode * startNode = this;
-	const TNode * tempNode = this;
-	while ( tempNode && tempNode->getNodeType() == TEXT_NODE )	{
+	TNodeShared startNode = make_shared( mThisPointer );
+	TNodeShared tempNode = make_shared( mThisPointer );
+	while ( tempNode.get() && tempNode->getNodeType() == TEXT_NODE )	{
 		startNode = tempNode;
-		tempNode = tempNode->getPreviousSibling().get();
+		tempNode = make_shared( tempNode->getPreviousSibling() );
 	}
-	
-	const TNode * endNode = this;
-	tempNode = this;
-	while ( tempNode && tempNode->getNodeType() == TEXT_NODE )	{
+
+	TNodeShared endNode = make_shared( mThisPointer );
+	tempNode = make_shared( mThisPointer );
+
+	while ( tempNode.get() && tempNode->getNodeType() == TEXT_NODE )	{
 		endNode = tempNode;
-		tempNode = tempNode->getNextSibling().get();
+		tempNode = make_shared( tempNode->getNextSibling() );
 	}
-	
-	const TText * startText = (const TText *) startNode;
-	const TText * endText = (const TText *) endNode;
+
+	TTextShared startText = shared_static_cast<TText> ( startNode );
+	TTextShared endText = shared_static_cast<TText> ( endNode );
 		
 	wholeText = startText->getData();
 	while ( startText != endText )	{
-		startText = (TText *) startText->getNextSibling().get();
+		startText = shared_static_cast<TText> ( make_shared( startText->getNextSibling() ) );
 		wholeText += startText->getData();
 	}
 	
@@ -58,7 +59,7 @@ TDOMString TText	::	getWholeText() const	{
 	
 }
 
-TText * TText	::	splitText( const unsigned long aOffset )	{
+TTextShared TText	::	splitText( const unsigned long aOffset )	{
 	
 	if ( aOffset > (unsigned long) ( getLength() - 1 ) )	{
 		// Offset is larget than the actual length of the text. No go
@@ -67,24 +68,25 @@ TText * TText	::	splitText( const unsigned long aOffset )	{
 	}
 	
 	 TDOMString resultData = substringData( aOffset, getLength() - aOffset );
-	 TText * result = new TText( resultData );
+	 TTextShared result = TTextShared( new TText( resultData ) );
+	 result->setSmartPointer( result );
 	 deleteData( aOffset, getLength() - aOffset );
 	 
 	 return result;
 	 
 }
 
-TText * TText	::	replaceWholeText( const TDOMString aContent )	{
+TTextWeak TText	::	replaceWholeText( const TDOMString aContent )	{
 	
-	TNodeShared startNode = mThisPointer;
-	TNodeShared tempNode = mThisPointer;
+	TNodeShared startNode = make_shared( mThisPointer );
+	TNodeShared tempNode = make_shared( mThisPointer );
 	while ( tempNode.get() && tempNode->getNodeType() == TEXT_NODE )	{
 		startNode = tempNode;
 		tempNode = make_shared( tempNode->getPreviousSibling() );
 	}
 	
-	TNodeShared endNode = mThisPointer;
-	tempNode = mThisPointer;
+	TNodeShared endNode = make_shared( mThisPointer );
+	tempNode = make_shared( mThisPointer );
 	while ( tempNode.get() && tempNode->getNodeType() == TEXT_NODE )	{
 		endNode = tempNode;
 		tempNode = make_shared( tempNode->getNextSibling() );
@@ -94,7 +96,7 @@ TText * TText	::	replaceWholeText( const TDOMString aContent )	{
 	TNodeShared parentNode = make_shared( getParentNode() );
 
 	while ( startNode != endNode )	{
-		tempNode = startNode->getNextSibling();
+		tempNode = make_shared( startNode->getNextSibling() );
 		if ( startNode.get() != mThisPointer.get() )	{
 			parentNode.get()->removeChild( startNode );
 			//delete temp;
@@ -104,12 +106,13 @@ TText * TText	::	replaceWholeText( const TDOMString aContent )	{
 	
 	if ( currentText == "" )	{
 		// No text at all. Remove this node and return NULL
-		delete this;
-		return NULL;
+		TNodeShared parent = make_shared( getParentNode() );
+		parent->removeChild( make_shared( mThisPointer ) );
+		return TTextWeak();
 	}
 	
 	setData( aContent );
 	
-	return this;
+	return shared_static_cast<TText> ( make_shared( mThisPointer ) );
 	
 }
