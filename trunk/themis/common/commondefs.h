@@ -26,30 +26,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
-#ifndef _cache_manager
-#define _cache_manager
+#ifndef common_defines
+#define common_defines
 
-/*
-#include <File.h>
-#include <Node.h>
-#include <Path.h>
-#include <Directory.h>
-*/
-#include <StorageKit.h>
-#include <SupportDefs.h>
-#include <Handler.h>
-
-class cacheman:public BHandler
- {
-  private:
-   BPath cachepath;
-  public:
-   cacheman();
-   ~cacheman();
-   void MessageReceived(BMessage *msg);
-   status_t FindCacheDir();
-   status_t CheckIndices();
-   status_t CheckMIME();
- };
+#define ThemisAppSig "application/x-vnd.becommunity-themis"
+#define ThemisCacheMIME "application/x-Themis-cache"
 
 #endif

@@ -27,9 +27,11 @@ Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
 #include "cacheman.h"
+#include "../../common/commondefines.h"
 #include <stdio.h>
 #include <kernel/fs_index.h>
 #include <string.h>
+#include <AppKit.h>
 cacheman::cacheman()
          :BHandler("cache_manager")
  {
@@ -37,6 +39,7 @@ cacheman::cacheman()
    printf("Found or created the cache directory.\n");
   printf("cache path: %s\n",cachepath.Path());
   CheckIndices();
+  CheckMIME();
  }
 cacheman::~cacheman()
  {
@@ -50,6 +53,16 @@ void cacheman::MessageReceived(BMessage *msg)
       BHandler::MessageReceived(msg);
      }
    }
+ }
+status_t cacheman::CheckMIME()
+ {
+  BMimeType mime(ThemisCacheMIME);
+  if (!mime.IsInstalled())
+   {
+    mime.Install();
+    
+   }
+  return B_OK;
  }
 status_t cacheman::CheckIndices()
  {

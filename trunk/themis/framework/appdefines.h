@@ -28,7 +28,8 @@ Project Start Date: October 18, 2000
 */
 #ifndef _appdefines
 #define _appdefines
+#include "../common/commondefines.h"
 
-#define AppSig "application/x-vnd.becommunity-themis"
+#define AppSig ThemisAppSig
 
 #endif
