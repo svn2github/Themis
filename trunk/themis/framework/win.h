@@ -83,7 +83,8 @@ class Win : public BWindow, public MessageSystem
 		void						CreateUrlPopUpWindow();
 		
 		ThemisTab*					FindTabFor(
-										int32 id );		
+										int32 id,
+										int32* tabindex );		
 		
 //		FakeSite*					GetViewPointer( int16 tab_uid, int16 view_uid );
 

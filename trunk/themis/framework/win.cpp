@@ -1031,17 +1031,21 @@ Win::CreateUrlPopUpWindow()
 
 ThemisTab*
 Win::FindTabFor(
-	int32 id )
+	int32 id,
+	int32* tabindex )
 {
 	int32 count = tabview->CountTabs();
 	
-	for( int i = 0; i < count; i++ )
+	for( int32 i = 0; i < count; i++ )
 	{
 		ThemisTab* tab = ( ThemisTab* )tabview->TabAt( i );
 		if( tab )
 		{
 			if( tab->GetViewID() == id )
+			{
+				*tabindex = i;
 				return tab;
+			}
 		}
 	}
 	return NULL;
@@ -1406,7 +1410,8 @@ status_t Win::ReceiveBroadcast(BMessage *message)
 					if( view_id == 0 )
 						break;
 					
-					ThemisTab* tab = FindTabFor( view_id );
+					int32 tabindex;
+					ThemisTab* tab = FindTabFor( view_id, &tabindex );
 					if( tab == NULL )
 						break;
 					
@@ -1419,7 +1424,7 @@ status_t Win::ReceiveBroadcast(BMessage *message)
 
 					Lock();
 					
-					int32 tabindex = tabview->IndexForTab( tab );
+					//int32 tabindex = tabview->IndexForTab( tab );
 					
 					/*
 					 * We don't need to resize the renderview here, as this is done in
