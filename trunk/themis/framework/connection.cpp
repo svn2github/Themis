@@ -733,13 +733,14 @@ void Connection::StartUsing()
 {
 	BAutolock alock(lock);
 	if (alock.IsLocked())
-		atomic_add(&in_use,1);
+		if (in_use==0)
+			atomic_add(&in_use,1);
 }
 void Connection::StopUsing()
 {
 	BAutolock alock(lock);
 	if (alock.IsLocked())
-		atomic_add(&in_use,-1);
+		in_use=0;
 }
 
 bool Connection::Matches(const char *host, uint16 port) {

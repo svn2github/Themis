@@ -242,7 +242,7 @@ Connection *TCPManager::CreateConnection(NetworkableObject *net_obj,const char *
 				if (!target_connection->IsInUse()) {
 					if (target_connection->Matches(host,port)) {
 						connection=target_connection;
-						existing_available;
+						existing_available=true;
 						break;
 					}
 				}
