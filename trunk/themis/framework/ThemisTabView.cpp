@@ -347,9 +347,9 @@ ThemisTabView::MouseDown( BPoint point )
 				delete ( remtab );
 				
 				// if the newtab button is disabled, and no more tabs are
-				// out of range, enabled the button
+				// out of range, enable the button
 				if( ( CountTabs() * tab_width ) <= ( Bounds().right - 22 ) )
-					( ( Win* )Window() )->navview->buttons[4]->SetEnabled( true );
+					( ( Win* )Window() )->navview->buttons[4]->SetMode( 0 );
 								
 				// calculate new ( bigger ) size of tabs and draw again
 				DynamicTabs( false );
@@ -372,7 +372,7 @@ ThemisTabView::MouseDown( BPoint point )
 void
 ThemisTabView::Select( int32 tabindex )
 {
-	//cout << "ThemisTabView::Select()" << endl;
+	cout << "ThemisTabView::Select()" << endl;
 	
 	// hinder tab-selection when urlpopupwindow is open
 	if( ( ( Win* )Window() )->urlpopupwindow != NULL )
@@ -462,6 +462,9 @@ ThemisTabView::Select( int32 tabindex )
 	}
 	
 	BTabView::Select( tabindex );
+	
+	// as the methods name says, set the nav buttons according the tabs history
+	SetNavButtonsByTabHistory();
 }
 
 void
@@ -535,7 +538,7 @@ ThemisTabView::CreateCloseTabViewButton()
 	closemsg->AddBool( "close_last_tab", true );
 	
 	// create the BPictureButton
-	close_tabview_button = new ThemisPictureButton(
+	close_tabview_button = new TPictureButton(
 		BRect(
 			rect.right - 20,
 			rect.top + 3,
@@ -543,13 +546,12 @@ ThemisTabView::CreateCloseTabViewButton()
 			rect.top + 3 + 15 ), 
 		"CLOSETABVIEWPICBUTTON",
 		onpic,
+		overpic,
 		activepic,
+		NULL,
 		closemsg,
-		B_ONE_STATE_BUTTON,
-		B_FOLLOW_RIGHT, B_WILL_DRAW );
-	
-	close_tabview_button->SetDisabledOn( overpic );
-	close_tabview_button->SetDisabledOff( overpic );
+		B_FOLLOW_RIGHT,
+		B_WILL_DRAW );
 	
 	// reset the bitmaps and pics
 	smallbmp = NULL;
@@ -644,13 +646,56 @@ ThemisTabView::SetFakeSingleView()
 	if( FindView( "CLOSETABVIEWPICBUTTON" ) )
 	{
 		// clean up button states..
-		close_tabview_button->SetEnabled( true );
-		close_tabview_button->SetValue( B_CONTROL_OFF );
+		close_tabview_button->SetMode( 0, true );
 		
 		RemoveChild( close_tabview_button );
-	}
+	}	
 			
 	fake_single_view = true;
+}
+
+void
+ThemisTabView::SetNavButtonsByTabHistory()
+{
+	printf( "ThemisTabView::SetNavButtonsByTabHistory()\n" );
+	ThemisTab* tab = ( ThemisTab* )TabAt( Selection() );
+	
+	ThemisNavView* nv = ( ( Win* )Window() )->navview;
+	
+	printf( "CurrentPosition: %d\n", tab->GetHistory()->GetCurrentPosition() );
+	tab->GetHistory()->PrintHistory();
+	
+	if( tab->GetHistory()->GetCurrentPosition() == 0 )
+	{
+		if( tab->GetHistory()->GetEntryCount() > 1 )
+		{
+			printf( "enabling back, disabling fwd button if needed.\n" );
+			nv->buttons[0]->SetMode( 0 );
+			nv->buttons[1]->SetMode( 3 );
+		}
+		else
+		{
+			printf( "only one ( or no )history item. disabling back and fwd if needed.\n" );
+			nv->buttons[0]->SetMode( 3 );
+			nv->buttons[1]->SetMode( 3 );
+		}
+	}
+	else
+	{
+		if( tab->GetHistory()->GetCurrentPosition() == ( tab->GetHistory()->GetEntryCount() - 1 ) )
+		{
+			printf( "at history end. disable back, enable fwd if needed.\n" );
+			nv->buttons[0]->SetMode( 3 );
+			nv->buttons[1]->SetMode( 0 );
+		}
+		else
+		{
+			printf( "in middle of history. enablind back and fwd if needed.\n" );
+			nv->buttons[0]->SetMode( 0 );
+			nv->buttons[1]->SetMode( 0 );
+		}
+	}
+	
 }
 
 void
@@ -672,6 +717,7 @@ ThemisTabView::SetNormalTabView()
 		close_tabview_button->MoveTo(
 			rect.right - 20,
 			rect.top + 3 );
+		close_tabview_button->SetMode( 0 );
 		AddChild( close_tabview_button );
 	}	
 		

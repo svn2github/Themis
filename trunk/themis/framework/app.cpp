@@ -517,6 +517,7 @@ void App::InitSettings(char *settings_path) {
 	// tabs
 	AppSettings->AddBool( "ShowTabsAtStartup", false );
 	AppSettings->AddBool( "OpenTabsInBackground", false );
+	AppSettings->AddInt8( "TabHistoryDepth", 10 );
 	
 	// fonts
 	
@@ -706,6 +707,8 @@ status_t App::LoadSettings() {
 						AppSettings->AddBool( "ShowTabsAtStartup", false );
 					if( !AppSettings->HasBool( "OpenTabsInBackground" ) )
 						AppSettings->AddBool( "OpenTabsInBackground", false );
+					if( !AppSettings->HasInt8( "TabHistoryDepth" ) )
+						AppSettings->AddInt8( "TabHistoryDepth", 10 );
 					// fonts
 					// colors
 					union int32torgb convert;

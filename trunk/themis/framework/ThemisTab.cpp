@@ -22,6 +22,15 @@ ThemisTab::ThemisTab( BView *view, int16 uid )
 	: BTab( view )
 {
 	fUniqueID = uid;
+	
+	int8 histdepth;
+	AppSettings->FindInt8( "TabHistoryDepth", &histdepth );
+	fHistory = new TabHistory( histdepth );
+}
+
+ThemisTab::~ThemisTab()
+{
+	delete fHistory;
 }
 
 void
@@ -227,6 +236,12 @@ ThemisTab::DrawLabel( ThemisTabView* owner, BRect frame )
 	}
 	delete label;
 	tempview = NULL;
+}
+
+TabHistory*
+ThemisTab::GetHistory()
+{
+	return fHistory;
 }
 
 int16

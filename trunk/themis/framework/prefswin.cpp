@@ -13,6 +13,7 @@
 #define SHOWTABS_CHECKBOX		'stcb'
 #define SHOWTYPEAHEAD_CHECKBOX  'stab'
 #define TABSBACKGROUND_CHECKBOX	'tbcb'
+#define TABHISTDEPTH_CHANGED	'thdc'
 
 #include <Box.h>
 #include <Button.h>
@@ -27,7 +28,9 @@
 #include <RadioButton.h>
 #include <StringView.h>
 #include <TextControl.h>
+
 #include <iostream>
+#include <ctype.h>
 
 #include "prefswin.h"
 #include "app.h"
@@ -56,6 +59,7 @@ prefswin::prefswin(
 	// tab prefs
 	AppSettings->FindBool( "ShowTabsAtStartup", &fShowTabsAtStartup );
 	AppSettings->FindBool( "OpenTabsInBackground", &fOpenTabsInBackground );
+	AppSettings->FindInt8( "TabHistoryDepth", &fTabHistoryDepth );
 	// color prefs
 	union int32torgb convert;
 	//AppSettings->FindInt32( "MenuColor", &convert.value );
@@ -158,8 +162,7 @@ void prefswin::MessageReceived( BMessage* msg )
 			}	
 			
 			BMessenger* msgr = new BMessenger( NULL, win, NULL );
-			BMessage* rmsg = new BMessage( RE_INIT_INTERFACE );
-			msgr->SendMessage( rmsg );
+			msgr->SendMessage( RE_INIT_INTERFACE );
 			
 			while( win->NextWindow() != NULL )
 			{
@@ -169,7 +172,6 @@ void prefswin::MessageReceived( BMessage* msg )
 				msgr->SendMessage( RE_INIT_INTERFACE );
 			}
 			
-			delete rmsg;
 			delete msgr;
 			break;
 		}
@@ -387,6 +389,26 @@ void prefswin::MessageReceived( BMessage* msg )
 						OpenTabsInBackgroundcbox->SetValue( 1 );
 					box->AddChild( OpenTabsInBackgroundcbox );
 					
+					rect.top += 25;
+					rect.bottom = rect.top + 15;
+					rect.right -= 15;
+					
+					BTextControl* tabhistdepth = new BTextControl( rect, "TABHISTDEPTH", "Tab History Depth:", "", NULL );
+					tabhistdepth->SetModificationMessage( new BMessage( TABHISTDEPTH_CHANGED ) );
+					tabhistdepth->SetDivider( be_plain_font->StringWidth( "Tab History Depth:" ) + 5.0 );
+					
+					for( uint32 i = 0; i < 256; i++ )
+					{
+						if( i < 48 && i > 57 )
+							tabhistdepth->TextView()->DisallowChar( i );
+					}
+					
+					char* string;
+					sprintf( string, "%d", fTabHistoryDepth );
+					tabhistdepth->SetText( string );
+					box->AddChild( tabhistdepth );
+					
+					
 					break;
 				}
 				case 2 :
@@ -603,10 +625,10 @@ void prefswin::MessageReceived( BMessage* msg )
 		}
 		case OK_BUTTON :
 		{
-			// write settings to AppSettings
-			SaveSettings();
-			// as Themis crashes very often on quit, i call the real SaveSettings() here too
-			be_app_messenger.SendMessage( SAVE_APP_SETTINGS );
+			// apply all changes which have been made
+			BMessage* applymsg = new BMessage( APPLY_BUTTON );
+			MessageReceived( applymsg );			
+			delete applymsg;
 			
 			BMessenger msgr( this );
 			BMessage* qmsg = new BMessage( B_QUIT_REQUESTED );
@@ -696,6 +718,39 @@ void prefswin::MessageReceived( BMessage* msg )
 			
 			break;
 		}
+		case TABHISTDEPTH_CHANGED :
+		{
+			printf( "TABHISTDEPTH_CHANGED\n" );
+			BTextControl* ctrl;
+			msg->FindPointer( "source", ( void** )&ctrl );
+			BString string( ctrl->Text() );
+			printf( "  %s [length: %ld]\n", string.String(), string.Length() );
+			
+			if( string.Length() == 0 )
+				break;
+			
+			for( int32 i = 0; i < string.Length(); i++ )
+				printf( "  byte %3ld: %c\n", i, string.ByteAt( i ) );
+			
+			printf( "  last byte: %c\n", string.ByteAt( string.Length() - 1 ) );
+						
+			if( isdigit( string.ByteAt( string.Length() - 1 ) ) == 0 )
+			{
+				printf( "  last byte is no digit!\n" );
+				string.Remove( string.Length() - 1, 1 );
+				printf( "  %s [length: %ld]\n", string.String(), string.Length() );
+				ctrl->SetText( string.String() );
+				ctrl->TextView()->Select( string.Length(), string.Length() );
+			}
+			
+			fTabHistoryDepth = ( int8 )atoi( string.String() );
+			if( ( uint8 )fTabHistoryDepth > 127 ) 
+				fTabHistoryDepth = 10;
+			
+			printf( "  new fTabHistoryDepth: %d\n", fTabHistoryDepth );
+					
+			break;
+		}
 		default:
 			BWindow::MessageReceived( msg );
 	}
@@ -714,6 +769,7 @@ prefswin::SaveSettings()
 	// tabs
 	AppSettings->ReplaceBool( "ShowTabsAtStartup", fShowTabsAtStartup );
 	AppSettings->ReplaceBool( "OpenTabsInBackground", fOpenTabsInBackground );
+	AppSettings->ReplaceInt8( "TabHistoryDepth", fTabHistoryDepth );
 	// fonts
 	// colors
 	union int32torgb convert;

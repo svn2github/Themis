@@ -12,11 +12,13 @@
 // myheaders
 #include "FakeSite.h"
 #include "ThemisTabView.h"
+#include "TabHistory.h"
 
 class ThemisTab : public BTab
 {
 	public:
 									ThemisTab( BView *view, int16 uid );
+									~ThemisTab();
 									
 		virtual void				DrawTab(
 										ThemisTabView* owner,
@@ -26,11 +28,15 @@ class ThemisTab : public BTab
 		virtual void				DrawLabel(
 										ThemisTabView* owner,
 										BRect frame );
+		
+		TabHistory*					GetHistory();
 										
 		int16						UniqueID();
 		
 	private:
 		int16						fUniqueID;
+		
+		TabHistory*					fHistory;
 };
 
 #endif

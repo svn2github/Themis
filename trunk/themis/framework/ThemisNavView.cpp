@@ -15,8 +15,6 @@
 #include "win.h"
 #include "app.h"
 
-class ThemisPictureButton;
-
 ThemisNavView::ThemisNavView( BRect rect ) :
 	BView( rect, "THEMISNAVVIEW", B_FOLLOW_LEFT_RIGHT, B_WILL_DRAW | B_FULL_UPDATE_ON_RESIZE )
 {
@@ -121,7 +119,7 @@ ThemisNavView::CreateInterfaceButtons()
 {
 	//cout << "ThemisNavView::CreateInterfaceButton()" << endl;
 	
-	// the small 16x16 bitmap for on, active or off
+	// the small 16x16 bitmap for on, over, active or off
 	BBitmap* smallbmp = NULL;
 	
 	// the pictures
@@ -211,28 +209,28 @@ ThemisNavView::CreateInterfaceButtons()
 		posrect.right = posrect.left + 15;
 		
 		// create the BPictureButton
-		buttons[i] = new ThemisPictureButton(
+		buttons[i] = new TPictureButton(
 			posrect,
 			names[i],
 			onpic,
+			overpic,
 			activepic,
+			offpic,
 			msg,
-			B_ONE_STATE_BUTTON, 0, B_WILL_DRAW );
+			0,
+			B_WILL_DRAW );
 		
 		if( i == 6 )
 			buttons[i]->SetResizingMode( buttons[i]->ResizingMode() | B_FOLLOW_RIGHT );
-		buttons[i]->SetDisabledOn( overpic );
-		if( i <= 4 )
-			buttons[i]->SetDisabledOff( offpic );
-		else
-			buttons[i]->SetDisabledOff( overpic );
-			// ^^ unfortunately we even need a disabled-off pic for
-			// the buttons which may not be disabled .. 
-			// imho i am not setting it to disabled-off when using
-			// SetEnabled() and SetValue() in Mouse*() methods in ThemisPictureButton
-			// but it still crashes when drawing...
-			// will have to look at it later again
-			
+		
+		// set initial behaviour for back, fwd  and stop button ( disabled )
+		switch( i )
+		{
+			case 0 :
+			case 1 :
+			case 2 : buttons[i]->SetMode( 3 ); break;
+		}
+					
 		AddChild( buttons[i] );
 		
 		// reset the bitmaps and pics
@@ -246,155 +244,4 @@ ThemisNavView::CreateInterfaceButtons()
 	// remove the tempview
 	RemoveChild( tempview );
 	delete tempview;
-}
-
-/////////////////////////////////////
-// ThemisPictureButton
-/////////////////////////////////////
-
-ThemisPictureButton::ThemisPictureButton(
-	BRect rect,
-	const char* name,
-	BPicture* off,
-	BPicture* on,
-	BMessage* message,
-	uint32 behaviour,
-	uint32 resizingmode,
-	uint32 flags )
-	: BPictureButton(
-		rect,
-		name,
-		off,
-		on,
-		message,
-		behaviour,
-		resizingmode,
-		flags )
-{
-	i_was_disabled_on_flag = false;
-}
-
-void
-ThemisPictureButton::Draw( BRect updaterect )
-{
-	//cout << "ThemisPictureButton::Draw()" << endl;
-			
-	// just erase the whole area as old picture contents are not removed
-	// before drawing the new picture of the button if the buttons state
-	// changed...so we erase the whole button area..
-	union int32torgb convert;
-	AppSettings->FindInt32( "PanelColor", &convert.value );
-	SetHighColor( convert.rgb );
-	FillRect( Bounds(), B_SOLID_HIGH );
-	
-	// this is a little trick, to cheat the BPictureButton::Draw() function.
-	// if we change the panelcolor, the draw function would have drawn a rect
-	// in the bounds dimension in the _old_ panelcolor..
-	SetViewColor( convert.rgb );
-		
-	BPictureButton::Draw( updaterect );
-}
-
-void
-ThemisPictureButton::MouseDown( BPoint point )
-{
-	//cout << "ThemisPictureButton::MouseDown()" << endl;
-	
-	uint32 button;
-	GetMouse( &point, &button, true );
-	
-	// we would need a third active state for the button, but this isnt possible;
-	// i just use the disabled-on picture as a container for the mouse-over pic;
-	// if the button is set to disabled-on( mouse-over), it cannot be pressed, so we reset its
-	// state to enabled, and remember its state with a flag for MouseUp to display
-	// the correct mouse-over pic after mouse got released
-	if( button == B_PRIMARY_MOUSE_BUTTON )
-	{	
-		if( ( IsEnabled() == false ) && ( Value() == B_CONTROL_ON ) )
-		{
-			/*if( IsEnabled() == false ) cout << "button is disabled-";
-			else cout << "button is enabled-";
-			if( Value() == B_CONTROL_ON ) cout << "on" << endl;
-			else cout << "off" << endl;*/
-			
-			//cout << "setting to enabled-on" << endl;
-			SetEnabled( true );
-			SetValue( B_CONTROL_ON );
-			
-			/*if( IsEnabled() == false ) cout << "button is disabled-";
-			else cout << "button is enabled-";
-			if( Value() == B_CONTROL_ON ) cout << "on" << endl;
-			else cout << "off" << endl;*/
-			
-			i_was_disabled_on_flag = true;
-		}
-	}
-	BPictureButton::MouseDown( point );
-}
-
-void
-ThemisPictureButton::MouseMoved( BPoint point, uint32 transit, const BMessage* message )
-{
-	// if the button is really disabled -> do nothing
-	if( IsEnabled() == false && Value() == B_CONTROL_OFF )
-	{	
-		//cout << "the button is _really_ disabled -> nothing done on mousemoved" << endl;
-		return;
-	}
-	if( transit == B_ENTERED_VIEW )
-	{
-		/*cout << "ThemisPictureButton::MouseMoved() : B_ENTERED_VIEW" << endl;
-		if( IsEnabled() == false ) cout << "button is disabled-";
-		else cout << "button is enabled-";
-		if( Value() == B_CONTROL_ON ) cout << "on" << endl;
-		else cout << "off" << endl;
-		
-		cout << "setting to disabled-on ( mouse over )" << endl;*/
-		SetValue( B_CONTROL_ON );
-		SetEnabled( false );
-	}
-	if( transit == B_EXITED_VIEW )
-	{
-		/*cout << "ThemisPictureButton::MouseMoved() : B_EXITED_VIEW" << endl;
-		if( IsEnabled() == false ) cout << "button is disabled-";
-		else cout << "button is enabled-";
-		if( Value() == B_CONTROL_ON ) cout << "on" << endl;
-		else cout << "off" << endl;
-		
-		cout << "setting to enabled-off ( normal )" << endl;*/
-		SetValue( B_CONTROL_OFF );
-		SetEnabled( true );
-		
-		// fixes "press-out-in-release"-problem
-		BPictureButton::MouseUp( BPoint( 0.0, 0.0 ) );
-		// clean up
-		i_was_disabled_on_flag = false;
-	}
-}
-
-void
-ThemisPictureButton::MouseUp( BPoint point )
-{
-	//cout << "ThemisPictureButton::MouseUp()" << endl;
-	
-	BPictureButton::MouseUp( point );
-	
-	if( i_was_disabled_on_flag == true )
-	{
-		/*if( IsEnabled() == false ) cout << "button is disabled-";
-		else cout << "button is enabled-";
-		if( Value() == B_CONTROL_ON ) cout << "on" << endl;
-		else cout << "off" << endl;
-			
-		cout << "setting to disabled-on" << endl;*/
-		SetEnabled( false );
-		SetValue( B_CONTROL_ON );
-				
-		/*if( IsEnabled() == false ) cout << "button is disabled-";
-		else cout << "button is enabled-";
-		if( Value() == B_CONTROL_ON ) cout << "on" << endl;
-		else cout << "off" << endl;*/
-		
-		i_was_disabled_on_flag = false;
-	}
 }

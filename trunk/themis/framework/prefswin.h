@@ -37,6 +37,7 @@ class prefswin : public BWindow
 		// tab prefs
 		bool						fShowTabsAtStartup;
 		bool						fOpenTabsInBackground;
+		int8						fTabHistoryDepth;
 		
 		// font prefs
 		

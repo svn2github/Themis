@@ -6,11 +6,11 @@
 // BeOS headers
 #include <MessageFilter.h>
 #include <TabView.h>
-#include <PictureButton.h>
 
 // C/C++ headers
 
 // myheaders
+#include "TPictureButton.h"
 
 class ThemisTabView : public BTabView
 {
@@ -34,12 +34,13 @@ class ThemisTabView : public BTabView
 		void						CreateCloseTabViewButton();
 		void						DynamicTabs( bool newtab );
 		void						SetFakeSingleView();
+		void						SetNavButtonsByTabHistory();
 		void						SetNormalTabView();
 				
 		float						tab_width;
 		bool						fake_single_view;
 		
-		BPictureButton*				close_tabview_button;
+		TPictureButton*				close_tabview_button;
 		
 	private:
 		// for doubleclick detection on empty tabview-space

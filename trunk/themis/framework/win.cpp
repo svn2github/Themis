@@ -39,7 +39,6 @@ Project Start Date: October 18, 2000
 #include "app.h"
 #include "../common/commondefs.h"
 #include "protocol_plugin.h"
-//#include "AppDefs.h"
 #include "iostream.h"
 #include "ThemisIcons.h"
 #include "ThemisTab.h"
@@ -230,10 +229,46 @@ void Win::MessageReceived(BMessage *msg) {
 		}break;
 		case BUTTON_BACK :
 		{
+			printf( "BUTTON_BACK\n" );
+			
+			const char* previous = NULL;
+			previous = ( ( ThemisTab* )tabview->TabAt( tabview->Selection() ) )->GetHistory()->GetPreviousEntry();
+			if( previous != NULL )
+			{
+				printf( "previous != NULL [ %s ]\n", previous );
+				BMessage* backmsg = new BMessage( URL_OPEN );
+				backmsg->AddString( "url_to_open", previous );
+				backmsg->AddBool( "no_history_add", true );
+				BMessenger* msgr = new BMessenger( this );
+				msgr->SendMessage( backmsg );
+				delete backmsg;
+				delete msgr;
+			}
+			
 			break;
 		};
 		case BUTTON_FORWARD :
 		{
+			printf( "BUTTON_FORWARD\n" );
+			
+			const char* next = NULL;
+			next = ( ( ThemisTab* )tabview->TabAt( tabview->Selection() ) )->GetHistory()->GetNextEntry();
+			if( next != NULL )
+			{
+				printf( "next != NULL [ %s ]\n", next );
+				BMessage* fwdmsg = new BMessage( URL_OPEN );
+				fwdmsg->AddString( "url_to_open", next );
+				fwdmsg->AddBool( "no_history_add", true );
+				BMessenger* msgr = new BMessenger( this );
+				msgr->SendMessage( fwdmsg );
+				delete fwdmsg;
+				delete msgr;
+			}
+			else
+			{
+				tabview->SetNavButtonsByTabHistory();	// needed to disable the fwd button
+			}
+						
 			break;
 		}
 		case BUTTON_STOP :
@@ -242,6 +277,18 @@ void Win::MessageReceived(BMessage *msg) {
 		}
 		case BUTTON_HOME :
 		{
+			printf( "BUTTON_HOME\n" );
+			
+			BString homepage;
+			AppSettings->FindString( "HomePage", &homepage );
+			
+			BMessage* homemsg = new BMessage( URL_OPEN );
+			homemsg->AddString( "url_to_open", homepage.String() );
+			BMessenger* msgr = new BMessenger( this );
+			msgr->SendMessage( homemsg );
+			delete homemsg;
+			delete msgr;
+			
 			break;
 		}
 		case CLOSE_OTHER_TABS :
@@ -253,9 +300,8 @@ void Win::MessageReceived(BMessage *msg) {
 			Lock();
 			
 			// if the newtab button is disabled, enable it again
-			if( navview->buttons[4]->IsEnabled() == false )
-				navview->buttons[4]->SetEnabled( true );
-			
+			navview->buttons[4]->SetMode( 0 );
+						
 			uint32 current_tab = 0;
 			uint32 count = tabview->CountTabs();
 			
@@ -321,8 +367,8 @@ void Win::MessageReceived(BMessage *msg) {
 				
 				if( Bounds().right - width <= 22 )
 				{
-					navview->buttons[4]->SetEnabled( false );
-					navview->buttons[4]->SetValue( B_CONTROL_OFF );
+					// disable the newtab button
+					navview->buttons[4]->SetMode( 3);
 					break;
 				}
 				// if we won't cover the button, go on...
@@ -521,11 +567,19 @@ void Win::MessageReceived(BMessage *msg) {
 				
 				tabview->TabAt( tab_index )->SetView( fakesite );
 				tab_uid = ( ( ThemisTab* )tabview->TabAt( tab_index ) )->UniqueID();
+				
+				// add history entry for tab
+				if( msg->HasBool( "no_history_add" ) == false )
+					( (ThemisTab* )tabview->TabAt( tab_index ) )->GetHistory()->AddEntry( url.String() );
 			}
 			else
 			{
 				tabview->TabAt( selection )->SetView( fakesite );
 				tab_uid = ( ( ThemisTab* )tabview->TabAt( selection ) )->UniqueID();
+				
+				// add history entry for tab
+				if( msg->HasBool( "no_history_add" ) == false )
+					( (ThemisTab* )tabview->TabAt( selection ) )->GetHistory()->AddEntry( url.String() );
 			}
 			
 			if( msg->FindBool( "hidden" ) == true )
@@ -536,6 +590,9 @@ void Win::MessageReceived(BMessage *msg) {
 			if( CurrentFocus() != NULL )
 				CurrentFocus()->MakeFocus( false );
 			tabview->TabAt( selection )->View()->MakeFocus( true );
+			
+			// temporary stop
+			break;
 			
 			char *usepass=NULL;
 			char *workurl=NULL;
@@ -755,9 +812,9 @@ Win::FrameResized( float width, float height)
 	
 	// enable or disable the newtab button
 	if( ( tabview->CountTabs() * tabview->tab_width ) <= ( Bounds().right - 22 ) )
-		navview->buttons[4]->SetEnabled( true );
+		navview->buttons[4]->SetMode( 0 );
 	else
-		navview->buttons[4]->SetEnabled( false );
+		navview->buttons[4]->SetMode( 3 );
 	
 	// resize urlpopupwindow
 	if( urlpopupwindow != NULL )
@@ -1082,6 +1139,14 @@ Win::ReInitInterface()
 			child->Draw( child->Bounds() );
 		}
 	}
+	
+	// update the tabs history depth
+	int8 depth;
+	AppSettings->FindInt8( "TabHistoryDepth", &depth );
+	for( int32 i = 0; i < tabview->CountTabs(); i++ )
+		( ( ThemisTab* )tabview->TabAt( i ) )->GetHistory()->SetDepth( depth );
+	// update the nav buttons states
+	tabview->SetNavButtonsByTabHistory();
 }
 
 void
