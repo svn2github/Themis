@@ -351,7 +351,7 @@ http_request *httplayer::AddRequest(BMessage *info) {
 		request->url=new char[url.Length()+1];
 	strcpy(request->url,url.String());
 	 FindURI(url.String(),&request->host,&request->port,&request->uri,&request->secure);
-#ifdef USEOPENSSL
+#ifndef USENETSERVER
 	printf("Request is to: %s:%u\nURI: %s\n",request->host,request->port,request->uri);
 	UnprocessedReqs->AddItem(request);
 	delete info;
@@ -364,6 +364,9 @@ http_request *httplayer::AddRequest(BMessage *info) {
 		delete info;
 		delete request;
 		return NULL;
+	} else {
+		printf("Request is to: %s:%u\nURI: %s\n",request->host,request->port,request->uri);
+		UnprocessedReqs->AddItem(request);
 	}
 #endif
 }
