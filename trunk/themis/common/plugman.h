@@ -59,7 +59,7 @@ class plugman: public BLooper, public MessageSystem {
 		//! The user's add-on directory in the home directory.
 		entry_ref user_addon_dir;
 		
-		struct stat sad_stat,uad_stat;
+	//	struct stat sad_stat,uad_stat;
 		//! The initialization BMessage that is sent to plug-ins when loaded.
 		BMessage *InitInfo;
 		//! This triggers the heartbeat messages that are sent to plug-ins that require it.

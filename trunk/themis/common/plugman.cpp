@@ -119,14 +119,14 @@ plugman::plugman(entry_ref &appdirref)
 	dir->GetNodeRef(&nref);
 	status_t stat=watch_node(&nref,B_WATCH_DIRECTORY,this,this);
 	path->SetTo(&startup_addon_dir);
-	dir->GetStatFor(path->Path(),&sad_stat);
+//	dir->GetStatFor(path->Path(),&sad_stat);
 #ifdef DEBUG
 	printf("\t%s: %ld\n",path->Path(),stat);
 #endif
 	dir->SetTo(&user_addon_dir);
 	dir->GetNodeRef(&nref);
 	path->SetTo(&user_addon_dir);
-	dir->GetStatFor(path->Path(),&uad_stat);
+//	dir->GetStatFor(path->Path(),&uad_stat);
 	stat=watch_node(&nref,B_WATCH_DIRECTORY,this,this);
 #ifdef DEBUG
 	printf("\t%s: %ld\n",path->Path(),stat);
