@@ -15,16 +15,16 @@
 //  See http://www.boost.org/libs/smart_ptr/shared_ptr.htm for documentation.
 //
 
-#include <boost/config.hpp>   // for broken compiler workarounds
+#include "boost/config.hpp"   // for broken compiler workarounds
 
 #ifndef BOOST_MSVC6_MEMBER_TEMPLATES
-#include <boost/detail/shared_ptr_nmt.hpp>
+#include "boost/detail/shared_ptr_nmt.hpp"
 #else
 
-#include <boost/assert.hpp>
-#include <boost/checked_delete.hpp>
+#include "boost/assert.hpp"
+#include "boost/checked_delete.hpp"
 
-#include <boost/detail/shared_count.hpp>
+#include "boost/detail/shared_count.hpp"
 
 #include <memory>             // for std::auto_ptr
 #include <algorithm>          // for std::swap

@@ -34,7 +34,7 @@
 
 #ifndef BOOST_ASSERT
 
-#include <boost/current_function.hpp>
+#include "boost/current_function.hpp"
 
 bool boost_error(char const * expr, char const * func, char const * file, long line);
 

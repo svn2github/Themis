@@ -35,7 +35,7 @@
 //        inside for more info.
 
 
-#include <boost/config.hpp>
+#include "boost/config.hpp"
 
 //
 //  Note to implementors: if you write a platform-specific lightweight_mutex
@@ -46,22 +46,22 @@
 //
 
 #ifndef BOOST_HAS_THREADS
-#  include <boost/detail/lwm_nop.hpp>
+#  include "boost/detail/lwm_nop.hpp"
 #elif defined(BOOST_USE_ASM_ATOMIC_H)
-#  include <boost/detail/lwm_linux.hpp>
+#  include "boost/detail/lwm_linux.hpp"
 #elif defined(BOOST_LWM_USE_CRITICAL_SECTION)
-#  include <boost/detail/lwm_win32_cs.hpp>
+#  include "boost/detail/lwm_win32_cs.hpp"
 #elif defined(BOOST_LWM_USE_PTHREADS)
-#  include <boost/detail/lwm_pthreads.hpp>
+#  include "boost/detail/lwm_pthreads.hpp"
 #elif defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
-#  include <boost/detail/lwm_win32.hpp>
+#  include "boost/detail/lwm_win32.hpp"
 #elif defined(__sgi)
-#  include <boost/detail/lwm_irix.hpp>
+#  include "boost/detail/lwm_irix.hpp"
 #elif defined(BOOST_HAS_PTHREADS)
 #  define BOOST_LWM_USE_PTHREADS
-#  include <boost/detail/lwm_pthreads.hpp>
+#  include "boost/detail/lwm_pthreads.hpp"
 #else
-#  include <boost/detail/lwm_nop.hpp>
+#  include "boost/detail/lwm_nop.hpp"
 #endif
 
 #endif // #ifndef BOOST_DETAIL_LIGHTWEIGHT_MUTEX_HPP_INCLUDED

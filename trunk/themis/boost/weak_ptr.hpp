@@ -14,7 +14,7 @@
 //  See http://www.boost.org/libs/smart_ptr/weak_ptr.htm for documentation.
 //
 
-#include <boost/shared_ptr.hpp>
+#include "boost/shared_ptr.hpp"
 
 #ifdef BOOST_MSVC  // moved here to work around VC++ compiler crash
 # pragma warning(push)

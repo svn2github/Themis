@@ -16,14 +16,14 @@
 //  warranty, and with no claim as to its suitability for any purpose.
 //
 
-#include <boost/config.hpp>
+#include "boost/config.hpp"
 
 #ifndef BOOST_NO_AUTO_PTR
 # include <memory>
 #endif
 
-#include <boost/checked_delete.hpp>
-#include <boost/detail/lightweight_mutex.hpp>
+#include "boost/checked_delete.hpp"
+#include "boost/detail/lightweight_mutex.hpp"
 
 #include <functional>       // for std::less
 #include <exception>        // for std::exception

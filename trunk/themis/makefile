@@ -34,7 +34,7 @@ FRAMEWORKSOURCES= \
 	framework/win.cpp \
 	framework/winview.cpp \
 	framework/plugman.cpp \
-	framework/infowin.cpp
+	framework/infowin.cpp 
 COMMONSOURCES= \
 	common/plugclass.cpp \
 	common/tcplayer.cpp
@@ -142,7 +142,7 @@ NETWORKLIBS=-lsocket -lbind -lbnetapi -lopenssl
 NETWORKING=NONE
 # by default, debugging information will be included. to turn it off, remove or comment out (#) the -g
 # on the next line 
-COMPILE_FLAGS=-g
+COMPILE_FLAGS=-g -D_Themis_
 ifeq "$(shell if [ -f /system/lib/libsocket.so ] ; then echo 1 ; else echo 0 ; fi)" "1"
 	NETWORKLIBS=-lsocket -lbind -lbnetapi
 	NETWORKING=BONE
@@ -204,8 +204,8 @@ help:
 	@echo "	cleanlibs	Remove the dependency, object, and binary files for the libraries"
 	@echo "	framework	Just the Themis framework"
 	@echo "	cacheaddon	Just the cache addon"
-#	@echo "	cookieaddon	Just the cookie addon"
-#	@echo "	jsaddon		Javascript addon"
+	@echo "	cookieaddon	Just the cookie addon"
+	@echo "	jsaddon		Javascript addon"
 	@echo "	httpaddon	Just the HTTP addon"
 	@echo "	help		This message"
 	@echo "	dist		Distribution ready zip file"
@@ -369,11 +369,11 @@ domlibobjects: $(foreach file,$(DOMLIBRARYSOURCES),$(DOMLIBRARY_OBJECT_DIR)$(not
 	
 $(DOMLIBRARY_DEPENDS_DIR)%.d: $(DOMLIBRARYSOURCES)
 	@echo "DOM: Updating dependency file $(notdir $@)"
-	@set -e;VAR1=$(shell echo "$(DOMLIBRARY_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(DOMLIBRARY_OBJECT_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
+	@set -e;VAR1=$(shell echo "$(DOMLIBRARY_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(DOMLIBRARY_OBJECT_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -I./ -M $(CPPFLAGS) $(COMPILE_FLAGS) $< | sed 's/\($*\)\.o[ :]*/$(VAR2)\1.o $(VAR1) : /g' > $@;[ -s $@ ] || rm -f $@
 
 $(DOMLIBRARY_OBJECT_DIR)%.o: framework/DOM/%.cpp $(DOMLIBRARY_DEPENDS_DIR)%.d
 	@echo "DOM: Updating object file $(notdir $@)"
-	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@ -Wall -Wno-multichar -Wno-ctor-dtor-privacy -Woverloaded-virtual -O3
+	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -I./ -c $< -o $@ -Wall -Wno-multichar -Wno-ctor-dtor-privacy -Woverloaded-virtual -O3
 
 #DOM Test application
 domtest: domlib domtestdepends domtestobjects

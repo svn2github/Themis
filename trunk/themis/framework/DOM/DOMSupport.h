@@ -10,8 +10,8 @@
 
 #include <String.h>
 
-#include <boost/shared_ptr.hpp>
-#include <boost/weak_ptr.hpp>
+#include "boost/shared_ptr.h"
+#include "boost/weak_ptr.h"
 
 class TNode;
 class TElement;
