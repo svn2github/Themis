@@ -29,6 +29,7 @@ Project Start Date: October 18, 2000
 #include "ramcacheobject.h"
 #include "plugclass.h"
 #include <string.h>
+#include <stdio.h>
 RAMCacheObject::RAMCacheObject(int32 token,const char *URL)
 	:CacheObject(token,URL) {
 	databuffer=new BMallocIO();
@@ -100,7 +101,7 @@ ssize_t RAMCacheObject::Read(uint32 usertoken, void *buffer, size_t size)
 		if (databuffer!=NULL) {
 //			buffer->Seek(user->ReadPosition(),SEEK_SET);
 			dsize=databuffer->ReadAt(user->ReadPosition(),buffer,size);
-			user->SetReadPosition(databuffer->Position());
+			user->SetReadPosition(dsize+user->ReadPosition());
 		}
 		
 	} else
@@ -118,6 +119,7 @@ ssize_t RAMCacheObject::Write(uint32 usertoken, void *buffer, size_t size)
 			writelockowner->SetWritePosition(writelockowner->WritePosition()+bytes);
 		}
 	}
+	printf("RAM Cache: URL: %s\tSize: %ld\n",url,Size());
 	return bytes;
 }
 
