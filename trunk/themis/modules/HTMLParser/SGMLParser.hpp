@@ -41,6 +41,7 @@ class SGMLParser	:	public BaseParser	{
 		ElementParser * mElementParser;
 		
 		// Functions
+		void setupParsers( const char * aDtd );
 		void processSGMLDocument();
 		void processSGMLDocEntity();
 		void processProlog();
@@ -55,6 +56,7 @@ class SGMLParser	:	public BaseParser	{
 	public:
 		// Constructor
 		SGMLParser( const char * aDtd, const char * aDocument );
+		SGMLParser( const char * aDtd, SGMLTextPtr aDocument );
 		// Destructor
 		~SGMLParser();
 		// Parsing function

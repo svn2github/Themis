@@ -40,16 +40,21 @@ SGMLParser	::	SGMLParser( const char * aDtd, const char * aDocument )
 	};
 	
 	// Create declaration parsers
-	mCommentDecl =
-		new CommentDeclParser( mDocText, mDTD, mParEntities, mCharEntities );
-	mDtdParser =
-		new DTDParser( aDtd, mDTD );
-	mDocTypeDecl =
-		new DocTypeDeclParser( mDocText, mDTD, mParEntities, mCharEntities );
-	mElementParser =
-		new ElementParser( mDocText, mDTD, mParEntities, mCharEntities );
+	setupParsers( aDtd );
 	
+}
 
+SGMLParser	::	SGMLParser( const char * aDtd, SGMLTextPtr aDocument )
+					:	BaseParser()	{
+	
+	printf( "SGMLParser constructed\n" );
+
+	// Load text
+	mDocText = aDocument;
+
+	// Create declaration parsers
+	setupParsers( aDtd );
+	
 }
 
 SGMLParser	::	~SGMLParser()	{
@@ -60,6 +65,19 @@ SGMLParser	::	~SGMLParser()	{
 	delete mDtdParser;
 	delete mDocTypeDecl;
 	
+}
+
+void SGMLParser	::	setupParsers( const char * aDtd )	{
+
+	mCommentDecl =
+		new CommentDeclParser( mDocText, mDTD, mParEntities, mCharEntities );
+	mDtdParser =
+		new DTDParser( aDtd, mDTD );
+	mDocTypeDecl =
+		new DocTypeDeclParser( mDocText, mDTD, mParEntities, mCharEntities );
+	mElementParser =
+		new ElementParser( mDocText, mDTD, mParEntities, mCharEntities );
+
 }
 
 void SGMLParser	::	processSGMLDocument()	{
@@ -144,7 +162,15 @@ void SGMLParser	::	processOtherPrologStar()	{
 
 void SGMLParser	::	processBaseDocTypeDecl()	{
 
-	mDocTypeDecl->parse();
+	try	{
+		mDocTypeDecl->parse();
+	}
+	catch( ReadException r )	{
+		// Only throwing when fatal, because most documents lack the doctype declaration
+		if ( r.isFatal() )	{
+			throw r;
+		}
+	}
 	
 }
 
@@ -163,7 +189,13 @@ void SGMLParser	::	processBaseDocElement()	{
 
 void SGMLParser	::	processDocElement()	{
 	
-	mElementParser->parse( mDocTypeDecl->getDocTypeName() );
+	string docTypeName = mDocTypeDecl->getDocTypeName();
+	if ( docTypeName == "" )	{
+		// No doctype declaration. Assuming this is html
+		docTypeName = "HTML";
+	}
+		
+	mElementParser->parse( docTypeName );
 	
 }
 
@@ -187,21 +219,5 @@ TDocumentShared SGMLParser	::	parse()	{
 	}
 
 	return mDocument;
-	
-}
-
-int main( int argc, char * argv[] )	{
-	
-	if ( argc < 3 )	{
-		cout << "Please supply a dtd and a document to load\n";
-		return 1;
-	}
-	
-	SGMLParser * sgmlParser = new SGMLParser( argv[ 1 ], argv[ 2 ] );
-	TDocumentShared dtd = sgmlParser->parse();
-
-	delete sgmlParser;
-	
-	return 0;
 	
 }
