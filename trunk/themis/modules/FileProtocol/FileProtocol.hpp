@@ -14,7 +14,7 @@
 #include <Handler.h>
 
 // Themis headers
-#include "plugclass.h"
+#include "protocol_plugin.h"
 
 // Declarations of Themis classes
 class CachePlug;
@@ -23,7 +23,7 @@ extern "C" __declspec( dllexport ) status_t Initialize( void * info = NULL );
 extern "C" __declspec( dllexport ) status_t Shutdown( bool now = false );
 extern "C" __declspec( dllexport ) PlugClass * GetObject();
 
-class FileProtocol	:	public BHandler, public PlugClass	{
+class FileProtocol	:	public BHandler, public ProtocolPlugClass	{
 
 	private:
 		CachePlug * cache;
@@ -44,6 +44,9 @@ class FileProtocol	:	public BHandler, public PlugClass	{
 		status_t BroadcastReply( BMessage * message );
 		uint32 BroadcastTarget();
 		int32 Type();
+		virtual void ConnectionEstablished( connection * conn );
+		virtual void ConnectionDisconnected( connection * conn, uint32 reason = 0 );
+		virtual void DataWaiting( connection * conn );
 
 };
 

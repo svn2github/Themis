@@ -204,12 +204,7 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 						appSettings->FindString( "DTDToUsePath", &path );
 						string dtdLoad = "Loading new DTD: ";
 						dtdLoad += path;
-						BMessage * messages = new BMessage( ReturnedData );
-						messages->AddInt32( "command", COMMAND_INFO );
-						messages->AddString( "type", "messages" );
-						messages->AddInt32( "pluginID", PlugID() );
-						messages->AddString( "message", dtdLoad.c_str() );
-						Broadcast( MS_TARGET_HANDLER, messages );
+						Debug( dtdLoad.c_str(), PlugID() );
 						if ( parser == NULL )	{
 							parser = new SGMLParser( path );
 							parser->parseDTD();
@@ -217,9 +212,7 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 						else	{
 							parser->parseDTD( path );
 						}
-						messages->ReplaceString( "message", "New DTD loaded" );
-						Broadcast( MS_TARGET_HANDLER, messages );
-						delete messages;
+						Debug( "New DTD loaded", PlugID() );
 					}
 					break;
 				}
@@ -228,7 +221,6 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 					
 					message->PrintToStream();
 					fflush( stdout );
-					printf( "----------------\n" );
 					
 					bool requestDone = false;
 					message->FindBool( "request_done", &requestDone );
@@ -257,7 +249,6 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 					message->FindString( "url", &url );
 					
 					if ( url != NULL )	{
-						printf( "Getting data of url: %s\n", url );
 					}
 					else	{
 						// What the heck
@@ -267,15 +258,8 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 					int32 fileToken = cache->FindObject( userToken, url );
 					ssize_t fileSize = cache->GetObjectSize( userToken, fileToken );
 					
-					printf( "File size: %i\n", (int) fileSize );
 					if ( fileSize == 0 )	{
-						BMessage * messages = new BMessage( ReturnedData );
-						messages->AddInt32( "command", COMMAND_INFO );
-						messages->AddString( "type", "messages" );
-						messages->AddInt32( "pluginID", PlugID() );
-						messages->AddString( "message", "Requested file is 0 bytes long. Something is wrong here" );
-						Broadcast( MS_TARGET_HANDLER, messages );
-						delete messages;
+						Debug( "Requested file is 0 bytes long. Something is wrong here", PlugID() );
 						break;
 					}
 					string content;
@@ -286,20 +270,14 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 					while (  bytesRead > 0 )	{
 						totalBytes += bytesRead;
 						if ( totalBytes > fileSize )	{
-							printf( "Ahem. Whose bug is this ?\n" );
-							printf( "Complete text gotten:\n%s", content.c_str() );
 							break;
 						}
-						printf( "Got part of data: %i\n", totalBytes  );
 						content += buffer;
 						memset( buffer, 0, 1000 );
 						bytesRead = cache->Read( userToken, fileToken, buffer, 2000 );
 					}
 					delete[] buffer;
 
-					printf( "Put all data in content\n" );
-			
-					
 					// Parse it
 					SGMLTextPtr	docText = SGMLTextPtr( new SGMLText( content ) );
 					if ( parser != NULL )	{
@@ -321,17 +299,10 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 							/**/
 							Broadcast( MS_TARGET_ALL, done );
 							
-							BMessage * messages = new BMessage( ReturnedData );
-							messages->AddInt32( "command", COMMAND_INFO );
-							messages->AddString( "type", "messages" );
-							messages->AddInt32( "pluginID", PlugID() );
-							messages->AddString( "message", "File parsed" );
-							Broadcast( MS_TARGET_HANDLER, messages );
+							Debug( "File parsed", PlugID() );
 
 							delete done;
-							delete messages;
 							done = NULL;
-							messages = NULL;
 						}
 					}
 					break;

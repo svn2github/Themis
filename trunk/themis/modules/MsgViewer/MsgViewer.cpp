@@ -1,4 +1,34 @@
-/*	MsgViewer implementation
+/*
+	Copyright (c) 2001 Mark Hellegers. All Rights Reserved.
+	
+	Permission is hereby granted, free of charge, to any person
+	obtaining a copy of this software and associated documentation
+	files (the "Software"), to deal in the Software without
+	restriction, including without limitation the rights to use,
+	copy, modify, merge, publish, distribute, sublicense, and/or
+	sell copies of the Software, and to permit persons to whom
+	the Software is furnished to do so, subject to the following
+	conditions:
+	
+	   The above copyright notice and this permission notice
+	   shall be included in all copies or substantial portions
+	   of the Software.
+	
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+	KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+	WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+	PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+	OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+	OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+	
+	Original Author: 	Mark Hellegers (M.H.Hellegers@stud.tue.nl)
+	Project Start Date: October 18, 2000
+	Class Start Date: August 23, 2003
+*/
+/*
+	MsgViewer implementation
 	See MsgViewer.hpp for more information
 */
 
@@ -26,11 +56,11 @@ MsgViewer * viewer;
 BMessage ** appSettings_p;
 BMessage * appSettings;
 
-status_t Initialize( void * info )	{
+status_t Initialize( void * aInfo )	{
 	
 	viewer = NULL;
-	if ( info != NULL )	{
-		BMessage * message = (BMessage *) info;
+	if ( aInfo != NULL )	{
+		BMessage * message = (BMessage *) aInfo;
 		if ( message->HasPointer( "settings_message_ptr" ) )	{
 			message->FindPointer( "settings_message_ptr", (void **) & appSettings_p );
 			appSettings = *appSettings_p;
@@ -45,7 +75,7 @@ status_t Initialize( void * info )	{
 	
 }
 
-status_t Shutdown( bool now )	{
+status_t Shutdown( bool aNow )	{
 	
 	delete viewer;
 	
@@ -59,31 +89,31 @@ PlugClass * GetObject()	{
 	
 }
 
-MsgViewer	::	MsgViewer( BMessage * info )
-					:	BHandler( "MsgViewer" ), PlugClass( info, "MsgViewer" )	{
+MsgViewer	::	MsgViewer( BMessage * aInfo )
+					:	BHandler( "MsgViewer" ), PlugClass( aInfo, "MsgViewer" )	{
 
 	if ( PlugMan )	{
 		printf( "Getting plugin list\n" );
 		BMessage * list = PlugMan->GetPluginList();
-		view = new MsgView( list );
+		mView = new MsgView( list );
 	}
 	else	{
-		view = new MsgView();
+		mView = new MsgView();
 	}
-	view->Show();
+	mView->Show();
 
 }
 
 MsgViewer	::	~MsgViewer()	{
 	
-	view->Lock();
-	view->Quit();
+	mView->Lock();
+	mView->Quit();
 	
 }
 
-void MsgViewer	::	MessageReceived( BMessage * message )	{
+void MsgViewer	::	MessageReceived( BMessage * aMessage )	{
 	
-	BHandler::MessageReceived( message );
+	BHandler::MessageReceived( aMessage );
 	
 }
 
@@ -119,7 +149,7 @@ char * MsgViewer	::	PlugName()	{
 
 float MsgViewer	::	PlugVersion()	{
 	
-	return 0.2;
+	return 0.3;
 	
 }
 
@@ -127,32 +157,27 @@ void MsgViewer	::	Heartbeat()	{
 	
 }
 
-status_t MsgViewer	::	ReceiveBroadcast( BMessage * message )	{
+status_t MsgViewer	::	ReceiveBroadcast( BMessage * aMessage )	{
 
 	int32 command = 0;
-	message->FindInt32( "command", &command );
+	aMessage->FindInt32( "command", &command );
 	
 	switch ( command )	{
 		case COMMAND_INFO:	{
-			switch ( message->what )	{
+			switch ( aMessage->what )	{
 				case PlugInLoaded:	{
 					PlugClass * plug = NULL;
-					message->FindPointer(  "plugin", (void **) &plug );
+					aMessage->FindPointer(  "plugin", (void **) &plug );
 					if ( plug != NULL )	{
-						view->addPlugin( plug->PlugName() );
+						mView->addPlugin( plug->PlugName() );
 					}
 					break;
 				}
-				case ReturnedData:	{
+				case DEBUG_INFO_MSG:	{
 					const char * type;
-					message->FindString( "type", &type );
-					string typeString = type;
-					if ( typeString != "messages" )	{
-						return PLUG_DOESNT_HANDLE;
-					}
 					PlugClass * plug = NULL;
 					int32 id = 0;
-					message->FindInt32( "pluginID", &id );
+					aMessage->FindInt32( "pluginID", &id );
 					string sender;
 					if ( PlugMan )	{
 						plug = PlugMan->FindPlugin( id );
@@ -160,13 +185,17 @@ status_t MsgViewer	::	ReceiveBroadcast( BMessage * message )	{
 					if ( plug != NULL )	{
 						sender = plug->PlugName();
 					}
+					else	{
+						sender = "General messages";
+					}
 					int32 count = 0;
 					type_code code = B_STRING_TYPE;
-					message->GetInfo( "message", &code, &count );
-					const char * messageString;
+					aMessage->GetInfo( "message", &code, &count );
+					const char * message;
 					for ( int32 i = 0; i < count; i++ )	{
-						message->FindString( "message", i, &messageString );
-						view->addMessage( sender.c_str(), messageString );
+						aMessage->FindString( "message", i, &message );
+						string messageString = message;
+						mView->addMessage( messageString, sender );
 					}
 					break;
 				}
@@ -182,7 +211,7 @@ status_t MsgViewer	::	ReceiveBroadcast( BMessage * message )	{
 	
 }
 
-status_t MsgViewer	::	BroadcastReply( BMessage * message )	{
+status_t MsgViewer	::	BroadcastReply( BMessage * aMessage )	{
 	
 	return B_OK;
 	
@@ -190,7 +219,7 @@ status_t MsgViewer	::	BroadcastReply( BMessage * message )	{
 
 uint32 MsgViewer	::	BroadcastTarget()	{
 
-	return MS_TARGET_HANDLER;
+	return MS_TARGET_DEBUG;
 	
 }
 

@@ -66,7 +66,7 @@ PlugClass * GetObject()	{
 }
 
 FileProtocol	::	FileProtocol( BMessage * info )
-					:	BHandler( "FileProtocol" ), PlugClass( info, "FileProtocol" )	{
+					:	BHandler( "FileProtocol" ), ProtocolPlugClass( info, "FileProtocol" )	{
 
 	cache = (CachePlug *) PlugMan->FindPlugin( CachePlugin );
 	userToken = 0;
@@ -119,7 +119,7 @@ char * FileProtocol	::	PlugName()	{
 
 float FileProtocol	::	PlugVersion()	{
 	
-	return 0.1;
+	return 0.2;
 	
 }
 
@@ -177,22 +177,6 @@ status_t FileProtocol	::	ReceiveBroadcast( BMessage * message )	{
 				int32 objectToken =
 					cache->CreateObject( userToken, fileLocation.c_str(), TYPE_DISK_FILE );
 				
-//				char * buffer = new char[ kBufferSize ];
-//				unsigned int bytesRead = 0;
-//				unsigned int totalBytes = 0;
-//				file.read( buffer, kBufferSize );
-//				bytesRead = file.gcount();
-//				totalBytes = bytesRead;
-//				cache->Write( userToken, objectToken, buffer, bytesRead );
-//				while (  bytesRead == kBufferSize )	{
-//					totalBytes += bytesRead;
-//					file.read( buffer, kBufferSize );
-//					bytesRead = file.gcount();
-//					cache->Write( userToken, objectToken, buffer, bytesRead );
-//				}
-//				delete[] buffer;
-//				cache->ReleaseWriteLock( userToken, objectToken );
-//				printf( "Written %i bytes\n", totalBytes );
 				BMessage * fileMessage = new BMessage( ProtocolConnectionClosed );
 				int32 id=0;
 				message->FindInt32("view_id",&id);
@@ -236,3 +220,16 @@ int32 FileProtocol	::	Type()	{
 	return TARGET_PROTOCOL;
 	
 }
+
+void FileProtocol	::	ConnectionEstablished( connection * conn )	{
+	
+}
+
+void FileProtocol	::	ConnectionDisconnected( connection * conn, uint32 reason = 0 )	{
+	
+}
+
+void FileProtocol	::	DataWaiting( connection * conn )	{
+	
+}
+

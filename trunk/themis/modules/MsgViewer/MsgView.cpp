@@ -1,4 +1,35 @@
-/*	MsgView implementation
+/*
+	Copyright (c) 2001 Mark Hellegers. All Rights Reserved.
+	
+	Permission is hereby granted, free of charge, to any person
+	obtaining a copy of this software and associated documentation
+	files (the "Software"), to deal in the Software without
+	restriction, including without limitation the rights to use,
+	copy, modify, merge, publish, distribute, sublicense, and/or
+	sell copies of the Software, and to permit persons to whom
+	the Software is furnished to do so, subject to the following
+	conditions:
+	
+	   The above copyright notice and this permission notice
+	   shall be included in all copies or substantial portions
+	   of the Software.
+	
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+	KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+	WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+	PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+	OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+	OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+	
+	Original Author: 	Mark Hellegers (M.H.Hellegers@stud.tue.nl)
+	Project Start Date: October 18, 2000
+	Class Start Date: August 23, 2003
+*/
+
+/*
+	MsgView implementation
 	See MsgView.hpp for more information
 */
 
@@ -16,28 +47,30 @@
 // MsgViewer headers
 #include "MsgView.hpp"
 
-MsgView	::	MsgView( BMessage * pluginList )
+MsgView	::	MsgView( BMessage * aPluginList )
 				:	BWindow( BRect( 100, 100, 500, 200 ), "Message View", B_TITLED_WINDOW,
 									B_CURRENT_WORKSPACE )	{
 
-	printf( "Constructing MsgView\n" );
-	
+	// Create the BView.
 	BRect backRect = Bounds();
 	BView * backGround =
 		new BView( backRect, "Background", B_FOLLOW_ALL_SIDES, B_WILL_DRAW );
 	backGround->SetViewColor( ui_color( B_PANEL_BACKGROUND_COLOR ) );
 	AddChild( backGround );
 
+	// Create the popup menu.
 	BRect menuRect = backRect;
 	menuRect.bottom = 20;
 	menuRect.right = 200;
-	senderMenu = new BPopUpMenu( "Message Sender" );
+	mSenderMenu = new BPopUpMenu( "Message Sender" );
 
+	// Create the BMenuField and add it to the view.
 	BMenuField * senderField =
 		new BMenuField( menuRect, "senderField", "Sender", senderMenu );
 	senderField->SetDivider( 50 );
 	backGround->AddChild( senderField );
 	
+	// Create the message view and add it to the view.
 	BRect messageViewRect = backRect;
 	messageViewRect.InsetBy( 20, 20 );
 	messageViewRect.left -= 10;
@@ -45,27 +78,38 @@ MsgView	::	MsgView( BMessage * pluginList )
 	BRect messageRect = messageViewRect;
 	messageRect.OffsetTo( 0, 0 );
 	messageRect.InsetBy( 5, 5 );
-	messageView = new BTextView( messageViewRect, "MessageView", messageRect,
+	mMessageView = new BTextView( messageViewRect, "MessageView", messageRect,
 													B_FOLLOW_ALL_SIDES, B_WILL_DRAW );
 	BScrollView * scrollView =
 		new BScrollView( "MessageScrollView", messageView, B_FOLLOW_ALL_SIDES, 0,
 								 true, true );
 	backGround->AddChild( scrollView );
 
-	if ( pluginList != NULL )	{
+	// Add the general messages option.
+	mSenderMenu->AddItem( new BMenuItem( "General Messages",
+										new BMessage( CHANGE_MESSAGE_VIEW ) ) );
+	vector<string> generalMessageVector;
+	mMessageMap.insert(
+		map<string,
+				vector<string> >::value_type( "General Message",
+															 generalMessageVector ) );
+
+	if ( aPluginList != NULL )	{
 		// Add the list of plugins to the popup menu.
 		int32 count = 0;
 		type_code code = B_STRING_TYPE;
-		pluginList->GetInfo( "plug_name", &code, &count );
+		aPluginList->GetInfo( "plug_name", &code, &count );
 		const char * pluginName;
 		for ( int32 i = 0; i < count; i++ )	{
-			pluginList->FindString( "plug_name", i, &pluginName );
-			senderMenu->AddItem( new BMenuItem( pluginName,
+			aPluginList->FindString( "plug_name", i, &pluginName );
+			mSenderMenu->AddItem( new BMenuItem( pluginName,
 								new BMessage( CHANGE_MESSAGE_VIEW ) ) );
 			string pluginString( pluginName );
 			vector<string> messageVector;
-			messageMap.insert(
-				map<string, vector<string> >::value_type( pluginString, messageVector ) );
+			mMessageMap.insert(
+				map<string,
+						vector<string> >::value_type( pluginString,
+																	 messageVector ) );
 		}
 	}	
 
@@ -73,27 +117,25 @@ MsgView	::	MsgView( BMessage * pluginList )
 
 MsgView	::	~MsgView()	{
 	
-	printf( "Destroying MsgView\n" );
-	
 }
 
-void MsgView	::	MessageReceived( BMessage * message )	{
+void MsgView	::	MessageReceived( BMessage * aMessage )	{
 
-	switch( message->what )	{
+	switch( aMessage->what )	{
 		case CHANGE_MESSAGE_VIEW:	{
-			BMenuItem * marked = senderMenu->FindMarked();
+			BMenuItem * marked = mSenderMenu->FindMarked();
 			string label( marked->Label() );
-			map<string, vector<string> >::iterator it = messageMap.find( label );
-			if ( it != messageMap.end() )	{
-				messageView->SetText( "\0" );
+			map<string, vector<string> >::iterator it = mMessageMap.find( label );
+			if ( it != mMessageMap.end() )	{
+				mMessageView->SetText( "\0" );
 				for ( unsigned int i = 0; i < ( (*it).second ).size(); i++ )	{
-					messageView->Insert( ( (*it).second )[ i ].c_str() );
+					mMessageView->Insert( ( (*it).second )[ i ].c_str() );
 				}
 			}
 			break;
 		}
 		default:	{
-			BWindow::MessageReceived( message );
+			BWindow::MessageReceived( aMessage );
 		}
 	}
 	
@@ -105,47 +147,43 @@ bool MsgView	::	QuitRequested()	{
 	
 }
 
-void MsgView	::	addMessage( const char * sender, const char * message )	{
+void MsgView	::	addMessage( string aMessage, string aSender  )	{
 
 	Lock();
-	string messageString = string( message );
-	messageString += '\n';
 
-	string senderString = string( sender );
-	if ( messageMap.count( senderString ) == 0 )	{
-		vector<string> messageVector;
-		messageVector.push_back( messageString );
-		messageMap.insert(
-			map<string, vector<string> >::value_type( senderString, messageVector ) );
-		senderMenu->AddItem( new BMenuItem( sender,
-																	 new BMessage( CHANGE_MESSAGE_VIEW ) ) );
+	string senderString = "";
+	if ( aSender = "" )	{
+		senderString = "General Messages";
 	}
 	else	{
-		map<string, vector<string> >::iterator i = messageMap.find( senderString );
+		senderString = aSender;
+	}
+	if ( mMessageMap.count( senderString ) != 0 )	{
+		map<string, vector<string> >::iterator i = mMessageMap.find( senderString );
 		if ( i != messageMap.end() )	{
-			( (*i).second ).push_back( messageString );
+			( (*i).second ).push_back( aMessage );
 		}
 	}
 
-	BMenuItem * marked = senderMenu->FindMarked();
+	BMenuItem * marked = mSenderMenu->FindMarked();
 	if ( marked != NULL )	{
 		string label( marked->Label() );
 		if ( senderString == label )	{
-			messageView->Insert( messageString.c_str() );
+			mMessageView->Insert( aMessageString.c_str() );
 		}
 	}
 	Unlock();
 	
 }
 
-void MsgView	::	addPlugin( const char * plugin )	{
+void MsgView	::	addPlugin( string aPlugin )	{
 
 	Lock();	
-	senderMenu->AddItem( new BMenuItem( plugin,
+	senderMenu->AddItem( new BMenuItem( plugin.c_str(),
 						new BMessage( CHANGE_MESSAGE_VIEW ) ) );
-	string pluginString( plugin );
 	vector<string> messageVector;
 	messageMap.insert(
-		map<string, vector<string> >::value_type( pluginString, messageVector ) );
+		map<string, vector<string> >::value_type( aPlugin, messageVector ) );
 	Unlock();
+	
 }
