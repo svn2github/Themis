@@ -125,7 +125,7 @@ struct http_request {
 	BPositionIO *data;
 	connection *conn;
 	header_st *headers;
-	bool headersdone;
+	volatile int32 headersdone;
 	volatile int32 datawaiting;
 	volatile int32 done;
 	volatile int32 conn_released;
@@ -142,7 +142,7 @@ struct http_request {
 	http_request() {
 		a_realm=NULL;
 		url=uri=host=NULL;
-		port=80;
+		port=80; 
 		status=0;
 		cache=UsesCache;
 		cacheinfo=NULL;
@@ -158,7 +158,7 @@ struct http_request {
 		chunked=false;
 		conn_released=0;
 		chunkbytesremaining=0;
-		headersdone=false;
+		headersdone=0;
 		storage=NULL;
 		storagesize=0;
 		chunk=0;

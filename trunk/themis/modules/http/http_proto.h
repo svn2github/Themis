@@ -56,7 +56,7 @@ class http_protocol:public ProtocolPlugClass
 	 BWindow *win;
     public:
 		void FindURI(const char *url,BString &host,uint16 *port,BString &uri,bool *secure);
-     http_protocol();
+     http_protocol(BMessage *info=NULL);
      ~http_protocol();
      BMessage headers;
      char *PlugName(void);

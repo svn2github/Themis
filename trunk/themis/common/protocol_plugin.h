@@ -33,6 +33,7 @@ Project Start Date: October 18, 2000
 #include "plugclass.h"
 class ProtocolPlugClass: public PlugClass {
 	public:
+		ProtocolPlugClass(BMessage *info=NULL):PlugClass(info) {}
 		BString URL;
 		virtual const char *SetURL(const char* url) {URL=url; return URL.String();}
 		virtual BMessage *SupportedTypes(void) {return NULL;}

@@ -80,8 +80,13 @@ httplayer::httplayer(tcplayer *_TCP) {
 httplayer::httplayer(tcplayer *_TCP) 
 {
 	lock=new BLocker("http lock",false);
+	lock->Lock();
+	printf("HTTP object at %p\nhttp tcp: %p\n",this,_TCP);
+	
 	L=U=0;
-	SetTCP(_TCP);
+	TCP=NULL;
+	if (_TCP!=NULL)
+		SetTCP(_TCP);
 	__TCP==_TCP;
 	meHTTP=this;
 	Basic=NULL;
@@ -94,6 +99,7 @@ httplayer::httplayer(tcplayer *_TCP)
 	use_useragent=0;
 	PluginManager=NULL;
 	CachePlug=NULL;
+	lock->Unlock();
 }
 /*
 httplayer::~httplayer() {
@@ -165,15 +171,19 @@ httplayer::~httplayer()
 
 
 void httplayer::SetTCP(tcplayer *_TCP) {
+//	printf("Entered SetTCP\n");
+	
 	if (_TCP!=NULL) {
 		
 	TCP=_TCP;
+//	printf("_TCP: 0x%lx\n", (uint32)_TCP);
+//	printf("TCP: 0x%lx\n", (uint32)TCP);
+	fflush(stdout);
 	TCP->Lock();
-	if (TCP!=NULL)
-		TCP->SetDRCallback((int32)'http',DataReceived,LockHTTP,UnlockHTTP);
+	TCP->SetDRCallback((int32)'http',DataReceived,LockHTTP,UnlockHTTP);
 	TCP->Unlock();
 	}
-	
+//	printf("Leaving SetTCP\n");
 }
 /*
 void httplayer::DReceived(connection *conn) {
@@ -679,15 +689,37 @@ void httplayer::ClearHeaders(http_request *request) {
 void httplayer::ProcessHeaders(http_request *request,void *buffer,int size) {
 	bool conthead=false;
 	bool triggerauth=false;
+		char *header=NULL;
 	bool http_continue=false;
 	bool altlineending=false;
+		char *eoh=NULL;
+		char *eohc=new char[5];
+		memset(eohc,0,5);
 	char lineending[4];
 	int32 lesize=0;
 	memset(lineending,0,4);
 	strcpy(lineending,"\r\n");
 	lesize=strlen(lineending);
 	char *buf=(char*)buffer;
-	printf("ProcessHeaders getting started:\n%s\n",buf);
+	if ((request->headers!=NULL) || (request->storage!=NULL)){
+			request->storagesize+=size;
+			request->storage=(unsigned char*)realloc(request->storage,request->storagesize);
+			memcpy(request->storage+(request->storagesize-size),buffer,size);
+			buf=(char*)request->storage;
+			eoh=FindEndOfHeader(buf,(&eohc));
+			if (eoh==NULL) {
+				//what??? again????
+				delete eohc;
+				return;
+			} else {
+				int len=eoh-buf;
+				header=new char[len+1];
+				memset(header,0,len+1);
+				strncpy(header,buf,len);
+			}
+	}
+	
+//	printf("ProcessHeaders getting started:\n%s\n",buf);
 	
 	char *tmp=new char[5];
 	memset(tmp,0,5);
@@ -714,7 +746,7 @@ void httplayer::ProcessHeaders(http_request *request,void *buffer,int size) {
 			memset(temp,0,10);
 			strncpy(temp,sl+1,sp1-(sl+1));
 			float vers=atof(temp);
-			printf("version %1.1f\n",vers);
+//			printf("version %1.1f\n",vers);
 			request->http_v_major=(int)vers/1;
 			request->http_v_minor=(int)vers%1;
 			memset(temp,0,10);
@@ -723,14 +755,10 @@ void httplayer::ProcessHeaders(http_request *request,void *buffer,int size) {
 			memset(temp,0,10);
 		}
 	
-		char *eoh=NULL;
-		char *eohc=new char[5];
-		memset(eohc,0,5);
-		printf("[ph1] eohc: %p\n",eohc);
+//		printf("[ph1] eohc: %p\n",eohc);
 		
 		eoh=FindEndOfHeader(buf,(&eohc));
-		printf("[ph1] eohc: %p\n",eohc);
-		char *header=NULL;
+//		printf("[ph1] eohc: %p\n",eohc);
 		if (eoh!=NULL) {
 			int len=eoh-buf;
 			header=new char[len+1];
@@ -746,33 +774,16 @@ void httplayer::ProcessHeaders(http_request *request,void *buffer,int size) {
 				request->storagesize=size;
 				delete eohc;
 				return;
-			} else {
-				request->storagesize+=size;
-				request->storage=(unsigned char*)realloc(request->storage,request->storagesize);
-				memcpy(request->storage+(request->storagesize-size),buffer,size);
-				buf=(char*)request->storage;
-				eoh=FindEndOfHeader(buf,(&eohc));
-				if (eoh==NULL) {
-					//what??? again????
-					delete eohc;
-					return;
-				} else {
-					int len=eoh-buf;
-					header=new char[len+1];
-					memset(header,0,len+1);
-					strncpy(header,buf,len);
-				}
-				
 			}
 		}
 		
-		printf("Status: %d, eoh: %p\n",request->status,eoh);
-		printf("EoH str: ");
+//		printf("Status: %d, eoh: %p\n",request->status,eoh);
+//		printf("EoH str: ");
 		if (eohc==NULL)
-		for (int i=0;i<strlen(eohc);i++)
-			printf("0x%x ",(int)eohc[i]);
-		printf("\n");
-		printf("header:\n%s\n",header);
+//		for (int i=0;i<strlen(eohc);i++)
+//			printf("0x%x ",(int)eohc[i]);
+//		printf("\n");
+//		printf("header:\n%s\n",header);
 		switch((request->status/100)) {
 			case 1: {
 				//100 range responses should trigger another look... if there is no further
@@ -809,7 +820,7 @@ void httplayer::ProcessHeaders(http_request *request,void *buffer,int size) {
 		eol=strstr(curpos,lineending);
 		
 		char *colon;
-		printf("curpos: %p\teol: %p\teoh: %p\n",curpos,eol,eoh);
+//		printf("curpos: %p\teol: %p\teoh: %p\n",curpos,eol,eoh);
 		while(eol!=NULL) {
 			if (curpos==eol)
 				break;
@@ -968,16 +979,19 @@ void httplayer::ProcessHeaders(http_request *request,void *buffer,int size) {
 				//do nothing
 			}
 		}
-		printf("ProcessHeaders is just about done:\n%s\n",eoh+strlen(eohc));
+//		printf("ProcessHeaders is just about done:\n%s\n",eoh+strlen(eohc));
 		
 		DoneWithHeaders(request);
 		ProcessData(request,eoh+strlen(eohc),size-((eoh+strlen(eohc))-buf));
 		delete eohc;
 	} else {
 		//we don't have an HTTP response on our hands...
+		printf("Diner says hi!\n");
+		exit(0);
+		
 		delete tmp;
 	}
-	printf("ProcessHeaders done.\n");
+//	printf("ProcessHeaders done.\n");
 }
 
 /*
@@ -1153,7 +1167,7 @@ void httplayer::ProcessHeaders(http_request *request,void *buffer,int size) {
 */
 void httplayer::DoneWithHeaders(http_request *request) {
 	printf("DoneWithHeaders\n");
-	request->headersdone=true;
+	atomic_add(&request->headersdone,1);
 	char *result;
 	result=FindHeader(request,"transfer-encoding");
 	if (result!=NULL) {//transfer encoding
@@ -1605,7 +1619,7 @@ void httplayer::ProcessChunkedData(http_request *request,void *buffer, int size)
 		char *kk=new char[request->chunkbytesremaining+1];
 		memset(kk,0,request->chunkbytesremaining+1);
 		strncpy(kk,(char*)buffer,request->chunkbytesremaining);
-		printf("======Chunk======\n%s\n++++++++++\n",kk);
+//		printf("======Chunk======\n%s\n++++++++++\n",kk);
 		delete kk;
 		request->chunkbytesremaining=0;
 		
@@ -1622,7 +1636,7 @@ void httplayer::ProcessChunkedData(http_request *request,void *buffer, int size)
 				memset(rr,0,br+1);
 				strncpy(rr,rem,br);
 				
-			printf("========Remaining========\n%s\n++++++++++++++\n",rr);
+//			printf("========Remaining========\n%s\n++++++++++++++\n",rr);
 			delete rr;
 			
 			eol=(char*)memchr(rem,'\r',10);//strstr(rem,"\r\n");
@@ -1906,13 +1920,27 @@ bool httplayer::ResubmitRequest(http_request *request) {
 
 int32 httplayer::Lock(int32 timeout) 
 {
-	if (timeout==-1) {
-		if (lock->Lock())
+	thread_id callingthread=find_thread(NULL),lockingthread=lock->LockingThread();
+//	printf("calling thread: %ld\tlocking thread: %ld\tlocks: %ld\n",callingthread,lockingthread,lock->CountLocks());
+	
+	if (lockingthread!=B_ERROR) {
+		if (callingthread==lockingthread)
 			return B_OK;
+	}
+	if (timeout==-1) {
+		if (lock->Lock()) {
+//			printf("calling thread %ld has gotten the lock\n",callingthread);
+			
+			return B_OK;
+		}
+//		printf("calling thread failed to get the lock.\n");
+		
 		return B_ERROR;
 		
 	} else {
-		return lock->LockWithTimeout(timeout);
+		status_t stat=lock->LockWithTimeout(timeout);
+//		printf("status %ld while calling thread %ld attempted to get the lock\n",stat,callingthread);
+		return stat;
 	}
 	
 /*
@@ -1938,6 +1966,8 @@ int32 httplayer::Lock(int32 timeout)
 }
 void httplayer::Unlock() 
 {
+	thread_id callingthread=find_thread(NULL),lockingthread=lock->LockingThread();
+	
 	lock->Unlock();
 /*
 	sem_id targetsem=0;
@@ -2076,7 +2106,7 @@ int32 httplayer::LayerManager() {
 			current=current->next;
 		if (current==NULL) {
 			Unlock();
-			snooze(30000);
+			snooze(40000);
 			continue;
 		}
 		if (current->done==0) {
@@ -2094,7 +2124,7 @@ int32 httplayer::LayerManager() {
 //					printf("http: data received: %ld bytes\n",bytes);
 					TCP->Unlock();
 					if (bytes>0) {
-						if (current->headers==NULL) {
+						if (current->headersdone!=1) {
 							ProcessHeaders(current,buffer,bytes);
 						} else {
 							ProcessData(current,buffer,bytes);
@@ -2104,6 +2134,7 @@ int32 httplayer::LayerManager() {
 			}
 		}
 		Unlock();
+		snooze(20000);
 		
 	}
 	memset(buffer,0,10240);

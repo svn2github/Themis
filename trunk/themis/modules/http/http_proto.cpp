@@ -35,16 +35,22 @@ tcplayer *TCP;
 
 status_t Initialize(void *info)
  {
-  HTTP_proto=new http_protocol;
   TCP=NULL;
   if (info!=NULL) {
 	  
 	BMessage *imsg=(BMessage *)info;
+//	if (imsg!=NULL) {
+		imsg->PrintToStream();
+		
 	 if (imsg->HasPointer("tcp_layer_ptr"))
 	 	imsg->FindPointer("tcp_layer_ptr",(void**)&TCP);
+//	}
+	
 	printf("(http) TCP layer: %p\n",TCP);
+  HTTP_proto=new http_protocol(imsg);
 	 
-  }
+  }else 
+  	HTTP_proto=new http_protocol(NULL);
   
   return B_OK;
  }
@@ -82,15 +88,18 @@ status_t http_protocol::Go(void)
  {
   return B_OK;
  }
-http_protocol::http_protocol()
-              :protocol_plugin()
+http_protocol::http_protocol(BMessage *info)
+              :protocol_plugin(info)
  {
  	Window=NULL;
 	 
 	Go();
-		HTTP=new httplayer(TCP);
-	if (TCP!=NULL) {
+	if (TCP==NULL) {
+	 if (info->HasPointer("tcp_layer_ptr"))
+	 	info->FindPointer("tcp_layer_ptr",(void**)&TCP);
 	}
+	
+		HTTP=new httplayer(TCP);
 	HTTP->Start();
 	HOH=new http_opt_handler;
 	
@@ -162,9 +171,18 @@ int32 http_protocol::GetURL(BMessage *info)
 	}
 	
 	
+/*
  	if (TCP==NULL)
 	 if (info->HasPointer("tcp_layer_ptr"))
 	 	info->FindPointer("tcp_layer_ptr",(void**)&TCP);
+*/
+		printf("trying to lock HTTP\n");
+	 
+		HTTP->Lock();
+		printf("lock successful\n");
+	 
+	 printf("TCP %p\n HTTP::TCP %p\n",TCP,HTTP->TCP);
+/*	
 	if (HTTP->TCP==NULL)
 		HTTP->SetTCP(TCP);
 	 else
@@ -172,9 +190,12 @@ int32 http_protocol::GetURL(BMessage *info)
 	  	if (TCP!=HTTP->TCP)
 			HTTP->SetTCP(TCP);//TCP layer pointer changed... Why? Update HTTP layer
 	  }
+*/
+	 
 	  
 	printf("(http) TCP layer: %p\n",HTTP->TCP);
 	HTTP->AddRequest(info);
+	 HTTP->Unlock();
 	 
 //	BString url,host,uri;
 //	 uint16 port;

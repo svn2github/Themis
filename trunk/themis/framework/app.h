@@ -37,7 +37,10 @@ Project Start Date: October 18, 2000
 class App:public BApplication {
 	private:
 		Win *win;
+		void InitSettings(char *settings_path=NULL);
 	public:
+		status_t LoadSettings();
+		status_t SaveSettings();
 		App(const char *appsig);
 		~App();
 		bool QuitRequested();

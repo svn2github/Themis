@@ -40,6 +40,9 @@ Project Start Date: October 18, 2000
 #include <MessageRunner.h>
 #include "../common/plugstruct.h"
 #include "../common/protocol_plugin.h"
+//#include "tcplayer.h"
+
+class tcplayer;
 
 class plugman: public BLooper {
 	private:
@@ -47,8 +50,10 @@ class plugman: public BLooper {
 		void AddPlug(plugst *plug);
 		int32 heartcount;
 		BMessageRunner *Heartbeat_mr;
-	
 	public:
+		BMessage *InitInfo;
+		tcplayer *TCPLayer;
+		BMessage **AppSettings;
 		BWindow *Window;
 		BDirectory *appaddondir,*useraddondir;
 		plugman(entry_ref &appdirref);

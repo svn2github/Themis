@@ -137,6 +137,12 @@ int32 tcplayer::Lock(int32 timeout)
 	int32 result=B_ERROR;
 */
 //	printf("tcp::Lock %ld\n",TL);
+	thread_id callingthread=find_thread(NULL),lockingthread=lock->LockingThread();
+	if (lockingthread!=B_ERROR) {
+		if (callingthread==lockingthread)
+			return B_OK;
+	}
+	
 	if (timeout==-1) {
 		if (lock->Lock()){
 			
@@ -157,7 +163,6 @@ void tcplayer::Unlock()
 {
 //printf("tcp::Unlock %ld\n",TU);
 //	TU++;
-	
 lock->Unlock();
 	
 /*
@@ -275,10 +280,10 @@ int32 tcplayer::Manager() {
 //			release_sem(conn_sem);
 //cut back on processor time a bit... has little impact on performance						
 		lock->Unlock();
-		snooze(20000);
+		snooze(30000);
 		} else	{
 			lock->Unlock();
-			snooze(10000);
+			snooze(30000);
 			
 		}
 

@@ -34,8 +34,13 @@ Project Start Date: October 18, 2000
 plugman::plugman(entry_ref &appdirref)
 	:BLooper("plug-in manager",B_LOW_PRIORITY) {
 	//ref should be the application directory
-	Window=NULL;
 	Run();
+	Window=NULL;
+	AppSettings=NULL;
+	Heartbeat_mr=NULL;
+	InitInfo=new BMessage;
+	InitInfo->AddPointer("plug_manager",this);
+	heartcount=0;
 	head=tail=NULL;
 	status_t stat=B_OK;
 	appaddondir=new BDirectory(&appdirref);
@@ -208,6 +213,7 @@ plugman::~plugman() {
 	stop_watching(this,NULL);
 	delete appaddondir;
 	delete useraddondir;
+	delete InitInfo;
 }
 bool plugman::QuitRequested() {
 	 printf("plugman QuitRequested()\n");
@@ -215,7 +221,116 @@ bool plugman::QuitRequested() {
 	 return true;
 }
 void plugman::MessageReceived(BMessage *msg){
+	printf("Plugman has received a message.\n");
+	
+	msg->PrintToStream();
+	
 	switch(msg->what) {
+		case HeartbeatMessage: {
+			printf("Heartbeat\n");
+			plugst *cur=head;
+			while (cur!=NULL) {
+				if (cur->uses_heartbeat)
+					cur->pobj->Heartbeat();
+				cur=cur->next;
+			}
+			
+		}break;
+		case AddInitInfo: {
+			type_code type;
+			int32 count=0,index=0;
+			char *name=NULL;
+			status_t stat=B_OK;
+			BMessage reply;
+#if (B_BEOS_VERSION > 0x0504)
+			for (index=0;msg->GetInfo(B_ANY_TYPE,index,(const char**)&name,&type,&count)==B_OK; index++)
+#else
+			for (index=0;msg->GetInfo(B_ANY_TYPE,index,&name,&type,&count)==B_OK; index++)
+#endif
+				{
+					switch(type) {
+						case B_BOOL_TYPE: {
+							bool value=false;
+							for (int i=0; i<count; i++) {
+								stat|=msg->FindBool(name,i,&value);
+								stat|=InitInfo->AddBool(name,value);
+							}
+						}break;
+						case B_MESSAGE_TYPE: {
+							BMessage value;
+							for (int i=0; i<count; i++) {
+								stat|=msg->FindMessage(name,i,&value);
+								stat|=InitInfo->AddMessage(name,&value);
+							}
+						}break;
+						case B_MESSENGER_TYPE: {
+							BMessenger value;
+							for (int i=0; i<count; i++) {
+								stat|=msg->FindMessenger(name,i,&value);
+								stat|=InitInfo->AddMessenger(name,value);
+							}
+						}break;
+						case B_POINTER_TYPE: {
+							void *value=NULL;
+							for (int i=0; i<count; i++) {
+								stat|=msg->FindPointer(name,i,&value);
+								stat|=InitInfo->AddPointer(name,value);
+							}
+						}break;
+						case B_STRING_TYPE: {
+							BString value;
+							for (int i=0; i<count; i++) {
+								stat|=msg->FindString(name,i,&value);
+								stat|=InitInfo->AddString(name,value);
+							}
+						}break;
+						case B_INT8_TYPE: {
+							int8 value=0;
+							for (int i=0; i<count; i++) {
+								stat|=msg->FindInt8(name,i,&value);
+								stat|=InitInfo->AddInt8(name,value);
+								reply.AddInt32(name,count+1);
+							}
+						}break;
+						case B_INT16_TYPE: {
+							int16 value=0;
+							for (int i=0; i<count; i++) {
+								stat|=msg->FindInt16(name,i,&value);
+								stat|=InitInfo->AddInt16(name,value);
+							}
+						}break;
+						case B_INT32_TYPE: {
+							if ((strcasecmp(name,"what")==0) || (strcasecmp(name,"when")==0)) {
+								continue;
+							}
+							int32 value=0;
+							for (int i=0; i<count; i++) {
+								stat|=msg->FindInt32(name,i,&value);
+								stat|=InitInfo->AddInt32(name,value);
+							}
+						}break;
+						case B_INT64_TYPE: {
+							int64 value=0;
+							for (int i=0; i<count; i++) {
+								stat|=msg->FindInt64(name,i,&value);
+								stat|=InitInfo->AddInt64(name,value);
+							}
+						}break;
+						
+					}
+					
+				}
+			
+			if (stat!=B_OK)
+				stat=B_ERROR;
+			reply.what=stat;
+			msg->SendReply(&reply);
+			printf("Plug-Man: Add Init Info - %ld\n",stat);
+			InitInfo->PrintToStream();
+			
+		}break;
+		case RemoveInitInfo: {
+		}break;
 		case B_NODE_MONITOR: {
 			printf("Node monitor!\n");
 			int32 opcode;
@@ -291,13 +406,14 @@ void plugman::MessageReceived(BMessage *msg){
 				if (get_image_symbol(nuplug->sysid,"Initialize",B_SYMBOL_TYPE_TEXT,(void**)&Initialize)==B_OK) {
 					printf("\tInitializing...");
 					fflush(stdout);
-					if ((*Initialize)(NULL)!=B_OK) {
+					if ((*Initialize)(InitInfo)!=B_OK) {
 						printf("failure, aborting\n");
 						unload_add_on(nuplug->sysid);
 						delete nuplug;
 						continue;
 					}
 					printf("success\n");
+					
 				} else {
 					printf("\tUnable to load initializer function, aborting.\n");
 					unload_add_on(nuplug->sysid);
@@ -308,8 +424,30 @@ void plugman::MessageReceived(BMessage *msg){
 				fflush(stdout);
 				status_t stat;
 				if ((stat=get_image_symbol(nuplug->sysid,"GetObject",B_SYMBOL_TYPE_TEXT,(void**)&(nuplug->GetObject)))==B_OK) {
-					printf("success.\n");
 					nuplug->pobj=(*nuplug->GetObject)();
+					if (nuplug->pobj==NULL) {
+						printf("plug-in does not have a plug-class object!\n");
+						unload_add_on(nuplug->sysid);
+						delete nuplug;
+						continue;
+						
+					}
+					
+					printf("success.\n");
+					
+					nuplug->uses_heartbeat=nuplug->pobj->RequiresHeartbeat();
+					if (nuplug->uses_heartbeat) {
+						if (Heartbeat_mr==NULL) {
+							BMessenger *msgr=new BMessenger(this,NULL,NULL);
+							BMessage *hbmsg=new BMessage(HeartbeatMessage);
+							Heartbeat_mr=new BMessageRunner(*msgr,hbmsg,10000000,-1);
+							delete msgr;
+							delete hbmsg;
+						}
+						
+						heartcount++;
+					}
+					
 					if (FindPlugin(nuplug->pobj->PlugID())!=NULL) {
 						printf("plug-in already loaded.\n");
 						status_t (*Shutdown)(bool);
@@ -407,6 +545,7 @@ void plugman::AddPlug(plugst *plug) {
 	}
 	BMessenger *msgr=new BMessenger(NULL,Window,NULL);
 	BMessage *msg=new BMessage(PlugInLoaded);
+	msg->AddInt32("plugid",plug->pobj->PlugID());
 	msg->AddPointer("plugin",plug->pobj);
 	msgr->SendMessage(msg);
 	delete msgr;
@@ -432,6 +571,12 @@ status_t plugman::UnloadAllPlugins(bool clean) {
 			continue;
 		}
 	}
+	heartcount=0;
+	if (Heartbeat_mr!=NULL) {
+		delete Heartbeat_mr;
+		Heartbeat_mr=NULL;
+	}
+	
 	return B_OK;
 }
 status_t plugman::UnloadPlugin(uint32 which) {
@@ -453,6 +598,14 @@ status_t plugman::UnloadPlugin(uint32 which) {
 					(*Shutdown)(true);
 				cur->inmemory=false;
 				unload_add_on(cur->sysid);
+				if (cur->uses_heartbeat) {
+					heartcount--;
+					if (heartcount==0) {
+						delete Heartbeat_mr;
+						Heartbeat_mr=NULL;
+					}
+					cur->uses_heartbeat=false;
+				}
 			}
 			delete cur;
 			break;
@@ -477,6 +630,19 @@ status_t plugman::LoadPlugin(uint32 which) {
 				get_image_symbol(cur->sysid,"GetObject",B_SYMBOL_TYPE_TEXT,(void**)&(cur->GetObject));
 				(*Initialize)(NULL);
 				cur->pobj=(*cur->GetObject)();
+				cur->uses_heartbeat=cur->pobj->RequiresHeartbeat();
+				
+				if (cur->uses_heartbeat) {
+					if (Heartbeat_mr==NULL) {
+						BMessenger *msgr=new BMessenger(this,NULL,NULL);
+						BMessage *msg=new BMessage(HeartbeatMessage);
+						Heartbeat_mr=new BMessageRunner(*msgr,msg,10000000,-1);
+						delete msgr;
+						delete msg;
+					}
+					heartcount++;
+				}
+				
 			} else {
 			//plugin is already in memory
 			}

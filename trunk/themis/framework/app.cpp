@@ -30,6 +30,7 @@ Project Start Date: October 18, 2000
 #include "tcplayer.h"
 plugman *PluginManager;
 tcplayer *TCP;
+BMessage *AppSettings;
 
 App::App(const char *appsig)
 	:BApplication(appsig) {
@@ -40,11 +41,23 @@ App::App(const char *appsig)
 	ent->GetParent(ent);
 	ent->GetRef(&appdirref);
 	delete ent;
+	PluginManager=new plugman(appdirref);
 	TCP=new tcplayer;
 	TCP->Start();
 	BRect r(100,100,650,450);
-	PluginManager=new plugman(appdirref);
 	win=new Win(r,"Themis",B_DOCUMENT_WINDOW,B_QUIT_ON_WINDOW_CLOSE,B_CURRENT_WORKSPACE);
+	BMessenger *msgr=new BMessenger(PluginManager,NULL,NULL);
+		BMessage *msg=new BMessage(AddInitInfo);
+		msg->AddPointer("tcp_layer_ptr",TCP);
+		msg->AddPointer("settings_message_ptr",&AppSettings);
+		{
+		BMessage reply;	
+		msgr->SendMessage(msg,&reply);
+			if (reply.what==B_ERROR)
+				printf("Problem setting plug-in initialization info.\n");
+		}
+	delete msgr;
+		delete msg;
 	PluginManager->BuildRoster();
 	PluginManager->Window=win;
 }
@@ -92,4 +105,94 @@ void App::ReadyToRun(){
 	win->Show();
 }
 void App::ArgvReceived(int32 argc, char **argv){
+}
+void App::InitSettings(char *settings_path) {
+	if (settings_path!=NULL) {
+		AppSettings->AddString("settings_directory",settings_path);
+		BString name(settings_path);
+		name+="/Themis Settings";
+		AppSettings->AddString("settings_file",name.String());
+	} else {
+		AppSettings->AddString("settings_directory","/boot/home/config/settings/Themis/");
+		AppSettings->AddString("settings_file","/boot/home/config/settings/Themis/Themis Settings");
+	}
+	AppSettings->PrintToStream();
+	
+}
+
+status_t App::LoadSettings() {
+	status_t ret=B_OK;
+	BPath path;
+	if (find_directory(B_USER_SETTINGS_DIRECTORY,&path)==B_OK) {
+		path.Append("Themis/",true);
+		BEntry prefsent(path.Path(),true);
+		if (prefsent.Exists()) {
+			prefsent.GetPath(&path);
+			path.Append("Themis Settings",false);
+			prefsent.SetTo(path.Path(),true);
+			if (prefsent.Exists()) {
+				BFile *file=new BFile(&prefsent,B_READ_ONLY);
+				ret=file->InitCheck();
+				if (ret!=B_OK) {
+					delete file;
+					InitSettings();
+					return ret;
+				}
+				
+				file->Lock();
+				ret|=AppSettings->Unflatten(file);
+				file->Unlock();
+				delete file;
+				printf("Settings loaded.\n");
+				AppSettings->PrintToStream();
+				return ret;
+				
+			} else {
+				path.GetParent(&path);
+				InitSettings((char*)path.Path());
+				SaveSettings();
+				return B_OK;
+			}
+			
+		} else {
+			create_directory(path.Path(),0777);
+			InitSettings((char*)path.Path());
+			SaveSettings();
+			return B_OK;
+			
+		}
+		
+	} else {
+	}
+	return ret;
+	
+}
+status_t App::SaveSettings() {
+	status_t ret=B_OK;
+	
+	BString fname,dname;
+	AppSettings->FindString("settings_directory",&dname);
+	AppSettings->FindString("settings_file",&fname);
+	BEntry ent(dname.String());
+	if (!ent.Exists()) {
+		ret=create_directory(dname.String(),0777);
+		if (ret!=B_OK) {
+			printf("Couldn't create Themis settings directory.\n");
+			return ret;
+		}
+		
+	}
+	BFile *file=new BFile(fname.String(),B_CREATE_FILE|B_ERASE_FILE|B_WRITE_ONLY);
+	ret=file->InitCheck();
+	if (ret!=B_OK) {
+		printf("Unable to create Themis settings file\n");
+		delete file;
+		return ret;
+	}
+	
+	file->Lock();
+	ret=AppSettings->Flatten(file);
+	file->Unlock();
+	delete file;
+	return ret;
 }

@@ -78,4 +78,10 @@ Project Start Date: October 18, 2000
 
 //plug in management
 #define PlugInLoaded 'pild'
+
+#define AddInitInfo '_aii'
+#define RemoveInitInfo '_rii'
+#define ProtocolBroadcast 'prbc'
+#define CacheBroadcast 'chbc' 
+#define AppWideBroadcast 'awbc'
 #endif
