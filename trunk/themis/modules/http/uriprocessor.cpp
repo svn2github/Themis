@@ -48,7 +48,7 @@ URIProcessor::~URIProcessor()
 }
 status_t URIProcessor::GetParent(URIProcessor *URI)
 {
-	 char *slash=(char*)uri;
+//	 char *slash=(char*)uri;
 	char *lastslash=NULL;
 		int32 length=0;
 	if (*(uri+(strlen(uri)-1))=='/')
@@ -108,7 +108,7 @@ const char *URIProcessor::Set(const char *URI)
 }
 bool URIProcessor::Contains(const char *URI)
 {
-	int32 length=strlen(uri);
+	uint32 length=strlen(uri);
 	if (strlen(URI)>length)
 		return false;
 	if (strncmp(uri,URI,min_c(length,strlen(URI)))==0)

@@ -122,7 +122,7 @@ authwin::~authwin() {
 void authwin::MessageReceived(BMessage *msg) {
 //msg->PrintToStream();
 int32 auth_copy=auth_method;
-printf("authwin: auth method basic? %d\n",(auth_method&AuthManager::AUTHENTICATION_TYPE_BASIC));
+printf("authwin: auth method basic? %ld\n",(auth_method&AuthManager::AUTHENTICATION_TYPE_BASIC));
 	switch(msg->what) {
 		case B_QUIT_REQUESTED:
 		{
@@ -170,7 +170,7 @@ printf("authwin: auth method basic? %d\n",(auth_method&AuthManager::AUTHENTICATI
 status_t stat=B_OK;
 			BMessenger msgr(NULL,this,&stat);
 			msgr.SendMessage(B_QUIT_REQUESTED);
-			printf("authwin status: 0x%x\n",stat);
+			printf("authwin status: 0x%x\n",(unsigned int)stat);
 		}break;
 		case B_CANCEL: {
 			request->auth_win=NULL;

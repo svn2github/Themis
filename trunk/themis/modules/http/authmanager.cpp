@@ -161,7 +161,7 @@ status_t AuthManager::GetAuth(http_request_info_st *http_request)
 					method|=AUTHENTICATION_PROXY_AUTH;
 				}break;
 			}
-			char *type=NULL;
+//			char *type=NULL;
 			char *space=strchr(value,0x20);
 			int32 length=space-value;
 			if (strncasecmp("basic",value,5)==0)
@@ -176,7 +176,7 @@ status_t AuthManager::GetAuth(http_request_info_st *http_request)
 			realm=new char[length+1];
 			memset((char*)realm,0,length+1);
 			strncpy((char*)realm,start,length);
-			printf("Auth Manager auth code: %d\n",method);
+			printf("Auth Manager auth code: %ld\n",method);
 			//if digest, then search for nonce, algorithm,and qop
 			if ((method&AUTHENTICATION_SERVER_AUTH)!=0)
 			{
@@ -201,7 +201,7 @@ status_t AuthManager::AddProxyAuthentication(http_request_info_st *http_request,
 	BAutolock autolock(auth_lock);
 	if (autolock.IsLocked())
 	{
-	printf("AddProxyAuthentication: %s %s %d\n",http_request->host,pass,(auth_method&AUTHENTICATION_TYPE_BASIC));
+	printf("AddProxyAuthentication: %s %s %ld\n",http_request->host,pass,(auth_method&AUTHENTICATION_TYPE_BASIC));
 	auth_info_st *proxy_auth=new auth_info_st;
 	if ((auth_method&AUTHENTICATION_TYPE_BASIC)!=0)
 	{

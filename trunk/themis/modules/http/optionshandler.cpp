@@ -53,7 +53,7 @@ http_opt_handler::~http_opt_handler() {
 
 void http_opt_handler::MessageReceived(BMessage *msg) {
 	msg->PrintToStream();
-	char *bstr[3]={{"Themis"},{"IE"},{"Netscape"}};
+//	char *bstr[3]={{"Themis"},{"IE"},{"Netscape"}};
 	switch(msg->what) {
 		case BROWSER_IDENT_THEMIS: {
 			HTTP->use_useragent=BROWSER_IDENT_THEMIS;

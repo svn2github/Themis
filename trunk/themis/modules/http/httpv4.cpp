@@ -277,6 +277,7 @@ int32 HTTPv4::Type()
 }
 status_t HTTPv4::Go(void)
 {
+	return B_OK;
 }
 
 void HTTPv4::Heartbeat(void)
@@ -349,7 +350,7 @@ void HTTPv4::ResubmitRequest(http_request_info_st *request,const char *alt_url,i
 					new_url<<"s";
 				new_url<<"://"<<request->host;
 				if ((request->secure && request->port!=443)|| (!request->secure && request->port!=80))
-					new_url<<":"<<request->port;
+					new_url<<":"<<(int32)request->port;
 				new_url<<alt_url;
 				delete request->url;
 				request->url=new char[new_url.Length()+1];
@@ -364,7 +365,7 @@ void HTTPv4::ResubmitRequest(http_request_info_st *request,const char *alt_url,i
 				
 				if (request->secure)
 					new_url<<"s";
-				new_url<<"://"<<request->host<<":"<<request->port;
+				new_url<<"://"<<request->host<<":"<<(int32)request->port;
 				BPath path(request->uri);
 				if (request->uri[strlen(request->uri)-1]=='/')
 				{
@@ -429,6 +430,7 @@ void HTTPv4::Stop(void)
 }
 int32 HTTPv4::GetURL(BMessage *info)
 {
+	return 0;
 }
 void HTTPv4::AddMenuItems(BMenu *menu)
 {
@@ -593,7 +595,7 @@ uint32 HTTPv4::DataIsWaiting(Connection *connection)
 			{
 				if (current->connection==connection)
 				{
-					printf("Data is waiting for %s (s: %ld u: %ld ; %ld bytes)\n",current->url,current->site_id,current->url_id,current->connection->DataSize());
+					printf("Data is waiting for %s (s: %ld u: %ld ; %Ld bytes)\n",current->url,current->site_id,current->url_id,current->connection->DataSize());
 					if ((current->internal_status&STATUS_RESPONSE_RECEIVED_FROM_SERVER)==0)
 						current->internal_status|=STATUS_RESPONSE_RECEIVED_FROM_SERVER;
 					if ((current->internal_status&STATUS_RECEIVING_DATA)==0)
@@ -935,7 +937,7 @@ status_t HTTPv4::BroadcastReply(BMessage *msg)
 		
 	}
 	
-	
+return B_OK;
 	
 }
 
@@ -963,7 +965,7 @@ void HTTPv4::BuildRequest(build_request_st *bri)
 {
 	//bri = build request info
 	HTTPv4 *http=bri->http;
-	status_t status=B_ERROR;
+//	status_t status=B_ERROR;
 	printf("HTTPv4:\tBuild request for url: %s\n",bri->url);
 	http->request_lock.Lock();
 	http_request_info_st *current_item=NULL,*new_item=new http_request_info_st;
@@ -1069,7 +1071,7 @@ void HTTPv4::BuildRequest(build_request_st *bri)
 	}
 	new_item->request_string<<"Host: "<<new_item->host;
 	if (((new_item->port!=80) && (!new_item->secure)) || ((new_item->port!=443) && (new_item->secure)))
-		new_item->request_string<<":"<<new_item->port;
+		new_item->request_string<<":"<<(int32)new_item->port;
 	new_item->request_string<<"\r\n";
 	//language; temporarily hardcoded to english
 	new_item->request_string<<"Accept-Language: en-US,*\r\n";
@@ -1557,7 +1559,7 @@ void HTTPv4::ProcessData(http_request_info_st *request, unsigned char *buffer, i
 		char *data=(char*)buffer;
 		char *end_of_header=strstr(data,"\r\n\r\n");
 		bool end_of_headers_present=(end_of_header==NULL)?false:true;
-		char *status_line=NULL;
+//		char *status_line=NULL;
 		int32 Length;
 		char *eol=strstr(data,"\r\n");
 		if (eol!=NULL)
@@ -1620,7 +1622,7 @@ void HTTPv4::ProcessData(http_request_info_st *request, unsigned char *buffer, i
 						ProcessHeaderLevel500(request,eol+2,strlen(eol+2));
 					}break;
 					default:
-					printf("HTTPv4: Unknown HTTP response code: %ld - %s\n",request->http_status_code,request->http_status_message);
+					printf("HTTPv4: Unknown HTTP response code: %d - %s\n",request->http_status_code,request->http_status_message);
 					
 				}
 			ProcessData2(request,(unsigned char*)(end_of_header+4),length-((end_of_header+4)-(char*)buffer));
@@ -1710,12 +1712,12 @@ void HTTPv4::ProcessData(http_request_info_st *request, unsigned char *buffer, i
 						ProcessHeaderLevel500(request,data,strlen(data));
 					}break;
 					default:
-					printf("HTTPv4: Unknown HTTP response code: %ld - %s\n",request->http_status_code,request->http_status_message);
+					printf("HTTPv4: Unknown HTTP response code: %d - %s\n",request->http_status_code,request->http_status_message);
 					
 				}
-				printf("header length: %d\n" ,((end_of_header+4)-(char*)data)+orig_head_len);
-				printf("length received: %d\n",length);
-				printf("difference: %d\n",length-((end_of_header+4)-(char*)data)+orig_head_len);
+				printf("header length: %ld\n" ,((end_of_header+4)-(char*)data)+orig_head_len);
+				printf("length received: %ld\n",length);
+				printf("difference: %ld\n",length-((end_of_header+4)-(char*)data)+orig_head_len);
 				ProcessData2(request,(unsigned char*)(end_of_header+4),length-((end_of_header+4)-(char*)data)+orig_head_len);
 			}
 
@@ -1740,7 +1742,7 @@ void HTTPv4::ProcessData2(http_request_info_st *request,unsigned char *buffer, i
 		{//not GZIP content encoded
 			if ((request->transfer_state&TRANSFER_STATE_ENCODED_COMPRESS)==0)
 			{//normal file transfer; no content encoding
-				const char *value=NULL;
+//				const char *value=NULL;
 				if (!Compressed(request))
 					request->bytes_received+=length;
 				request->size_delta=length;
@@ -1792,11 +1794,11 @@ void HTTPv4::ProcessData2(http_request_info_st *request,unsigned char *buffer, i
 }
 void HTTPv4::StoreData(http_request_info_st *request,unsigned char *buffer, int32 length)
 {
-	printf("HTTPv4: Store Data: %d bytes buffer: %p request: %p\n",length,buffer,request);
+	printf("HTTPv4: Store Data: %ld bytes buffer: %p request: %p\n",length,buffer,request);
 	if ((length>0) && (buffer!=NULL) && (request!=NULL))
 	{
 		BMessage *broadcast=new BMessage(SH_LOADING_PROGRESS);
-		const char *value=NULL;
+//		const char *value=NULL;
 		broadcast->AddInt32("command",COMMAND_INFO);
 		broadcast->AddInt32("url_id",request->url_id);
 		broadcast->AddInt32("site_id",request->site_id);
@@ -1889,17 +1891,17 @@ void HTTPv4::ProcessChunk(http_request_info_st *request,unsigned char *buffer, i
 	printf("ProcessChunk: %ld bytes\n",length);
 	if (length<=0)
 		return;
-	uint32 start_time=0,current_time=0;
-	uint8 max_seconds=2;
+//	uint32 start_time=0,current_time=0;
+//	uint8 max_seconds=2;
 	//The first chunk is a little different from the rest... It does not have a CRLF pair before
 	//the chunk size other than that which determines the end of the header.
-	char *cbuffer=(char*)buffer;
-	char *crlf1=NULL,*crlf2=NULL;
-	char *start=NULL;
-	char *end=NULL;
-	char *temp=NULL;
-	int32 len=0l;
-	int32 bytes_remaining=0l;
+//	char *cbuffer=(char*)buffer;
+//	char *crlf1=NULL,*crlf2=NULL;
+//	char *start=NULL;
+//	char *end=NULL;
+//	char *temp=NULL;
+//	int32 len=0l;
+//	int32 bytes_remaining=0l;
 	if (request->temporary_data_buffer==NULL)
 	{
 		request->temporary_data_buffer=(unsigned char*)malloc(length);
@@ -1946,7 +1948,7 @@ void HTTPv4::ProcessChunkedData(http_request_info_st *request)
 		request->chunk_size=strtol(temp,&end,16);
 		memset(temp,0,len+1);
 		delete temp;
-		printf("First chunk size: %ld bytes (0x%02x)\n",request->chunk_size,request->chunk_size);
+		printf("First chunk size: %lu bytes (0x%02lx)\n",request->chunk_size,(uint32)request->chunk_size);
 		temp=NULL;
 		if (request->chunk_size==0)
 		{
@@ -2020,7 +2022,7 @@ void HTTPv4::ProcessChunkedData(http_request_info_st *request)
 				request->chunk_size=strtol(temp,&end2,16);
 				memset(temp,0,len+1);
 				delete temp;
-				printf("chunk size: %ld bytes (0x%x)\n",request->chunk_size,request->chunk_size);
+				printf("chunk size: %lu bytes (0x%lx)\n",request->chunk_size,(uint32)request->chunk_size);
 				bytes_remaining-=(len+4);
 				current_time=real_time_clock();
 				if ((current_time-start_time)>=max_seconds)
@@ -2155,14 +2157,14 @@ void HTTPv4::ProcessChunkedData(http_request_info_st *request)
 				temp=new char[len+1];
 				memset(temp,0,len+1);
 				strncpy(temp,crlf1+2,len);
-				printf("[temp] chunk size: %s (%d)\n",temp,strlen(temp));
+				printf("[temp] chunk size: %s (%ld)\n",temp,strlen(temp));
 				end2=NULL;
 				request->chunk_size=strtol(temp,&end2,16);
 				memset(temp,0,len+1);
 				delete temp;
-				printf("chunk size: %ld bytes (0x%x)\n",request->chunk_size,request->chunk_size);
+				printf("chunk size: %ld bytes (0x%lx)\n",request->chunk_size,(uint32)request->chunk_size);
 				bytes_remaining-=(len+4);
-				printf("bytes remaining: %ld (0x%x)\n",bytes_remaining,bytes_remaining);
+				printf("bytes remaining: %ld (0x%lx)\n",bytes_remaining,(uint32)bytes_remaining);
 				
 				current_time=real_time_clock();
 				printf("processing time: %ld\n",(current_time-start_time));
@@ -2333,7 +2335,7 @@ void HTTPv4::ProcessHeadersGeneral(http_request_info_st *request, char *buffer, 
 		if (strcasecmp("Content-Length",current->attribute)==0)
 		{
 			request->content_length=atol(current->value);
-			printf("HTTPv4 Expected Content Length: %ld bytes\n",request->content_length);
+			printf("HTTPv4 Expected Content Length: %Ld bytes\n",request->content_length);
 		}
 		if ((strcasecmp("Set-cookie",current->attribute)==0) || (strcasecmp("Set-Cookie2",current->attribute)==0))
 		{
@@ -2613,7 +2615,7 @@ void HTTPv4::DoneWithRequest(http_request_info_st *request)
 		}
 	
 		BMessage *broadcast=new BMessage(SH_LOADING_PROGRESS);
-		const char *value=NULL;
+//		const char *value=NULL;
 		broadcast->AddInt32("command",COMMAND_INFO);
 		broadcast->AddInt32("url_id",request->url_id);
 		broadcast->AddInt32("site_id",request->site_id);
@@ -2711,7 +2713,7 @@ unsigned char *HTTPv4::GUnzip(http_request_info_st *request,unsigned char *buffe
 				request->gzip_info->error=inflateInit2(request->gzip_info->stream,window_bits);
 				printf("zlib init status: %ld\n",request->gzip_info->error);
 			}
-			bool good=false;
+//			bool good=false;
 //			int32 error=Z_OK;
 //			z_streamp stream=new z_stream;
 //			stream->zalloc=Z_NULL;
@@ -2721,8 +2723,8 @@ unsigned char *HTTPv4::GUnzip(http_request_info_st *request,unsigned char *buffe
 //			stream->avail_in=length;
 //			error=Z_OK;
 				bool cont=true;
-				printf("available in: %ld\n",request->gzip_info->stream->avail_in);
-				int32 session_bytes_received=0,start_total=request->gzip_info->stream->total_out,current_total=0;
+				printf("available in: %d\n",request->gzip_info->stream->avail_in);
+				int32 session_bytes_received=0,start_total=request->gzip_info->stream->total_out;//,current_total=0;
 			while (cont && request->gzip_info->stream->avail_in>0)
 			{
 				if (uncompressed_buffer==NULL)

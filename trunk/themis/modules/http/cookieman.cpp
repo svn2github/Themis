@@ -862,7 +862,7 @@ int32 CookieManager::SetCookie(const char *header, const char *request_host, con
 	{
 	comma=strchr(header_copy,',');
 //	printf("comma: %s\n",comma);
-	char *start=NULL;
+//	char *start=NULL;
 	int32 offset=0;
 	int32 cookie_count2=1;
 	while (comma!=NULL)
@@ -979,7 +979,7 @@ int32 CookieManager::SetCookie(const char *header, const char *request_host, con
 	int32 semicolons=0,segments=1;;
 	char *semicolon=NULL;
 	char **attributes=NULL;
-	cookie_st *current_cookie=cookie_head,*new_cookie=NULL,*last_cookie=cookie_head;
+	cookie_st /**current_cookie=cookie_head,*/*new_cookie=NULL,*last_cookie=cookie_head;
 	int32 currenttime=0;
 	while(last_cookie!=NULL)
 	{
@@ -1254,6 +1254,7 @@ int32 CookieManager::SetCookie(const char *header, const char *request_host, con
 	memset(header_copy,0,header_length+1);
 	delete header_copy;
 	header_copy=NULL;
+	return B_OK;
 }
 cookie_st *CookieManager::FindCookie(const char *name,const char *path,const char *domain)
 {
@@ -1327,7 +1328,7 @@ const char *CookieManager::GetCookie(const char *host, const char *path,uint16 p
 							if (strchr(ports_copy,'"')!=NULL)
 							{
 								char *quote;
-								for (int32 j=0; j<strlen(ports_copy); j++)
+								for (uint32 j=0; j<strlen(ports_copy); j++)
 								{
 									quote=strchr(ports_copy,'"');
 									*quote=0x20;//convert quotes to spaces.

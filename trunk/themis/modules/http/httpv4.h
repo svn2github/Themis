@@ -83,9 +83,9 @@ struct zlib_info_st
 		stream=NULL;
 		error=0;
 		uncompressed_data=NULL;
-		int32 uncompressed_length=0;
+		uncompressed_length=0;
 		window_bits=15;
-		int32 state=0;
+		state=0;
 		initialized=false;
 	}
 	~zlib_info_st()
@@ -93,9 +93,9 @@ struct zlib_info_st
 		stream=NULL;
 		error=0;
 		uncompressed_data=NULL;
-		int32 uncompressed_length=0;
+		uncompressed_length=0;
 		window_bits=15;
-		int32 state=0;
+		state=0;
 	}
 };
 /*!
@@ -133,7 +133,7 @@ struct http_request_info_st
 	uint8 http_minor_version; //!< Minor HTTP version number of the server.
 	char *header_buffer; //!< A buffer used to cache received header information; it's used to make sure that all of the header is received before we start processing the actual content of the request.
 	unsigned char *temporary_data_buffer; //!< A buffer used to cache data when an incomplete chunk has been received while in chunked transfer mode. 
-	uint32 temporary_data_size; //!< Size of the temporary_data_buffer.
+	int32 temporary_data_size; //!< Size of the temporary_data_buffer.
 	header_info_st *header_list; //!< Pointer to the first header_info_st in the header linked list.
 	uint8 redirection_counter; //!< A counter for the number of times the original URL request has been redirected. More than 5 redirects is considered an infinite loop by the HTTP specifications.
 	int32 transfer_state; //!< A bitmap field that records the transmission type of the request: chunked, gzip, compress, deflate.
