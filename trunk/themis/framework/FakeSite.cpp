@@ -49,12 +49,20 @@ FakeSite::FakeSite( BRect rect, const char* title, int16 uid, BWindow* win = NUL
 		site_title.SetTo( title );
 		
 	// info init
+//	fStatusText.SetTo( "" );
+//	fSecure = false;
+//	fCookiesDisabled = false;
+//	fDocProgress = 0;
+//	fDocText = "";
+//	fImgProgress = 0;
+//	fImgText = "";
+	// temporay until raymond has fixed some stuff about the new networking...
 	fStatusText.SetTo( "" );
 	fSecure = false;
 	fCookiesDisabled = false;
-	fDocProgress = 0;
+	fDocProgress = 100;
 	fDocText = "";
-	fImgProgress = 0;
+	fImgProgress = 100;
 	fImgText = "";
 }
 

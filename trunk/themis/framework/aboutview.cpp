@@ -78,15 +78,16 @@ aboutview::aboutview(BRect frame, const char *name, uint32 resizem, uint32 flags
 	SetViewColor(216,216,216);
 	BRect r(Bounds());
 	r.InsetBy(10,10);
-	r.bottom-=20;
+	r.bottom-=25;
 	outerbox=new BBox(r,"outer-about-box",B_FOLLOW_ALL,B_WILL_DRAW|B_FRAME_EVENTS|B_NAVIGABLE_JUMP,B_FANCY_BORDER);
 	AddChild(outerbox);
 	r=Bounds();
-	r.bottom-=10.0;
+	r.bottom-=15.0;
 	r.top=r.bottom-15.0;
 	r.left=(r.right/2.0)-20.0;
 	r.right=(r.right/2.0)+20.0;
 	OkB=new BButton(r,"Ok-button","Done",(new BMessage(B_OK)),B_WILL_DRAW|B_NAVIGABLE,B_FOLLOW_BOTTOM|B_FOLLOW_H_CENTER);
+	OkB->MakeDefault(true);
 	AddChild(OkB);
 	items=NULL;
 	r=outerbox->Bounds();
@@ -138,102 +139,124 @@ aboutview::~aboutview()
 }
 void aboutview::MessageReceived(BMessage *msg) 
 {
-	switch(msg->what) {
-		case B_OK: {
+	switch(msg->what)
+	{
+		case B_OK:
+		{
 			printf("done button pressed.\n");
-			BMessenger *msgr=new BMessenger(NULL,(BLooper*)Window(),NULL);
-			LockLooper();
-			msgr->SendMessage(B_QUIT_REQUESTED);
-			UnlockLooper();
-			delete msgr;
+			BMessenger msgr((BHandler *)Window());
+			msgr.SendMessage(B_QUIT_REQUESTED);
 		}break;
-		case SelectionChanged: {
+		case SelectionChanged:
+		{
 			int32 index=0;
 			msg->FindInt32("index",&index);
 			BStringItem *item=(BStringItem *)listv->ItemAt(index);
-			about_items_st *which;
-			for (int32 i=0;i<items->CountItems();i++) {
-				which=(about_items_st *)items->ItemAt(i);
-				if (which->listitem==item)
-					break;
-				which=NULL;
-			}
-			printf("%s has been selected.\n",which->listitem->Text());
-			if (innerbox->CountChildren()>0) {
-				BView *child=NULL;
-				for (int32 i=0; i<innerbox->CountChildren();i++) {
-					child=innerbox->ChildAt(i);
-					innerbox->RemoveChild(child);
-					delete child;
+			if (item)
+			{
+				about_items_st *which;
+				for (int32 i=0;i<items->CountItems();i++)
+				{
+					which=(about_items_st *)items->ItemAt(i);
+					if (which->listitem==item)
+						break;
+					which=NULL;
 				}
-			}
-			BRect r=innerbox->Bounds();
-			r.InsetBy(5.0,5.0);
-			if (which!=NULL) {
-				switch (which->type) {
-					case AboutThemisApplication: {
-						innerbox->AddChild((new appaboutview(r,"About Themis View",B_FOLLOW_ALL,B_WILL_DRAW)));
-					}break;
-					case AboutThemisPlugIn: {
-						BView *view= ((PlugClass*)which->pointer)->AboutView();
-						bool icreated=false;
-						if (view==NULL) {
-							view=new BTextView(r,"About whatever plugin",r,B_FOLLOW_ALL,B_WILL_DRAW);
-							((BTextView*)view)->MakeEditable(false);
-							icreated=true;
-						}
-						innerbox->AddChild(view);
-						if (icreated) {
-							((BTextView*)view)->Insert("Add-on Name: ");
-							PlugClass *plug=(PlugClass*)which;
-							((BTextView*)view)->Insert(plug->PlugName());
-							((BTextView*)view)->Insert("\nVersion: ");
-							char temp[20];
-							sprintf(temp,"%1.3f",plug->PlugVersion());
-							((BTextView*)view)->Insert(temp);
-							((BTextView*)view)->Insert("\nAdd-on ID: ");
-							memset(temp,0,20);
-							sprintf(temp,"%c%c%c%c",plug->PlugID()>>24, plug->PlugID()>>16,plug->PlugID()>>8,plug->PlugID());
-							((BTextView*)view)->Insert(temp);
-						}
-						view=NULL;
-					}break;
-					case AboutThemisDOM: {
-					}break;
-					case AboutThemisSSL: {
+				
+				printf("%s has been selected.\n",which->listitem->Text());
+				if (innerbox->CountChildren()>0)
+				{
+					BView *child=NULL;
+					for (int32 i=0; i<innerbox->CountChildren();i++)
+					{
+						child=innerbox->ChildAt(i);
+						innerbox->RemoveChild(child);
+						delete child;
+					}
+				}
+				
+				BRect r=innerbox->Bounds();
+				r.InsetBy(5.0,5.0);
+				if (which!=NULL)
+				{
+					switch (which->type)
+					{
+						case AboutThemisApplication:
+						{
+							innerbox->AddChild((new appaboutview(r,"About Themis View",B_FOLLOW_ALL,B_WILL_DRAW)));
+						}break;
+						case AboutThemisPlugIn:
+						{
+							BView *view= ((PlugClass*)which->pointer)->AboutView();
+							bool icreated=false;
+							if (view==NULL)
+							{
+								view=new BTextView(r,"About whatever plugin",r,B_FOLLOW_ALL,B_WILL_DRAW);
+								((BTextView*)view)->MakeEditable(false);
+								icreated=true;
+							}
+							innerbox->AddChild(view);
+							if (icreated)
+							{
+								((BTextView*)view)->Insert("Add-on Name: ");
+								PlugClass *plug=(PlugClass*)which;
+								((BTextView*)view)->Insert(plug->PlugName());
+								((BTextView*)view)->Insert("\nVersion: ");
+								char temp[20];
+								sprintf(temp,"%1.3f",plug->PlugVersion());
+								((BTextView*)view)->Insert(temp);
+								((BTextView*)view)->Insert("\nAdd-on ID: ");
+								memset(temp,0,20);
+								sprintf(temp,"%c%c%c%c",plug->PlugID()>>24, plug->PlugID()>>16,plug->PlugID()>>8,plug->PlugID());
+								((BTextView*)view)->Insert(temp);
+							}
+							view=NULL;
+						}break;
+						case AboutThemisDOM:
+						{
+						}break;
+						case AboutThemisSSL:
+						{
 #ifndef NEWNET
-						BTextView *view;
+							r.right-=B_V_SCROLL_BAR_WIDTH;
+							BTextView *view;
 							view=new BTextView(r,"About SSL",r,B_FOLLOW_ALL,B_WILL_DRAW);
 							view->MakeEditable(false);
 							view->Insert(TCP->SSLAboutString());
-						innerbox->AddChild(view);
-						view=NULL;
+							BScrollView *sv=new BScrollView("about_plug_scroller",view,B_FOLLOW_ALL,B_WILL_DRAW|B_NAVIGABLE_JUMP,false,true,B_FANCY_BORDER);
+							innerbox->AddChild(sv);
+							view=NULL;
 #endif
-					}break;
+						}break;
+					}
 				}
-			}
-		}break;
-		default: {
+			}	// if (item)
+		}break;  // case SelectionChanged:
+		default:
+		{
 			BView::MessageReceived(msg);
 		}
 	}
-	
 }
 
 void aboutview::AttachedToWindow() 
 {
 	OkB->SetTarget(this);
 	LockLooper();
-	if (firstrun) {
-	for (int32 i=0; i<items->CountItems();i++) {
-		listv->AddItem(((about_items_st *)items->ItemAt(i))->listitem);
-	}
+	if (firstrun)
+	{
+		for (int32 i=0; i<items->CountItems();i++)
+			listv->AddItem(((about_items_st *)items->ItemAt(i))->listitem);
+			
 		firstrun=false;
 		listv->SortItems(sortaboutitems);
-//		listv->Select(0);
-	} else {
+		listv->Select(0);
+		BMessenger here(this);
+		BMessage selectFirstItem(SelectionChanged);
+		selectFirstItem.AddInt32("index",0);
+		here.SendMessage(&selectFirstItem);
+	} else 
 		listv->SortItems(sortaboutitems);
-	}
 
 	listv->SetTarget(this);
 	UnlockLooper();

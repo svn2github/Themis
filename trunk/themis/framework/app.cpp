@@ -119,9 +119,10 @@ App::~App(){
 	delete MDaemon;
 }
 
-void App::AboutRequested() {
+void App::AboutRequested()
+{
 	if (AWin==NULL) {
-		AWin=new aboutwin(BRect(100,100,600,300),"About Themis",B_TITLED_WINDOW,B_ASYNCHRONOUS_CONTROLS|B_NOT_MINIMIZABLE);
+		AWin=new aboutwin(BRect(200,200,800,500),"About Themis",B_TITLED_WINDOW,B_ASYNCHRONOUS_CONTROLS|B_NOT_MINIMIZABLE);
 	} else {
 		AWin->Activate(true);
 	}

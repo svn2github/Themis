@@ -28,12 +28,18 @@ Project Start Date: October 18, 2000
 */
 #include "aboutwin.h"
 #include "app.h"
-aboutwin::aboutwin(BRect frame, const char *title, window_type type, uint32 flags, uint32 wspaces)
-	:BWindow(frame,title,type,flags,wspaces) 
+
+aboutwin::aboutwin(
+	BRect frame,
+	const char* title,
+	window_type type,
+	uint32 flags,
+	uint32 wspaces )
+	: BWindow( frame, title, type, flags, wspaces ) 
 {
-	view=new aboutview(Bounds(),"aboutview",B_FOLLOW_ALL,B_WILL_DRAW|B_NAVIGABLE_JUMP);
-	AddChild(view);
-	SetSizeLimits(500,1000,200,400);
+	view = new aboutview( Bounds(), "aboutview", B_FOLLOW_ALL, B_WILL_DRAW | B_NAVIGABLE_JUMP );
+	AddChild( view );
+	SetSizeLimits( 500, 1000, 200, 400);
 	Show();
 }
 

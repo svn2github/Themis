@@ -1407,7 +1407,7 @@ Win::UrlTypedHandler( bool show_all )
 status_t Win::ReceiveBroadcast(BMessage *message) 
 {
 	printf( "Win::ReceiveBroadcast()\n" );
-	message->PrintToStream();
+//	message->PrintToStream();
 	uint32 command=0;
 	message->FindInt32("command",(int32*)&command);
 
@@ -1423,8 +1423,31 @@ status_t Win::ReceiveBroadcast(BMessage *message)
 		{
 			switch( message->what )
 			{
+				case ProtocolConnectionClosed :
+				{
+					printf( "ProtocolConnectionClosed\n" );
+					
+					message->PrintToStream();
+					
+//					BMessage('_pcc') {
+//						// Timestamp (when) at 9147556310us
+//						command = int32(262 or 0x106)
+//						bytes-received = int64(0 or (nil))
+//						url = string("http://www.beosjournal.org/", 28 bytes)
+//						From = int32(1752462448 or 0x68747470)
+//						FromPointer = pointer(0x800c76a0)
+//						cache_object_token = int32(-1 or 0xffffffff)
+//						request_done = bool(true)
+//					}
+					
+					break;
+				}
 				case ReturnedData :
 				{
+					printf( "ReturnedData\n" );
+					
+					message->PrintToStream();
+					
 					if( win_uid == UniqueID() )
 					{
 						int16 tab_uid = 0;
