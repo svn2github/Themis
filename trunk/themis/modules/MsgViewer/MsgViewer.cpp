@@ -69,6 +69,7 @@ MsgViewer	::	MsgViewer( BMessage * info )
 
 MsgViewer	::	~MsgViewer()	{
 	
+	view->Lock();
 	view->Quit();
 	
 }
