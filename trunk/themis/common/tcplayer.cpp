@@ -553,6 +553,7 @@ void tcplayer::CloseConnection(connection *target) {
 //	if (acquire_sem(conn_sem)!=B_OK)
 //		return;
 //mtx->lock();
+printf("tcplayer closeconnection\n");
 if (target->open) {
 	
 	closesocket(target->socket);
@@ -578,8 +579,11 @@ if (target->socket!=-1)
 	DRCallback_st *cur=callback_head;
 	while (cur!=NULL) {
 		if (cur->protocol==target->proto_id) {
-			if (cur->connclosedcb!=NULL)
+			if ((target->closedcbdone==0) && (cur->connclosedcb!=NULL)){
+				atomic_add(&target->closedcbdone,1);
+printf("about to call connection closed callback %ld\n",target->closedcbdone);
 				cur->connclosedcb(target);
+			}
 			break;
 		}
 		cur=cur->next;

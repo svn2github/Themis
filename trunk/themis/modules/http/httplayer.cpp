@@ -40,6 +40,7 @@ httplayer *meHTTP;
 tcplayer *__TCP;
 void ConnectClosed(connection *conn)
 {
+	printf("ConnectClosed\n");
 	meHTTP->ConnectionClosed(conn);
 }
 
@@ -1423,8 +1424,10 @@ void httplayer::CloseRequest(http_request *request) {
 	
 	if (request->contentlen!=0)
 		msg->AddInt64("content-length",request->contentlen);
-	
-	
+	BMessage container;
+	container.AddMessage("message",msg);
+	delete msg;
+	Proto->PlugMan->Broadcast(Proto->PlugID(),ALL_TARGETS,&container);
 //	release_sem(connhandle_sem);
 
 }

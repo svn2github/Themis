@@ -90,7 +90,7 @@ class mutex {
 struct connection {
 	int32 proto_id;
 	uint16 port;
-	
+	volatile int32 closedcbdone;
 	volatile int32 callbackdone;
 	int32 socket;
 	uint32 last_trans_time;//last transaction time
@@ -118,6 +118,7 @@ struct connection {
 		ssl=NULL;
 #endif
 		next=NULL;
+		closedcbdone=0;
 		callbackdone=0;
 		proto_id=0;
 		port=80;
