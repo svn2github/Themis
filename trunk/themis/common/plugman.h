@@ -39,6 +39,7 @@ Project Start Date: October 18, 2000
 #include <Message.h>
 #include <MessageRunner.h>
 #include <Messenger.h>
+#include <Locker.h>
 #include "plugstruct.h"
 #include "plugclass.h"
 class tcplayer;
@@ -67,6 +68,7 @@ class plugman: public BLooper {
 		plugst *head, *tail;
 		//! Add a plug-in structure to the internal linked list.
 		void AddPlug(plugst *plug);
+		BLocker *Locker;
 	public:
 		plugman(entry_ref &appdirref);
 		~plugman();

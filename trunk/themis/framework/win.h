@@ -31,18 +31,42 @@ Project Start Date: October 18, 2000
 #include <Window.h>
 #include "winview.h"
 #include "htmlparser.h"
+
+#include "ThemisNavView.h"
+#include "ThemisStatusView.h"
+#include "ThemisTabView.h"
+#include "ThemisUrlPopUpWindow.h"
+#include "FakeSite.h"
+#include "ThemisTVS.h"
 class Win:public BWindow
  {
   private:
    bool startup;
    HTMLParser *Parser;
+		uint32 protocol;
   public:
    winview *View;
    Win(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspace=B_CURRENT_WORKSPACE);
    bool QuitRequested();
    void MessageReceived(BMessage *msg);
    void WindowActivated(bool active);
+		virtual void				FrameMoved( BPoint origin );
+		virtual void				FrameResized( float width, float height );
    void WorkspacesChanged(uint32 oldws, uint32 newws);
+		void								AddNewTab( bool hidden );
+		void								CreateTabView();
+		void								CreateUrlPopUpWindow();
+		void								LoadInterfaceGraphics();
+		void								UrlTypedHandler();
+		BMenu *optionsmenu;
+		BMenu *filemenu;
+								
+		BMenuBar*						menubar;
+		ThemisNavView*			navview;
+		ThemisUrlPopUpWindow*	urlpopupwindow;
+		ThemisTabView*			tabview;
+		ThemisStatusView*		statusview;
+		BBitmap*						bitmaps[10];
  };
 
 #endif

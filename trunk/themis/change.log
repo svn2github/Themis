@@ -1,4 +1,13 @@
 ========
+09 March 2003
+========
+*PART 1*
+The most significant change in this commit is the addition and initial integration of the tabbed view system by Michael Weirauch (emwe).
+
+There is more to come, but this is just part 1.
+
+
+========
 18 September 2002
 ========
 More fixes, corrections, and functionality shifts.

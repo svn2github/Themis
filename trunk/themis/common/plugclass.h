@@ -40,6 +40,7 @@ add a command to makelinks.sh to create this link in your plug-in's directory.
 #include <Looper.h>
 #include <Handler.h>
 #include <Message.h>
+#include <Locker.h>
 #include <Entry.h>
 #include <OS.h>
 #include <MenuBar.h>
@@ -378,6 +379,7 @@ class PlugClass {
 				it's controls and widgets! AttachedToWindow() or AllAttached() is the
 				best place to do this!
 			*/
+		BLocker *Lock;
 	
 };
 

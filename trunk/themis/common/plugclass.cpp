@@ -79,10 +79,11 @@ PlugClass::PlugClass(BMessage *info) {
 		if (InitInfo->HasPointer("plug_manager"))
 			InitInfo->FindPointer("plug_manager",(void**)&PlugMan);
 	}
-	
+	Lock=new BLocker(true);
 }
 
 PlugClass::~PlugClass() {
+	delete Lock;
 }
 
 uint32 PlugClass::PlugID() {

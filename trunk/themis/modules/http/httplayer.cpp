@@ -452,6 +452,11 @@ void httplayer::KillRequest(http_request *request) {
 }
 
 http_request *httplayer::AddRequest(BMessage *info) {
+	printf("AddRequest\n");
+	BAutolock alock(lock);
+	http_request *request=NULL;
+	if (alock.IsLocked()) {
+	printf("AddRequest: alock is locked\n");
 	int32 what=0;
 	if (info!=NULL) {
 		if (info->HasInt32("action")) {
@@ -483,7 +488,7 @@ http_request *httplayer::AddRequest(BMessage *info) {
 		if (PluginManager==NULL) {
 			info->FindPointer("plug_manager",(void**)&PluginManager);
 		}
-		http_request *request=new http_request;
+		request=new http_request;
 		if (info->HasInt32("browser_string"))
 			info->FindInt32("browser_string",&use_useragent);
 		if (info->HasString("referrer")) {
@@ -546,6 +551,8 @@ http_request *httplayer::AddRequest(BMessage *info) {
 		return request;
 	} else
 		return NULL;
+	}
+	return request;
 }
 char *httplayer::FindEndOfHeader(char *buffer, char **eohc) {
 	if (buffer==NULL)
@@ -1951,12 +1958,12 @@ int32 httplayer::LayerManager() {
 	int32 bytes=0;
 	volatile int32 c=0;
 	while (!quit) {
-		stat=Lock(20000);
-		
-		if (stat!=B_OK) {
-			snooze(10000);
-			continue;
-		}
+//		stat=Lock(20000);
+//		
+//		if (stat!=B_OK) {
+//			snooze(10000);
+//			continue;
+//		}
 //		if (c==99) {
 //			printf("http layermanager\n");
 //			c=0;
@@ -1967,25 +1974,29 @@ int32 httplayer::LayerManager() {
 		} else
 			current=current->next;
 		if (current==NULL) {
-			Unlock();
+//			Unlock();
 			snooze(40000);
 			continue;
 		}
+		lock->Lock();
 		if (current->done==0) {
 			if (current->datawaiting>=1) {
+				lock->Unlock();
 				/*
 					If we timeout while waiting for TCP->Lock() then it's possible
 					that TCP is waiting for a lock on this protocol. A deadlock
 					would occur if we didn't timeout. So, we can simply pick up
 					the data on the next pass.
 				*/
-				if (TCP->Lock(100000)==B_OK) {
+//				if (TCP->Lock(100000)==B_OK) {
 					memset(buffer,0,10240);
 					bytes=0;
 					bytes=TCP->Receive(&current->conn,buffer,10240);
 //					printf("http: data received: %ld bytes\n",bytes);
-					TCP->Unlock();
+//					TCP->Unlock();
 					if (bytes>0) {
+					BAutolock alock(lock);
+					if (alock.IsLocked()) {
 						if (current->headersdone!=1) {
 							ProcessHeaders(current,buffer,bytes);
 						} else {
@@ -1994,11 +2005,13 @@ int32 httplayer::LayerManager() {
 							printf("http layermanager: post processdata, %s\n",current->url);
 							
 						}
+						}
 					}
-				}
+//				}
 			}
-		}
-		Unlock();
+		} else
+			lock->Unlock();
+//		Unlock();
 		snooze(20000);
 		
 	}

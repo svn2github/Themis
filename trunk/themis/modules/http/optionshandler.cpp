@@ -70,6 +70,7 @@ void http_opt_handler::MessageReceived(BMessage *msg) {
 	printf("Browser string is set to %s\n",bstr[meHTTP->use_useragent]);
 }
 void http_opt_handler::AddMenu(BMenu *parent) {
+	printf("hoh::AddMenu\n");
 	if (parentmenu!=NULL) {
 		if (parentmenu!=parent) {
 			RemoveMenu();

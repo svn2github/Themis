@@ -58,7 +58,16 @@ FRAMEWORKSOURCES= \
 	framework/infowin.cpp \
 	framework/aboutview.cpp \
 	framework/aboutwin.cpp \
-	framework/appaboutview.cpp
+	framework/appaboutview.cpp \
+	framework/ThemisNavView.cpp \
+	framework/ThemisStatusView.cpp \
+	framework/ThemisTab.cpp \
+	framework/ThemisTabView.cpp \
+	framework/ThemisUrlPopUpView.cpp \
+	framework/ThemisUrlPopUpWindow.cpp \
+	framework/ThemisUrlView.cpp \
+	framework/FakeSite.cpp
+#	framework/ThemisTVS.cpp \
 #	framework/htmlparser.cpp
 COMMONSOURCES= \
 	common/plugclass.cpp \
@@ -339,7 +348,7 @@ $(BASE_INSTALL_DIR)Themis: $(foreach file,$(notdir $(FRAMEWORKSOURCES:.cpp=.o)),
 #$(BASE_INSTALL_DIR)Themis: frameworkdepends commondepends frameworkobjects commonobjects
 	@echo "Linking Themis."
 	@$(CC) -o$(BASE_INSTALL_DIR)Themis $(foreach file,$(notdir $(FRAMEWORKSOURCES:.cpp=.o)),$(FRAMEWORK_OBJECT_DIR)$(file)) $(foreach file,$(notdir $(COMMONSOURCES:.cpp=.o)),$(COMMON_OBJECT_DIR)$(file)) -Xlinker $(LDFLAGS) -L ./ \
-		-L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) $(NETWORKLIBS) -lbe -ltextencoding -lroot # -ldom
+		-L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) $(NETWORKLIBS) -lbe -ltextencoding -lroot -lstdc++.r4 -ltranslation # -ldom
 	@echo "Done linking, adding resource file."
 	@xres -o $(BASE_INSTALL_DIR)Themis framework/themis.rsrc
 	@echo "Done adding resources. Themis framework app is ready to run."

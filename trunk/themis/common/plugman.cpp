@@ -37,6 +37,7 @@ Project Start Date: October 18, 2000
 #include <String.h>
 #include <Node.h>
 #include <NodeInfo.h>
+#include <Autolock.h>
 //#include "lockres.h"
 #include "commondefs.h"
 #define CheckFile 'chkf'
@@ -52,6 +53,7 @@ void showbits(int32 val)
 plugman::plugman(entry_ref &appdirref)
 	:BLooper("plug-in manager",B_LOW_PRIORITY) {
 	Lock();
+	Locker=new BLocker(true);
 	heartcount=0;
 	Heartbeat_mr=NULL;	
 	head=NULL;
@@ -233,7 +235,7 @@ plugman::plugman(entry_ref &appdirref)
 }
 plugman::~plugman() {
 	stop_watching((BHandler *)this,(BLooper*)this);
-	
+	delete Locker;
 }
 bool plugman::QuitRequested() {
 
@@ -988,6 +990,8 @@ status_t plugman::UnloadPlugin(uint32 which,bool clean) {
 	return B_OK;
 }
 void plugman::AddPlug(plugst *plug) {
+	BAutolock alock(Locker);
+	if (alock.IsLocked()) {
 	if (head==NULL) {
 		head=plug;
 	} else {
@@ -1017,7 +1021,7 @@ void plugman::AddPlug(plugst *plug) {
 	msgr->SendMessage(msg);
 	delete msgr;
 	delete msg;
-	
+	}
 }
 void plugman::BuildRoster(bool clean) {
 	if (clean)

@@ -31,6 +31,7 @@ http_protocol *HTTP_proto;
 #include "commondefs.h"
 #include "http_defines.h"
 #include <Menu.h>
+#include <Autolock.h>
 #include "plugman.h"
 tcplayer *TCP;
 BMessage *AppSettings;
@@ -381,15 +382,18 @@ void http_protocol::Stop()
 	printf("done unregistering.\n");
  }
 void http_protocol::AddMenuItems(BMenu *menu) {
+	printf("http proto: Window %p\n",Window);
+	BAutolock alock(Lock);
+	if (alock.IsLocked()) {
 	printf("http_protocol AddMenuItems\n");
 	if (Window!=NULL) {
-		Window->Lock();
+//		Window->Lock();
 		Window->AddHandler(HOH);
 		HOH->browserident->SetTargetForItems(HOH);
 		
 		printf("handler added\n");
 		
-		Window->Unlock();
+//		Window->Unlock();
 	}
 	
 //	BMenuItem *options=menubar->FindItem("Options");
@@ -397,11 +401,13 @@ void http_protocol::AddMenuItems(BMenu *menu) {
 	
 		HOH->AddMenu(menu);
 	
-	
+	}
 }
 void http_protocol::RemoveMenuItems() {
+	BAutolock alock(Lock);
+	if (alock.IsLocked()) {
 	HOH->RemoveMenu();
-	
+	}
 }
 
 int32 http_protocol::GetURL(BMessage *info)
