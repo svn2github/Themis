@@ -94,6 +94,8 @@ class BaseParser	{
 		void processAttrValueSpec();
 		void processAttrValue();
 		void processAttrValueLit();
+		string processCharData( string aEndString, bool aSpaceEnd = true );
+		char processDataChar();
 
 	public:
 		// Constructor

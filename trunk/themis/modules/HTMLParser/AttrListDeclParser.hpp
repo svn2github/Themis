@@ -22,18 +22,21 @@
 using namespace std;
 
 class AttrListDeclParser	:	public DeclarationParser	{
-	
+
+	private:
+		TElementShared mAttrLists;
+		
 	public:
 		AttrListDeclParser( SGMLTextPtr aDocText, TDocumentShared aDTD,
 								 	TElementShared aParEntities, TElementShared aCharEntities );
 		~AttrListDeclParser();
 		virtual void processDeclaration();
-		void processAssElementType();
-		void processAttrDefList();
-		void processAttrDef();
-		void processAttrName();
-		void processDeclValue();
-		void processDefValue();
+		TElementShared processAssElementType();
+		TElementShared processAttrDefList();
+		TElementShared processAttrDef();
+		string processAttrName();
+		string processDeclValue();
+		string processDefValue();
 	
 };
 

@@ -161,6 +161,7 @@ void ElementParser	::	processElement( const TElementShared & aElementDecl,
 		if ( start )	{
 			throw r;
 		}
+		printf( "Start not required\n" );
 		// Should actually still add the element to the tree. Bit too complicated atm.
 		tag = shared_static_cast<TNode>( aParent );
 	}
@@ -171,16 +172,21 @@ void ElementParser	::	processElement( const TElementShared & aElementDecl,
 		processContent( content, exceptions, tag );
 	}
 
+	printf( "Done with content. Trying to close up %s\n", aElementDecl->getNodeName().c_str() );
+	
 	save = mDocText->saveState();
 	try	{
 		processSStar();
 		processEndTag( aElementDecl );
+		printf( "Closed up %s correctly\n", aElementDecl->getNodeName().c_str() );
 	}
 	catch( ReadException r )	{
 		mDocText->restoreState( save );
 		if ( end )	{
+			printf( "Throwing exception on closing of %s\n", aElementDecl->getNodeName().c_str() );
 			throw r;
 		}
+		printf( "Closed up %s implicitly\n", aElementDecl->getNodeName().c_str() );
 	}
 	
 }
@@ -205,11 +211,12 @@ void ElementParser	::	processStartTag( const TElementShared & elementDecl )	{
 		string error = "Expected start tag ";
 		error += elementDecl->getNodeName();
 		throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(),
-										error, true, false, true );
+										error, true, false, true, name );
 	}
 	
 	// Skipping some stuff for now
 	try	{
+		printf( "Processing AttrSpecList\n" );
 		processAttrSpecList();
 	}
 	catch( ReadException r )	{
@@ -296,24 +303,20 @@ void ElementParser	::	processAttrSpec()	{
 
 	processSStar();
 	
+	State save = mDocText->saveState();
 	try	{
-		processName();
-		try	{
-			processSStar();
-			process( mVi );
-			processSStar();
-		}
-		catch( ReadException r )	{
-			r.setFatal();
-			throw r;
-		}
+		string name = processName();
+		printf( "Found attr spec name: %s\n", name.c_str() );
+		processSStar();
+		process( mVi );
+		processSStar();
 	}
 	catch( ReadException r )	{
-		// Optional. Do nothing
+		// Optional.
+		mDocText->restoreState( save );
 	}
 	
 	// Not entirely correct. Check later
-	
 	processAttrValueSpec();
 	
 }
@@ -363,6 +366,8 @@ void ElementParser	::	processContent( const TElementShared & aContent,
 		default:	{
 			if ( contentName == "CDATA" )	{
 				printf( "At cdata\n" );
+				string cdata = processCharData( mEtago, false );
+				printf( "CDATA: %s\n", cdata.c_str() );
 				break;
 			}
 			if ( contentName == "EMPTY" )	{
@@ -481,8 +486,32 @@ void ElementParser	::	processOr( const TElementShared & aContent,
 			break;
 		}
 		catch( ReadException r )	{
-			if ( ! r.isWrongTag() && r.isFatal() )	{
+			if ( ( ! r.isWrongTag() && r.isFatal() ) || r.isEndTag() )	{
 				throw r;
+			}
+			if ( r.isWrongTag() )	{
+				string name = r.getWrongTag();
+				printf( "Need to find tag: %s. Have %s\n", name.c_str(), element->getNodeName().c_str() );
+				for ( unsigned int j = i; j < children->getLength(); j++ )	{
+					TNodeShared child = make_shared( children->item( j ) );
+					TElementShared element = shared_static_cast<TElement>( child );
+					if ( element->getTagName() == name )	{
+						printf( "Found right name: %s\n", name.c_str() );
+						try	{
+							processContent( element, aExceptions, aParent );
+							found = true;
+							break;
+						}
+						catch( ReadException r )	{
+							if ( ! r.isWrongTag() && r.isFatal() )	{
+								throw r;
+							}
+						}
+					}
+				}
+			}
+			if ( found )	{
+				break;
 			}
 		}
 	}
@@ -719,7 +748,6 @@ void ElementParser	::	processComment()	{
 
 	try	{
 		commentParser->parse();
-		printf( "Comment found\n" );
 		return;
 	}
 	catch( ReadException r )	{

@@ -480,6 +480,11 @@ string BaseParser	::	processRepCharData()	{
 
 string BaseParser	::	processGI()	{
 
+	if ( mDocText->getChar() == '/' )	{
+		throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(), "Is an end tag",
+										false, false, false, "", true );
+	}
+
 	// Generic identifier and name are equivalent
 	return processName();
 	
@@ -610,8 +615,12 @@ void BaseParser	::	processAttrValueSpec()	{
 void BaseParser	::	processAttrValue()	{
 
 	// FIX ME!!!!!!!!!!!!!!!!!!!!!
-	string token = processNameToken();
-	//printf( "Token found: %s\n", token.c_str() );
+	string result = processCharData( mTagc );
+	if ( result == "" )	{
+		throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(),
+										"AttrValue expected" );
+	}
+	//processNameToken();
 	
 }
 
@@ -648,5 +657,43 @@ void BaseParser	::	processAttrValueLit()	{
 	}
 	
 	//printf( "Value literal: %s\n", text.c_str() );
+	
+}
+
+string BaseParser	::	processCharData( string aEndString, bool aSpaceEnd )	{
+
+	string result;
+
+	bool dataCharFound = true;
+	while ( dataCharFound )	{
+		State save = mDocText->saveState();
+		try	{
+			process( aEndString );
+		}
+		catch( ReadException r )	{
+			if ( aSpaceEnd && isspace( mDocText->getChar() ) )	{
+				dataCharFound = false;
+			}
+			else	{
+				result += processDataChar();
+				continue;
+			}
+		}
+		mDocText->restoreState( save );
+		dataCharFound = false;
+		
+	}
+	
+	return result;
+	
+}
+
+char BaseParser	::	processDataChar()	{
+
+	char c = mDocText->getChar();
+
+	mDocText->nextChar();
+
+	return c;
 	
 }

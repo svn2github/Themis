@@ -13,6 +13,7 @@
 // DOM headers
 #include "TDocument.h"
 #include "TElement.h"
+#include "TNodeList.h"
 
 AttrListDeclParser	::	AttrListDeclParser( SGMLTextPtr aDocText,
 															TDocumentShared aDTD,
@@ -21,6 +22,8 @@ AttrListDeclParser	::	AttrListDeclParser( SGMLTextPtr aDocText,
 							:	DeclarationParser( aDocText, aDTD, aParEntities, aCharEntities )	{
 
 	//printf( "Constructing AttrListDeclParser\n" );
+	mAttrLists = mDTD->createElement( "attrlists" );
+	mDTD->appendChild( mAttrLists );
 	
 }
 
@@ -32,6 +35,9 @@ AttrListDeclParser	::	~AttrListDeclParser()	{
 
 void AttrListDeclParser	::	processDeclaration()	{
 
+	// Define an element to store the attribute list declaration
+	TElementShared attrList = mDTD->createElement( "attrList" );
+	
 	process( mMdo );
 	process( kATTLIST );
 
@@ -44,7 +50,8 @@ void AttrListDeclParser	::	processDeclaration()	{
 	}
 	
 	try	{
-		processAssElementType();
+		TElementShared assElementType = processAssElementType();
+		attrList->appendChild( assElementType );
 	}
 	catch( ReadException r )	{
 		r.setFatal();
@@ -60,7 +67,8 @@ void AttrListDeclParser	::	processDeclaration()	{
 	}
 
 	try	{
-		processAttrDefList();
+		TElementShared attrDefList = processAttrDefList();
+		attrList->appendChild( attrDefList );
 	}
 	catch( ReadException r )	{
 		r.setFatal();
@@ -87,28 +95,44 @@ void AttrListDeclParser	::	processDeclaration()	{
 	
 }
 
-void AttrListDeclParser	::	processAssElementType()	{
+TElementShared AttrListDeclParser	::	processAssElementType()	{
 	
+	TElementShared assElementType = mDTD->createElement( "assElementType" );
+
 	try	{
 		string name = processGI();
+		TElementShared elementName = mDTD->createElement( name );
+		assElementType->appendChild( elementName );
 		//printf( "Element of attribute list: %s\n", name.c_str() );
 	}
 	catch( ReadException r )	{
 		// Not a generic identifier. Must be a name group
-		processNameGroup();
+		TElementShared nameGroup = processNameGroup();
+		TNodeListShared children = nameGroup->getChildNodes();
+		for ( unsigned int i = 0; i < children->getLength(); i++ )	{
+			TNodeShared child = make_shared( children->item( i ) );
+			TElementShared element = shared_static_cast<TElement>( child );
+			assElementType->appendChild( element );
+		}
 	}
+	
+	return assElementType;
 	
 }
 
-void AttrListDeclParser	::	processAttrDefList()	{
+TElementShared AttrListDeclParser	::	processAttrDefList()	{
 
-	processAttrDef();
+	TElementShared attrDefList = mDTD->createElement( "attrDefList" );
+
+	TElementShared attrDef = processAttrDef();
+	attrDefList->appendChild( attrDef );
 	
 	bool adFound = true;
 	while ( adFound )	{
 		try	{
 			processPsPlus();
-			processAttrDef();
+			attrDef = processAttrDef();
+			attrDefList->appendChild( attrDef );
 		}
 		catch( ReadException r )	{
 			if ( r.isFatal() )	{
@@ -118,13 +142,14 @@ void AttrListDeclParser	::	processAttrDefList()	{
 		}
 	}
 	
+	return attrDefList;
+	
 }
 
-void AttrListDeclParser	::	processAttrDef()	{
+TElementShared AttrListDeclParser	::	processAttrDef()	{
 
-	//printf( "processAttrDef: %c %i %i %i\n", mDocText->getChar(), mDocText->getIndex(), mDocText->getLineNr(), mDocText->getCharNr() );
-
-	processAttrName();
+	string name = processAttrName();
+	TElementShared attrDef = mDTD->createElement( name );
 
 	try	{
 		processPsPlus();
@@ -135,7 +160,8 @@ void AttrListDeclParser	::	processAttrDef()	{
 	}
 
 	try	{	
-		processDeclValue();
+		string declValue = processDeclValue();
+		attrDef->setAttribute( "declValue", declValue );
 	}
 	catch( ReadException r )	{
 		r.setFatal();
@@ -151,29 +177,31 @@ void AttrListDeclParser	::	processAttrDef()	{
 	}
 	
 	try	{	
-		processDefValue();
+		string defValue = processDefValue();
+		attrDef->setAttribute( "defValue", defValue );
 	}
 	catch( ReadException r )	{
 		r.setFatal();
 		throw r;
 	}
 	
+	return attrDef;
+	
 }
 
-void AttrListDeclParser	::	processAttrName()	{
+string AttrListDeclParser	::	processAttrName()	{
 
 	// Attribute name and name are equivalent
-	string name = processName();
-	//printf( "Attribute name: %s\n", name.c_str() );
+	return processName();
 	
 }
 
-void AttrListDeclParser	::	processDeclValue()	{
+string AttrListDeclParser	::	processDeclValue()	{
 
 	try	{
 		process( kCDATA );
 		//printf( "Declared value: %s\n", mCDATA.c_str() );
-		return;
+		return kCDATA;
 	}
 	catch( ReadException r )	{
 		// Do nothing
@@ -181,7 +209,7 @@ void AttrListDeclParser	::	processDeclValue()	{
 	try	{
 		process( kENTITY );
 		//printf( "Declared value: %s\n", kENTITY.c_str() );
-		return;
+		return kENTITY;
 	}
 	catch( ReadException r )	{
 		// Do nothing
@@ -189,7 +217,7 @@ void AttrListDeclParser	::	processDeclValue()	{
 	try	{
 		process( kENTITIES );
 		//printf( "Declared value: %s\n", kENTITIES.c_str() );
-		return;
+		return kENTITIES;
 	}
 	catch( ReadException r )	{
 		// Do nothing
@@ -197,7 +225,7 @@ void AttrListDeclParser	::	processDeclValue()	{
 	try	{
 		process( kIDREFS );
 		//printf( "Declared value: %s\n", kIDREFS.c_str() );
-		return;
+		return kIDREFS;
 	}
 	catch( ReadException r )	{
 		// Do nothing
@@ -205,7 +233,7 @@ void AttrListDeclParser	::	processDeclValue()	{
 	try	{
 		process( kIDREF );
 		//printf( "Declared value: %s\n", kIDREF.c_str() );
-		return;
+		return kIDREF;
 	}
 	catch( ReadException r )	{
 		// Do nothing
@@ -213,7 +241,7 @@ void AttrListDeclParser	::	processDeclValue()	{
 	try	{
 		process( kID );
 		//printf( "Declared value: %s\n", kID.c_str() );
-		return;
+		return kID;
 	}
 	catch( ReadException r )	{
 		// Do nothing
@@ -221,7 +249,7 @@ void AttrListDeclParser	::	processDeclValue()	{
 	try	{
 		process( kNAMES );
 		//printf( "Declared value: %s\n", mNAMES.c_str() );
-		return;
+		return kNAMES;
 	}
 	catch( ReadException r )	{
 		// Do nothing
@@ -229,7 +257,7 @@ void AttrListDeclParser	::	processDeclValue()	{
 	try	{
 		process( kNAME );
 		//printf( "Declared value: %s\n", mNAME.c_str() );
-		return;
+		return kNAME;
 	}
 	catch( ReadException r )	{
 		// Do nothing
@@ -237,7 +265,7 @@ void AttrListDeclParser	::	processDeclValue()	{
 	try	{
 		process( kNMTOKENS );
 		//printf( "Declared value: %s\n", mNMTOKENS.c_str() );
-		return;
+		return kNMTOKENS;
 	}
 	catch( ReadException r )	{
 		// Do nothing
@@ -245,7 +273,7 @@ void AttrListDeclParser	::	processDeclValue()	{
 	try	{
 		process( kNMTOKEN );
 		//printf( "Declared value: %s\n", mNMTOKEN.c_str() );
-		return;
+		return kNMTOKEN;
 	}
 	catch( ReadException r )	{
 		// Do nothing
@@ -253,7 +281,7 @@ void AttrListDeclParser	::	processDeclValue()	{
 	try	{
 		process( kNUMBERS );
 		//printf( "Declared value: %s\n", mNUMBERS.c_str() );
-		return;
+		return kNUMBERS;
 	}
 	catch( ReadException r )	{
 		// Do nothing
@@ -261,7 +289,7 @@ void AttrListDeclParser	::	processDeclValue()	{
 	try	{
 		process( kNUMBER );
 		//printf( "Declared value: %s\n", mNUMBER.c_str() );
-		return;
+		return kNUMBER;
 	}
 	catch( ReadException r )	{
 		// Do nothing
@@ -269,7 +297,7 @@ void AttrListDeclParser	::	processDeclValue()	{
 	try	{
 		process( kNUTOKENS );
 		//printf( "Declared value: %s\n", mNUTOKENS.c_str() );
-		return;
+		return kNUTOKENS;
 	}
 	catch( ReadException r )	{
 		// Do nothing
@@ -277,7 +305,7 @@ void AttrListDeclParser	::	processDeclValue()	{
 	try	{
 		process( kNUTOKEN );
 		//printf( "Declared value: %s\n", mNUTOKEN.c_str() );
-		return;
+		return kNUTOKEN;
 	}
 	catch( ReadException r )	{
 		// Do nothing
@@ -285,7 +313,7 @@ void AttrListDeclParser	::	processDeclValue()	{
 	try	{
 		processNameTokenGroup();
 		//printf( "Declared value: name token group\n" );
-		return;
+		return "";
 	}
 	catch( ReadException r )	{
 		// Do nothing
@@ -295,7 +323,7 @@ void AttrListDeclParser	::	processDeclValue()	{
 	
 }
 
-void AttrListDeclParser	::	processDefValue()	{
+string AttrListDeclParser	::	processDefValue()	{
 	
 	try	{
 		process( mRni );
@@ -303,46 +331,49 @@ void AttrListDeclParser	::	processDefValue()	{
 	catch( ReadException r )	{
 		// Must be an attribute value specification
 		processAttrValueSpec();
-		return;
+		return "";
 	}
+	
 	try	{
 		process( kFIXED );
 		processPsPlus();
 		processAttrValueSpec();
-		return;
+		return "";
 	}
 	catch( ReadException r )	{
 		// Do nothing
 	}
 	try	{
 		process( kREQUIRED );
-		return;
+		return kREQUIRED;
 	}
 	catch( ReadException r )	{
 		// Do nothing
 	}
 	try	{
 		process( kCURRENT );
-		return;
+		return kCURRENT;
 	}
 	catch( ReadException r )	{
 		// Do nothing
 	}
 	try	{
 		process( kCONREF );
-		return;
+		return kCONREF;
 	}
 	catch( ReadException r )	{
 		// Do nothing
 	}
 	try	{
 		process( kIMPLIED );
-		return;
+		return kIMPLIED;
 	}
 	catch( ReadException r )	{
 		// Do nothing
 	}
-	
+
 	processAttrValueSpec();
+	
+	return "";
 	
 }

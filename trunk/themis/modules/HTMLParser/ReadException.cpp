@@ -10,7 +10,8 @@
 
 ReadException	::	ReadException( unsigned int aLineNr, unsigned int aCharNr,
 												   string aErrorMessage, bool aFatal, bool aEof,
-												   bool aWrongTag )	{
+												   bool aWrongTag, string aWrongTagString,
+												   bool aEndTag )	{
 		
 	mLineNr = aLineNr;
 	mCharNr = aCharNr;
@@ -18,6 +19,8 @@ ReadException	::	ReadException( unsigned int aLineNr, unsigned int aCharNr,
 	mFatal = aFatal;
 	mEof = aEof;
 	mWrongTag = aWrongTag;
+	mWrongTagString = aWrongTagString;
+	mEndTag = aEndTag;
 		
 }
 
@@ -58,6 +61,18 @@ bool ReadException	::	isEof() const	{
 bool ReadException	::	isWrongTag() const	{
 	
 	return mWrongTag;
+	
+}
+
+string ReadException	::	getWrongTag() const	{
+	
+	return mWrongTagString;
+	
+}
+
+bool ReadException	::	isEndTag() const	{
+	
+	return mEndTag;
 	
 }
 

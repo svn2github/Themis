@@ -24,11 +24,14 @@ class ReadException	{
 		bool mFatal;
 		bool mEof;
 		bool mWrongTag;
+		bool mEndTag;
+		string mWrongTagString;
 	
 	public:
 		ReadException( unsigned int aLineNr, unsigned int aCharNr,
 							   string aErrorMessage, bool aFatal = false, bool aEof = false,
-							   bool aWrongTag = false );
+							   bool aWrongTag = false, string aWrongTagString = "",
+							   bool aEndTag = false );
 		~ReadException();
 		unsigned int getCharNr() const;
 		unsigned int getLineNr() const;
@@ -36,6 +39,8 @@ class ReadException	{
 		bool isFatal() const;
 		bool isEof() const;
 		bool isWrongTag() const;
+		bool isEndTag() const;
+		string getWrongTag() const;
 		void setFatal( bool aFatal = true );
 		
 };
