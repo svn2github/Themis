@@ -37,6 +37,8 @@ class ElementParser	:	public BaseParser	{
 		virtual ~ElementParser();
 		void parse( const map<string, Position> & aEntityTexts, const string & aName );
 		void parse( const string & aName );	// If you don't need entities
+		void processElementContent( const TElementShared & aElementDecl,
+												   TNodeShared aParent );
 		void processElement( const TElementShared & aElementDecl, TNodeShared aParent );
 		void processStartTag( const TElementShared & elementDecl );
 		void processEndTag( const TElementShared & elementDecl );

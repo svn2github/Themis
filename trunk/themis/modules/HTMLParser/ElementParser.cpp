@@ -71,10 +71,40 @@ void ElementParser	::	parse( const string & aName )	{
 	mName = aName;
 	
 	TElementShared elementDecl = getElementDecl( aName, mElements );
-	processElement( elementDecl, mDocument );
+	processElementContent( elementDecl, mDocument );
 	
 	showTree( mDocument, 0 );
 
+}
+
+void ElementParser	::	processElementContent( const TElementShared & aElementDecl,
+																	TNodeShared aParent )	{
+
+	bool contentFound = true;
+	while ( contentFound )	{
+		try	{
+			processComment();
+		}
+		catch( ReadException r )	{
+			if ( r.isFatal() )	{
+				throw r;
+			}
+			try	{
+				processS();
+			}
+			catch( ReadException r )	{
+				if ( r.isFatal() )	{
+					throw r;
+				}
+				else	{
+					contentFound = false;
+				}
+			}
+		}
+	}
+
+	processElement( aElementDecl, aParent );
+																		
 }
 
 void ElementParser	::	processElement( const TElementShared & aElementDecl,
@@ -86,8 +116,6 @@ void ElementParser	::	processElement( const TElementShared & aElementDecl,
 
 	State save = mDocText->saveState();
 	try	{
-		processComments();
-		processSStar();
 		processStartTag( aElementDecl );
 	}
 	catch( ReadException r )	{
@@ -96,6 +124,7 @@ void ElementParser	::	processElement( const TElementShared & aElementDecl,
 		throw r;
 	}
 	
+	// Add element to tree
 	TElementShared element =
 		mDocument->createElement( aElementDecl->getNodeName() );
 	aParent->appendChild( element );
@@ -290,6 +319,7 @@ void ElementParser	::	processAttrSpec()	{
 void ElementParser	::	processContent( const TElementShared & aContent,
 														 const TElementShared & aExceptions,
 														 TNodeShared aParent )	{
+
 	processExceptions( aExceptions, aParent );
 
 	string contentName = aContent->getNodeName();
@@ -470,18 +500,49 @@ void ElementParser	::	processContent( const TElementShared & aContent,
 			break;
 		}
 		default:	{
+			if ( contentName == "CDATA" )	{
+				printf( "At cdata\n" );
+				break;
+			}
+			if ( contentName == "EMPTY" )	{
+				printf( "At empty\n" );
+				break;
+			}
 			printf( "At tag\n" );
 			TElementShared elementDecl = getElementDecl( contentName, mElements );
-			processElement( elementDecl, aParent );
+			processElementContent( elementDecl, aParent );
 			printf( "Finished tag\n" );
 		}
 	}
-	
+
 }
 
 void ElementParser	::	processExceptions( const TElementShared & aExceptions,
 															TNodeShared aParent )	{
 	
+	bool contentFound = true;
+	while ( contentFound )	{
+		try	{
+			processComment();
+		}
+		catch( ReadException r )	{
+			if ( r.isFatal() )	{
+				throw r;
+			}
+			try	{
+				processS();
+			}
+			catch( ReadException r )	{
+				if ( r.isFatal() )	{
+					throw r;
+				}
+				else	{
+					contentFound = false;
+				}
+			}
+		}
+	}
+
 	bool exceptionFound = true;
 	while ( exceptionFound )	{
 		try	{

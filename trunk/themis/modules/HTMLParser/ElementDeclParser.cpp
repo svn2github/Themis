@@ -85,32 +85,26 @@ void ElementDeclParser	::	processDeclaration()	{
 		throw r;
 	}
 
+	// Find right element to put content on
+	TElementShared contentElement = element;
+	if ( element->hasChildNodes() )	{
+		// Name group. Assuming has connector as child
+		TNodeShared connector = make_shared( element->getFirstChild() );
+		TNodeShared child = make_shared( connector->getFirstChild() );
+		contentElement = shared_static_cast<TElement>( child );
+	}
+	
 	try	{
-		processDeclContent();
+		processDeclContent( contentElement );
 	}
 	catch( ReadException r )	{
 		// Not declared content. Must be a content model
-		if ( element->hasChildNodes() )	{
-			// Name group. Assuming has connector as child
-			TNodeShared connector = make_shared( element->getFirstChild() );
-			TNodeShared child = make_shared( connector->getFirstChild() );
-			TElementShared firstElement = shared_static_cast<TElement>( child );
-			try	{
-				processContentModel( firstElement );
-			}
-			catch( ReadException r )	{
-				r.setFatal();
-				throw r;
-			}
+		try	{
+			processContentModel( contentElement );
 		}
-		else	{
-			try	{
-				processContentModel( element );
-			}
-			catch( ReadException r )	{
-				r.setFatal();
-				throw r;
-			}
+		catch( ReadException r )	{
+			r.setFatal();
+			throw r;
 		}
 	}
 
@@ -204,19 +198,25 @@ void ElementDeclParser	::	processTagMin( TElementShared aElement )	{
 	
 }
 
-void ElementDeclParser	::	processDeclContent()	{
+void ElementDeclParser	::	processDeclContent( TElementShared aElement )	{
 
 	try	{
 		process( kCDATA );
+		TElementShared cdata = mDTD->createElement( "CDATA" );
+		aElement->appendChild( cdata );
 	}
 	catch( ReadException r )	{
 		// Not CDATA. Try RCDATA
 		try	{
 			process( kRCDATA );
+			TElementShared rcdata = mDTD->createElement( "RCDATA" );
+			aElement->appendChild( rcdata );
 		}
 		catch( ReadException r )	{
 			// Not RCDATA. Try EMPTY
 			process( kEMPTY );
+			TElementShared empty = mDTD->createElement( "EMPTY" );
+			aElement->appendChild( empty );
 		}
 	}
 

@@ -32,7 +32,7 @@ class ElementDeclParser	:	public DeclarationParser	{
 		virtual void processDeclaration();
 		TElementShared processElementType();
 		void processTagMin( TElementShared aElement );
-		void processDeclContent();
+		void processDeclContent( TElementShared aElement );
 		void processContentModel( TElementShared aElement );
 		TElementShared processModelGroup();
 		TElementShared processSubModelGroup();
