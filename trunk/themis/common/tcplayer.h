@@ -157,11 +157,16 @@ struct DRCallback_st
 {
 	int32 protocol;
 	void (*callback)(connection *conn);
+	int32 (*Lock)(int32 timeout=-1);
+	void (*Unlock)(void);
 	DRCallback_st *next;
 	DRCallback_st() {
 		protocol=0;
 		next=NULL;
 		callback=NULL;
+		Lock=NULL;
+		Unlock=NULL;
+		
 	}
 	
 };
@@ -176,6 +181,12 @@ class tcplayer {
 #endif
 		sem_id tcp_mgr_sem;
 		sem_id conn_sem;
+		sem_id cb_sem;
+		sem_id tcplayer_sem;
+		int32 Lock(int32 timeout=-1);
+		BLocker *lock;
+		void Unlock();
+		volatile int32 firstcb;
 		thread_id thread;
 		volatile int32 quit;
 		tcplayer();
@@ -184,7 +195,7 @@ class tcplayer {
 		static int32 StartManager(void *arg);
 		int32 Manager();
 		status_t Quit();
-		void SetDRCallback(int32 proto,void (*DataReceived)(connection* conn));
+		void SetDRCallback(int32 proto,void (*DataReceived)(connection* conn),int32 (*Lock)(int32 timeout=-1),void(*Unlock)(void));
 		bool IsValid(connection *conn);
 		connection *conn_head;//first connection
 		connection *prev_conn;
