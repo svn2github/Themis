@@ -479,11 +479,9 @@ http_request *httplayer::AddRequest(BMessage *info) {
 		request=new http_request;
 		// added by emwe ( hope its correct here )
 		// add the unique IDs
-		info->FindInt16( "window_uid", &request->window_uid );
-		info->FindInt16( "tab_uid", &request->tab_uid );
-		info->FindInt16( "view_uid", &request->view_uid );
+		info->FindInt32( "view_id", &request->view_id );
 #ifdef DEBUG
-		printf( "UIDS: %d,%d,%d\n", request->window_uid, request->tab_uid, request->view_uid );
+		printf( "UID: %ld\n", request->view_id );
 #endif
 		//
 		if (info->HasInt32("browser_string"))
@@ -1724,9 +1722,7 @@ void httplayer::ProcessData(http_request *request, void *buffer, int size) {
 #endif
 	BMessage *msg=new BMessage(ReturnedData);
 	// added by emwe
-	msg->AddInt16( "window_uid", request->window_uid );
-	msg->AddInt16( "tab_uid", request->tab_uid );
-	msg->AddInt16( "view_uid", request->view_uid );
+	msg->AddInt32( "view_id", request->view_id );
 	msg->AddBool( "secure", request->secure );
 	//
 	msg->AddInt32("command",COMMAND_INFO);
@@ -1943,7 +1939,9 @@ void httplayer::CloseRequest(http_request *request,bool quick) {
 				if ((request->contentlen!=0) && (request->contentlen>request->bytesreceived))
 					msg->AddInt32("status",UnexpectedDisconnect);
 			}
-			
+	
+	/* added by emwe. I need this damn view id :)) */
+	msg->AddInt32( "view_id", request->view_id );
 	
 	if (request->contentlen>0)
 		msg->AddInt64("content-length",request->contentlen);

@@ -123,9 +123,7 @@ class authwin;
 
 struct http_request {
 	// added by emwe
-	int16 window_uid;
-	int16 tab_uid;
-	int16 view_uid;
+	int32 view_id;
 	// 
 	uint32 cache_system_type;
 	int32 cache_object_token;
@@ -168,9 +166,7 @@ struct http_request {
 	
 	http_request() {
 		// added by emwe
-		window_uid = 0;
-		tab_uid = 0;
-		view_uid = 0;
+		view_id = 0;
 		// 
 		requeststr=NULL;
 		connection_established=0;
