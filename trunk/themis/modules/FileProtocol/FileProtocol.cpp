@@ -174,7 +174,7 @@ status_t FileProtocol	::	ReceiveBroadcast( BMessage * message )	{
 				}
 
 				// Put the file contents in the cache
-				int32 objectToken = cache->CreateObject( userToken, fileLocation.c_str() );
+				int32 objectToken = cache->CreateObject( userToken, fileLocation.c_str() ,TYPE_RAM);
 				
 				char * buffer = new char[ kBufferSize ];
 				unsigned int bytesRead = 0;
