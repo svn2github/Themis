@@ -34,7 +34,7 @@ Project Start Date: October 18, 2000
 #include <Message.h>
 #include <string.h>
 #include "commondefs.h"
-
+#include <TranslationUtils.h>
 #include <String.h>
 #include "plugman.h"
 ImageMan *ImageManager;
@@ -247,13 +247,13 @@ status_t ImageMan::ReceiveBroadcast(BMessage *msg) {
 							last->cache_object_token=CacheSys->FindObject(cache_user_token,url);
 							if (last->cache_object_token>=0)
 							{//yes, we have it the cache!
-								last->bitmap=BTranslatorRoster::GetBitmap(CacheSys->ObjectIOPointer(cache_user_token,last->cache_object_token));
+								last->bitmap=BTranslationUtils::GetBitmap(CacheSys->ObjectIOPointer(cache_user_token,last->cache_object_token));
 								//if it's an animated image, we'll need to more processing first...
 							} else {//request the image from the appropriate protocol
-								BMessage request(LoadingNewPage);
+								BMessage request(SH_RETRIEVE_START);
 								request.AddString("target_url",url);
 								request.AddInt32("command",COMMAND_RETRIEVE);
-								Broadcast(MS_TARGET_PROTOCOLS,&request);
+								Broadcast(MS_TARGET_PROTOCOL,&request);
 								
 							}
 							
@@ -309,6 +309,10 @@ out our stored images.
 					
 				}break;
 				case ReturnedData: {
+/*
+					BMessage image_loaded(IH_IMAGE_LOADED);
+					Broadcast(MS_TARGET_RENDERER,&image_loaded);
+					
 					bool done=false;
 					BString mime;
 					BString url;
@@ -364,7 +368,7 @@ out our stored images.
 /*
 	Check to see if we already have an image for the specified URL. If not, then add it.
 	If so, then update the existing image.
-*/
+* /
 									while (cur!=NULL) {
 										if (strcasecmp(url.String(),cur->URL())==0) 
 											break;
@@ -387,7 +391,7 @@ out our stored images.
 					} else {
 						printf(" unsupported: %s\n",mime.String());
 					}
-				
+*/				
 				}break;
 			}
 			
@@ -400,10 +404,12 @@ out our stored images.
 			msg->FindInt32("ReplyTo",&replyto);
 			switch(msg->what) {
 				case GetSupportedMIMEType: {
+					
 /*
 	Ah, they want to know what MIME types this plug-in supports.
 */					
 			if (msg->HasBool("supportedmimetypes")) {
+				printf("\tImageHAddon: MIME Type Support Request!\n");
 				BMessage types(SupportedMIMEType);
 				smt_st *cur=mimes;
 				while (cur!=NULL) {
@@ -411,11 +417,11 @@ out our stored images.
 					cur=cur->next;
 				}
 				types.AddInt32("command",COMMAND_INFO);
-				PlugClass *plug=NULL;
+				MessageSystem *msgsys=NULL;
 				if (msg->HasPointer("ReplyToPointer")) {
-					msg->FindPointer("ReplyToPointer",(void**)&plug);
-					if (plug!=NULL)
-						plug->BroadcastReply(&types);
+					msg->FindPointer("ReplyToPointer",(void**)&msgsys);
+					if (msgsys!=NULL)
+						msgsys->BroadcastReply(&types);
 				} else {	
 				//	BMessage container;
 				//	container.AddMessage("message",&types);
@@ -507,5 +513,5 @@ bool ImageMan::TypeSupported(char *type)
 }
 uint32 ImageMan::BroadcastTarget() 
 {
-	return MS_TARGET_DOM_VIEWER;
+	return MS_TARGET_IMAGE_HANDLER;
 }
