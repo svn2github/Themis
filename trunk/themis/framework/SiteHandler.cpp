@@ -353,8 +353,9 @@ SiteHandler::ReceiveBroadcast(
 					
 					SiteEntry* site_entry = GetEntry( site_id );
 					UrlEntry* url_entry = NULL;
+
 					if ( site_entry != NULL )
-						site_entry->GetEntry( url_id );
+						url_entry = site_entry->GetEntry( url_id );
 					
 					if( !site_entry || !url_entry )
 					{
