@@ -78,23 +78,26 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 						BroadcastPointer(document);
 					}
 					}break;
-			}break;
-		case R_WELCOME:{
-			printf("RENDERER: R_WELCOME received\n");
-			BRect rect;
-			int32 doc_number, view_number;
-			BMessenger userInterface;
-			
-			message->FindRect("rect",&rect);
-			message->FindInt32("document_number",&doc_number);
-			message->FindInt32("view_number",&view_number);
-			message->FindMessenger("messenger",&userInterface);
-			PreProcess(doc_number,view_number,rect,userInterface);
-			}break;
-		default:{
-			printf("Renderer doesn't handle this broadcast\n");
-			return PLUG_DOESNT_HANDLE;	
-			}
+				case R_WELCOME:{
+					printf("RENDERER: R_WELCOME received\n");
+					BRect rect;
+					int32 doc_number, view_number;
+					BMessenger userInterface;
+				
+					//Retrieve data sent by UI
+					message->FindRect("rect",&rect);
+					message->FindInt32("document_number",&doc_number);
+					message->FindInt32("view_number",&view_number);
+					message->FindMessenger("messenger",&userInterface);
+				
+					//Start Processing
+					PreProcess(doc_number,view_number,rect,userInterface);
+					}break;
+				default:{
+					printf("Renderer doesn't handle this broadcast\n");
+					return PLUG_DOESNT_HANDLE;	
+					}
+			}	
 		}
 	}
 	
