@@ -39,7 +39,7 @@ void EntityDeclParser	::	processDeclaration()	{
 	// Create an element to store the entity
 	TElementPtr entity;
 
-	process( mMdo );
+	//process( mMdo );
 	process( kENTITY );
 
 	try	{

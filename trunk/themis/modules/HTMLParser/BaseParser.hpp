@@ -130,11 +130,12 @@ class BaseParser	{
 		// Functions
 		void createDTD();
 		void setupSyntax();
-		void process( const string & symbol );
-		void processS();
-		void processEe();
+		bool process( const string & symbol, bool aException = true );
+		bool processS( bool aException = true );
+		bool processEe( bool aException = true );
 		void processComment();
 		void processParEntityReference();
+		string processLiteral();
 		void processParLiteral( TElementPtr & entity );
 		string processMinLiteral();
 		string processMinData();

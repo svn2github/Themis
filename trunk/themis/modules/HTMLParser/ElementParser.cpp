@@ -399,7 +399,7 @@ TElementPtr ElementParser	::	processStartTag( const TElementPtr & elementDecl, T
 		exception.setWrongTag( name );
 		throw exception;
 	}
-	
+
 	// Skipping some stuff for now
 	try	{
 		printf( "Processing AttrSpecList\n" );
@@ -411,7 +411,7 @@ TElementPtr ElementParser	::	processStartTag( const TElementPtr & elementDecl, T
 	}
 
 	processSStar();
-	
+
 	try	{
 		process( mTagc );
 	}
@@ -492,7 +492,7 @@ void ElementParser	::	processAttrSpecList( TNodePtr aParent )	{
 void ElementParser	::	processAttrSpec( TNodePtr aParent )	{
 
 	processSStar();
-	
+
 	TAttrPtr attr;
 	
 	State save = mDocText->saveState();
@@ -510,7 +510,7 @@ void ElementParser	::	processAttrSpec( TNodePtr aParent )	{
 		// Optional.
 		mDocText->restoreState( save );
 	}
-	
+
 	// Not entirely correct. Check later
 	string value = processAttrValueSpec();
 	if ( attr.get() != NULL )	{

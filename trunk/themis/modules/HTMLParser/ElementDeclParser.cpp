@@ -20,8 +20,6 @@ ElementDeclParser	::	ElementDeclParser( SGMLTextPtr aDocText,
 															 TDocumentPtr aDTD )
 							:	DeclarationParser( aDocText, aDTD )	{
 
-	//printf( "Constructing ElementDeclParser\n" );
-
 	// Element to store the element declarations of the DTD
 	mElements = mDTD->createElement( "elements" );
 	mDTD->appendChild( mElements );
@@ -30,10 +28,6 @@ ElementDeclParser	::	ElementDeclParser( SGMLTextPtr aDocText,
 
 ElementDeclParser	::	~ElementDeclParser()	{
 
-	//printf( "Destroying ElementDeclParser\n" );
-	
-	//showTree( mElements, 0 );
-	
 }
 
 void ElementDeclParser	::	processDeclaration()	{
@@ -41,7 +35,7 @@ void ElementDeclParser	::	processDeclaration()	{
 	// Define an element to store the element declaration
 	TElementPtr element;
 
-	process( mMdo );
+	//process( mMdo );
 	process( kELEMENT );
 	
 	try	{
@@ -79,19 +73,13 @@ void ElementDeclParser	::	processDeclaration()	{
 
 	try	{
 		processTagMin( infoElement );
-		try	{
-			processPsPlus();
-		}
-		catch( ReadException r )	{
-			r.setFatal();
-			throw r;
-		}
+		processPsPlus();
 	}
 	catch( ReadException r )	{
 		r.setFatal();
 		throw r;
 	}
-
+	
 	try	{
 		processDeclContent( infoElement );
 	}
@@ -143,7 +131,6 @@ TElementPtr ElementDeclParser	::	processElementType()	{
 	}
 
 	try	{
-		
 		TElementPtr group = processNameGroup();
 		return group;
 	}
@@ -153,21 +140,27 @@ TElementPtr ElementDeclParser	::	processElementType()	{
 		}
 	}
 	
-	throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(),
+	throw ReadException( mDocText->getLineNr(),
+									mDocText->getCharNr(),
 									"Element type expected" );
 	
 }
 
 void ElementDeclParser	::	processTagMin( TElementPtr aElement )	{
 
-	try	{
-		process( kO );
+	if ( process( kO, false ) )	{
 		aElement->setAttribute( "start", "false" );
 	}
-	catch( ReadException r )	{
+	else	{
 		// Not O minimization. Try minus
-		process( kMinus );
-		aElement->setAttribute( "start", "true" );
+		if ( process( kMinus, false ) )	{
+			aElement->setAttribute( "start", "true" );
+		}
+		else	{
+			throw ReadException( mDocText->getLineNr(),
+											mDocText->getCharNr(),
+											"Start minimization expected" );
+		}
 	}
 
 	try	{
@@ -178,19 +171,20 @@ void ElementDeclParser	::	processTagMin( TElementPtr aElement )	{
 		throw r;
 	}
 	
-	try	{
-		process( kO );
+	if ( process( kO, false ) )	{
 		aElement->setAttribute( "end", "false" );
 	}
-	catch( ReadException r )	{
+	else	{
 		// Not O minimization. Try minus
-		try	{
-			process( kMinus );
+		if ( process( kMinus, false ) )	{
 			aElement->setAttribute( "end", "true" );
 		}
-		catch( ReadException r )	{
-			r.setFatal();
-			throw r;
+		else	{
+			throw ReadException( mDocText->getLineNr(),
+											mDocText->getCharNr(),
+											"End minimization expected",
+											GENERIC,
+											true );
 		}
 	}
 	
@@ -198,34 +192,32 @@ void ElementDeclParser	::	processTagMin( TElementPtr aElement )	{
 
 void ElementDeclParser	::	processDeclContent( TElementPtr aElement )	{
 
-	try	{
-		process( kCDATA );
-		TElementPtr cdata = mDTD->createElement( "CDATA" );
+	if ( process( kCDATA, false ) )	{
+		TElementPtr cdata = mDTD->createElement( kCDATA );
 		aElement->appendChild( cdata );
+		return;
 	}
-	catch( ReadException r )	{
-		// Not CDATA. Try RCDATA
-		try	{
-			process( kRCDATA );
-			TElementPtr rcdata = mDTD->createElement( "RCDATA" );
-			aElement->appendChild( rcdata );
-		}
-		catch( ReadException r )	{
-			// Not RCDATA. Try EMPTY
-			process( kEMPTY );
-			TElementPtr empty = mDTD->createElement( "EMPTY" );
-			aElement->appendChild( empty );
-		}
+
+	if ( process( kRCDATA, false ) )	{
+		TElementPtr rcdata = mDTD->createElement( kRCDATA );
+		aElement->appendChild( rcdata );
+		return;
 	}
+		
+	if ( process( kEMPTY, false ) )	{
+		TElementPtr empty = mDTD->createElement( kEMPTY );
+		aElement->appendChild( empty );
+		return;
+	}
+
+	throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(),
+									"Declared content expected" );
 
 }
 
 void ElementDeclParser	::	processContentModel( TElementPtr aElement )	{
 
-	try	{
-		process( kANY );
-	}
-	catch( ReadException r )	{
+	if ( ! process( kANY, false ) )	{
 		// Not ANY. Must be a model group
 		TElementPtr modelGroup = processModelGroup();
 		aElement->appendChild( modelGroup );

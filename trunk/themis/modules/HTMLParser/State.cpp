@@ -52,13 +52,13 @@ void State	::	add( const Position & aPosition )	{
 
 }
 
-Position State	::	top() const	{
+const Position & State	::	top() const	{
 	
 	return mPositions.back();
 	
 }
 
-Position State	::	top()	{
+Position & State	::	top()	{
 	
 	return mPositions.back();
 	

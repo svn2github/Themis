@@ -201,7 +201,7 @@ void SGMLParser	::	processDocElement()	{
 TDocumentPtr SGMLParser	::	parse()	{
 	
 	parseDTD();
-	
+
 	mDocText->reset();
 	
 	try	{

@@ -85,43 +85,69 @@ void BaseParser	::	setupSyntax()	{
 
 }
 
-void BaseParser	::	process( const string & symbol )	{
+bool BaseParser	::	process( const string & symbol, bool aException )	{
 
 	State save = mDocText->saveState();
 	unsigned int i = 0;
 	while ( i < symbol.size() )	{
-		//printf( "Current character: %c, Symbol character: %c\n", mDocText->getChar(), symbol[ i ] );
-		if ( mDocText->getChar() != symbol[ i ] )	{
-			mDocText->restoreState( save );
-			string error = "Expected ";
-			error += symbol;
-			throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(), error );
+		if ( mDocText->getChar() == symbol[ i ] )	{
+			mDocText->nextChar();
+			i++;
 		}
-		mDocText->nextChar();
-		i++;
+		else	{
+			mDocText->restoreState( save );
+			if ( ! aException )	{
+				return false;
+			}
+			else	{
+				string error = "Expected ";
+				error += symbol;
+				throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(), error );
+			}
+		}
 	}
+	
+	return true;
 	
 }
 
-void BaseParser	::	processS()	{
+bool BaseParser	::	processS( bool aException )	{
 
 	if ( isspace( mDocText->getChar() ) || iscntrl( mDocText->getChar() ) )	{
 		mDocText->nextChar();
 	}
 	else	{
-		throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(), "S expected" );
+		if ( aException )	{
+			throw ReadException( mDocText->getLineNr(),
+											mDocText->getCharNr(),
+											"S expected" );
+		}
+		else	{
+			return false;
+		}
 	}
 
+	return true;
+	
 }
 
-void BaseParser	::	processEe()	{
+bool BaseParser	::	processEe( bool aException )	{
 	
 	if ( iscntrl( mDocText->getChar() ) )	{
 		mDocText->nextChar();
 	}
 	else	{
-		throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(), "Ee expected" );
+		if ( aException )	{
+			throw ReadException( mDocText->getLineNr(),
+											mDocText->getCharNr(),
+											"Ee expected" );
+		}
+		else	{
+			return false;
+		}
 	}
+	
+	return true;
 	
 }
 
@@ -132,18 +158,15 @@ void BaseParser	::	processComment()	{
 	process( mCom );
 	bool comFound = false;
 	while ( ! comFound )	{
-		try	{
-			process( mCom );
+		if ( process( mCom, false ) )	{
 			comFound = true;
 		}
-		catch( ReadException r )	{
+		else	{
 			// Not yet found. Read next character
 			comment += mDocText->getChar();
 			mDocText->nextChar();
 		}
 	}
-	
-	//printf( "Comment: %s\n", comment.c_str() );
 	
 }
 
@@ -163,12 +186,8 @@ void BaseParser	::	processParEntityReference()	{
 		throw r;
 	}
 
-	try	{
-		process( mRefc );
-	}
-	catch( ReadException r )	{
-		// Must have been omitted
-	}
+	// Can be omitted
+	process( mRefc, false );
 
 	TNodeListPtr children = mParEntities->getChildNodes();
 
@@ -191,19 +210,25 @@ void BaseParser	::	processParEntityReference()	{
 	
 }
 
+string BaseParser	::	processLiteral()	{
+
+	if ( process( mLit, false ) )	{
+		return mLit;
+	}
+	if ( process( mLitA, false ) )	{
+		return mLitA;
+	}
+
+	throw ReadException( mDocText->getLineNr(),
+									mDocText->getCharNr(),
+									"Literal expected" );
+
+}
+
 void BaseParser	::	processParLiteral( TElementPtr & entity )	{
 
 	string text = "";
-	string literal = "";
-	try	{
-		process( mLit );
-		literal = mLit;
-	}
-	catch( ReadException r )	{
-		// Not mLit. Try mLitA
-		process( mLitA );
-		literal = mLitA;
-	}
+	string literal = processLiteral();
 
 	unsigned int start = mDocText->getIndex();
 	unsigned int lineNr = mDocText->getLineNr();
@@ -211,11 +236,10 @@ void BaseParser	::	processParLiteral( TElementPtr & entity )	{
 	
 	bool litFound = false;
 	while ( ! litFound )	{
-		try	{
-			process( literal );
+		if ( process( literal, false ) )	{
 			litFound = true;
 		}
-		catch( ReadException r )	{
+		else	{
 			// Not yet found. Process replacable parameter data
 			try	{
 				text += processRepParData();
@@ -239,24 +263,14 @@ void BaseParser	::	processParLiteral( TElementPtr & entity )	{
 string BaseParser	::	processMinLiteral()	{
 	
 	string text = "";
-	string literal = "";
-	try	{
-		process( mLit );
-		literal = mLit;
-	}
-	catch( ReadException r )	{
-		// Not mLit. Try mLitA
-		process( mLitA );
-		literal = mLitA;
-	}
+	string literal = processLiteral();
 
 	bool litFound = false;
 	while ( ! litFound )	{
-		try	{
-			process( literal );
+		if ( process( literal, false ) )	{
 			litFound = true;
 		}
-		catch( ReadException r )	{
+		else	{
 			// Not yet found. Process replacable parameter data
 			try	{
 				text += processMinData();
@@ -375,19 +389,11 @@ void BaseParser	::	processPs()	{
 		}
 	}
 
-	try	{
-		processS();
+	if ( processS( false ) )	{
 		return;
 	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
-	try	{
-		processEe();
+	if ( processEe( false ) )	{
 		return;
-	}
-	catch( ReadException r )	{
-		// Do nothing
 	}
 
 	throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(), "Ps expected" );
@@ -445,19 +451,11 @@ void BaseParser	::	processTs()	{
 		}	
 	}
 
-	try	{
-		processS();
+	if ( processS( false ) )	{
 		return;
 	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
-	try	{
-		processEe();
+	if ( processEe( false ) )	{
 		return;
-	}
-	catch( ReadException r )	{
-		// Do nothing
 	}
 
 	throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(), "Ts expected" );
@@ -604,24 +602,19 @@ TElementPtr BaseParser	::	processConnector()	{
 
 	TElementPtr connector;
 
-	try	{
-		process( mAnd );
-		connector = mDTD->createElement( mAnd );
+	if ( process( mAnd, false ) )	{
+		return mDTD->createElement( mAnd );
 	}
-	catch( ReadException r )	{
-		// Not the and connector. Try or
-		try	{
-			process( mOr );
-			connector = mDTD->createElement( mOr );
-		}
-		catch( ReadException r )	{
-			// Not the or connector. Must be seq
-			process( mSeq );
-			connector = mDTD->createElement( mSeq );
-		}
+	if ( process( mOr, false ) )	{
+		return mDTD->createElement( mOr );
+	}
+	if ( process( mSeq, false ) )	{
+		return mDTD->createElement( mSeq );
 	}
 
-	return connector;
+	throw ReadException( mDocText->getLineNr(),
+									mDocText->getCharNr(),
+									"Connector expected" );
 
 }
 
@@ -656,24 +649,14 @@ string BaseParser	::	processAttrValue()	{
 string BaseParser	::	processAttrValueLit()	{
 
 	string result = "";
-	string literal = "";
-	try	{
-		process( mLit );
-		literal = mLit;
-	}
-	catch( ReadException r )	{
-		// Not mLit. Try mLitA
-		process( mLitA );
-		literal = mLitA;
-	}
+	string literal = processLiteral();
 
 	bool litFound = false;
 	while ( ! litFound )	{
-		try	{
-			process( literal );
+		if ( process( literal, false ) )	{
 			litFound = true;
 		}
-		catch( ReadException r )	{
+		else	{
 			// Not yet found. Process replacable parameter data
 			try	{
 				result += processRepCharData();
@@ -684,8 +667,6 @@ string BaseParser	::	processAttrValueLit()	{
 			}
 		}
 	}
-	
-	//printf( "Value literal: %s\n", text.c_str() );
 	
 	return result;
 	
@@ -698,21 +679,18 @@ string BaseParser	::	processCharData( string aEndString, bool aSpaceEnd )	{
 	bool dataCharFound = true;
 	while ( dataCharFound )	{
 		State save = mDocText->saveState();
-		try	{
-			process( aEndString );
-		}
-		catch( ReadException r )	{
+		if ( ! process( aEndString, false ) )	{
 			if ( aSpaceEnd && isspace( mDocText->getChar() ) )	{
 				dataCharFound = false;
 			}
 			else	{
 				result += processDataChar();
-				continue;
 			}
 		}
-		mDocText->restoreState( save );
-		dataCharFound = false;
-		
+		else	{
+			mDocText->restoreState( save );
+			dataCharFound = false;
+		}
 	}
 	
 	return result;

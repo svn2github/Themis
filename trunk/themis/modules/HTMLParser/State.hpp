@@ -86,9 +86,9 @@ class State	{
 		*/		
 		void add( const Position & aPosition );
 		/// Get the top of the State, when you won't change anything.
-		Position top() const;
+		const Position & top() const;
 		/// Get the top of the State, when you want to change something.
-		Position top();
+		Position & top();
 		/// Remove the last position.
 		void pop();
 		/// Resets the State by removing all the positions.

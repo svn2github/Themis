@@ -92,20 +92,18 @@ void SGMLText	::	loadText( const char * aDocument )	{
 	
 }
 
-char SGMLText	::	nextChar()	{
+const char SGMLText	::	nextChar()	{
 
-	// Not very nice. Better to return a reference. How to do that ?
-	Position current = mState.top();
-	mState.pop();
+	Position & current = mState.top();
 	
 	char c = mText[ current.getIndex() ];
 	
 	try	{
 		current.nextPosition( c );
-		mState.add( current );
 	}
 	catch( PositionException p )	{
 		// End of piece of text reached
+		mState.pop();
 		if ( mState.size() == 0 )	{
 			// End of total text reached
 			throw ReadException( current.getLineNr(), current.getCharNr(),
@@ -118,11 +116,11 @@ char SGMLText	::	nextChar()	{
 
 }
 
-char SGMLText	::	getChar()	{
+const char SGMLText	::	getChar()	{
 
 	// WARNING: Might be dodgy if a zero length entity was just pushed on the stack
 	
-	Position current = mState.top();
+	const Position & current = mState.top();
 	
 	return mText[ current.getIndex() ];
 
@@ -130,12 +128,8 @@ char SGMLText	::	getChar()	{
 
 void SGMLText	::	addEntity( const Position & aEntity )	{
 	
-	//printf( "Adding entity: index %i, lineNr %i, charNr %i\n", aEntity.getIndex(), aEntity.getLineNr(), aEntity.getCharNr() );
-	
 	mState.add( aEntity );
 
-	//printf( "First character of entity: %c\n", getChar() );
-	
 }
 
 State SGMLText	::	saveState() const	{
@@ -152,7 +146,7 @@ void SGMLText	::	restoreState( const State & aState )	{
 
 unsigned int SGMLText	::	getLineNr() const	{
 
-	const Position current = mState.top();
+	const Position & current = mState.top();
 		
 	return current.getLineNr();
 	
@@ -160,7 +154,7 @@ unsigned int SGMLText	::	getLineNr() const	{
 
 unsigned int SGMLText	::	getCharNr() const	{
 	
-	const Position current = mState.top();
+	const Position & current = mState.top();
 		
 	return current.getCharNr();
 	
@@ -168,7 +162,7 @@ unsigned int SGMLText	::	getCharNr() const	{
 
 unsigned int SGMLText	::	getIndex() const	{
 	
-	const Position current = mState.top();
+	const Position & current = mState.top();
 		
 	return current.getIndex();
 	

@@ -92,11 +92,12 @@ void DTDParser	::	setDTD( TDocumentPtr aDTD )	{
 
 void DTDParser	::	processDeclaration()	{
 
+	process( mMdo );
+
 	State save = mDocText->saveState();
 
 	try	{
 		entityDecl->parse( entityDecl->getEntityTexts() );
-		//printf( "Entity declaration parsed\n" );
 		return;
 	}
 	catch( ReadException r )	{
@@ -110,7 +111,6 @@ void DTDParser	::	processDeclaration()	{
 
 	try	{
 		elementDecl->parse( entityDecl->getEntityTexts() );
-		//printf( "Element declaration parsed\n" );
 		return;
 	}
 	catch( ReadException r )	{
@@ -124,7 +124,6 @@ void DTDParser	::	processDeclaration()	{
 
 	try	{
 		attrListDecl->parse( entityDecl->getEntityTexts() );
-		//printf( "AttList declaration parsed\n" );
 		return;
 	}
 	catch( ReadException r )	{
