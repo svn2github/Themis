@@ -885,7 +885,7 @@ void HTMLParser	::	startParsing( TDocumentShared aDocument )	{
 				continue;
 			}
 			
-			cout << "Unknown tag found. Skipping...\n";
+			cout << "Unknown tag found: " << mTag << ". Skipping...\n";
 			skipTag();
 			
 		}
@@ -931,7 +931,7 @@ void HTMLParser	::	htmlTag()	{
 				continue;
 			}
 
-			cout << "Unknown tag found. Skipping...\n";
+			cout << "Unknown tag found: " << mTag << ". Skipping...\n";
 			skipTag();
 
 		}
@@ -943,7 +943,7 @@ void HTMLParser	::	htmlTag()	{
 									
 			}
 			else	{
-				cout << "Unknown closing tag found. Skipping...\n";
+				cout << "Unknown closing tag found: " << mTag << ". Skipping...\n";
 			}
 		}
 	}
@@ -994,7 +994,7 @@ void HTMLParser	::	headTag( TElementShared aParent )	{
 			}
 			
 			// Not a known tag
-			cout << "Unknown tag found. Skipping...\n";
+			cout << "Unknown tag found: " << mTag << ". Skipping...\n";
 			skipTag();
 
 		}
@@ -1006,7 +1006,7 @@ void HTMLParser	::	headTag( TElementShared aParent )	{
 				insideHead = false;
 			}
 			else	{
-				cout << "Unknown closing tag found. Skipping...\n";
+				cout << "Unknown closing tag found: " << mTag << ". Skipping...\n";
 			}
 		}
 	}
@@ -1040,11 +1040,11 @@ void HTMLParser	::	normalHeadTag( TElementShared aParent )	{
 				insideHeadLevel = false;
 			}
 			else	{
-				cout << "Unknown closing tag found. Skipping...\n";
+				cout << "Unknown closing tag found: " << mTag << ". Skipping...\n";
 			}
 		}
 		else	{
-			cout << "Unknown tag found. Skipping...\n";
+			cout << "Unknown tag found: " << mTag << ". Skipping...\n";
 			skipTag();
 		}
 	}
@@ -1118,7 +1118,7 @@ void HTMLParser	::	bodyStyleTag( TElementShared aParent, bool aInsideForm )	{
 					}
 		
 					// Not a known tag
-					cout << "Unknown tag found. Skipping...\n";
+					cout << "Unknown tag found: " << mTag << ". Skipping...\n";
 					skipTag();
 					
 				}
@@ -1130,7 +1130,7 @@ void HTMLParser	::	bodyStyleTag( TElementShared aParent, bool aInsideForm )	{
 						insideBodyStyle = false;
 					}
 					else	{
-						cout << "Unknown closing tag found. Skipping...\n";
+						cout << "Unknown closing tag found: " << mTag << ". Skipping...\n";
 					}
 				}
 				break;
@@ -1199,7 +1199,7 @@ void HTMLParser	::	adressTag( TElementShared aParent )	{
 					}
 		
 					// Not a known tag
-					cout << "Unknown tag found. Skipping...\n";
+					cout << "Unknown tag found: " << mTag << ". Skipping...\n";
 					skipTag();
 					
 				}
@@ -1211,7 +1211,7 @@ void HTMLParser	::	adressTag( TElementShared aParent )	{
 						insideAdress = false;
 					}
 					else	{
-						cout << "Unknown closing tag found. Skipping...\n";
+						cout << "Unknown closing tag found: " << mTag << ". Skipping...\n";
 					}
 				}
 				break;
@@ -1312,13 +1312,97 @@ void HTMLParser	::	textLevelTag( TElementShared aParent, bool aConserveSpaces, b
 
 void HTMLParser	::	flowLevelTag( TElementShared aParent )	{
 	
-	if ( isBlockLevelTag() )	{
-		blockLevelTag( aParent );
-		return;
-	}
-	if ( isTextLevelTag() )	{
-		textLevelTag( aParent );
-		return;
+	cout << mTag << " tag found\n";
+
+	// Save the tag name
+	string tag = mTag;
+
+	// Add to parent
+	TElementShared element = mDocument->createElement( mTag );
+	aParent->appendChild( element );
+
+	bool insideFlow = true;
+	string attribute;
+	
+	while ( insideFlow )	{
+		// Warning: more possible than a tag only
+		string data = getString();
+
+		cout << "Received string " << data.size() << ": " << data << endl;
+
+		switch ( mStringType )	{
+			case ATTR :	{
+				attribute = data;
+				if ( mAttrNoValue )	{
+					element->setAttribute( attribute, "" );
+					attribute = "";
+				}
+				break;
+			}
+			case ATTRVALUE :	{
+				if ( attribute.compare( "" ) )	{
+					// Attribute has a name
+					// I'll declare it legal
+					element->setAttribute( attribute, data );
+					attribute = "";
+				}
+				break;
+			}
+			case TAG :	{
+				if ( isStartTag() )	{
+					if ( isBlockLevelTag() )	{
+						blockLevelTag( element );
+						continue;
+					}
+					if ( isTextLevelTag() )	{
+						textLevelTag( element );
+						continue;
+					}
+					if ( !mTag.compare( tag ) )	{
+						cout << mTag << " closed implicitly\n";
+		
+						// End the while loop
+						insideFlow = false;
+						backPedal();
+						continue;
+					}
+		
+					// Not a known tag
+					cout << "Unknown tag found: " << mTag << ". Skipping...\n";
+					skipTag();
+					
+				}
+				else	{			
+					if ( !mTag.compare( tag ) )	{
+						cout << mTag << " closing tag found\n";
+		
+						// End the while loop
+						insideFlow = false;
+						continue;
+					}
+					if ( isListTag() )	{
+						cout << mTag << " closed implicitly\n";
+		
+						// End the while loop
+						insideFlow = false;
+						backPedal();
+						continue;
+					}
+
+					cout << "Unknown closing tag found: " << mTag << ". Skipping...\n";
+
+				}
+				break;
+			}
+			case TEXT :	{
+				if ( data.compare( " " ) && data.compare( "" ) )	{
+					cout << "Text is:" << endl << data << endl;
+					TTextShared text = mDocument->createText( data );
+					element->appendChild( text );
+				}
+				break;
+			}
+		}
 	}
 
 }
@@ -1384,23 +1468,21 @@ void HTMLParser	::	pTag( TElementShared aParent )	{
 					}
 					if ( isAdressTag() ||
 						 isBodyStyleTag() ||
-						 isFormTag() )	{
+						 isFormTag() ||
+						 isListTag() )	{
 						cout << "p closed implicitly\n";
 						insideP = false;
 						backPedal();
 						continue;
 					}
-					if ( isCommentTag() )	{
-						commentTag( element );
-						continue;
-					}
 		
-					cout << "Unknown closing tag found. Skipping...\n";
+					cout << "Unknown closing tag found: " << mTag << ". Skipping...\n";
 		
 				}
 				else	{
 					if ( isBlockLevelTag() ||
-						 isHeadingTag() )	{
+						 isHeadingTag() ||
+						 isLITag() )	{
 						cout << "p closed implicitly\n";
 						insideP = false;
 						backPedal();
@@ -1410,9 +1492,13 @@ void HTMLParser	::	pTag( TElementShared aParent )	{
 						textLevelTag( element );
 						continue;
 					}
+					if ( isCommentTag() )	{
+						commentTag( element );
+						continue;
+					}
 
 					// Not a known tag
-					cout << "Unknown tag found. Skipping...\n";
+					cout << "Unknown tag found: " << mTag << ". Skipping...\n";
 					skipTag();
 
 				}
@@ -1493,7 +1579,7 @@ void HTMLParser	::	listTag( TElementShared aParent )	{
 					}
 		
 					// Not a known tag
-					cout << "Unknown tag found. Skipping...\n";
+					cout << "Unknown tag found: " << mTag << ". Skipping...\n";
 					skipTag();
 					
 				}
@@ -1505,7 +1591,7 @@ void HTMLParser	::	listTag( TElementShared aParent )	{
 						insideList = false;
 					}
 					else	{
-						cout << "Unknown closing tag found. Skipping...\n";
+						cout << "Unknown closing tag found: " << mTag << ". Skipping...\n";
 					}
 				}
 				break;
@@ -1572,7 +1658,7 @@ void HTMLParser	::	tableTag( TElementShared aParent )	{
 					}
 		
 					// Not a known tag
-					cout << "Unknown tag found. Skipping...\n";
+					cout << "Unknown tag found: " << mTag << ". Skipping...\n";
 					skipTag();
 					
 				}
@@ -1584,7 +1670,7 @@ void HTMLParser	::	tableTag( TElementShared aParent )	{
 						insideTable = false;
 					}
 					else	{
-						cout << "Unknown closing tag found. Skipping...\n";
+						cout << "Unknown closing tag found: " << mTag << ". Skipping...\n";
 					}
 				}
 				break;
@@ -1647,7 +1733,7 @@ void HTMLParser	::	trTag( TElementShared aParent )	{
 					}
 		
 					// Not a known tag
-					cout << "Unknown tag found. Skipping...\n";
+					cout << "Unknown tag found: " << mTag << ". Skipping...\n";
 					skipTag();
 					
 				}
@@ -1659,7 +1745,7 @@ void HTMLParser	::	trTag( TElementShared aParent )	{
 						insideTr = false;
 					}
 					else	{
-						cout << "Unknown closing tag found. Skipping...\n";
+						cout << "Unknown closing tag found: " << mTag << ". Skipping...\n";
 					}
 				}
 				break;
@@ -1718,7 +1804,7 @@ void HTMLParser	::	preTag( TElementShared aParent )	{
 						continue;
 					}
 		
-					cout << "Unknown closing tag found. Skipping...\n";
+					cout << "Unknown closing tag found: " << mTag << ". Skipping...\n";
 		
 				}
 				else	{
@@ -1753,7 +1839,7 @@ void HTMLParser	::	preTag( TElementShared aParent )	{
 					}
 
 					// Not a known tag
-					cout << "Unknown tag found. Skipping...\n";
+					cout << "Unknown tag found: " << mTag << ". Skipping...\n";
 					skipTag();
 
 				}
@@ -1866,7 +1952,7 @@ void HTMLParser	::	selectTag( TElementShared aParent, bool aConserveSpaces )	{
 					}
 		
 					// Not a known tag
-					cout << "Unknown tag found. Skipping...\n";
+					cout << "Unknown tag found: " << mTag << ". Skipping...\n";
 					skipTag();
 					
 				}
@@ -1878,7 +1964,7 @@ void HTMLParser	::	selectTag( TElementShared aParent, bool aConserveSpaces )	{
 						insideSelect = false;
 					}
 					else	{
-						cout << "Unknown closing tag found. Skipping...\n";
+						cout << "Unknown closing tag found: " << mTag << ". Skipping...\n";
 					}
 				}
 				break;
@@ -1939,7 +2025,7 @@ void HTMLParser	::	pcDataTag( TElementShared aParent, bool aConserveSpaces )	{
 					}
 		
 					// Not a known tag
-					cout << "Unknown tag found. Skipping...\n";
+					cout << "Unknown tag found: " << mTag << ". Skipping...\n";
 					skipTag();
 					
 				}
@@ -1951,7 +2037,7 @@ void HTMLParser	::	pcDataTag( TElementShared aParent, bool aConserveSpaces )	{
 						insidePcData = false;
 					}
 					else	{
-						cout << "Unknown closing tag found. Skipping...\n";
+						cout << "Unknown closing tag found: " << mTag << ". Skipping...\n";
 					}
 				}
 				break;
@@ -2017,7 +2103,7 @@ void HTMLParser	::	appletTag( TElementShared aParent, bool aConserveSpaces, bool
 					}
 		
 					// Not a known tag
-					cout << "Unknown tag found. Skipping...\n";
+					cout << "Unknown tag found: " << mTag << ". Skipping...\n";
 					skipTag();
 					
 				}
@@ -2029,7 +2115,7 @@ void HTMLParser	::	appletTag( TElementShared aParent, bool aConserveSpaces, bool
 						insideApplet = false;
 					}
 					else	{
-						cout << "Unknown closing tag found. Skipping...\n";
+						cout << "Unknown closing tag found: " << mTag << ". Skipping...\n";
 					}
 				}
 				break;
@@ -2093,7 +2179,7 @@ void HTMLParser	::	mapTag( TElementShared aParent )	{
 					}
 		
 					// Not a known tag
-					cout << "Unknown tag found. Skipping...\n";
+					cout << "Unknown tag found: " << mTag << ". Skipping...\n";
 					skipTag();
 					
 				}
@@ -2105,7 +2191,7 @@ void HTMLParser	::	mapTag( TElementShared aParent )	{
 						insideMap = false;
 					}
 					else	{
-						cout << "Unknown closing tag found. Skipping...\n";
+						cout << "Unknown closing tag found: " << mTag << ". Skipping...\n";
 					}
 				}
 				break;
@@ -2168,7 +2254,7 @@ void HTMLParser	::	normalTextTag( TElementShared aParent, bool aConserveSpaces, 
 						continue;
 					}
 		
-					cout << "Unknown closing tag found. Skipping...\n";
+					cout << "Unknown closing tag found: " << mTag << ". Skipping...\n";
 		
 				}
 				else	{
@@ -2182,7 +2268,7 @@ void HTMLParser	::	normalTextTag( TElementShared aParent, bool aConserveSpaces, 
 					}
 
 					// Not a known tag
-					cout << "Unknown tag found. Skipping...\n";
+					cout << "Unknown tag found: " << mTag << ". Skipping...\n";
 					skipTag();
 
 				}
