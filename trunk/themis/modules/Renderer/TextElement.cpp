@@ -10,7 +10,7 @@
 #include "Globals.h"
 #include "TextElement.h"
 
-#define DEBUG 0
+#define RDEBUG 0
 
 TextElement::TextElement(UIBox frame,  TNodePtr node, const char *text, BFont *font, rgb_color high,
 						 float size) : UIElement(frame,node)
@@ -109,7 +109,7 @@ int32 TextElement::LineStartingAt(int32 n)
 void TextElement::EFrameResized(float width, float height)
 {
 
-#if (DEBUG == 1)	
+#if (RDEBUG == 1)	
 	bigtime_t now = real_time_clock_usecs();
 #endif
 	
@@ -138,7 +138,7 @@ void TextElement::EFrameResized(float width, float height)
 		cursor = TextForFrame(string);
 		*val   = cursor;
 		endsOfLines.AddItem(val);
-#if (DEBUG ==1)
+#if (RDEBUG ==1)
 		printf("strlen of string\"%s\" at the turn %d: %d\n",string,counter+1,strlen(string));
 		printf("cursor: %d\n",cursor);
 #endif
@@ -147,7 +147,7 @@ void TextElement::EFrameResized(float width, float height)
 		counter++;
 	}
 	
-#if (DEBUG == 1)
+#if (RDEBUG == 1)
 	printf("Are added the %d followings:",endsOfLines.CountItems());
 	for (i=0; i < endsOfLines.CountItems(); i++)
 		printf(" %d",*((int32 *)endsOfLines.ItemAtFast(i)));
@@ -165,18 +165,17 @@ void TextElement::EFrameResized(float width, float height)
 		text.CopyInto(linedText[i],LineStartingAt(i),*((int32 *)(endsOfLines.ItemAtFast(i))));
 		linedText[i][*((int32 *)(endsOfLines.ItemAtFast(i)))] = '\0';		
 
-#if (DEBUG == 1)
+#if (RDEBUG == 1)
 		printf("linedText[%d] = %s\n",i,linedText[i]);
 		printf("\tAllocated: %d\n",*((int32 *)(endsOfLines.ItemAtFast(i)))+1);
 		printf("\tCopied from %d for %d\n",LineStartingAt(i),*((int32 *)(endsOfLines.ItemAtFast(i))));
 #endif
 	}
 		
-#if (DEBUG == 1)	
+#if (RDEBUG == 1)	
 	printf("time: %d\n",real_time_clock_usecs() - now);
 #endif
 
 	UIElement::EFrameResized(width,height);
 }
-
 

@@ -28,3 +28,4 @@ class BitmapElement : public UIElement
 				BRect	bmpFrame;
 };
 #endif
+
