@@ -61,7 +61,7 @@ class CSSRule	{
 		
 		/// Constructor of the CSSRule class.
 		/**
-			The constructor of the CSSRuleList class. It stores
+			The constructor of the CSSRule class. It stores
 			values that can't be changed after construction.
 			
 			@param	aParentStyleSheet	The parent style sheet.
@@ -81,7 +81,7 @@ class CSSRule	{
 		/// A function to get the text of the rule.
 		/**
 			This function gets the current text of the rule.
-			This is not the initial value of the rule.
+			This does not have to be the initial value of the rule.
 		*/
 		TDOMString getCssText() const;
 		
