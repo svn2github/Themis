@@ -744,7 +744,8 @@ status_t App::LoadSettings() {
 					if( !AppSettings->HasString( "DTDToUsePath" ) || strncmp( AppSettings->FindString( "DTDToUsePath" ), "none", 4 ) == 0 )
 					{
 						// set the DTDToUsePath to "none", as we may not find a DTD below
-						AppSettings->AddString( "DTDToUsePath", "none" );
+						if( !AppSettings->HasString( "DTDToUsePath" ) )
+							AppSettings->AddString( "DTDToUsePath", "none" );
 	
 						// find a DTD
 						BString dtddir;
