@@ -27,7 +27,7 @@ Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
 #include "cacheman.h"
-#include "../../common/commondefines.h"
+#include "../../common/commondefs.h"
 #include <stdio.h>
 #include <kernel/fs_index.h>
 #include <string.h>
@@ -60,7 +60,9 @@ status_t cacheman::CheckMIME()
   if (!mime.IsInstalled())
    {
     mime.Install();
-    
+    app_info ai;
+    be_app->GetAppInfo(&ai);
+    mime.SetAppHint(&ai.ref);
    }
   return B_OK;
  }

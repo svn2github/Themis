@@ -28,7 +28,7 @@ Project Start Date: October 18, 2000
 */
 #ifndef _appdefines
 #define _appdefines
-#include "../common/commondefines.h"
+#include "../common/commondefs.h"
 
 #define AppSig ThemisAppSig
 
