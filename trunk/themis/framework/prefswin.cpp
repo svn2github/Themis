@@ -492,19 +492,23 @@ void prefswin::MessageReceived( BMessage* msg )
 					rect.bottom = rect.top + 20;
 					rect.right -= 50;
 					
-					BPopUpMenu* popmenu = new BPopUpMenu( "No DTD selected!", true, true, B_ITEMS_IN_COLUMN );
+					BPopUpMenu* popmenu = new BPopUpMenu( "No DTD selected or available!", true, true, B_ITEMS_IN_COLUMN );
 					
-					// find dtd's to include
-					
+					// set the DTDToUsePath to "none", as we may not find a DTD below
+					//AppSettings->AddString( "DTDToUsePath", "none" );
+	
+					// find a DTD
 					BString dtddir;
 					AppSettings->FindString( "settings_directory", &dtddir );
-					cout << dtddir.String() << endl;
 					dtddir.Append( "/dtd/" );
-					
+					printf( "DTD dir: %s\n", dtddir.String() );
+			
 					BDirectory* dir = new BDirectory( dtddir.String() );
 					if( dir->InitCheck() != B_OK )
 					{
-						cout << "DTD directory (" << dtddir.String() << ") not found!" << endl;
+						printf( "DTD directory (%s) not found!\n", dtddir.String() );
+						printf( "Setting DTDToUsePath to \"none\"\n" );
+						AppSettings->AddString( "DTDToUsePath", "none" );
 					}
 					else
 					{
@@ -515,18 +519,51 @@ void prefswin::MessageReceived( BMessage* msg )
 							entry.GetPath( &path );
 							char name[B_FILE_NAME_LENGTH];
 							entry.GetName( name );
-							
-							BMessage* msg = new BMessage( DTD_SELECTED );
-							msg->AddString( "DTDFileString", path.Path() );
-							BMenuItem* item = new BMenuItem( name, msg, 0, 0 );
-							popmenu->AddItem( item );
-							if( strncmp( path.Path(), fDTDToUsePath.String(), strlen( path.Path() ) ) == 0 )
+					
+							BString nstring( name );
+							printf( "----------------\n" );
+							printf( "found file: %s\n", nstring.String() );
+							if( nstring.IFindFirst( "DTD", nstring.Length() - 3 ) != B_ERROR )
 							{
-								//cout << "paths fit!" << endl << path.Path() << endl << fDTDToUsePath.String() << endl;
-								( popmenu->ItemAt( popmenu->CountItems() - 1 ) )->SetMarked( true );
+								printf( "found DTD file: %s\n", nstring.String() );
+								
+								// add the file to the popupmenu
+								BMessage* msg = new BMessage( DTD_SELECTED );
+								msg->AddString( "DTDFileString", path.Path() );
+								BMenuItem* item = new BMenuItem( name, msg, 0, 0 );
+								popmenu->AddItem( item );
+								
+								// if the path of the current file equals the one of the settings,
+								// mark the item
+								if( strncmp( path.Path(), fDTDToUsePath.String(), strlen( path.Path() ) ) == 0 )
+								{
+									printf( "DTD from settings found -> SetMarked( true )\n" );
+									( popmenu->ItemAt( popmenu->CountItems() - 1 ) )->SetMarked( true );
+								}
+							}
+						} // while
+						
+						// if we found some DTDs, but still no DTD is saved in the prefs,
+						// or no DTD is selected: 
+						// set the last found DTD in the prefs. we save it to the prefs,
+						// because the user might not reselect a DTD in the list, which
+						// would save the DTD.
+						if( popmenu->CountItems() > 0 )
+						{
+							if( popmenu->FindMarked() == NULL )
+							{
+								printf( "no marked item found\n" );
+								BMenuItem* item = popmenu->ItemAt( popmenu->CountItems() - 1 );
+								item->SetMarked( true );
+								fDTDToUsePath.SetTo( dtddir.String() );
+								fDTDToUsePath.Append( item->Label() );
+								printf( "setting fDTDToUsePath to: %s\n", fDTDToUsePath.String() );
+								AppSettings->ReplaceString( "DTDToUsePath", fDTDToUsePath );
 							}
 						}
 					}
+					delete dir;
+					// end: find a DTD
 					
 					BMenuField* dtdmenufield = new BMenuField( rect, "DTDFIELD", "Document Type Definition:", popmenu, true, B_FOLLOW_TOP, B_WILL_DRAW);
 					dtdmenufield->SetDivider( be_plain_font->StringWidth( "Document Type Definition:" ) + 5.0 );

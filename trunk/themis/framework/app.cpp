@@ -440,6 +440,7 @@ void App::ArgvReceived(int32 argc, char **argv){
 }
 
 void App::InitSettings(char *settings_path) {
+	printf( "App::InitSettings()\n" );
 	if (settings_path!=NULL) {
 		AppSettings->AddString("settings_directory",settings_path);
 		BString name(settings_path);
@@ -501,10 +502,55 @@ void App::InitSettings(char *settings_path) {
 	// privacy
 	
 	// HTML Parser
+	// set the DTDToUsePath to "none", as we may not find a DTD below
 	AppSettings->AddString( "DTDToUsePath", "none" );
 	
-	AppSettings->PrintToStream();
+	// find a DTD
+	BString dtddir;
+	AppSettings->FindString( "settings_directory", &dtddir );
+	dtddir.Append( "/dtd/" );
+	printf( "DTD dir: %s\n", dtddir.String() );
+				
+	BDirectory* dir = new BDirectory( dtddir.String() );
+	if( dir->InitCheck() != B_OK )
+	{
+		printf( "DTD directory (%s) not found!\n", dtddir.String() );
+		printf( "Setting DTDToUsePath to \"none\"\n" );
+		AppSettings->AddString( "DTDToUsePath", "none" );
+	}
+	else
+	{
+		BEntry entry;
+		while( dir->GetNextEntry( &entry, false ) != B_ENTRY_NOT_FOUND )
+		{
+			BPath path;
+			entry.GetPath( &path );
+			char name[B_FILE_NAME_LENGTH];
+			entry.GetName( name );
+						
+			BString nstring( name );
+			printf( "----------------\n" );
+			printf( "found file: %s\n", nstring.String() );
+			if( nstring.IFindFirst( "DTD", nstring.Length() - 3 ) != B_ERROR )
+			{
+				printf( "found DTD file: %s\n", nstring.String() );
+				if( AppSettings->HasString( "DTDToUsePath" ) )
+				{
+					printf( "replacing DTDToUsePath with: %s\n", path.Path() );
+					AppSettings->ReplaceString( "DTDToUsePath", path.Path() );
+				}
+				else
+				{
+					printf( "adding DTDToUsePath: %s\n", path.Path() );
+					AppSettings->AddString( "DTDToUsePath", path.Path() );
+				}
+			}
+		}
+	}
+	delete dir;
+	// end: find a DTD
 	
+	AppSettings->PrintToStream();
 }
 
 int16
@@ -536,6 +582,7 @@ App::FirstWindow()
 }
 
 status_t App::LoadSettings() {
+	printf( "App::LoadSettings()\n" );
 	if (AppSettings!=NULL) {
 		{
 			BEntry ent("/boot/home/config/settings/Themis/dtd/",true);
@@ -642,9 +689,57 @@ status_t App::LoadSettings() {
 					// privacy
 					
 					// HTML Parser
-					if( !AppSettings->HasString( "DTDToUsePath" ) )
+					// if we have no DTDToUsePath, or the DTDToUsePath is "none"
+					// ( checking for "none" because somebody may have added a DTD in the mean time )
+					if( !AppSettings->HasString( "DTDToUsePath" ) || strncmp( AppSettings->FindString( "DTDToUsePath" ), "none", 4 ) == 0 )
 					{
+						// set the DTDToUsePath to "none", as we may not find a DTD below
 						AppSettings->AddString( "DTDToUsePath", "none" );
+	
+						// find a DTD
+						BString dtddir;
+						AppSettings->FindString( "settings_directory", &dtddir );
+						dtddir.Append( "/dtd/" );
+						printf( "DTD dir: %s\n", dtddir.String() );
+			
+						BDirectory* dir = new BDirectory( dtddir.String() );
+						if( dir->InitCheck() != B_OK )
+						{
+							printf( "DTD directory (%s) not found!\n", dtddir.String() );
+							printf( "Setting DTDToUsePath to \"none\"\n" );
+							AppSettings->AddString( "DTDToUsePath", "none" );
+						}
+						else
+						{
+							BEntry entry;
+							while( dir->GetNextEntry( &entry, false ) != B_ENTRY_NOT_FOUND )
+							{
+								BPath path;
+								entry.GetPath( &path );
+								char name[B_FILE_NAME_LENGTH];
+								entry.GetName( name );
+						
+								BString nstring( name );
+								printf( "----------------\n" );
+								printf( "found file: %s\n", nstring.String() );
+								if( nstring.IFindFirst( "DTD", nstring.Length() - 3 ) != B_ERROR )
+								{
+									printf( "found DTD file: %s\n", nstring.String() );
+									if( AppSettings->HasString( "DTDToUsePath" ) )
+									{
+										printf( "replacing DTDToUsePath with: %s\n", path.Path() );
+										AppSettings->ReplaceString( "DTDToUsePath", path.Path() );
+									}
+									else
+									{
+										printf( "adding DTDToUsePath: %s\n", path.Path() );
+										AppSettings->AddString( "DTDToUsePath", path.Path() );
+									}
+								}
+							}
+						}
+						delete dir;
+						// end: find a DTD
 					}
 						
 					AppSettings->PrintToStream();
