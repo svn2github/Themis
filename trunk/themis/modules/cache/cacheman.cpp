@@ -1423,8 +1423,8 @@ status_t cacheman::SetObjectAttr(uint32 usertoken,int32 objecttoken, BMessage *i
 										
 									}break;
 									case B_STRING_TYPE:{
-										str.Truncate(0,false);
-										aname.Truncate(0,false);
+										str.Truncate(0);
+										aname.Truncate(0);
 										info->FindString(name,i,&str);
 										if (strcasecmp(name,"url")==0) {
 											aname="Themis:URL";
