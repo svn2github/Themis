@@ -43,6 +43,7 @@ Project Start Date: October 18, 2000
 class winview:public BView {
 	public:
 		winview(BRect frame,const char *name,uint32 resizem,uint32 flags);
+		~winview();
 		void AttachedToWindow();
 		void MessageReceived(BMessage *msg);
 		BTextControl *locline;

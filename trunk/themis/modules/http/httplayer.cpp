@@ -479,9 +479,13 @@ http_request *httplayer::AddRequest(BMessage *info) {
 		
 		BString url;
 		info->FindString("target_url",&url);
+		if (url.Length()==0)
+			return NULL;
 		request->url=new char[url.Length()+1];
 		strcpy(request->url,url.String());
 		FindURI(&request->url,&request->host,&request->port,&request->uri,&request->secure);
+		printf("[http->addrequest] Host: %s\n",request->host);
+		
 		if (what==LoadingNewPage) {
 			BHandler *target;
 			info->FindPointer("top_view",(void**)&target);
@@ -972,7 +976,7 @@ void httplayer::DoneWithHeaders(http_request *request) {
 	if ((!request->chunked) && (result!=NULL)) {//content length
 		//according to specs, a content-length and chunked transfer encoding can't be
 		//specified together.
-		request->bytesremaining=atol(result);
+		request->contentlen=request->bytesremaining=atol(result);
 	}//content length
 	result=FindHeader(request,"cache-control");
 	if (result!=NULL) {//Cache control header
@@ -1097,6 +1101,23 @@ void httplayer::DoneWithHeaders(http_request *request) {
 	if ((request->bytesremaining==-1) && (request->http_v_major==1) && (request->http_v_minor==0)) {
 		request->receivetilclosed=true;
 	}
+	BMessage *msg=new BMessage(ReturnedData);
+	msg->AddInt32("command",COMMAND_INFO);
+	msg->AddPointer("data_pointer",request->data);
+	msg->AddString("url",request->url);
+	result=FindHeader(request,"content-type");
+	if (result!=NULL)
+		msg->AddString("mimetype",result);
+	result=NULL;
+	if (request->contentlen!=0)
+		msg->AddInt64("content-length",request->contentlen);
+	BMessage container;
+	container.AddMessage("message",msg);
+	delete msg;
+	printf("Sending broadcast to handlers and parsers.\n");
+	
+	Proto->PlugMan->Broadcast(TARGET_PARSER|TARGET_HANDLER,&container);
+	
 }
 
 void httplayer::ProcessChunkedData(http_request *request,void *buffer, int size) {
@@ -1126,6 +1147,8 @@ void httplayer::ProcessChunkedData(http_request *request,void *buffer, int size)
 			
 		oldchunk=request->chunkbytesremaining;
 		request->data->Write((unsigned char*)buffer,request->chunkbytesremaining);
+		request->contentlen+=request->chunkbytesremaining;
+		
 		char *kk=new char[request->chunkbytesremaining+1];
 		memset(kk,0,request->chunkbytesremaining+1);
 		strncpy(kk,(char*)buffer,request->chunkbytesremaining);
@@ -1185,17 +1208,22 @@ void httplayer::ProcessChunkedData(http_request *request,void *buffer, int size)
 		if (size<request->chunkbytesremaining) {
 			//size is less than chunkbytesremaining
 			request->data->Write((unsigned char*)buffer,size);
+			request->contentlen+=size;
+			
 			request->chunkbytesremaining-=size;
 		} else {
 			//size == chunkbytesremaining
 //			printf("size==chunkbytesremaining\n");
 			
 			request->data->Write((unsigned char*)buffer,size);
+			request->contentlen+=size;
 			request->chunkbytesremaining=0;
 			request->chunk++;
 		}
 		
 	}
+	printf("Chunked File Transfer: %lu bytes received.\n",request->contentlen);
+	
 //	printf("ProcessChunkedData done.\n");
 }
 
@@ -1245,8 +1273,10 @@ printf("http:SendRequest trying to lock TCP\n");
 	
 					TCP->Lock();
 					printf("tcp is locked\n");
-	
+			TryConnecting:
 			request->conn=TCP->ConnectTo('http',request->host,request->port,request->secure);
+			printf("[http] Connection struct: %p\n",request->conn);
+			
 			if (request->conn!=NULL)
 				if (request->conn->result>=0) {
 					int32 bytes=0;
@@ -1597,11 +1627,25 @@ status_t httplayer::Quit() {
 //*
 char *httplayer::GetSupportedTypes() {
 	printf("httplayer::GetSupportedTypes()\n");
-	BString output("Content-Type: text/plain; text/html");
+	BString output("Accept: ");
 	//insert code here to get content types from other plug-ins via the plug-in manager
+	smt_st *cur=Proto->smthead;
+	while (cur!=NULL) {
+		output << cur->type;
+		if (cur->next!=NULL)
+			output << ", ";
+		cur=cur->next;
+	}
+	cur=NULL;
 	output << "\r\n";
+	printf("output: %s\n",output.String());
+	
 	char *out=new char[output.Length()+1];
+	memset(out,0,output.Length()+1);
+	
 	strcpy(out,output.String());
+	printf("Supported MIME TYPE String: %s\n",out);
+	
 	return out;
 }
 char *httplayer::UserAgent() {

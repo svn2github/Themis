@@ -35,7 +35,7 @@ int WinW=600;
 extern plugman *PluginManager;
 Win::Win(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspace)
     :BWindow(frame,title,type,flags,wspace) {
-  View=new winview(Bounds(),"mainview",B_FOLLOW_ALL,B_WILL_DRAW|B_ASYNCHRONOUS_CONTROLS|B_NAVIGABLE|B_NAVIGABLE_JUMP);
+  View=new winview(Bounds(),"mainview",B_FOLLOW_ALL,B_WILL_DRAW|B_ASYNCHRONOUS_CONTROLS|B_NAVIGABLE_JUMP);
 	startup=true;
 //  Parser=new HTMLParser;
 //  Parser->View=View;
@@ -72,6 +72,7 @@ void Win::MessageReceived(BMessage *msg) {
 //	Unlock();
 }
 void Win::WindowActivated(bool active) {
+	BWindow::WindowActivated(active);
 	if (startup) {
 		startup=false;
 		printf("WindowActivated\n");

@@ -134,6 +134,7 @@ struct http_request {
 	http_request *next;
 	bool chunked;
 	int32 bytesremaining;
+	uint64 contentlen;
 	int32 chunkbytesremaining;
 	int32 cache;
 	int32 chunk;
@@ -149,6 +150,7 @@ struct http_request {
 		status=0;
 		cache=UsesCache;
 		cacheinfo=NULL;
+		contentlen=0;
 		bytesremaining=-1;
 		conn=NULL;
 		headers=NULL;
@@ -286,6 +288,7 @@ class httplayer {
 		void FindURI(char **url,char **host,uint16 *port,char **uri,bool *secure);
 		friend class authwin;
 		friend class http_protocol;
+		http_protocol *Proto;
 };
 
 #endif

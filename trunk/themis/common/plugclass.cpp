@@ -196,3 +196,7 @@ status_t PlugClass::ReceiveBroadcast(BMessage *msg) {
 int32 PlugClass::Type() {
 	return 0;
 }
+status_t PlugClass::BroadcastReply(BMessage *msg) {
+	return PLUG_REPLY_RECEIVED;
+}
+

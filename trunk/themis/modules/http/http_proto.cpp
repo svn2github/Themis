@@ -94,6 +94,65 @@ int32 http_protocol::Type()
 {
 	return HTTP_PROTOCOL;
 }
+status_t http_protocol::BroadcastReply(BMessage *msg){
+	printf("http proto: BroadcastReply\n");
+	
+	int32 cmd=0;
+	msg->FindInt32("command",&cmd);
+	switch(cmd){
+		case COMMAND_INFO: {
+			switch(msg->what) {
+				case SupportedMIMEType: {
+					printf("Add types in following message to MIME Type list.\n");
+					msg->PrintToStream();
+					BString str;
+					int32 count=0;
+					type_code type;
+					msg->GetInfo("mimetype",&type,&count);
+					smt_st *cur,*cur2,*cur3;
+					for (int32 i=0;i<count;i++) {
+						str="nothing";
+						msg->FindString("mimetype",i,&str);
+						cur3=NULL;
+						cur3=smthead;
+						while (cur3!=NULL) {
+							if (strcasecmp(cur3->type,str.String())==0)
+								break;
+							cur3=cur3->next;
+						}
+						if (cur3!=NULL)
+							continue;
+						/*
+							The above code should prevent a duplicate type from being added.
+						*/
+						cur3=NULL;
+						cur=new smt_st;
+						cur->type=new char[str.Length()+1];
+						str.CopyInto(cur->type,0,str.Length());
+						if (smthead==NULL) {
+							smthead=cur;
+						} else {
+							cur2=smthead;
+							while (cur2->next!=NULL)
+								cur2=cur2->next;
+							cur2->next=cur;
+						}
+						
+					}
+					
+				}break;
+				default: {
+					msg->PrintToStream();
+					//display the message info, but otherwise ignore it
+				}
+			}
+		}break;
+		default:
+			return PLUG_DOESNT_HANDLE;
+}
+	return PLUG_REPLY_RECEIVED;
+}
+
 status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 {
 	status_t stat=B_ERROR;
@@ -103,6 +162,9 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
  	BView *vw;
 	if (msg->HasPointer("window"))
 		msg->FindPointer("window",(void**)&win);
+		if (Window==NULL)
+			Window=win;
+	
 	if (msg->HasPointer("top_view"))
 		msg->FindPointer("top_view",(void**)&vw);
  	if (view==NULL) {
@@ -127,53 +189,46 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 	switch (command) {
 		case COMMAND_RETRIEVE: {
 			int32 action=0;
+			BMessage *rmsg=new BMessage(*msg);
+//			printf("[http proto retrieve 1] message:\n");
+//			rmsg->PrintToStream();
+			
 			if (msg->HasInt32("action"))
 				msg->FindInt32("action",&action);
 			printf("http proto: action is %c%c%c%c\n",action>>24,action>>16,action>>8,action);
 			if (action==LoadingNewPage) {
-				printf("http proto: PlugMan %p\n",PlugMan);
+//				printf("http proto: PlugMan %p\n",PlugMan);
 				if (PlugMan!=NULL) {
-					BMessage msg(GetSupportedMIMEType);
-					msg.AddInt32("ReplyTo",Type());
-					msg.AddInt32("command",COMMAND_INFO_REQUEST);
-					msg.AddBool("supportedmimetypes",true);
+					BMessage *amsg=new BMessage(GetSupportedMIMEType);
+					amsg->AddInt32("ReplyTo",Type());
+					amsg->AddPointer("ReplyToPointer",this);
+					amsg->AddInt32("command",COMMAND_INFO_REQUEST);
+					amsg->AddBool("supportedmimetypes",true);
+//					printf("http proto: just before adding message to container.\n");
+					amsg->PrintToStream();
+					
 					BMessage container;
-					container.AddMessage("message",&msg);
+					container.AddMessage("message",amsg);
+					delete amsg;
+					amsg=NULL;
 					PlugMan->Broadcast(TARGET_PARSER|TARGET_HANDLER,&container);
 				}
 			}
+//			printf("[http proto retrieve 2] message:\n");
+//			rmsg->PrintToStream();
+			
+			BString targ;
+			rmsg->FindString("target_url",&targ);
+//			printf("http proto: target url: %s\n",targ.String());
 			
 			HTTP->Lock();
-			HTTP->AddRequest(msg);
+			HTTP->AddRequest(rmsg);
 			HTTP->Unlock();
+			delete rmsg;
+			
 		}break;
 		case COMMAND_INFO: {
 			switch(msg->what) {
-				case SupportedMIMEType: {
-					printf("Add types in following message to MIME Type list.\n");
-					msg->PrintToStream();
-					BString str;
-					int32 count=0;
-					type_code type;
-					msg->GetInfo("mimetype",&type,&count);
-					smt_st *cur,*cur2;
-					for (int32 i=0;i<count;i++) {
-						cur=new smt_st;
-						msg->FindString("mimetype",i,&str);
-						cur->type=new char[str.Length()+1];
-						str.CopyInto(cur->type,0,str.Length());
-						if (smthead==NULL) {
-							smthead=cur;
-						} else {
-							cur2=smthead;
-							while (cur2->next!=NULL)
-								cur2=cur2->next;
-							cur2->next=cur;
-						}
-						
-					}
-					
-				}break;
 				default: {
 					msg->PrintToStream();
 					//display the message info, but otherwise ignore it
@@ -209,6 +264,20 @@ http_protocol::http_protocol(BMessage *info)
  {
  	Window=NULL;
 	 smthead=NULL;
+	 /*
+	 	All web browsers should at least be able to support
+	 	text/plain and text/html, so include those as the
+	 	default mime types that are supported.
+	 */
+	 smthead=new smt_st;
+	 smthead->type=new char[11];
+	 memset(smthead->type,0,11);
+	 strcpy(smthead->type,"text/plain");
+	 smthead->next=new smt_st;
+	 smthead->next->type=new char[10];
+	 memset(smthead->next->type,0,10);
+	 strcpy(smthead->next->type,"text/html");
+	 
 	Go();
 	if (TCP==NULL) {
 	 if (info->HasPointer("tcp_layer_ptr"))
@@ -216,17 +285,17 @@ http_protocol::http_protocol(BMessage *info)
 	}
 	
 		HTTP=new httplayer(TCP);
+		HTTP->Proto=this;
 	HTTP->Start();
 	HOH=new http_opt_handler;
 	
  }
-http_protocol::~http_protocol()
- {
-  printf("http_protocol destructor\n");
-  Stop();
+http_protocol::~http_protocol() {
+	printf("http_protocol destructor\n");
+	Stop();
  	HTTP->Quit();
+	delete HTTP;
 	printf("http: Window: %p\n",Window);
-	 
 	if (smthead!=NULL) {
 		smt_st *cur=smthead;
 		while (smthead!=NULL) {
@@ -236,7 +305,6 @@ http_protocol::~http_protocol()
 		}
 	}
 	
-  delete HTTP;
  }
 int32 http_protocol::SpawnThread(BMessage *info)
  {
@@ -274,6 +342,8 @@ int32 http_protocol::GetURL(BMessage *info)
  {
  	BView *vw;
 	info->FindPointer("window",(void**)&win);
+	 if (Window==NULL)
+	 	Window=win;
 	 
 	info->FindPointer("top_view",(void**)&vw);
  	if (view==NULL) {

@@ -81,6 +81,9 @@ winview::winview(BRect frame,const char *name,uint32 resizem,uint32 flags)
 	stopbutton->SetEnabled(false);
 	AddChild(stopbutton);	
 }
+winview::~winview() {
+}
+
 void winview::AttachedToWindow() {
 	stopbutton->SetTarget(this);
 	locline->SetTarget(this);

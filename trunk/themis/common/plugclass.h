@@ -105,7 +105,8 @@ add a command to makelinks.sh to create this link in your plug-in's directory.
 //in the message.
 #define PLUG_HANDLE_GOOD 'phgd'
 //The plug-in can handle the message/data sent.
-
+#define PLUG_REPLY 'plrp'
+#define PLUG_REPLY_RECEIVED 'prrc'
 //commands that can be sent to the plug-ins
 /*
 	Exact behavior of a command depends on the type of plug-in the message is sent to.
@@ -255,6 +256,7 @@ class PlugClass {
 		virtual bool RequiresHeartbeat();
 
 		virtual status_t ReceiveBroadcast(BMessage *msg);
+		virtual status_t BroadcastReply(BMessage *msg);
 		virtual int32 Type();
 };
 

@@ -42,7 +42,7 @@ struct smt_st {
 	}
 	~smt_st() {
 		if (type!=NULL) {
-			memset(type,0,strlen(type));
+			memset(type,0,strlen(type)+1);
 			delete type;
 			type=NULL;
 		}

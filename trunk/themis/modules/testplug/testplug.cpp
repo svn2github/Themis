@@ -108,6 +108,9 @@ void testplug::Heartbeat(){
 status_t testplug::ReceiveBroadcast(BMessage *msg){
 	int32 command=0;
 	msg->FindInt32("command",&command);
+	printf("TestPlug ReceiveBroadcast: \n");
+	msg->PrintToStream();
+	
 	switch(command) {
 		case COMMAND_INFO_REQUEST: {
 			int32 replyto=0;
@@ -121,9 +124,17 @@ status_t testplug::ReceiveBroadcast(BMessage *msg){
 				types.AddString("mimetype","image/gif");
 				types.AddString("mimetype","image/png");
 				types.AddInt32("command",COMMAND_INFO);
-				BMessage container;
-				container.AddMessage("message",&types);
-				PlugMan->Broadcast(replyto,&container);
+				PlugClass *plug=NULL;
+				if (msg->HasPointer("ReplyToPointer")) {
+					msg->FindPointer("ReplyToPointer",(void**)&plug);
+					if (plug!=NULL)
+						plug->BroadcastReply(&types);
+				} else {	
+					BMessage container;
+					container.AddMessage("message",&types);
+					PlugMan->Broadcast(replyto,&container);
+				}
+				
 			}
 				}break;
 			}

@@ -311,6 +311,10 @@ uint32 tcplayer::Connections() {
 Danger! Danger! Ugly monstrosity that seems to work! Needs to be rewritten!!!
 */
 connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, bool forcenew) {
+	if (host==NULL)
+		return NULL;
+	if (strlen(host)<4)
+		return NULL;
 	bool ilocked=false;
 		if (!lock->IsLocked()) {
 			ilocked=true;
