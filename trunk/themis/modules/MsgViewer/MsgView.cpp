@@ -66,7 +66,7 @@ MsgView	::	MsgView( BMessage * aPluginList )
 
 	// Create the BMenuField and add it to the view.
 	BMenuField * senderField =
-		new BMenuField( menuRect, "senderField", "Sender", senderMenu );
+		new BMenuField( menuRect, "senderField", "Sender", mSenderMenu );
 	senderField->SetDivider( 50 );
 	backGround->AddChild( senderField );
 	
@@ -81,7 +81,7 @@ MsgView	::	MsgView( BMessage * aPluginList )
 	mMessageView = new BTextView( messageViewRect, "MessageView", messageRect,
 													B_FOLLOW_ALL_SIDES, B_WILL_DRAW );
 	BScrollView * scrollView =
-		new BScrollView( "MessageScrollView", messageView, B_FOLLOW_ALL_SIDES, 0,
+		new BScrollView( "MessageScrollView", mMessageView, B_FOLLOW_ALL_SIDES, 0,
 								 true, true );
 	backGround->AddChild( scrollView );
 
@@ -152,7 +152,7 @@ void MsgView	::	addMessage( string aMessage, string aSender  )	{
 	Lock();
 
 	string senderString = "";
-	if ( aSender = "" )	{
+	if ( aSender == "" )	{
 		senderString = "General Messages";
 	}
 	else	{
@@ -160,7 +160,7 @@ void MsgView	::	addMessage( string aMessage, string aSender  )	{
 	}
 	if ( mMessageMap.count( senderString ) != 0 )	{
 		map<string, vector<string> >::iterator i = mMessageMap.find( senderString );
-		if ( i != messageMap.end() )	{
+		if ( i != mMessageMap.end() )	{
 			( (*i).second ).push_back( aMessage );
 		}
 	}
@@ -169,7 +169,7 @@ void MsgView	::	addMessage( string aMessage, string aSender  )	{
 	if ( marked != NULL )	{
 		string label( marked->Label() );
 		if ( senderString == label )	{
-			mMessageView->Insert( aMessageString.c_str() );
+			mMessageView->Insert( aMessage.c_str() );
 		}
 	}
 	Unlock();
@@ -179,10 +179,10 @@ void MsgView	::	addMessage( string aMessage, string aSender  )	{
 void MsgView	::	addPlugin( string aPlugin )	{
 
 	Lock();	
-	senderMenu->AddItem( new BMenuItem( plugin.c_str(),
+	mSenderMenu->AddItem( new BMenuItem( aPlugin.c_str(),
 						new BMessage( CHANGE_MESSAGE_VIEW ) ) );
 	vector<string> messageVector;
-	messageMap.insert(
+	mMessageMap.insert(
 		map<string, vector<string> >::value_type( aPlugin, messageVector ) );
 	Unlock();
 	

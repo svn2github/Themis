@@ -68,7 +68,7 @@ class MsgView	:	public BWindow	{
 		/// The popup menu to let the user choose which messages to show.
 		BPopUpMenu * mSenderMenu;
 		/// The map which stores all the messages.
-		map<string, vector<string> >  messageMap;
+		map<string, vector<string> >  mMessageMap;
 	
 	public:
 		/// Constructor of the MsgView class.
