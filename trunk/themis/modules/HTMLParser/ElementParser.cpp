@@ -332,8 +332,9 @@ void ElementParser	::	processAttrSpec()	{
 void ElementParser	::	processContent( const TElementShared & aContent,
 														 const TElementShared & aExceptions,
 														 TNodeShared aParent )	{
-
-	processExceptions( aExceptions, aParent );
+	
+	// Moved to just before tag
+	//processExceptions( aExceptions, aParent );
 
 	string contentName = aContent->getNodeName();
 	
@@ -372,6 +373,7 @@ void ElementParser	::	processContent( const TElementShared & aContent,
 			break;
 		}
 		default:	{
+			processExceptions( aExceptions, aParent );
 			if ( contentName == "CDATA" )	{
 				printf( "At cdata\n" );
 				string cdata = processCharData( mEtago, false );
@@ -517,8 +519,6 @@ void ElementParser	::	processOr( const TElementShared & aContent,
 						}
 					}
 				}
-			}
-			if ( found )	{
 				break;
 			}
 		}
