@@ -27,15 +27,15 @@ FRAMEWORKSOURCES= \
 	framework/plugman.cpp \
 	framework/infowin.cpp
 COMMONSOURCES= \
-	common/plugclass.cpp #\
-#	common/tcplayer.cpp
+	common/plugclass.cpp \
+	common/tcplayer.cpp
 #add similar lines for new plugins, libraries, etc.
 HTTPADDONSOURCES= \
-	http/http_main.cpp #\
-#	http/http_proto.cpp \
-#	http/httplayer.cpp \
-#	http/optionshandler.cpp \
-#	http/authvw.cpp
+	http/http_main.cpp \
+	http/http_proto.cpp \
+	http/httplayer.cpp \
+	http/optionshandler.cpp \
+	http/authvw.cpp
 #the above lines are commented out in part or whole because the new sources are not yet ready to go into the repository
 CACHEADDONSOURCES= \
 	cache/cache_main.cpp \
@@ -111,7 +111,7 @@ else
 	NETWORKLIBS=-lnet -lnetapi
 	COMPILE_FLAGS+=-DUSENETSERVER
 endif
-ifeq "$(shell if [ -f /system/lib/libopenssl.so ] ; then echo 1 ; else echo 0 ; fi)" "1"
+ifeq "$(shell if [ -f /boot/develop/lib/x86/libopenssl.so ] ; then echo 1 ; else echo 0 ; fi)" "1"
 	NETWORKLIBS+= -lopenssl
 	COMPILE_FLAGS+= -DUSEOPENSSL
 else
@@ -177,6 +177,7 @@ $(FRAMEWORK_DEPENDS_DIR)%.d: $(FRAMEWORKSOURCES)
 
 $(FRAMEWORK_OBJECT_DIR)%.o: framework/%.cpp $(FRAMEWORK_DEPENDS_DIR)$(notdir %.d)
 	@echo "Updating object file $@"
+	@echo "Compile flags: $(COMPILE_FLAGS)"
 	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
 
 
@@ -193,7 +194,8 @@ $(COMMON_DEPENDS_DIR)%.d: $(COMMONSOURCES)
 
 $(COMMON_OBJECT_DIR)%.o: common/%.cpp $(COMMON_DEPENDS_DIR)%.d
 	@echo "Updating object file $@"
-	@$(CC) $(CFLAGS) -Icommon -c $< -o $@
+	@echo "Compile flags: $(COMPILE_FLAGS)"
+	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
 
 #cache add-on
 cacheaddon: cacheaddondepends cacheaddonobjects

@@ -31,38 +31,37 @@ Project Start Date: October 18, 2000
 #define _plugman
 #define PlugManVersion 2.0
 
-//namespace PlugMan {
 #include <AppKit.h>
 #include <Looper.h>
 #include <KernelKit.h>
 #include <SupportKit.h>
 #include <StorageKit.h>
+#include <Window.h>
 
 #include "../common/plugstruct.h"
 #include "../common/protocol_plugin.h"
 
-class plugman: public BLooper
- {
-  private:
-   plugst *head,*tail;
-   void AddPlug(plugst *plug);
-  public:
-   BDirectory *appaddondir,*useraddondir;
-   plugman(entry_ref &appdirref);
-   ~plugman();
-   void MessageReceived(BMessage *msg);
-   bool QuitRequested();
-   void *FindPlugin(uint32 which,uint32 secondary=0);
-   void *FindPlugin(node_ref &nref);
-   status_t UnloadAllPlugins(bool clean=true);
-   status_t UnloadPlugin(uint32 which);
-   status_t LoadPlugin(uint32 which);
-   status_t LoadPluginFor(const char *mimetype);
-   status_t ReloadPlugin(uint32 which);
-   status_t BuildRoster(bool clean=true);
- };
+class plugman: public BLooper {
+	private:
+		plugst *head,*tail;
+		void AddPlug(plugst *plug);
+	
+	public:
+		BWindow *Window;
+		BDirectory *appaddondir,*useraddondir;
+		plugman(entry_ref &appdirref);
+		~plugman();
+		void MessageReceived(BMessage *msg);
+		bool QuitRequested();
+		void *FindPlugin(uint32 which,uint32 secondary=0);
+		void *FindPlugin(node_ref &nref);
+		status_t UnloadAllPlugins(bool clean=true);
+		status_t UnloadPlugin(uint32 which);
+		status_t LoadPlugin(uint32 which);
+		status_t LoadPluginFor(const char *mimetype);
+		status_t ReloadPlugin(uint32 which);
+		status_t BuildRoster(bool clean=true);
+};
 
-
-//};
 
 #endif

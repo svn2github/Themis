@@ -26,39 +26,18 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
-/*
-#ifndef _http_main
-#define _http_main
-#include <SupportKit.h>
-#include <AppKit.h>
-#include <KernelKit.h>
+
+#ifndef _http_proto
+#define _http_proto
+#include "httplayer.h"
 #include "protocol_plugin.h"
-//namespace Themis_Networking
-// {
+#include "optionshandler.h"
+#include <View.h>
+#include <Window.h>
   extern "C" __declspec(dllexport)status_t Initialize(void *info=NULL);
   extern "C" __declspec(dllexport)status_t Shutdown(bool now=false);
   extern "C" __declspec(dllexport)protocol_plugin* GetObject(void);
-class http_worker
- {
-  public:
-   http_worker(BMessage *info);
-   ~http_worker();
-   port_id http_proto_port;
-   int32 sock;
-   BMessage *Info;
-   volatile int32 die;
-   bool Quit();
-   int32 *benval;
-   sem_id httpsem;
-   thread_id thread;
-   static int32 GetIt(void *);
-     void FindURI(const char *url,BString &host,uint16 &port,BString &uri);
-     BMessage *ProcessRespLine(const char *data);
-     BMessage *GetHead(BMessage *info,int32 use_sock=-1);
-     BMessage *GetURL(BMessage *info);
-     thread_id Thread();
-     BList *list;
- };  
+
 class http_protocol:public ProtocolPlugClass
    {
     private:
@@ -71,7 +50,12 @@ class http_protocol:public ProtocolPlugClass
      BList *queue;
      int32 benval;
      sem_id httpsem;
+	 httplayer *HTTP;
+	 http_opt_handler *HOH;  
+	 BView *view;
+	 BWindow *win;
     public:
+		void FindURI(const char *url,BString &host,uint16 *port,BString &uri,bool *secure);
      http_protocol();
      ~http_protocol();
      BMessage headers;
@@ -84,7 +68,7 @@ class http_protocol:public ProtocolPlugClass
      void Stop();
      int32 GetURL(BMessage *info);
      static int32 ThreadFunc(void *info);
+	 void AddMenuItems(BMenu *menu);
+	 void RemoveMenuItems();
    };
-// };
 #endif
-*/

@@ -26,7 +26,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
-
+/*
 #include "http_main.h"
 #include "http_defines.h"
 #include <stdlib.h>
@@ -1088,3 +1088,4 @@ int32 http_protocol::ThreadFunc(void *info)
  {
   return (HTTP->GetURL((BMessage *)info));
  }
+*/

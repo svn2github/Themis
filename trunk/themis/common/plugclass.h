@@ -42,6 +42,7 @@ add a command to makelinks.sh to create this link in your plug-in's directory.
 #include <Message.h>
 #include <Entry.h>
 #include <OS.h>
+#include <MenuBar.h>
 
 #define ProtocolPlugin 'pplg'
 #define ContentPlugin 'cplg'
@@ -51,62 +52,65 @@ add a command to makelinks.sh to create this link in your plug-in's directory.
 
 int32 strtoval(char *proto); //plug-in identifier converter 4 char string to int32
 
-class PlugClass
- {
-  private:
-  public:
-   PlugClass(BMessage *info=NULL);
-   BMessage *InitInfo;
-   virtual ~PlugClass();
-   
-   volatile int32 Cancel;
-   virtual uint32 PlugID();
-   virtual uint32 SecondaryID();
-  /*
-   plugid is the plugin's individual id, it's a 4 char constant #define'd.
-   For example:
-	   #define JavaPlugin 'java'
-	   #define OpenSSLPlugin 'ossl'
-   Some types of plugins might have a secondary ID number. In these cases, the
-   primary ID number (PlugID) indicates the category of the plugin, and the
-   secondary indicates a specific item. For example:
-
-	HTML Plugins should return 'html' as the PlugID and a unique identifier
-        for each tag; the "<HTML>" tag plugin might return 'html' for both, while
-        the "<TITLE>" tag plugin might return 'html' and 'titl'.
-  */
-   virtual char *PlugName();//returns a pointer to a string constant in each plugin
-   virtual float PlugVersion();//returns the plugin version, if applicable
-   
-   virtual bool NeedsThread();
-   virtual int32 SpawnThread(BMessage *info);
-   virtual int32 StartThread();
-   virtual thread_id Thread();
-   virtual void Stop();
-   thread_id thread;
-   
-   BWindow *Window;
-   BLooper *PlugMan;
-   
-   virtual int32 TypePrimary();
-   virtual int32 TypeSecondary();
-   
-   virtual bool IsHandler();//if the plugin has a BHandler object instead
-   virtual BHandler *Handler();
-   
-   virtual bool IsPersistant();//does the plugin load and unload based on page?
-  
-   virtual bool IsLooper();
-   virtual BLooper *Looper();
-   virtual void Run();
-   
-   virtual bool IsView();
-   virtual BView *View();
-   virtual BView *Parent();
-   
-   entry_ref *SetRef(entry_ref *nuref);
-   entry_ref *Ref();
-   entry_ref *ref;//an entry for the plugin
- };
+class PlugClass {
+	private:
+	public:
+		PlugClass(BMessage *info=NULL);
+		BMessage *InitInfo;
+		virtual ~PlugClass();
+		
+		volatile int32 Cancel;
+		virtual uint32 PlugID();
+		virtual uint32 SecondaryID();
+		/*
+		plugid is the plugin's individual id, it's a 4 char constant #define'd.
+		For example:
+		#define JavaPlugin 'java'
+		#define OpenSSLPlugin 'ossl'
+		Some types of plugins might have a secondary ID number. In these cases, the
+		primary ID number (PlugID) indicates the category of the plugin, and the
+		secondary indicates a specific item. For example:
+		
+		HTML Plugins should return 'html' as the PlugID and a unique identifier
+		  for each tag; the "<HTML>" tag plugin might return 'html' for both, while
+		  the "<TITLE>" tag plugin might return 'html' and 'titl'.
+		*/
+		virtual char *PlugName();//returns a pointer to a string constant in each plugin
+		virtual float PlugVersion();//returns the plugin version, if applicable
+		
+		virtual bool NeedsThread();
+		virtual int32 SpawnThread(BMessage *info);
+		virtual int32 StartThread();
+		virtual thread_id Thread();
+		virtual void Stop();
+		thread_id thread;
+		
+		BWindow *Window;
+		BLooper *PlugMan;
+		
+		virtual int32 TypePrimary();
+		virtual int32 TypeSecondary();
+		
+		virtual bool IsHandler();//if the plugin has a BHandler object instead
+		virtual BHandler *Handler();
+		
+		virtual bool IsPersistant();//does the plugin load and unload based on page?
+		
+		virtual bool IsLooper();
+		virtual BLooper *Looper();
+		virtual void Run();
+		
+		virtual bool IsView();
+		virtual BView *View();
+		virtual BView *Parent();
+		
+		entry_ref *SetRef(entry_ref *nuref);
+		entry_ref *Ref();
+		entry_ref *ref;//an entry for the plugin
+		
+		virtual void AddMenuItems(BMenu *menu);//this is a signal for plug-ins to add any menus or items
+		virtual void RemoveMenuItems();
+		
+};
 
 #endif 

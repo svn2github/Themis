@@ -30,11 +30,10 @@ Project Start Date: October 18, 2000
 #define DEBUG 1
 #include <SupportKit.h>
 
-int main()
- {
-  SET_DEBUG_ENABLED(TRUE);
-  (new App(AppSig));
-  be_app->Run();
-  delete be_app;
-  return 0;
- }
+int main() {
+	SET_DEBUG_ENABLED(TRUE);
+	(new App(AppSig));
+	be_app->Run();
+	delete be_app;
+	return 0;
+}

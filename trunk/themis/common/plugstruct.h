@@ -34,41 +34,39 @@ Project Start Date: October 18, 2000
 #include <Entry.h>
 #include "plugclass.h"
 
-struct plugst
- {
-  image_id sysid;
-  //sysid is the id assigned to the plugin on load by BeOS.
-  uint32 plugid;
-  //a copy of the plug id for when it's not loaded.
-  volatile bool inmemory;
-  //is the plugin currently in memory
-  PlugClass *pobj;//plugin object
-  PlugClass *(*GetObject)(void);
-  entry_ref ref;
-  node_ref nref;
-  char path[B_PATH_NAME_LENGTH+B_FILE_NAME_LENGTH];
-  plugst *next;
-  plugst *prev;
-  /*
-   next and prev will enable a doubly linked list. A bit cumbersome perhaps,
-   but it may allow for some performance increases here and there over a singly
-   linked list. (For instance, when removing individual plugins from memory,
-   it becomes possible to set the previous plugin's next pointer to the current's
-   next pointer, and the next's prev pointer to current's prev pointer instead of
-   having to loop through again to make sure the previous one knows where the
-   next one is. Ex:
-   
-   		previous->next=current->next;
-  		nextone->prev=current->prev;
-   		delete current;
-  */
-  plugst()
-   {
-    inmemory=false;
-    pobj=NULL;
-    sysid=0;
-    next=prev=NULL;
-   }
- };
+struct plugst {
+	image_id sysid;
+	//sysid is the id assigned to the plugin on load by BeOS.
+	uint32 plugid;
+	//a copy of the plug id for when it's not loaded.
+	volatile bool inmemory;
+	//is the plugin currently in memory
+	PlugClass *pobj;//plugin object
+	PlugClass *(*GetObject)(void);
+	entry_ref ref;
+	node_ref nref;
+	char path[B_PATH_NAME_LENGTH+B_FILE_NAME_LENGTH];
+	plugst *next;
+	plugst *prev;
+	/*
+	next and prev will enable a doubly linked list. A bit cumbersome perhaps,
+	but it may allow for some performance increases here and there over a singly
+	linked list. (For instance, when removing individual plugins from memory,
+	it becomes possible to set the previous plugin's next pointer to the current's
+	next pointer, and the next's prev pointer to current's prev pointer instead of
+	having to loop through again to make sure the previous one knows where the
+	next one is. Ex:
+	
+			previous->next=current->next;
+			nextone->prev=current->prev;
+			delete current;
+	*/
+	plugst() {
+		inmemory=false;
+		pobj=NULL;
+		sysid=0;
+		next=prev=NULL;
+	}
+};
 
 #endif

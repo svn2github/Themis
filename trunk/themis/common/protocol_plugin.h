@@ -31,43 +31,19 @@ Project Start Date: October 18, 2000
 
 #include <String.h>
 #include "plugclass.h"
-class ProtocolPlugClass: public PlugClass
- {
-  public:
-   BString URL;
-   virtual const char *SetURL(const char* url) {URL=url; return URL.String();}
-   virtual BMessage *SupportedTypes(void) {return NULL;}
-   virtual void Config(BMessage *msg) {}
-   virtual void FindURI(const char *url,BString &host,int &port,BString &uri) {}
-   virtual void ParseResponse(unsigned char *resp,size_t size) {}
-   virtual unsigned char *GetDoc(BString &host,int &port,BString &uri) {return NULL;}
-   virtual unsigned char *GetDoc(const char* url) {return NULL;}
-   virtual int32 GetURL(BMessage *info) {return 0;} //use in combination with SpawnThread and StartThread
-   virtual unsigned char *GetURL(const char* url) {return NULL;}
- };
+class ProtocolPlugClass: public PlugClass {
+	public:
+		BString URL;
+		virtual const char *SetURL(const char* url) {URL=url; return URL.String();}
+		virtual BMessage *SupportedTypes(void) {return NULL;}
+		virtual void Config(BMessage *msg) {}
+		virtual void FindURI(const char *url,BString &host,int &port,BString &uri) {}
+		virtual void ParseResponse(unsigned char *resp,size_t size) {}
+		virtual unsigned char *GetDoc(BString &host,int &port,BString &uri) {return NULL;}
+		virtual unsigned char *GetDoc(const char* url) {return NULL;}
+		virtual int32 GetURL(BMessage *info) {return 0;}
+		int32 TypePrimary() {return ProtocolPlugin;}
+};
 
 typedef ProtocolPlugClass protocol_plugin;
-//enum PlugType{ProtocolPlugin=0,ContentPlugin=1};
-/*
-class protocol_plugin
- {
-  public:
-   protocol_plugin(){}
-   virtual ~protocol_plugin(){};
-   virtual char *GetPluginName(void)=0;
-   virtual int32 GetPluginID(void)=0;
-   virtual float GetPluginVers(void)=0;
-   virtual PlugType PluginType(void)=0;
-   virtual status_t Go(void)=0;
-   virtual bool IsPersistant(void)=0;
-   virtual BMessage *SupportedTypes(void)=0;
-   virtual void FindURI(const char *url,BString &host,int &port,BString &uri)=0;
-   virtual void ParseResponse(unsigned char *resp,size_t size)=0;
-   virtual unsigned char *GetDoc(BString &host,int &port,BString &uri)=0;
-   virtual unsigned char *GetDoc(const char* url)=0;
-   virtual unsigned char *GetURL(const char* url)=0;
-   volatile uint8 Cancel;
-   BWindow *Window;
- };
-*/
 #endif

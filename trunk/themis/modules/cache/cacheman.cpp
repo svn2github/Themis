@@ -38,6 +38,11 @@ Project Start Date: October 18, 2000
 #include <Message.h>
 #include <Messenger.h>
 #include <MessageRunner.h>
+#include <Statable.h>
+#include <File.h>
+#include <fs_attr.h>
+#include <Node.h>
+#include <Path.h>
 cacheman::cacheman(BMessage *info)
          :BHandler("cache_manager"),
           PlugClass(info)
@@ -66,6 +71,116 @@ void cacheman::MessageReceived(BMessage *mmsg)
    {
     case FindCachedObject:
      {
+      BEntry ent(cachepath.Path(),true);
+      struct stat devstat;
+      ent.GetStat(&devstat);
+      BVolume vol(devstat.st_dev);
+      BQuery query;
+      query.SetVolume(&vol);
+      query.PushAttr("Themis:URL");
+      BString url;
+      mmsg->FindString("url",&url);
+      query.PushString(url.String());
+      query.PushOp(B_EQ);
+      query.Fetch();
+      ent.Unset();
+      entry_ref ref;
+      BNode node;
+      BMessage reply(B_ERROR);
+      struct attr_info ai;
+      char attname[B_ATTR_NAME_LENGTH+1];
+        memset(attname,0,B_ATTR_NAME_LENGTH+1);
+      unsigned char *data=NULL;
+      BString fname;//field name
+      while (query.GetNextEntry(&ent,false)!=B_ENTRY_NOT_FOUND)
+       {
+        ent.GetRef(&ref);
+        reply.AddRef("ref",&ref);
+        ent.Unset();
+        node.SetTo(&ref);
+        node.Lock();
+        while (node.GetNextAttrName(attname)!=B_ENTRY_NOT_FOUND)
+         {
+          node.GetAttrInfo(attname,&ai);
+          if (data!=NULL)
+           delete data;
+          data=new unsigned char[ai.size+1];
+          memset(data,0,ai.size+1);
+          switch(ai.type)
+           {
+            case B_INT64_TYPE:
+             {
+              if (strcasecmp(attname,"Themis:content-length")==0)
+               {
+                off_t clen=0;
+                node.ReadAttr("Themis:content-length",B_INT64_TYPE,0,&clen,sizeof(clen));
+                reply.AddInt64("content-length",clen);
+                continue;
+               }
+             }break;
+            case B_STRING_TYPE:
+             {
+               if (strcasecmp(attname,"Themis:URL")==0)
+                {
+                 node.ReadAttr("Themis:URL",B_STRING_TYPE,0,data,ai.size);
+                 fname="url";
+                }
+               if (strcasecmp(attname,"Themis:name")==0)
+                {
+                 node.ReadAttr("Themis:name",B_STRING_TYPE,0,data,ai.size);
+                 fname="name";
+                }
+               if (strcasecmp(attname,"Themis:host")==0)
+                {
+                 node.ReadAttr("Themis:host",B_STRING_TYPE,0,data,ai.size);
+                 fname="host";
+                }
+               if (strcasecmp(attname,"Themis:mime_type")==0)
+                {
+                 node.ReadAttr("Themis:mime_type",B_STRING_TYPE,0,data,ai.size);
+                 fname="mime_type";
+                }
+               if (strcasecmp(attname,"Themis:path")==0)
+                {
+                 node.ReadAttr("Themis:path",B_STRING_TYPE,0,data,ai.size);
+                 fname="path";
+                }
+               if (strcasecmp(attname,"Themis:etag")==0)
+                {
+                 node.ReadAttr("Themis:etag",B_STRING_TYPE,0,data,ai.size);
+                 fname="etag";
+                }
+               if (strcasecmp(attname,"Themis:last-modified")==0)
+                {
+                 node.ReadAttr("Themis:last-modified",B_STRING_TYPE,0,data,ai.size);
+                 fname="last-modified";
+                }
+               if (strcasecmp(attname,"Themis:expires")==0)
+                {
+                 node.ReadAttr("Themis:expires",B_STRING_TYPE,0,data,ai.size);
+                 fname="expires";
+                }
+               if (strcasecmp(attname,"Themis:content-md5")==0)
+                {
+                 node.ReadAttr(attname,B_STRING_TYPE,0,data,ai.size);
+                 fname="content-md5";
+                }
+                 reply.AddString(fname.String(),(char*)data);
+                 fname="";
+                 continue;
+             }break;
+            case B_INT32_TYPE:
+             {
+             }break;
+           }
+          delete data;
+          data=NULL;
+         }
+        node.Unlock();
+        node.Unset();
+        //fix this later so that it should get more specific before returning
+       }
+       mmsg->SendReply(&reply);
      }break;
     case CreateCacheObject:
      {
@@ -108,6 +223,18 @@ void cacheman::MessageReceived(BMessage *mmsg)
           for (int i=0;i<count;i++)
            switch(type)
             {
+			 case B_INT64_TYPE:
+			  {
+               if (strcasecmp(name,"content-length")==0)
+                {
+				 off_t clen;
+                 msg->FindInt64(name,&clen);
+                 printf("writing %s: %Ld\n",name,clen);
+                 node->WriteAttr("Themis:content-length",B_INT64_TYPE,0,&clen,sizeof(clen));
+                 continue;
+                }
+				  
+			  }break;
              case B_INT32_TYPE:
               {
                if (strcasecmp(name,"what")==0)
@@ -150,6 +277,34 @@ void cacheman::MessageReceived(BMessage *mmsg)
                  msg->FindString(name,&fname);
                  printf("writing %s: %s\n",name,fname.String());
                  node->WriteAttr("Themis:path",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
+                 continue;
+                }
+               if (strcasecmp(name,"etag")==0)
+                {
+                 msg->FindString(name,&fname);
+                 printf("writing %s: %s\n",name,fname.String());
+                 node->WriteAttr("Themis:etag",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
+                 continue;
+                }
+               if (strcasecmp(name,"last-modified")==0)
+                {
+                 msg->FindString(name,&fname);
+                 printf("writing %s: %s\n",name,fname.String());
+                 node->WriteAttr("Themis:last-modified",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
+                 continue;
+                }
+               if (strcasecmp(name,"expires")==0)
+                {
+                 msg->FindString(name,&fname);
+                 printf("writing %s: %s\n",name,fname.String());
+                 node->WriteAttr("Themis:expires",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
+                 continue;
+                }
+               if (strcasecmp(name,"content-md5")==0)
+                {
+                 msg->FindString(name,&fname);
+                 printf("writing %s: %s\n",name,fname.String());
+                 node->WriteAttr("Themis:content-md5",B_STRING_TYPE,0,fname.String(),fname.Length()+1);
                  continue;
                 }
               }break;
@@ -375,6 +530,136 @@ status_t cacheman::CheckMIME()
   else
    found=false;
   //Make Themis:path a visible attribute; done
+  //Make Themis:etag a visible attribute
+  for (int32 i=0;i<attrcount;i++)
+   {
+    BString item;
+    attrinf.FindString("attr:name",i,&item);
+    if (item=="Themis:etag")
+     {
+      found=true;
+      break;
+     }
+   }
+  if ((!found) || (installall))
+   {
+    attrinf.AddString("attr:name","Themis:etag");
+    attrinf.AddString("attr:public_name","Entity Tag");
+    attrinf.AddInt32("attr:type",B_STRING_TYPE);
+    attrinf.AddInt32("attr:width",200);
+    attrinf.AddInt32("attr:alignment",B_ALIGN_CENTER);
+    attrinf.AddBool("attr:public",true);
+    attrinf.AddBool("attr:editable",false);
+    attrinf.AddBool("attr:viewable",true);
+    attrinf.AddBool("attr:extra",false);
+   }
+  else
+   found=false;
+  //Make Themis:etag a visible attribute; done
+    //Make Themis:last-modified a visible attribute
+  for (int32 i=0;i<attrcount;i++)
+   {
+    BString item;
+    attrinf.FindString("attr:name",i,&item);
+    if (item=="Themis:last-modified")
+     {
+      found=true;
+      break;
+     }
+   }
+  if ((!found) || (installall))
+   {
+    attrinf.AddString("attr:name","Themis:last-modified");
+    attrinf.AddString("attr:public_name","Last Modified");
+    attrinf.AddInt32("attr:type",B_STRING_TYPE);
+    attrinf.AddInt32("attr:width",200);
+    attrinf.AddInt32("attr:alignment",B_ALIGN_CENTER);
+    attrinf.AddBool("attr:public",true);
+    attrinf.AddBool("attr:editable",false);
+    attrinf.AddBool("attr:viewable",true);
+    attrinf.AddBool("attr:extra",false);
+   }
+  else
+   found=false;
+  //Make Themis:last-modified a visible attribute; done
+  //Make Themis:content-length a visible attribute
+  for (int32 i=0;i<attrcount;i++)
+   {
+    BString item;
+    attrinf.FindString("attr:name",i,&item);
+    if (item=="Themis:content-length")
+     {
+      found=true;
+      break;
+     }
+   }
+  if ((!found) || (installall))
+   {
+    attrinf.AddString("attr:name","Themis:content-length");
+    attrinf.AddString("attr:public_name","Content Length");
+    attrinf.AddInt32("attr:type",B_INT64_TYPE);
+    attrinf.AddInt32("attr:width",50);
+    attrinf.AddInt32("attr:alignment",B_ALIGN_CENTER);
+    attrinf.AddBool("attr:public",true);
+    attrinf.AddBool("attr:editable",false);
+    attrinf.AddBool("attr:viewable",true);
+    attrinf.AddBool("attr:extra",false);
+   }
+  else
+   found=false;
+  //Make Themis:content-length a visible attribute; done
+  //Make Themis:expires a visible attribute
+  for (int32 i=0;i<attrcount;i++)
+   {
+    BString item;
+    attrinf.FindString("attr:name",i,&item);
+    if (item=="Themis:expires")
+     {
+      found=true;
+      break;
+     }
+   }
+  if ((!found) || (installall))
+   {
+    attrinf.AddString("attr:name","Themis:expires");
+    attrinf.AddString("attr:public_name","Expiry");
+    attrinf.AddInt32("attr:type",B_INT64_TYPE);
+    attrinf.AddInt32("attr:width",200);
+    attrinf.AddInt32("attr:alignment",B_ALIGN_CENTER);
+    attrinf.AddBool("attr:public",true);
+    attrinf.AddBool("attr:editable",false);
+    attrinf.AddBool("attr:viewable",true);
+    attrinf.AddBool("attr:extra",false);
+   }
+  else
+   found=false;
+  //Make Themis:expires a visible attribute; done
+  //Make Themis:content-md5 a visible attribute
+  for (int32 i=0;i<attrcount;i++)
+   {
+    BString item;
+    attrinf.FindString("attr:name",i,&item);
+    if (item=="Themis:content-md5")
+     {
+      found=true;
+      break;
+     }
+   }
+  if ((!found) || (installall))
+   {
+    attrinf.AddString("attr:name","Themis:content-md5");
+    attrinf.AddString("attr:public_name","MD5 Checksum");
+    attrinf.AddInt32("attr:type",B_INT64_TYPE);
+    attrinf.AddInt32("attr:width",200);
+    attrinf.AddInt32("attr:alignment",B_ALIGN_CENTER);
+    attrinf.AddBool("attr:public",true);
+    attrinf.AddBool("attr:editable",false);
+    attrinf.AddBool("attr:viewable",true);
+    attrinf.AddBool("attr:extra",false);
+   }
+  else
+   found=false;
+  //Make Themis:content-md5 a visible attribute; done
   mime.SetAttrInfo(&attrinf);
   return B_OK;
  }
@@ -533,7 +818,113 @@ status_t cacheman::CheckIndices()
       fs_rewind_index_dir(d);
       found=false;
       //end block
-     }
+      //begin block
+      //Themis:etag 
+      printf("\t\tlooking for \"Themis:etag\" index...");
+      fflush(stdout);
+      while((ent=fs_read_index_dir(d)))
+       {
+        if (strcasecmp(ent->d_name,"Themis:etag")==0)
+         {
+          printf("found it.\n");
+          found=true;
+          break;
+         }
+       }
+      if (!found)
+       {
+        printf("created it.\n");
+        fs_create_index(vol.Device(),"Themis:etag",B_STRING_TYPE,0);
+       }
+      fs_rewind_index_dir(d);
+      found=false;
+      //end block
+       //begin block
+      //Themis:last-modified is the file's real mime_type.
+      printf("\t\tlooking for \"Themis:last-modified\" index...");
+      fflush(stdout);
+      while((ent=fs_read_index_dir(d)))
+       {
+        if (strcasecmp(ent->d_name,"Themis:last-modified")==0)
+         {
+          printf("found it.\n");
+          found=true;
+          break;
+         }
+       }
+      if (!found)
+       {
+        printf("created it.\n");
+        fs_create_index(vol.Device(),"Themis:last-modified",B_STRING_TYPE,0);
+       }
+      fs_rewind_index_dir(d);
+      found=false;
+      //end block
+      //begin block
+      //Themis:content-length is the file's real mime_type.
+      printf("\t\tlooking for \"Themis:mime_type\" index...");
+      fflush(stdout);
+      while((ent=fs_read_index_dir(d)))
+       {
+        if (strcasecmp(ent->d_name,"Themis:content-length")==0)
+         {
+          printf("found it.\n");
+          found=true;
+          break;
+         }
+       }
+      if (!found)
+       {
+        printf("created it.\n");
+        fs_create_index(vol.Device(),"Themis:content-length",B_INT64_TYPE,0);
+       }
+      fs_rewind_index_dir(d);
+      found=false;
+      //end block
+      //begin block
+      //Themis:expires is the file's real mime_type.
+      printf("\t\tlooking for \"Themis:expires\" index...");
+      fflush(stdout);
+      while((ent=fs_read_index_dir(d)))
+       {
+        if (strcasecmp(ent->d_name,"Themis:expires")==0)
+         {
+          printf("found it.\n");
+          found=true;
+          break;
+         }
+       }
+      if (!found)
+       {
+        printf("created it.\n");
+        fs_create_index(vol.Device(),"Themis:expires",B_STRING_TYPE,0);
+       }
+      fs_rewind_index_dir(d);
+      found=false;
+      //end block
+      //begin block
+      //Themis:content-md5 is the file's real mime_type.
+      printf("\t\tlooking for \"Themis:md5\" index...");
+      fflush(stdout);
+      while((ent=fs_read_index_dir(d)))
+       {
+        if (strcasecmp(ent->d_name,"Themis:content-md5")==0)
+         {
+          printf("found it.\n");
+          found=true;
+          break;
+         }
+       }
+      if (!found)
+       {
+        printf("created it.\n");
+        fs_create_index(vol.Device(),"Themis:content-md5",B_STRING_TYPE,0);
+       }
+      fs_rewind_index_dir(d);
+      found=false;
+      //end block
+    fs_close_index_dir(d);
+   }
    }
   delete volr;
   return B_OK;

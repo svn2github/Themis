@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2000 Z3R0 One. All Rights Reserved. 
+Copyright (c) 2000 Z3R0 One. All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -26,25 +26,36 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
-#ifndef _appclass
-#define _appclass
-#include <AppKit.h>
-#include "win.h"
-#include "appdefines.h"
-#include "plugman.h"
-
-
-class App:public BApplication {
+#ifndef _authvw
+#define _authvw
+#include "httplayer.h"
+#include <Window.h>
+#include <View.h>
+#include <TextControl.h>
+#include <TextView.h>
+#include <Button.h>
+#include <String.h>
+class authview:public BView {
 	private:
-		Win *win;
 	public:
-		App(const char *appsig);
-		~App();
-		bool QuitRequested();
-		void MessageReceived(BMessage *msg);
-		void RefsReceived(BMessage *refs);
-		void ReadyToRun();
-		void ArgvReceived(int32 argc, char **argv);
+		BButton *ok,*cancel;
+		BTextControl *user,*pass;
+		BTextView *info;
+		authview(BRect frame);
+		~authview();
+		void AttachedToWindow();
+	
 };
 
+class authwin:public BWindow {
+	private:
+		http_request *request;
+		authview *view;
+		BString realm;
+	public:
+		authwin(const char *title,http_request *req,char *rlm);
+		~authwin();
+		void MessageReceived(BMessage *msg);
+		bool QuitRequested();
+};
 #endif

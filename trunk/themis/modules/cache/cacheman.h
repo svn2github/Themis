@@ -30,9 +30,6 @@ Project Start Date: October 18, 2000
 #define _cache_manager
 
 /*
-#include <File.h>
-#include <Node.h>
-#include <Path.h>
 #include <Directory.h>
 */
 #include <StorageKit.h>

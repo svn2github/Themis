@@ -51,5 +51,8 @@ Project Start Date: October 18, 2000
 #define ReturnedData 'data'
 #define SendData 'send'
 #define ThreadDone 'done'
+#define ProtocolResponse 'prsp'
 
+//plug in management
+#define PlugInLoaded 'pild'
 #endif

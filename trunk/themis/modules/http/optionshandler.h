@@ -26,25 +26,26 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
-#ifndef _appclass
-#define _appclass
-#include <AppKit.h>
-#include "win.h"
-#include "appdefines.h"
-#include "plugman.h"
+#ifndef _http_opt_handler
+#define _http_opt_handler
+#include <Handler.h>
+#include <Menu.h>
+#include <MenuItem.h>
 
+#define BROWSER_IDENT_THEMIS 0
+#define BROWSER_IDENT_IE 1
+#define BROWSER_IDENT_NETSCAPE 2
 
-class App:public BApplication {
+class http_opt_handler:public BHandler {
 	private:
-		Win *win;
+		BMenu *parentmenu;
 	public:
-		App(const char *appsig);
-		~App();
-		bool QuitRequested();
+		BMenu *browserident;
+		http_opt_handler();
+		~http_opt_handler();
 		void MessageReceived(BMessage *msg);
-		void RefsReceived(BMessage *refs);
-		void ReadyToRun();
-		void ArgvReceived(int32 argc, char **argv);
+		void AddMenu(BMenu *parent);
+		void RemoveMenu();
 };
 
 #endif

@@ -33,6 +33,11 @@ Include *both* plugclass.h *and* plugclass.cpp in your plugin!
 
 #include "plugclass.h"
 
+/*
+ The strtoval function takes the first four characters of a string, and converts them to
+a 32-bit integer value. This value, when viewed properly, will represent an integer version
+of those four characters; similar to what BeOS originated BMessages have as what values.
+*/
 int32 strtoval(char *proto) {
 	int32 value=0;
 	if (strlen(proto)>=4) {
@@ -55,124 +60,117 @@ int32 strtoval(char *proto) {
 	return value;
 }
 
-PlugClass::PlugClass(BMessage *info)
- {
-  InitInfo=info;
-  thread=0;
- }
+/*
+The PlugClass constructor can take a BMessage that contains various tidbits of information
+that can be used by the plug-in. The down side of this is that currently, this information
+is lost because most plug-ins are loaded, passed some information, then destroyed when
+the app is started. When the plug-in is brought back into memory depends on what's calling
+it, and what the plug-in actually does. For instance, the protocol plug-ins are handed
+URL information, and a number of pointers to objects which they might need.
+*/
+PlugClass::PlugClass(BMessage *info) {
+	InitInfo=info;
+	thread=0;
+	Window=NULL;
+	PlugMan=NULL;
+}
 
-PlugClass::~PlugClass()
- {
- }
+PlugClass::~PlugClass() {
+}
 
-uint32 PlugClass::PlugID()
- {
-  return 'none';
- }
+uint32 PlugClass::PlugID() {
+	return 'none';
+}
 
-uint32 PlugClass::SecondaryID()
- {
-  return 'none';
- }
+uint32 PlugClass::SecondaryID(){
+	return 'none';
+}
 
-char *PlugClass::PlugName()
- {
-  return "Not A Plug-in";
- }
+char *PlugClass::PlugName(){
+	return "Not A Plug-in";
+}
 
-float PlugClass::PlugVersion()
- {
-  return 0.0;
- }
+float PlugClass::PlugVersion(){
+	return 0.0;
+}
 
-bool PlugClass::NeedsThread()
- {
-  return false;
- }
+bool PlugClass::NeedsThread(){
+	return false;
+}
 
-int32 PlugClass::SpawnThread(BMessage *info)
- {
-  //See Be Book Documentation on thread creation.
-  return 0;
- }
+int32 PlugClass::SpawnThread(BMessage *info){
+	//See Be Book Documentation on thread creation.
+	return 0;
+}
 
-int32 PlugClass::StartThread()
- {
-  return (resume_thread(thread));
- }
+int32 PlugClass::StartThread(){
+	return (resume_thread(thread));
+}
 
-thread_id PlugClass::Thread()
- {
-  return thread;
- }
- 
-void PlugClass::Stop()
- {
-  atomic_add(&Cancel,1);
- }
+thread_id PlugClass::Thread(){
+	return thread;
+}
 
-int32 PlugClass::TypePrimary()
- {
-  return -1;
- }
+void PlugClass::Stop(){
+	atomic_add(&Cancel,1);
+}
 
-int32 PlugClass::TypeSecondary()
- {
-  return -1;
- }
+int32 PlugClass::TypePrimary(){
+	return -1;
+}
 
-bool PlugClass::IsHandler()
- {
-  return false;
- }
+int32 PlugClass::TypeSecondary(){
+	return -1;
+}
 
-BHandler *PlugClass::Handler()
- {
-  return NULL;
- }
+bool PlugClass::IsHandler(){
+	return false;
+}
 
-bool PlugClass::IsPersistant()
- {
-  return false;
- }
+BHandler *PlugClass::Handler(){
+	return NULL;
+}
 
-bool PlugClass::IsLooper()
- {
-  return false;
- }
+bool PlugClass::IsPersistant(){
+	return false;
+}
 
-BLooper *PlugClass::Looper()
- {
-  return NULL;
- }
+bool PlugClass::IsLooper(){
+	return false;
+}
 
-void PlugClass::Run()
- {
- }
+BLooper *PlugClass::Looper(){
+	return NULL;
+}
 
-bool PlugClass::IsView()
- {
-  return false;
- }
+void PlugClass::Run(){
+}
 
-BView *PlugClass::View()
- {
-  return NULL;
- }
+bool PlugClass::IsView(){
+	return false;
+}
 
-BView *PlugClass::Parent()
- {
-  return NULL;
- }
+BView *PlugClass::View(){
+	return NULL;
+}
 
-entry_ref *PlugClass::SetRef(entry_ref *nuref)
- {
-  ref=nuref;
-  return ref;
- }
+BView *PlugClass::Parent(){
+	return NULL;
+}
 
-entry_ref *PlugClass::Ref()
- {
-  return ref;
- }
+entry_ref *PlugClass::SetRef(entry_ref *nuref){
+	ref=nuref;
+	return ref;
+}
 
+entry_ref *PlugClass::Ref(){
+	return ref;
+}
+/*
+These functions signal the plug-in that it's either safe to add or remove menu items from
+the menu passed as a parameter.
+*/
+void PlugClass::AddMenuItems(BMenu *menu) {
+}
+void PlugClass::RemoveMenuItems() {
+}

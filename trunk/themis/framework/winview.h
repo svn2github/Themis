@@ -40,17 +40,20 @@ Project Start Date: October 18, 2000
 #include "plugman.h"
 #include "plugclass.h"
 #include "htmlparser.h"
-class winview:public BView
- {
-  public:
-   winview(BRect frame,const char *name,uint32 resizem,uint32 flags);
-   void AttachedToWindow();
-   void MessageReceived(BMessage *msg);
-   BTextControl *locline;
-   BButton *stopbutton;
-   uint32 protocol;
-   HTMLParser *Parser;
-   sem_id proto_sem;
- };
+class winview:public BView {
+	public:
+		winview(BRect frame,const char *name,uint32 resizem,uint32 flags);
+		void AttachedToWindow();
+		void MessageReceived(BMessage *msg);
+		BTextControl *locline;
+		BButton *stopbutton;
+		int32 protocol;
+		HTMLParser *Parser;
+		sem_id proto_sem;
+		BMenuBar *menubar;
+		BMenu *filemenu;
+		BMenu *optionsmenu;
+	
+};
 
 #endif

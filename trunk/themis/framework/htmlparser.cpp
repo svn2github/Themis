@@ -28,29 +28,27 @@ Project Start Date: October 18, 2000
 */
 
 #include "htmlparser.h"
+#include "commondefs.h"
 #include <stdio.h>
+#include "nuresource.h"
 extern plugman *PluginManager;
 
 HTMLParser::HTMLParser()
-           :BLooper("html parser",B_DISPLAY_PRIORITY)
- {
-  Run();
- }
-HTMLParser::~HTMLParser()
- {
- }
-bool HTMLParser::QuitRequested()
- {
-  printf("HTMLParser quitting\n");
-  return true;
- }
-void HTMLParser::MessageReceived(BMessage *msg)
- {
-  switch(msg->what)
-   {
-    default:
-     {
-      BLooper::MessageReceived(msg);
-     }
-   }
- }
+	:BLooper("html parser",B_DISPLAY_PRIORITY){{
+	Run();
+}
+HTMLParser::~HTMLParser(){
+}
+bool HTMLParser::QuitRequested(){
+	printf("HTMLParser quitting\n");
+	return true;
+}
+void HTMLParser::MessageReceived(BMessage *msg){
+	switch(msg->what){
+		case ProtocolResponse: {
+		}break;
+		default:{
+			BLooper::MessageReceived(msg);
+		}
+	}
+}
