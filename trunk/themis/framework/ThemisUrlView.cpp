@@ -166,6 +166,34 @@ ThemisUrlTextView::ThemisUrlTextView(
 }
 
 void
+ThemisUrlTextView::MouseDown(
+	BPoint point )
+{
+	uint32 buttons;
+	BPoint pt;
+	GetMouse( &pt, &buttons, true );
+	
+	switch( buttons )
+	{
+		case B_SECONDARY_MOUSE_BUTTON :
+		{
+			/*
+			 * A right-click in urlview pastes clipboard content.
+			 * Fast and efficient. If you'd like popupmenu behaviour
+			 * with copy/pase, or preferences defined behaviour,
+			 * drop me a line.
+			 */
+
+			Paste( be_clipboard );
+											
+			break;
+		}
+		default :
+			BTextView::MouseDown( point );
+	}
+}
+
+void
 ThemisUrlTextView::Paste( BClipboard* clipboard )
 {
 	cout << "ThemisUrlTextView::Paste()" << endl;
@@ -193,7 +221,25 @@ ThemisUrlTextView::Paste( BClipboard* clipboard )
 	ptext.RemoveSet( "\'" );	// apostroph sign
 	ptext.RemoveSet( "\"" );	// quote
 	cout << "ptext: " << ptext.String() << endl;
-	SetText( ptext.String() );
+	
+	/*
+	 * If there is some partial selection, or the cursor is at an offset
+	 * greater 0, then either remove the currently selected text, or insert
+	 * the text at the given offset.
+	 */
+	
+	int32 off1 = 0, off2 = 0;
+	GetSelection( &off1, &off2 );
+	
+	if( off1 != off2 )
+	{
+		Delete( off1, off2 );
+	}
+	
+	// remove the selection
+	Select( off1, off1 );
+	// and add the text
+	Insert( ptext.String(), ptext.Length() );	
 }
 
 

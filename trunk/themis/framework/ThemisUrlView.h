@@ -59,8 +59,11 @@ class ThemisUrlTextView : public BTextView
 										uint32 resizingmode,
 										uint32 flags );
 		
-		virtual void				Paste( BClipboard* clipboard );
-	
+		void						MouseDown(
+										BPoint point );
+		
+		void						Paste(
+										BClipboard* clipboard );
 };
 
 #endif
