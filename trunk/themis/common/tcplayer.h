@@ -89,6 +89,8 @@ class mutex {
 
 struct connection {
 	int32 proto_id;
+	uint16 port;
+	
 	volatile int32 callbackdone;
 	int32 socket;
 	uint32 last_trans_time;//last transaction time
@@ -104,7 +106,7 @@ struct connection {
 #endif
 	int result;
 	volatile int32 requests;
-	BNetAddress *address;
+//	BNetAddress *address;
 	struct hostent *hptr;
 	in_addr **pptr;
 	BString addrstr;
@@ -118,7 +120,8 @@ struct connection {
 		next=NULL;
 		callbackdone=0;
 		proto_id=0;
-		address=new BNetAddress;
+		port=80;
+//		address=new BNetAddress;
 		time_to_live=TCP_DEFAULT_TIME_TO_LIVE;
 		result=0;
 		requests=0;
@@ -146,8 +149,8 @@ struct connection {
 		printf(" (%s)\n",open ? "open":"closed");
 		fflush(stdout);
 */		
-		if (address!=NULL)
-			delete address;
+//		if (address!=NULL)
+//			delete address;
 		if (open)
 			closesocket(socket);
 #ifdef USEOPENSSL

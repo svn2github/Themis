@@ -32,6 +32,7 @@ Project Start Date: October 18, 2000
 #include "httplayer.h"
 #include "protocol_plugin.h"
 #include "optionshandler.h"
+#include "smt.h"
 #include <View.h>
 #include <Window.h>
   extern "C" __declspec(dllexport)status_t Initialize(void *info=NULL);

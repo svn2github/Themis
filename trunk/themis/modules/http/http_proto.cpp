@@ -161,7 +161,7 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 						cur=new smt_st;
 						msg->FindString("mimetype",i,&str);
 						cur->type=new char[str.Length()+1];
-						str.CopyInto(cur->type);
+						str.CopyInto(cur->type,0,str.Length());
 						if (smthead==NULL) {
 							smthead=cur;
 						} else {

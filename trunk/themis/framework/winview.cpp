@@ -70,7 +70,7 @@ winview::winview(BRect frame,const char *name,uint32 resizem,uint32 flags)
 	r.top=20;
 	r.bottom=35;
 	BMessage *msg=new BMessage(OpenLocation);
-	locline=new BTextControl(r,"locationline","Location:",NULL,msg,B_FOLLOW_TOP|B_FOLLOW_LEFT_RIGHT,B_WILL_DRAW|B_FRAME_EVENTS|B_NAVIGABLE);
+	locline=new BTextControl(r,"locationline","Location:",NULL,msg,B_FOLLOW_TOP|B_FOLLOW_LEFT_RIGHT,B_WILL_DRAW|B_NAVIGABLE);
 	locline->SetDivider(50);
 	r=Bounds();
 	r.top=r.bottom-15;

@@ -1,5 +1,7 @@
 #include "cookieman.h"
 #include "cookiedefs.h"
+#include "commondefs.h"
+#include "plugman.h"
 #include <stdio.h>
 cookieman::cookieman(BMessage *info)
 	:BHandler("cookie_manager"),PlugClass(info) {

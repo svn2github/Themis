@@ -317,6 +317,7 @@ connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, b
 		connection *nu=new connection;
 		nu->proto_id=protoid;
 		nu->addrstr=host;
+		nu->port=port;
 //		nu->address->SetTo(host,port);
 		nu->hptr=gethostbyname(host);
 		nu->pptr=(struct in_addr**)nu->hptr->h_addr_list;
@@ -325,7 +326,7 @@ connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, b
 		servaddr.sin_port=htons(port);
 		nu->socket=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
 		//mtx->lock();
-		nu->address->GetAddr(servaddr);
+//		nu->address->GetAddr(servaddr);
 		nu->result=connect(nu->socket,(sockaddr *)&servaddr,sizeof(servaddr));
 #ifdef USEOPENSSL
 		if (ssl){
@@ -415,17 +416,31 @@ connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, b
 	char curhost[250];
 	uint16 curport=80;
 	char host2[250];
+	struct hostent *hptr;
+	in_addr **haddr;
+	
 	{
-		BNetAddress addr(host,port);
-		uint16 tport;
+//		BNetAddress addr(host,port);
+//		uint16 tport;
 		
-		addr.GetAddr(host2,&tport);
+//		addr.GetAddr(host2,&tport);
+		hptr=gethostbyname(host);
+		if (hptr!=NULL)
+			haddr=(struct in_addr**)hptr->h_addr_list;
 		
+/*
+		nu->hptr=gethostbyname(host);
+		nu->pptr=(struct in_addr**)nu->hptr->h_addr_list;
+		sockaddr_in servaddr;
+		memcpy(&servaddr.sin_addr,*nu->pptr,sizeof(struct in_addr));
+		servaddr.sin_port=htons(port);
+		nu->socket=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
+*/		
 	}
 	
 	while (current!=NULL){
-		current->address->GetAddr(curhost,&curport);
-		if (/*(strcasecmp(curhost,host)==0)*/(strcasecmp(curhost,host2)==0) && (curport==port))
+//		current->address->GetAddr(curhost,&curport);
+		if (/*(strcasecmp(curhost,host)==0)*/((*current->pptr)->s_addr==(*haddr)->s_addr) && (curport==port))
 			break;
 		current=current->next;		
 	}
@@ -433,7 +448,9 @@ connection* tcplayer::ConnectTo(int32 protoid,char *host,int16 port, bool ssl, b
 		current=new connection;
 		current->proto_id=protoid;
 		current->addrstr=host;
-		current->address->SetTo(host,port);
+		current->port=port;
+		
+//		current->address->SetTo(host,port);
 		connection *cur=conn_head;
 		if (cur==NULL){
 			conn_head=current;
@@ -808,11 +825,11 @@ printf("Send\n");
 	if ((*conn)->requests>0) {
 			char host[250];
 			int16 port;
-			(*conn)->address->GetAddr(host,(unsigned short*)&port);
+//			(*conn)->address->GetAddr(host,(unsigned short*)&port);
 #ifdef USEOPENSSL
-			*conn=ConnectTo((*conn)->proto_id,host,port,(*conn)->usessl,true);
+			*conn=ConnectTo((*conn)->proto_id,(char*)(*conn)->addrstr.String(),(*conn)->port,(*conn)->usessl,true);
 #else
-			*conn=ConnectTo((*conn)->proto_id,host,port,false,true);
+			*conn=ConnectTo((*conn)->proto_id,(char*)(*conn)->addrstr.String(),(*conn)->port,false,true);
 #endif
 			atomic_add(&(*conn)->requests,1);
 		
@@ -827,11 +844,11 @@ printf("Not connected (send)\n");
 		
 			char host[250];
 			int16 port;
-			(*conn)->address->GetAddr(host,(unsigned short*)&port);
+//			(*conn)->address->GetAddr(host,(unsigned short*)&port);
 #ifdef USEOPENSSL
-			*conn=ConnectTo((*conn)->proto_id,host,port,(*conn)->usessl);
+			*conn=ConnectTo((*conn)->proto_id,(char*)(*conn)->addrstr.String(),port,(*conn)->usessl);
 #else
-			*conn=ConnectTo((*conn)->proto_id,host,port,false);
+			*conn=ConnectTo((*conn)->proto_id,(char*)(*conn)->addrstr.String(),port,false);
 #endif
 	}
 //	printf("post connection status check.\n");
