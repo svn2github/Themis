@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 
+#include <AppDefs.h>
 #include <Message.h>
 
 #include "UIElement.h"
@@ -17,6 +18,7 @@ UIElement::UIElement(UIBox frame, TNodePtr node)
 	
 	parentElement		  = NULL;
 	UIElement::node 	  = node;
+	cursor				  = (BCursor *)B_CURSOR_SYSTEM_DEFAULT;	
 	
 	//The following values are UA dependants (we can choose them)
 	minHeight = minWidth = 0;
@@ -83,7 +85,7 @@ void UIElement::EDraw()
 			((UIElement *)nextLayer->ItemAt(i))->EDraw();	
 }
 
-void UIElement::PostTMessage(BMessage *message)
+void UIElement::EMessageReceived(BMessage *message)
 {
 	//Do nothing, implemented by derivated classes to
 	//manage incoming messages ala BHandler::MessageReceived(BMessage *message)

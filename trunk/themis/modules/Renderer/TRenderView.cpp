@@ -21,6 +21,7 @@ TRenderView::TRenderView(UIBox frame, TNodePtr node) : BView(frame.MarginRect(),
 	
 	currentMouseOver = this;
 	parentView 		 = this;
+	viewID			 = 0;
 	
 	UIElement::frame = frame;
 	
@@ -95,6 +96,8 @@ void TRenderView::MouseMoved(BPoint point, uint32 transit, const BMessage *messa
 	else {
 		onTop->EMouseMoved(point,B_ENTERED_VIEW,message);
 		currentMouseOver->EMouseMoved(point,B_EXITED_VIEW,message);
+		if (onTop->cursor != currentMouseOver->cursor)
+			SetViewCursor(onTop->cursor,true);
 		currentMouseOver = onTop;
 	}
 }

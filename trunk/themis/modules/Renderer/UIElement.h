@@ -4,6 +4,7 @@
 	
 	This code falls under the General Themis License.
 */
+#include <Cursor.h>
 #include <List.h>
 #include <Rect.h>
 #include <View.h>
@@ -33,7 +34,7 @@ class UIElement
 		virtual void			EMouseUp(BPoint point);
 		virtual	void			EMouseMoved(BPoint point, uint32 transit, const BMessage *message);
 				
-		virtual	void			PostTMessage(BMessage *message);
+		virtual	void			EMessageReceived(BMessage *message);
 								/*You keep the ownership of message
 								  arg: you must delete it yourself if needed.*/
 
@@ -55,6 +56,8 @@ class UIElement
 				UIElement 		*FindElementFor(BPoint point);
 
 				BView			*parentView;
+				
+				BCursor			*cursor;
 				
 				double			minHeight, maxHeight;
 				double 			minWidth , maxWidth;

@@ -34,6 +34,8 @@ class TRenderView : public BView , public UIElement
 		
 				BMessenger		userInterface; 
 				
+				int32			viewID;
+				
 	private:
 				//Pointer to the UIElement which has currently the mouse over it.
 				UIElement		*currentMouseOver;
