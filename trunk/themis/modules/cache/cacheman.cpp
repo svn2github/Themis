@@ -31,6 +31,7 @@ Project Start Date: October 18, 2000
 #include <stdio.h>
 #include <kernel/fs_index.h>
 #include <string.h>
+#include <String.h>
 #include <AppKit.h>
 cacheman::cacheman()
          :BHandler("cache_manager")
@@ -56,6 +57,7 @@ void cacheman::MessageReceived(BMessage *msg)
  }
 status_t cacheman::CheckMIME()
  {
+  //MIME type goodness...
   BMimeType mime(ThemisCacheMIME);
   if (!mime.IsInstalled())
    {
@@ -64,6 +66,133 @@ status_t cacheman::CheckMIME()
     be_app->GetAppInfo(&ai);
     mime.SetAppHint(&ai.ref);
    }
+  char type[B_MIME_TYPE_LENGTH];
+  mime.GetShortDescription(type);
+  if (strcasecmp(type,"Themis Cache File")!=0)
+   mime.SetShortDescription("Themis Cache File");
+  mime.GetLongDescription(type);
+  if (strcasecmp(type,"Themis Cache File")!=0)
+   mime.SetLongDescription("Themis Cache File");
+  mime.GetPreferredApp(type);
+  if (strcasecmp(type,ThemisAppSig)!=0)
+   mime.SetPreferredApp(ThemisAppSig);
+  BMessage attrinf;
+  mime.GetAttrInfo(&attrinf);
+  bool installall=false;
+  int32 attrcount=0;
+  if (attrinf.IsEmpty())
+   installall=true;
+  else
+   {
+    type_code typec;
+    attrinf.GetInfo("attr:name",&typec,&attrcount);
+   }
+  bool found=false;
+  //Make Themis:URL a visible attribute
+  for (int32 i=0;i<attrcount;i++)
+   {
+    BString item;
+    attrinf.FindString("attr:name",i,&item);
+    if (item=="Themis:URL")
+     {
+      found=true;
+      break;
+     }
+   }
+  if ((!found) || (installall))
+   {
+    attrinf.AddString("attr:name","Themis:URL");
+    attrinf.AddString("attr:public_name","URL");
+    attrinf.AddInt32("attr:type",B_STRING_TYPE);
+    attrinf.AddInt32("attr:width",200);
+    attrinf.AddInt32("attr:alignment",B_ALIGN_CENTER);
+    attrinf.AddBool("attr:public",true);
+    attrinf.AddBool("attr:editable",true);
+    attrinf.AddBool("attr:viewable",true);
+    attrinf.AddBool("attr:extra",false);
+   }
+  else
+   found=false;
+  //Make Themis:URL a visible attribute; done
+  //Make Themis:mime_type a visible attribute
+  for (int32 i=0;i<attrcount;i++)
+   {
+    BString item;
+    attrinf.FindString("attr:name",i,&item);
+    if (item=="Themis:mime_type")
+     {
+      found=true;
+      break;
+     }
+   }
+  if ((!found) || (installall))
+   {
+    attrinf.AddString("attr:name","Themis:mime_type");
+    attrinf.AddString("attr:public_name","MIME Type");
+    attrinf.AddInt32("attr:type",B_STRING_TYPE);
+    attrinf.AddInt32("attr:width",200);
+    attrinf.AddInt32("attr:alignment",B_ALIGN_CENTER);
+    attrinf.AddBool("attr:public",true);
+    attrinf.AddBool("attr:editable",true);
+    attrinf.AddBool("attr:viewable",true);
+    attrinf.AddBool("attr:extra",false);
+   }
+  else
+   found=false;
+  //Make Themis:mime_type a visible attribute; done
+  //Make Themis:name a visible attribute
+  for (int32 i=0;i<attrcount;i++)
+   {
+    BString item;
+    attrinf.FindString("attr:name",i,&item);
+    if (item=="Themis:name")
+     {
+      found=true;
+      break;
+     }
+   }
+  if ((!found) || (installall))
+   {
+    attrinf.AddString("attr:name","Themis:name");
+    attrinf.AddString("attr:public_name","Real Name");
+    attrinf.AddInt32("attr:type",B_STRING_TYPE);
+    attrinf.AddInt32("attr:width",200);
+    attrinf.AddInt32("attr:alignment",B_ALIGN_CENTER);
+    attrinf.AddBool("attr:public",true);
+    attrinf.AddBool("attr:editable",true);
+    attrinf.AddBool("attr:viewable",true);
+    attrinf.AddBool("attr:extra",false);
+   }
+  else
+   found=false;
+  //Make Themis:name a visible attribute; done
+  //Make Themis:host a visible attribute
+  for (int32 i=0;i<attrcount;i++)
+   {
+    BString item;
+    attrinf.FindString("attr:name",i,&item);
+    if (item=="Themis:host")
+     {
+      found=true;
+      break;
+     }
+   }
+  if ((!found) || (installall))
+   {
+    attrinf.AddString("attr:name","Themis:host");
+    attrinf.AddString("attr:public_name","Host Name");
+    attrinf.AddInt32("attr:type",B_STRING_TYPE);
+    attrinf.AddInt32("attr:width",200);
+    attrinf.AddInt32("attr:alignment",B_ALIGN_CENTER);
+    attrinf.AddBool("attr:public",true);
+    attrinf.AddBool("attr:editable",true);
+    attrinf.AddBool("attr:viewable",true);
+    attrinf.AddBool("attr:extra",false);
+   }
+  else
+   found=false;
+  //Make Themis:host a visible attribute; done
+  mime.SetAttrInfo(&attrinf);
   return B_OK;
  }
 status_t cacheman::CheckIndices()
