@@ -36,10 +36,48 @@ Project Start Date: October 18, 2000
 #include "smt.h"
 #include "image.h"
 #include "cacheplug.h"
+#include <Bitmap.h>
 
 extern "C" __declspec(dllexport)status_t Initialize(void *info=NULL);
 extern "C" __declspec(dllexport)status_t Shutdown(bool now=false);
 extern "C" __declspec(dllexport)PlugClass *GetObject(void);
+
+struct image_info_st
+{
+	uint32 cache_object_token;
+	void * renderer_bitmap_element;
+	const char *url;
+	bool image_available;
+	BBitmap *bitmap;
+	image_info_st *next;
+	image_info_st()
+	{
+		cache_object_token=0;
+		renderer_bitmap_element=NULL;
+		url=NULL;
+		image_available=false;
+		bitmap=NULL;
+		next=NULL;
+	}
+	~image_info_st()
+	{
+		cache_object_token=0;
+		renderer_bitmap_element=NULL;
+		if (url!=NULL)
+		{
+			memset((char*)url,0,strlen(url)+1);
+			delete url;		
+			url=NULL;
+		}
+		image_available=false;
+		if (bitmap!=NULL)
+			delete bitmap;
+		bitmap=NULL;
+		next=NULL;
+	}
+		
+};
+
 
 
 class ImageMan: public PlugClass {
@@ -56,7 +94,7 @@ class ImageMan: public PlugClass {
 		Image *imagelist;
 		uint32 cache_user_token;
 		CachePlug *CacheSys;
-		
+		image_info_st *image_list;
 	public:
 		ImageMan(BMessage *info=NULL);
 		~ImageMan();

@@ -127,7 +127,8 @@ ImageMan::ImageMan(BMessage *info)
 		printf("\t%s\n",cur->type);
 		cur=cur->next;
 	}
-	
+	image_list=NULL;
+		
 	
 }
 
@@ -178,6 +179,67 @@ status_t ImageMan::ReceiveBroadcast(BMessage *msg) {
 		case COMMAND_INFO: {
 			switch(msg->what) {
 				case IH_LOAD_IMAGE: {
+					const char *url;
+					msg->FindString("URL",&url);
+					image_info_st *current=image_list,*last;
+					while (current!=NULL)
+					{
+						if (strcmp(current->url,url)==0)
+						{
+							MessageSystem *origin=NULL;
+							msg->FindPointer("_broadcast_origin_pointer_",(void **)&origin);
+							BMessage reply(IH_IMAGE_LOADED);
+							reply.AddInt32("command",COMMAND_INFO);
+							if (current->image_available)
+							{
+								reply.AddPointer("bitmap_ptr",current->bitmap);
+								reply.AddInt32("frame_count",1);
+								reply.AddInt32("width",current->bitmap->Bounds().IntegerWidth());
+								reply.AddInt32("height",current->bitmap->Bounds().IntegerHeight());
+							}
+							
+							void * element;
+							msg->FindPointer("element",&element);
+							reply.AddPointer("element",element);
+							if (origin!=NULL)
+								origin->BroadcastReply(&reply);
+							break;
+						}
+						last=current;
+						current=current->next;
+						
+					}
+					if (current==NULL)
+					{
+						if (last!=NULL)
+						{
+							last->next=new image_info_st;
+							last=last->next;
+							msg->FindPointer("element",&last->renderer_bitmap_element);
+							last->url=new char[strlen(url)+1];
+							memset((char*)last->url,0,strlen(url)+1);
+							strcpy((char*)last->url,url);
+							//see if we have the image in the cache already...
+							if (CacheSys!=NULL)
+							{
+								last->cache_object_token=CacheSys->FindObject(cache_user_token,url);
+								if (last->cache_object_token>=0)
+								{//yes, we have it the cache!
+								
+								} else {
+									BMessage request(LoadingNewPage);
+									request.AddString("target_url",url);
+									request.AddInt32("command",COMMAND_RETRIEVE);
+									Broadcast(MS_TARGET_PROTOCOLS,&request);
+									
+								}
+								
+								
+							}
+							
+						}
+						
+					}
 					
 				}break;
 				case PlugInLoaded: {
