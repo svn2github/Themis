@@ -9,6 +9,7 @@
 
 #include "Globals.h"
 #include "TextElement.h"
+#include "TRenderView.h"
 
 #define RDEBUG 0
 

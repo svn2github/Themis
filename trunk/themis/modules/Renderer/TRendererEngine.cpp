@@ -31,7 +31,8 @@ int32 Renderer::PreProcess(void *data)
 
 	//The new view
 	TRenderView *view = new TRenderView(UIBox(800,450),cdata->document);
-	view->viewID = cdata->viewID;
+	view->viewID   = cdata->viewID;
+	view->renderer = cdata->renderer;
 
 	cdata->renderer->locker->Lock();
 	//Add the DOM & the view to the list of trees.
@@ -62,11 +63,11 @@ int32 Renderer::PreProcess(void *data)
 	//view->userInterface = userInterface;
 
 	//Do the Broadcasting to give the view to the UI
-	BMessage message(RENDERVIEW_POINTER);
-	message.AddInt32("command",COMMAND_INFO);
-	message.AddInt32("view_id",view->viewID);
-	message.AddPointer("renderview_pointer",(void *)view);
-	cdata->renderer->Broadcast(MS_TARGET_ALL,&message);
+	BMessage *message = new BMessage(RENDERVIEW_POINTER);
+	message->AddInt32("command",COMMAND_INFO);
+	message->AddInt32("view_id",view->viewID);
+	message->AddPointer("renderview_pointer",(void *)view);
+	cdata->renderer->Broadcast(MS_TARGET_ALL,message);
 						
 	//Start processing the DOM Tree
 	printf("RENDERER: START PROCESSING...\n");
@@ -75,14 +76,16 @@ int32 Renderer::PreProcess(void *data)
 	printf("RENDERER: DONE PROCESSING in %g microseconds.\n",real_time_clock_usecs() - time);
 
 	//Do the Broadcasting to say we are done rendering
-	message.what = UH_RENDER_FINISHED;
-	message.RemoveName("renderview_pointer");
+	message->what = UH_RENDER_FINISHED;
+	message->RemoveName("renderview_pointer");
 
 //Commented as make the thread crash. Might need some fixing or may be moved elsewhere
-//	cdata->renderer->Broadcast(MS_TARGET_URLHANDLER,&message);	
+//	cdata->renderer->Broadcast(MS_TARGET_URLHANDLER,message);	
 	
 	//Update the view
 	//cdata->view->Invalidate();
+	
+	delete message;
 		
 	//Show the View, will be removed as soon as the REAL window uses the view
 	//(new TRenderWindow((TRenderView *)UITrees.ItemAt(UITrees.CountItems()-1)))->Show();	
@@ -92,6 +95,10 @@ int32 Renderer::PreProcess(void *data)
 //That's the BIG one. Don't be scared and full it! Now !
 void Renderer::Process( TNodePtr node, UIElement *element)
 {
+	//Validity Check
+	if (node.get() == NULL)
+		return;
+		
 	TNodeListPtr children = node->getChildNodes();
 	int 			length	 = 0;
 	 
@@ -138,22 +145,23 @@ void Renderer::Process( TNodePtr node, UIElement *element)
 					if (!(/*non-replaced-inline-element and */css_display_v > 6))
 						GetCSSMinMaxValues(elementChild,uiChild);
 					
-/*****TITLE******/	if (strcmp(tagName,"TITLE") == 0){
-						TNodeListPtr    loc_children = node->getChildNodes();
+/*****TITLE*****/	if (strcmp(tagName,"TITLE") == 0){
+						TNodeListPtr    loc_children = child->getChildNodes();
 						int 			loc_length	 = loc_children->getLength();
 						
 						if (loc_length > 1)	 //Just for debug in case
 							printf("RENDERER: WOOPS HEADER HAS MORE THAN 1 CHILD\n");
 							
-						TNodePtr loc_child = children->item(0);
-						
+						TNodePtr loc_child = loc_children->item(0);
+
 						if (loc_child->getNodeType() == TEXT_NODE){
 							TTextPtr loc_textChild = shared_static_cast <TText> (loc_child);	
 							element->parentView->SetName(loc_textChild->getWholeText().c_str());
+							printf("RENDERER: Name of the view found: %s !!!!!!\n",element->parentView->Name());
 						}
 						else { // just for debug in case
 							printf("RENDERER: WOOPS TITLE CHILD IS NOT A TEXT_NODE\n");
-							printf("RENDERER: TYPE IS %s\n",(loc_child->getNodeType() == ELEMENT_NODE) ? "ELEMENT_NODE" : "OTHER");
+							printf("RENDERER: TYPE IS %s\n",loc_child->getNodeName().c_str());
 						}
 						
 						//We should jump that whole part I think by now

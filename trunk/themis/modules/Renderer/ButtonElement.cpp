@@ -16,7 +16,7 @@ ButtonElement::~ButtonElement()
 void ButtonElement::AttachedToWindow()
 {
 	//Set Message Target
-	SetTarget(parentView);
+	SetTarget((BHandler *)parentView);
 	
 	BButton::AttachedToWindow();
 }

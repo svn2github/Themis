@@ -13,6 +13,8 @@
 #ifndef _TRENDERVIEW_H_
 #define _TRENDERVIEW_H_
 
+class 	 Renderer;
+
 /*The top View which manage the tree of DrawElements.
   That's the view we draw in.*/
 class TRenderView : public BView , public UIElement
@@ -35,6 +37,8 @@ class TRenderView : public BView , public UIElement
 				BMessenger		userInterface; 
 				
 				int32			viewID;
+				
+				Renderer		*renderer;
 				
 	private:
 				//Pointer to the UIElement which has currently the mouse over it.

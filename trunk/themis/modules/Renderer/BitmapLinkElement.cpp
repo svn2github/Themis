@@ -2,8 +2,8 @@
 
 #include "BitmapLinkElement.h"
 
-BitmapLinkElement::BitmapLinkElement(UIBox frame,  TNodePtr node, BBitmap *bitmap, BBitmap *onMouseOver) 
-				  :BitmapElement(frame,node,bitmap)
+BitmapLinkElement::BitmapLinkElement(UIBox frame,  TNodePtr node, BBitmap *bitmap, const char *url) 
+				  :BitmapElement(frame,node,url)
 {
 	BitmapLinkElement::onMouseOver = onMouseOver;
 }

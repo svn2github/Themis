@@ -5,6 +5,7 @@
 #include <AppDefs.h>
 #include <Message.h>
 
+#include "TRenderView.h"
 #include "UIElement.h"
 #include "Utils.h"
 

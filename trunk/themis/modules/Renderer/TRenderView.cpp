@@ -10,7 +10,7 @@
 #include "TRenderView.h"
 #include "Utils.h"
 
-#define TEXT "Heya girls ! As you can see if you type enough text"
+#define  TEXT "Heya girls ! As you can see if you type enough text"
 
 TRenderView::TRenderView(UIBox frame, TNodePtr node) : BView(frame.MarginRect(),"God",B_FOLLOW_ALL_SIDES,B_WILL_DRAW | B_FRAME_EVENTS) , UIElement(UIBox(frame.Width(),frame.Height()),node)
 {	

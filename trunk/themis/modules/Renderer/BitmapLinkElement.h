@@ -12,7 +12,7 @@
 class BitmapLinkElement : public BitmapElement
 {
 	public:
-						BitmapLinkElement(UIBox frame,  TNodePtr node, BBitmap *bitmap, BBitmap *onMouseOver);
+						BitmapLinkElement(UIBox frame,  TNodePtr node, BBitmap *bitmap, const char *url);
 		
 		virtual			~BitmapLinkElement();
 		

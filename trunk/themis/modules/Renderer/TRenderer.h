@@ -64,9 +64,11 @@ class Renderer : public PlugClass
 				
 				void		BroadcastPointer(TRenderView *view);
 				
-				//Below spreads the dark land of Processing methods.
+		//Below spreads the dark land of Processing methods.
+		
 		//Because it's a thread_func it has to be static int32 with a single void param		
 		static	int32		PreProcess(void *data);
+		
 				void		Process(TNodePtr node, UIElement *view);
 				
 				int8		GetCSSDisplay(TElementPtr node);

@@ -16,6 +16,8 @@
 #ifndef _UIELEMENT_H_
 #define _UIELEMENT_H_
 
+class TRenderView;
+
 /*This class is never used as is, only derivated ones are.
   This class is the Base Drawing Element of the Rendered objects.
   It is meant to be used with our own objects inheriting from it of from BeOS
@@ -55,7 +57,7 @@ class UIElement
 
 				UIElement 		*FindElementFor(BPoint point);
 
-				BView			*parentView;
+				TRenderView		*parentView;
 				
 				BCursor			*cursor;
 				

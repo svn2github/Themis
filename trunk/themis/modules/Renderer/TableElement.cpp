@@ -1,6 +1,7 @@
 /* See header for more info */
 
 #include "TableElement.h"
+#include "TRenderView.h"
 #include "Utils.h"
 
 #include <String.h> //temporary

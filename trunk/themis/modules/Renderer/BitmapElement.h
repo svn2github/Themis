@@ -18,7 +18,7 @@
 class BitmapElement : public UIElement
 {
 	public:
-						BitmapElement(UIBox frame,  TNodePtr node, BBitmap *bitmap);
+						BitmapElement(UIBox frame,  TNodePtr node, const char *url);
 		virtual 		~BitmapElement();
 		
 		virtual	void	EDraw();
@@ -26,6 +26,7 @@ class BitmapElement : public UIElement
 	protected:
 				BBitmap *bitmap;		
 				BRect	bmpFrame;
+				int		frames;
 };
 #endif
 
