@@ -15,6 +15,7 @@
 #include <storage/Directory.h>
 #include <storage/Entry.h>
 #include <storage/Path.h>
+#include <support/String.h>
 
 #include <stdio.h>
 

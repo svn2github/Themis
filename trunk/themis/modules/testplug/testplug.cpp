@@ -82,6 +82,8 @@ testplug::testplug(BMessage *info):PlugClass(info,"Test Plug-in")//,MessageSyste
 	CacheSys=(CachePlug*)PlugMan->FindPlugin(CachePlugin);
 	if (CacheSys!=NULL)
 		cache_user_token=CacheSys->Register(Type(),"Test Plug-in");
+	site_id=url_id=-1;
+	uncached_file=NULL;
 }
 
 testplug::~testplug(){
@@ -152,12 +154,14 @@ status_t testplug::ReceiveBroadcast(BMessage *msg){
 					CacheSys=NULL;
 					
 				}break;
-		//		case ProtocolConnectionClosed:
+				case SH_LOADING_PROGRESS:
 				case ProtocolConnectionClosed: {
 					printf("[TESTPLUG] Returned data\n");
 					msg->PrintToStream();
 					bool request_done=false;
 					msg->FindBool("request_done",&request_done);
+					if (msg->HasInt32("cache_object_token"))
+					{
 					if (request_done) {
 						int32 cache_object_token=0;
 						msg->FindInt32("cache_object_token",&cache_object_token);
@@ -185,6 +189,59 @@ status_t testplug::ReceiveBroadcast(BMessage *msg){
 						size=0;
 						
 					}
+					} else
+					{
+							printf("TestPlug: Data being received is not cached...\n");
+						int32 sid,uid;
+						msg->FindInt32("site_id",&sid);
+						msg->FindInt32("url_id",&uid);
+						if (site_id==-1 && url_id==-1)
+						{
+							printf("TestPlug: I'm not doing anything at the moment, I guess I can save the data to disk...\n");
+
+							site_id=sid;
+							url_id=uid;
+							goto ReceiveData;
+						} else
+						{
+							if (site_id==sid && url_id==uid)
+							{
+								ReceiveData:
+								if (uncached_file==NULL)
+								{
+							printf("TestPlug: creating disk file\n");
+									uncached_file=new BFile("test.data",B_CREATE_FILE|B_ERASE_FILE|B_READ_WRITE);
+								}
+								unsigned char *data=NULL;
+								ssize_t bytes=0;
+								if (msg->HasData("raw_data",B_RAW_TYPE))
+								{
+							printf("TestPlug: writing data to disk...\n");
+									msg->FindData("raw_data",B_RAW_TYPE,(const void **)&data,&bytes);
+									uncached_file->Write(data,bytes);
+								}
+								bool request_done=false;
+								if (msg->HasBool("request_done"))
+									msg->FindBool("request_done",&request_done);
+								if (request_done)
+								{
+							printf("TestPlug: all done with file, going back to doing nothing...\n");
+									BNodeInfo *ni=new BNodeInfo(uncached_file);
+									const char *mime=NULL;
+									msg->FindString("mimetype",&mime);
+									if (mime==NULL)
+										mime="application/octet-stream\0";
+									ni->SetType(mime);
+									delete ni;
+									uncached_file->Sync();
+									delete uncached_file;
+									uncached_file=NULL;
+									site_id=-1;
+									url_id=-1;
+								}
+							}
+						}
+					}
 				}break;
 			}
 			
@@ -199,13 +256,11 @@ status_t testplug::ReceiveBroadcast(BMessage *msg){
 				BMessage types(SupportedMIMEType);
 				types.AddString("mimetype","text/html");
 				types.AddInt32("command",COMMAND_INFO);
-				PlugClass *plug=NULL;
-				if (msg->HasPointer("broadcaster_pointer")) {
-					msg->FindPointer("broadcaster_pointer",(void**)&plug);
+				MessageSystem *plug=NULL;
+				if (msg->HasPointer("_broadcast_origin_pointer_")) {
+					msg->FindPointer("_broadcast_origin_pointer_",(void**)&plug);
 					if (plug!=NULL)
 						plug->BroadcastReply(&types);
-				} else {	
-					Broadcast(replyto,msg);
 				}
 				
 			}

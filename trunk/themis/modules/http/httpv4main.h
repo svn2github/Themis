@@ -26,39 +26,14 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@users.sourceforge.net)
 Project Start Date: October 18, 2000
 */
-#ifndef _authvw
-#define _authvw
-#include <Window.h>
-#include <View.h>
-#include <TextControl.h>
-#include <TextView.h>
-#include <Button.h>
-#include <String.h>
-class authview:public BView {
-	private:
-	public:
-		BButton *ok,*cancel;
-		BTextControl *user,*pass;
-		BTextView *info;
-		authview(BRect frame);
-		~authview();
-		void AttachedToWindow();
-	
-};
-class AuthManager;
-struct http_request_info_st;
-class authwin:public BWindow {
-	private:
-		http_request_info_st *request;
-		authview *view;
-		BString realm;
-		bool update;
-		AuthManager *auth_manager;
-		int32 auth_method;
-	public:
-		authwin(AuthManager *AManager,const char *title,http_request_info_st *req,const char *rlm,int32 method,bool upd=false);
-		~authwin();
-		void MessageReceived(BMessage *msg);
-		bool QuitRequested();
-};
+#ifndef _http_addon_v4_
+#define _http_addon_v4_
+
+#include "protocol_plugin.h"
+
+extern "C" __declspec(dllexport)status_t Initialize(void *info=NULL);
+extern "C" __declspec(dllexport)status_t Shutdown(bool now=false);
+extern "C" __declspec(dllexport)protocol_plugin* GetObject(void);
+
+
 #endif

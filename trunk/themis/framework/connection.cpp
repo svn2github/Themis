@@ -32,6 +32,7 @@ Project Start Date: October 18, 2000
 #include <stdio.h>
 #include <OS.h>
 #include <errno.h>
+#include "networkableobject.h"
 #include "tcpmanager.h"
 using namespace _Themis_Networking_;
 
@@ -93,26 +94,25 @@ int32 Connection::CountConnections() {
 }
 int32 Connection::ConnectionResult() {
 	printf("ConnectionResult\n");
-	int32 result=0;
-	BAutolock alock(lock);
-	if (alock.IsLocked())
-		result=connection_result;
-	return result;
+	return connection_result;
 }
 bool Connection::NotifiedConnect() {
-	bool notified=false;
-	BAutolock alock(lock);
-	if (alock.IsLocked())
-		notified=notified_connect;
-	return notified;
+	return notified_connect;
 }
 void Connection::NotifyConnect(){
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
 		if (owner!=NULL) {
-			owner->ConnectionEstablished(this);
 			if (notified_connect==0)
-				atomic_add(&notified_connect,1);
+			{
+				uint32 status=0;
+				if (already_connected)
+					status=owner->ConnectionAlreadyExists(this);
+				else
+					status=owner->ConnectionEstablished(this);
+				if (status==NetworkableObject::STATUS_NOTIFICATION_SUCCESSFUL)
+					atomic_add(&notified_connect,1);
+			}
 		}
 		
 	}
@@ -120,20 +120,27 @@ void Connection::NotifyConnect(){
 }
 bool Connection::NotifiedDisconnect(){
 	bool notified=false;
-	BAutolock alock(lock);
-	if (alock.IsLocked())
+//	BAutolock alock(lock);
+	if (lock.LockWithTimeout(10000)==B_OK)
+	{
 		notified=notified_disconnect;
+		lock.Unlock();
+	}
 	return notified;
 }
 void Connection::NotifyDisconnect() {
-	BAutolock alock(lock);
-	if (alock.IsLocked()) {
+//	BAutolock alock(lock);
+//	if (alock.IsLocked()) {
 		if (owner!=NULL) {
-			owner->ConnectionTerminated(this);
 			if (notified_disconnect==0)
-				atomic_add(&notified_disconnect,1);
+			{
+				uint32 status=0;
+				status=owner->ConnectionTerminated(this);
+				if (status==NetworkableObject::STATUS_NOTIFICATION_SUCCESSFUL)
+					atomic_add(&notified_disconnect,1);
+			}
 		}
-	}
+//	}
 	
 }
 
@@ -156,6 +163,7 @@ Connection::Connection(NetworkableObject *NetObject,const char *host, uint16 por
 	nonblocking=async;
 }
 Connection::~Connection() {
+	printf("Connection: Connection to %s is going away.\n",host_name);
 	if (!IsBufferEmpty())
 		EmptyBuffer();
 	session_id=0;
@@ -167,40 +175,20 @@ Connection::~Connection() {
 		delete host_name;
 		host_name=NULL;
 	}
-#ifdef USEOPENSSL
-	if (server_cert!=NULL) {
-		X509_free(server_cert);
-		server_cert=NULL;
-	}
-	if (ssl!=NULL) {
-		SSL_free(ssl);
-		ssl=NULL;
-	}
-	
-	if (ssl_version!=NULL) {
-		memset((char*)ssl_version,0,strlen(ssl_version)+1);
-		free((char*)ssl_version);
-		ssl_version=NULL;
-	}
-	if (cipher_name!=NULL) {
-		memset((char*)cipher_name,0,strlen(cipher_name)+1);
-		free((char*)cipher_name);
-		cipher_name=NULL;
-	}
-	if (server_cert_subject!=NULL) {
-		memset((char*)server_cert_subject,0,strlen(server_cert_subject)+1);
-		free((char*)server_cert_subject);
-		server_cert_subject=NULL;
-	}
-	if (server_cert_issuer!=NULL) {
-		memset((char*)server_cert_issuer,0,strlen(server_cert_issuer)+1);
-		free((char*)server_cert_issuer);
-		server_cert_issuer=NULL;
-	}
-	
-#endif	
 //	delete lock;
 //	RemoveFromList(this);
+	if (ssl_server_name!=NULL)
+		delete ssl_server_name;
+ssl_server_name=NULL;
+	if (ssl_org_unit_name!=NULL)
+		delete ssl_org_unit_name;
+ssl_org_unit_name=NULL;
+	if (ssl_org_name!=NULL)
+		delete ssl_org_name;
+ssl_org_name=NULL;
+	if (ssl_country_name!=NULL)
+		delete ssl_country_name;
+ssl_country_name=NULL;
 	if (owner!=NULL) {
 		owner->DestroyingConnectionObject(this);
 		owner=NULL;
@@ -212,6 +200,7 @@ void Connection::OwnerRelease() {
 	if (alock.IsLocked()) {
 		printf("Connection::OwnerRelease\n");
 		owner=NULL;
+		StopUsing();
 		NewSession();
 	}
 }
@@ -223,9 +212,12 @@ void Connection::AssignNetObject(NetworkableObject *net_obj)
 	
 }
 void Connection::Connect() {
+	printf("Connection::Connect()\n");
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
 		if (IsConnected()) {
+			if (already_connected==0)
+				atomic_add(&already_connected,1);
 			if (owner!=NULL)
 				owner->ConnectionAlreadyExists(this);
 			if (notified_connect==0)
@@ -259,66 +251,78 @@ void Connection::Connect() {
 		
 		
 	}
+	printf("Connection::Connect() done\n");
 	
 }
 void Connection::ConnectionEstablished(){
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
 		if (use_ssl) {
-#ifdef USEOPENSSL
-			ssl=SSL_new(TCPMan->SSLContext());
-			SSL_set_cipher_list(ssl,SSL_TXT_ALL);
-			bio=BIO_new_socket(socket_id,BIO_NOCLOSE);
-			SSL_set_bio(ssl,bio,bio);
-			SSL_set_connect_state(ssl);
-			int32 error=0;
-			bool canexitloop=false;
-			
-			do {
-				connection_result=SSL_connect(ssl);
-				error=SSL_get_error(ssl,connection_result);
-				switch(error) {
-					case SSL_ERROR_NONE:
-						canexitloop=true;
-						break;
-					case SSL_ERROR_SSL:
-						canexitloop=true;
-						//something ugly must have happened.
-						break;
-					case SSL_ERROR_WANT_CONNECT:
-					case SSL_ERROR_WANT_WRITE:
-					case SSL_ERROR_WANT_READ:
-					default:
-						snooze(10000);
-						break;
-				}
-			}while (canexitloop==false);
-			if (connection_result==1) {
-				cipher=SSL_get_current_cipher(ssl);
-				cipher_used_bits=SSL_CIPHER_get_bits(cipher,(int*)&cipher_bits);
-				server_cert=SSL_get_peer_certificate(ssl);
-				ssl_version=SSL_get_version(ssl);
-				cipher_name=SSL_CIPHER_get_name(cipher);
-				server_cert_subject=X509_NAME_oneline(X509_get_subject_name(server_cert),0,0);
-				server_cert_issuer=X509_NAME_oneline(X509_get_issuer_name(server_cert),0,0);
-				printf("================\nSSL Information:\n================\n");
-				printf("SSL Version:\t\t%s\n",ssl_version);
-				printf("Certificate Subject:\t\trans_st%s\nIssuer:\t\t%s\n",server_cert_subject,server_cert_issuer);
-				printf("Cipher:\t\t%s\nBits:\t\t%ld\nBits Used:\t\t%ld\n",cipher_name,cipher_bits,cipher_used_bits);
-				printf("================\n");
-			} else {
-				use_ssl=false;
+			int cryptstatus;
+			printf("CRYPT_OK: %ld\n",CRYPT_OK);
+			cryptstatus=cryptCreateSession(&cryptSession,CRYPT_UNUSED,CRYPT_SESSION_SSL);
+			printf("session creation: %ld\n",cryptstatus);
+			cryptstatus=cryptSetAttribute(cryptSession,CRYPT_SESSINFO_NETWORKSOCKET,socket_id);
+			printf("passing network socket: %ld\n",cryptstatus);
+			cryptstatus=cryptSetAttribute(cryptSession,CRYPT_SESSINFO_ACTIVE,1);
+			printf("activating session: %ld\n",cryptstatus);
+			if (cryptStatusError(cryptstatus))
+			{
+			int errorcode,errorstrlen;
+			char *errstring;
+			cryptGetAttribute(cryptSession,CRYPT_ATTRIBUTE_INT_ERRORCODE,&errorcode);
+			cryptGetAttributeString(cryptSession,CRYPT_ATTRIBUTE_INT_ERRORMESSAGE,NULL,&errorstrlen);
+			errstring=new char[errorstrlen+1];
+			memset(errstring,0,errorstrlen+1);
+			cryptGetAttributeString(cryptSession,CRYPT_ATTRIBUTE_INT_ERRORMESSAGE,errstring,&errorstrlen);
+			printf("error: %ld - %s\n",errorcode,errstring);
+			delete errstring;
+			printf("Closing connection.\n");
+			last_error=ERROR_CONNECTION_RESET;
+			Disconnect();
+			NotifyDisconnect();
+			return;
 			}
-			
-#else
-			printf("SSL is not supported, so I'm trying to do ordinary communications...\n");
-#endif
+			if (cryptstatus==CRYPT_ATTRIBUTE_INT_ERRORMESSAGE)
+			{
+				cryptSetAttribute(cryptSession,CRYPT_SESSINFO_VERSION,0);
+				cryptstatus=cryptSetAttribute(cryptSession,CRYPT_SESSINFO_ACTIVE,1);
+			}
+			cryptGetAttribute(cryptSession,CRYPT_CTXINFO_ALGO,(int*)&cryptAlgo);
+			cryptGetAttribute(cryptSession,CRYPT_CTXINFO_MODE,(int*)&cryptMode);
+			cryptGetAttribute(cryptSession,CRYPT_SESSINFO_RESPONSE,&ssl_certificate);
+			int len=0;
+			printf("SSL Certificate Information:\n============================\n");
+			cryptGetAttributeString(ssl_certificate,CRYPT_CERTINFO_COMMONNAME,NULL,&len);
+			ssl_server_name=new char[len+1];
+			memset((char*)ssl_server_name,0,len+1);
+			cryptGetAttributeString(ssl_certificate,CRYPT_CERTINFO_COMMONNAME,(char*)ssl_server_name,&len);
+			printf("Host Name: %s\n",ssl_server_name);
+			cryptGetAttributeString(ssl_certificate,CRYPT_CERTINFO_ORGANIZATIONALUNITNAME,NULL,&len);
+			ssl_org_unit_name=new char[len+1];
+			memset((char*)ssl_org_unit_name,0,len+1);
+			cryptGetAttributeString(ssl_certificate,CRYPT_CERTINFO_ORGANIZATIONALUNITNAME,(char*)ssl_org_unit_name,&len);
+			printf("Org. Unit: %s\n",ssl_org_unit_name);
+			cryptGetAttributeString(ssl_certificate,CRYPT_CERTINFO_ORGANIZATIONNAME,NULL,&len);
+			ssl_org_name=new char[len+1];
+			memset((char*)ssl_org_name,0,len+1);
+			cryptGetAttributeString(ssl_certificate,CRYPT_CERTINFO_ORGANIZATIONNAME,(char*)ssl_org_name,&len);
+			printf("Organizaiton: %s\n",ssl_org_name);
+			cryptGetAttributeString(ssl_certificate,CRYPT_CERTINFO_COUNTRYNAME,NULL,&len);
+			ssl_country_name=new char[len+1];
+			memset((char*)ssl_country_name,0,len+1);
+			cryptGetAttributeString(ssl_certificate,CRYPT_CERTINFO_COUNTRYNAME,(char*)ssl_country_name,&len);
+			printf("Country: %s\n",ssl_country_name);
+			cryptGetAttribute(cryptSession,CRYPT_CTXINFO_KEYSIZE,(int*)&ssl_encrypt_bits);
+			ssl_encrypt_bits*=8;
+			printf("Strength: %ld bits\n============================\n",ssl_encrypt_bits);
+
 		}
 		if (notified_connect==0) {
 			first_data_received_time=real_time_clock_usecs();
-			if (owner!=NULL)
-				owner->ConnectionEstablished(this);
-			atomic_add(&notified_connect,1);
+//			if (owner!=NULL)
+//				owner->ConnectionEstablished(this);
+//			atomic_add(&notified_connect,1);
 			printf("connection %p: notified connect %ld\n",this,notified_connect);
 		}
 			
@@ -337,20 +341,18 @@ void Connection::Disconnect() {
 		connection_result=0;
 		if (socket_id>=0) {
 			lastusedtime=real_time_clock();
-#ifdef USEOPENSSL
-			if (ssl!=NULL)
-				SSL_shutdown(ssl);
-#endif
+			cryptDestroySession(cryptSession);
 			closesocket(socket_id);
+			already_connected=0;
 			socket_id=-1;
 		}
 	}
 }
 
 bool Connection::IsConnected() {
-	bool is_connected=false;
-	BAutolock alock(lock);
-	if (alock.IsLocked()) {
+	bool is_connected=false;//so that we don't accidentally disconnect prematurely if the lock times out
+//	BAutolock alock(lock);
+	if (lock.LockWithTimeout(25000)==B_OK) {
 		if (socket_id>=0) {
 			fd_set rset,wset,eset;
 			FD_ZERO(&rset);
@@ -372,8 +374,11 @@ bool Connection::IsConnected() {
 						last_error=ERROR_SOCKET_INTERRUPTED;
 						break;
 					case ECONNRESET:
-						printf("Connection::IsConnected Connection Reset\n");
+						//connection reset is usually a sign that the server closed the connection.
+//						printf("Connection::IsConnected Connection Reset\n");
+						NotifyDisconnect();
 						last_error=ERROR_CONNECTION_RESET;
+						is_connected=false;
 						break;
 					case ENOTCONN:
 						last_error=ERROR_NOT_CONNECTED;
@@ -387,6 +392,7 @@ bool Connection::IsConnected() {
 //					if (owner!=NULL)
 //						owner->ConnectionError(this);
 				}
+				lock.Unlock();
 				return false;
 			}
 			if (FD_ISSET(socket_id,&eset)) {
@@ -419,6 +425,7 @@ bool Connection::IsConnected() {
 							last_error=ERROR_UNKNOWN;
 						}
 					}
+					lock.Unlock();
 					return false;
 //					if (owner!=NULL)
 //						owner->ConnectionError(this);
@@ -431,14 +438,14 @@ bool Connection::IsConnected() {
 			}
 			 
 		}
-		
+		lock.Unlock();
 	}
 	return is_connected;
 }
 bool Connection::IsDataWaiting() {
 	bool waiting_data=false;
-	BAutolock alock(lock);
-	if (alock.IsLocked()) {
+//	BAutolock alock(lock);
+	if (lock.LockWithTimeout(10000)==B_OK) {
 		if (socket_id>=0) {
 			struct timeval tv;
 			tv.tv_sec=2;
@@ -447,33 +454,51 @@ bool Connection::IsDataWaiting() {
 			FD_ZERO(&fds);
 			FD_SET(socket_id,&fds);
 			int32 err=select(socket_id+1,&fds,NULL,NULL,&tv);
-			if (err<=0)
+			if (err<=0) {
+				lock.Unlock();
 				return false;
+			}
 			waiting_data=FD_ISSET(socket_id,&fds);
 		}
-		
+		lock.Unlock();
 	}
 	return waiting_data;
 }
 bool Connection::IsSecure() {
 	bool secured=false;
-	BAutolock alock(lock);
-	if (alock.IsLocked()) {
-#ifdef USEOPENSSL
-		if ((use_ssl) && (ssl!=NULL))
+//	BAutolock alock(lock);
+//	if (alock.IsLocked()) {
+		if ((use_ssl) && (ssl_encrypt_bits>0))
 			secured=true;
 		else
 			secured=false;
-#else
-		secured=false;
-#endif
-	}
+//	}
 	return secured;
+}
+uint16 Connection::EncryptionBits()
+{
+	return ssl_encrypt_bits;
+}
+const char *Connection::SSLServerName()
+{
+	return ssl_server_name;
+}
+const char *Connection::SSLOrgName()
+{
+	return ssl_org_name;
+}
+const char *Connection::SSLOrgUnitName()
+{
+	return ssl_org_unit_name;
+}
+const char *Connection::SSLCountry()
+{
+	return ssl_country_name;
 }
 
 void Connection::Init() {
-bytes_read_by_owner=0L;
-	
+	bytes_read_by_owner=0L;
+	already_connected=0L;
 	session_bytes_sent=0L;
 	session_bytes_received=0L;
 	total_bytes_sent=0L;
@@ -493,18 +518,14 @@ bytes_read_by_owner=0L;
 	last_error=0;
 	notified_connect=0;
 	notified_disconnect=0;
-	
-#ifdef USEOPENSSL
-	ssl=NULL;
-	cipher=NULL;
-	cipher_used_bits=0;
-	cipher_bits=0;
-	ssl_version=NULL;
-	cipher_name=NULL;
-	server_cert=NULL;
-	server_cert_subject=NULL;
-	server_cert_issuer=NULL;
-#endif	
+	bytes_per_second=0L;
+	first_data_received_time=0L;
+	ssl_encrypt_bits=0;
+	ssl_server_name=NULL;
+	ssl_org_unit_name=NULL;
+	ssl_org_name=NULL;
+	ssl_country_name=NULL;
+	cryptSession=0;
 	AddToList(this);
 }
 bool Connection::IsBufferEmpty() {
@@ -535,7 +556,7 @@ int32 Connection::NewSession() {
 		owner=NULL;
 		id=session_id;
 		lastusedtime=real_time_clock();
-		first_data_received_time=0;
+		first_data_received_time=0L;
 		session_bytes_sent=0L;
 		session_bytes_received=0L;
 		session_bytes_out=0L;
@@ -543,54 +564,22 @@ int32 Connection::NewSession() {
 		bytes_per_second=0;
 		notified_connect=0;
 		notified_disconnect=0;
+		atomic_add(&already_connected,1);
 		if (!IsBufferEmpty())
 			EmptyBuffer();
 	}
 	return id;
 }
 double Connection::BytesPerSecond(){
-	double val=0.0;
-	BAutolock alock(lock);
-	if (alock.IsLocked())
-		val=bytes_per_second;
-	return val;
+	return bytes_per_second;
 }
 
 status_t Connection::AppendData(void *data, off_t size) {
-	printf("[AppendData]\n");
 	fflush(stdout);
 	status_t status=B_BUSY;
-	BAutolock alock(lock);
-	if (alock.IsLocked()) {
-/*
-		buffer_list_st *nubuff=new buffer_list_st;
-		if (nubuff==NULL) {
-			last_error=ERROR_NO_MEMORY;
-			if (owner!=NULL)
-				owner->ConnectionError(this);
-			return B_NO_MEMORY;
-		}
-		
-		nubuff->buffer=new Buffer(data,size);
-		if (nubuff->buffer==NULL) {
-			delete nubuff;
-			last_error=ERROR_NO_MEMORY;
-			if (owner!=NULL)
-				owner->ConnectionError(this);
-			
-			return B_NO_MEMORY;
-		}
-		nubuff->next=NULL;
-		if (buffer_in==NULL) {
-			buffer_in=nubuff;
-		} else {
-			buffer_list_st *next=buffer_in;
-//			if (next!=NULL)
-				while (next->next!=NULL)
-					next=next->next;
-			next=nubuff;
-		}
-*/
+//	BAutolock alock(lock);
+//	if (alock.IsLocked()) {
+
 		buffer_list_st *current=buffer_in;
 		if (current==NULL) {
 			buffer_in=new buffer_list_st;
@@ -606,15 +595,15 @@ status_t Connection::AppendData(void *data, off_t size) {
 		status=B_OK;
 		lastusedtime=real_time_clock();
 		printf("[Connection::AppendData] Buffer is now %Ld bytes long\n",DataSize());
-	}
+//	}
 	return status;
 }
 off_t Connection::Receive(void *data, off_t max_size) {
 	printf("[Receive]\n");
 	fflush(stdout);
 	off_t size=0L;
-	BAutolock alock(lock);
-	if (alock.IsLocked()) {
+//	BAutolock alock(lock);
+	if (lock.LockWithTimeout(10000)==B_OK) {
 		buffer_list_st *current=buffer_in;
 		buffer_list_st *prev;
 		memset((unsigned char*)data,0,max_size);
@@ -641,19 +630,20 @@ off_t Connection::Receive(void *data, off_t max_size) {
 		session_bytes_out+=size;
 		printf("[Connection::Receive] %ld bytes have been transferred to owner. %ld bytes left in buffer.\n\n",session_bytes_received,DataSize());
 		fflush(stdout);
+		lock.Unlock();
 	}
 	return size;
 }
 off_t Connection::DataSize() {
 	off_t size=0L;
-	BAutolock alock(lock);
-	if (alock.IsLocked()) {
+	if (lock.LockWithTimeout(15000)==B_OK) {
 		buffer_list_st *current=buffer_in;
 		while(current!=NULL) {
 			if (current->buffer!=NULL)
 				size+=current->buffer->Size();
 			current=current->next;
-		}	
+		}
+		lock.Unlock();
 	}
 	return size;	
 }
@@ -702,12 +692,8 @@ off_t Connection::Send(void *data, off_t size) {
 		if (socket_id>=0) {
 			if (use_ssl) {
 				try {
-#ifdef USEOPENSSL
-			
-					bytes=SSL_write(ssl,(const char*)data,size);
-#else
-					bytes=send(socket_id,(char *)data, size,0);
-#endif
+					cryptPushData(cryptSession,data,size,(int*)&bytes);
+					cryptFlushData(cryptSession);
 				}
 				catch(...) {
 				}
@@ -715,9 +701,39 @@ off_t Connection::Send(void *data, off_t size) {
 			} else				
 				bytes=send(socket_id,(char *)data, size,0);
 		}
-		session_bytes_sent+=bytes;
-		total_bytes_sent+=bytes;
-		TCPMan->AddBytesSent(bytes);
+		if (bytes==-1)
+		{
+				switch(errno) {
+					case EWOULDBLOCK:
+						last_error=ERROR_WOULD_BLOCK;
+						break;
+					case EINTR:
+						last_error=ERROR_SOCKET_INTERRUPTED;
+						break;
+					case ECONNRESET:
+						//connection reset is usually a sign that the server closed the connection.
+//						printf("Connection::IsConnected Connection Reset\n");
+						NotifyDisconnect();
+						last_error=ERROR_CONNECTION_RESET;
+						break;
+					case ENOTCONN:
+						last_error=ERROR_NOT_CONNECTED;
+						break;
+					case EBADF:
+						last_error=ERROR_INVALID_SOCKET;
+						break;
+					default: {
+						printf("%d\t%s\n",errno,strerror(errno));
+						last_error=ERROR_UNKNOWN;
+					}
+				}
+		}
+		else
+		{
+			session_bytes_sent+=bytes;
+			total_bytes_sent+=bytes;
+			TCPMan->AddBytesSent(bytes);
+		}
 		lastusedtime=real_time_clock();
 	}
 	return bytes;
@@ -731,10 +747,22 @@ int32 Connection::IsInUse() {
 }
 void Connection::StartUsing() 
 {
+	printf("Connection::StartUsing beginning.\n");
 	BAutolock alock(lock);
 	if (alock.IsLocked())
 		if (in_use==0)
-			atomic_add(&in_use,1);
+		{
+			in_use=1;
+//			atomic_add(&in_use,1);
+//			if (already_connected==0)
+//				atomic_add(&already_connected,1);
+//			if (owner!=NULL)
+//				owner->ConnectionAlreadyExists(this);
+//			if (notified_connect==0)
+//				atomic_add(&notified_connect,1);
+			
+		}
+		printf("Connection::StartUsing done.\n");
 }
 void Connection::StopUsing()
 {
@@ -753,48 +781,82 @@ bool Connection::Matches(const char *host, uint16 port) {
 }
 void Connection::RetrieveData() {
 //	printf("[RetrieveData]\n");
-	fflush(stdout);
-	BAutolock alock(lock);
-	if (alock.IsLocked()) {
+//	fflush(stdout);
+//	BAutolock alock(lock);
+		if (lock.LockWithTimeout(15000)==B_OK) {
 		int16 size=10240;
 		int16 bytes=0;
 		unsigned char *data=new unsigned char[size];
+			if (!IsInUse())
+			{
+				if (use_ssl) {
+					try {
+						cryptPopData(cryptSession,(unsigned char*)data,size,(int*)&bytes);
+					}
+					catch(...) {
+					}
+			
+				} else				
+					bytes=recv(socket_id,(char *)data, size,0);
+				delete data;
+				size=0;
+				bytes=0;
+				lock.Unlock();
+				return;
+			}
 		memset(data,0,size);
 		if (socket_id>=0) {
+			if (!nonblocking)
+			{//set the socket to non-blocking mode for the receive then set back
+				int option=1;
+				setsockopt(socket_id,SOL_SOCKET,SO_NONBLOCK,&option,sizeof(option));
+			}
 			
 			if (use_ssl) {
 				try {
-#ifdef USEOPENSSL
-			
-					bytes=SSL_read(ssl,(char*)data,size);
-#else
-					bytes=recv(socket_id,(char *)data, size,0);
-#endif
+					cryptPopData(cryptSession,(unsigned char*)data,size,(int*)&bytes);
 				}
 				catch(...) {
 				}
 		
 			} else				
 				bytes=recv(socket_id,(char *)data, size,0);
+			if (!nonblocking)
+			{//set the socket to non-blocking mode for the receive then set back
+				int option=0;
+				setsockopt(socket_id,SOL_SOCKET,SO_NONBLOCK,&option,sizeof(option));
+			}
 		}
+		
 		if (bytes>0) { //negative byte counts are errors... zero ones are useless
-			printf("[RetrieveData] just retrieved %ld bytes\n",bytes);
+//			printf("[RetrieveData] just retrieved %ld bytes\n",bytes);
 			fflush(stdout);
 			//call the networkable object's data waiting function.
 			
+				if (first_data_received_time==0L)
+				{
+//					printf("setting first_data_received_time\n");
+					first_data_received_time=real_time_clock_usecs();
+				}
 			bigtime_t currenttime=real_time_clock_usecs();
-			float tdiff=(currenttime-first_data_received_time)/1000000.0;
-			if (tdiff<=(1.0/1000000.0))
-				tdiff=1.0;
-			session_bytes_received+=size;
-			bytes_per_second=(session_bytes_received*1.0)/tdiff;
+
+			double tdiff=(currenttime-first_data_received_time)/1000000.0;
+//			printf("%Ld bytes received\t%1.2f seconds\n",session_bytes_received,tdiff);
+			session_bytes_received+=bytes;
+			if (tdiff<1.0)
+			{
+				bytes_per_second=session_bytes_received*(1.0/tdiff);
+			} else {
+				bytes_per_second=session_bytes_received/(tdiff/1.0);
+			}
 			printf("Estimated Bytes Per Second: %1.4f\n",bytes_per_second);
-			total_bytes_received+=size;
-			TCPMan->AddBytesReceived(size);
+			total_bytes_received+=bytes;
+			TCPMan->AddBytesReceived(bytes);
 			AppendData(data,bytes);
 			lastusedtime=real_time_clock();
-			if (owner!=NULL)
-				owner->DataIsWaiting(this);
+			
+//			if (owner!=NULL)
+//				owner->DataIsWaiting(this);
 		} else {
 			if (bytes<0) {
 				//notify of errors...
@@ -830,15 +892,12 @@ void Connection::RetrieveData() {
 		memset(data,0,size);
 		delete data;
 		data=NULL;
-		
-	}
+		lock.Unlock();
+		}
+//		printf("Connection::Retrieve() is done.\n");
 }
 int32 Connection::LastUsed(){
-	int32 lasttime=0;
-	BAutolock alock(lock);
-	if (alock.IsLocked())
-		lasttime=lastusedtime;
-	return lasttime;
+	return lastusedtime;
 }
 void Connection::TimeOut() {
 	BAutolock alock(lock);
@@ -852,11 +911,7 @@ void Connection::TimeOut() {
 
 int32 Connection::Error() 
 {
-	int32 errnum=BASE_ERROR;
-	BAutolock alock(lock);
-	if (alock.IsLocked())
-		errnum=last_error;
-	return errnum;
+	return last_error;
 }
 void Connection::ClearError() 
 {

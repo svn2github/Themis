@@ -83,8 +83,8 @@ FRAMEWORKSOURCES= \
 	framework/protocol_plugin.cpp \
 	framework/SiteHandler.cpp \
 	framework/SiteEntry.cpp \
-	framework/UrlEntry.cpp
-#	framework/UrlEntry.cpp \
+	framework/UrlEntry.cpp \
+	framework/date.cpp
 #	framework/UrlHandler.cpp
 RENDERERSOURCES= \
 	Renderer/BitmapElement.cpp \
@@ -104,7 +104,6 @@ RENDERERSOURCES= \
 	Renderer/Utils.cpp
 COMMONSOURCES= \
 	common/plugclass.cpp \
-	common/tcplayer.cpp \
 	common/msgsystem.cpp \
 	common/plugman.cpp \
 	common/cacheplug.cpp \
@@ -113,13 +112,16 @@ COMMONSOURCES= \
 	common/stripwhite.cpp
 #add similar lines for new plugins, libraries, etc.
 HTTPADDONSOURCES= \
-	http/http_main.cpp \
-	http/http_proto.cpp \
-	http/httplayer.cpp \
 	http/optionshandler.cpp \
 	http/authvw.cpp \
-	http/cookieman.cpp
-#the above lines are commented out in part or whole because the new sources are not yet ready to go into the repository
+	http/cookieman.cpp \
+	http/httpv4main.cpp \
+	http/httpv4.cpp \
+	http/authmanager.cpp \
+	http/authtype.cpp \
+	http/authtypedigest.cpp \
+	http/authtypebasic.cpp \
+	http/uriprocessor.cpp
 CACHEADDONSOURCES= \
 	cache/cacheman.cpp \
 	cache/cache_main.cpp \
@@ -319,32 +321,27 @@ endif
 #	#endif
 #While this doesn't have a major effect on current code, the new
 #networking support will utilize it.
-NETWORKLIBS=-lsocket -lbind -lbnetapi -lopenssl
+NETWORKLIBS=-lsocket -lbind  -lopenssl
 NETWORKING=NONE
 # by default, debugging information will be included. to turn it off, remove or comment out (#) the -g
 # on the next line 
-COMPILE_FLAGS=-g -D_Themis_ -DDEBUG -DNEWNET #-Wall -DNEWNET
+COMPILE_FLAGS=-g -D_Themis_ -DDEBUG -DNEWNET #-Wall
+ifeq "$(shell if [ -f $(BASE_APP_LIB_INSTALL_DIR)libcl.so ] ; then echo 0; else unzip -d $(BASE_APP_LIB_INSTALL_DIR) 3rd_party/cryptlib_netserver.zip;  ln -s libcl.so.3.1.0 $(BASE_APP_LIB_INSTALL_DIR)libcl.so ; echo 1; fi)" "1"
+endif
+ifeq "$(shell if [ -f $(BASE_APP_LIB_INSTALL_DIR)libz.so ] ; then echo 0; else unzip -d $(BASE_APP_LIB_INSTALL_DIR) 3rd_party/libz.zip; echo 1; fi)" "1"
+endif
 ifeq "$(shell if [ -f /boot/develop/headers/be/bone/sys/socket.h ] ; then echo 1 ; else echo 0 ; fi)" "1"
-	NETWORKLIBS=-lsocket -lbind -lbnetapi -I/boot/develop/headers/be/bone/ 
+	NETWORKLIBS=-lsocket -lbind  -I/boot/develop/headers/be/bone/ 
 	NETWORKING=BONE
 	COMPILE_FLAGS+= -DUSEBONE -D_ZETA_USING_DEPRECATED_API_
 else
-	NETWORKLIBS=-lnet -lnetapi
+	NETWORKLIBS=-lnet 
 	NETWORKING=net_server
 ifeq "$(PLATFORM)" "i586"
 	COMPILE_FLAGS+= -DUSENETSERVER -D _Themis_
 else
 	COMPILE_FLAGS+= -d USENETSERVER -d _Themis_
 endif
-endif
-ifeq "$(shell if [ -f /boot/develop/lib/x86/libopenssl.so ] ; then echo 1 ; else echo 0 ; fi)" "1"
-	NETWORKLIBS+= -lopenssl
-	COMPILE_FLAGS+= -DUSEOPENSSL
-else
-	ifeq "$(shell if [ -f /boot/develop/lib/x86/libcrypto.so ] ; then echo 1 ; else echo 0 ; fi)" "1"
-		NETWORKLIBS+= -lcrypto -lssl
-		COMPILE_FLAGS+= -DUSEOPENSSL
-	endif
 endif
 ifeq "$(PLATFORM)" "ppc"
 	DEPSWITCH=-make
@@ -433,7 +430,7 @@ libs: domlib
 dist: all zip
 	@echo "Done."
 zip:
-	@-rm Themis.zip 
+	-@rm Themis.zip 
 	@zip -ry9D Themis.zip Themis/
 	@echo "Themis.zip has been created."
 	
@@ -444,7 +441,7 @@ $(BASE_INSTALL_DIR)Themis: framework/themis.rsrc $(foreach file,$(notdir $(FRAME
 #$(BASE_INSTALL_DIR)Themis: frameworkdepends commondepends frameworkobjects commonobjects
 	@echo "Linking Themis."
 	@$(CC) -o$(BASE_INSTALL_DIR)Themis $(foreach file,$(notdir $(FRAMEWORKSOURCES:.cpp=.o)),$(FRAMEWORK_OBJECT_DIR)$(file)) $(foreach file,$(notdir $(COMMONSOURCES:.cpp=.o)),$(COMMON_OBJECT_DIR)$(file)) -Xlinker $(LDFLAGS) -L ./ \
-		-L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) $(NETWORKLIBS) $(STDLIBS) -lstdc++.r4 -ltranslation # -ldom
+		-L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) $(NETWORKLIBS) $(STDLIBS)  -O0 -lcl -lstdc++.r4 -ltranslation  # -ldom /boot/develop/lib/x86/i386-mcount.o
 	@echo "Done linking, adding resource file."
 	@xres -o $(BASE_INSTALL_DIR)Themis framework/themis.rsrc
 	@mimeset -F $(BASE_INSTALL_DIR)Themis
@@ -642,7 +639,7 @@ $(BASE_ADDONS_OBJECT_DIR)imageh/%.o: $(BASE_ADDON_SOURCE_DIR)imageh/%.cpp $(BASE
 
 #html parser add-on
 htmlpaddon: $(BASE_ADDON_INSTALL_DIR)html_parser.so domlib
-$(BASE_ADDON_INSTALL_DIR)html_parser.so:  $(BASE_INSTALL_DIR)Themis $(COMMONOBJ) $(foreach file,$(HTMLPARSERSOURCES),$(BASE_ADDONS_OBJECT_DIR)HTMLParser/$(notdir $(file:.cpp=.o))) #domlib htmlparserdepends htmlparserobjects
+$(BASE_ADDON_INSTALL_DIR)html_parser.so:  $(BASE_INSTALL_DIR)Themis $(foreach file,$(HTMLPARSERSOURCES),$(BASE_ADDONS_OBJECT_DIR)HTMLParser/$(notdir $(file:.cpp=.o))) #domlib htmlparserdepends htmlparserobjects
 	@echo "Linking HTML Parser add-on $@" 
 	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)html_parser.so $(foreach file,$(notdir $(HTMLPARSERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)HTMLParser/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=html_parser.so -L ./ -L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR)  -lbe -lroot -ldom -lstdc++.r4 _APP_
 	@echo "HTML Parser add-on is now linked. Doing mimeset."
@@ -702,9 +699,9 @@ $(BASE_ADDONS_OBJECT_DIR)DOMView/%.o: $(BASE_ADDON_SOURCE_DIR)DOMView/%.cpp $(BA
 
 #http add-on
 httpaddon: $(BASE_ADDON_INSTALL_DIR)http_plugin.so
-$(BASE_ADDON_INSTALL_DIR)http_plugin.so: $(BASE_INSTALL_DIR)Themis $(COMMONOBJ) $(foreach file,$(notdir $(HTTPADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)http/$(file)) #commondepends httpaddondepends commonobjects httpaddonobjects
+$(BASE_ADDON_INSTALL_DIR)http_plugin.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(notdir $(HTTPADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)http/$(file)) #commondepends httpaddondepends commonobjects httpaddonobjects
 	@echo "Linking http add-on" 
-	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)http_plugin.so  $(foreach file,$(notdir $(HTTPADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)http/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=http_plugin.so -L ./ -L $(BELIBRARIES)  $(NETWORKLIBS) $(STDLIBS) -ltranslation _APP_
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)http_plugin.so  $(foreach file,$(notdir $(HTTPADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)http/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=http_plugin.so -L ./ -L$(BASE_APP_LIB_INSTALL_DIR) -lz -lcl -L $(BELIBRARIES)  $(NETWORKLIBS) $(STDLIBS) -ltranslation  _APP_
 	@echo "HTTP add-on is now linked. Doing mimeset."
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)http_plugin.so
 	@echo "HTTP plug-in compiled and linked successfully."
@@ -724,7 +721,7 @@ httpaddonobjects: $(COMMON_OBJECT_DIR)plugman.o $(COMMON_OBJECT_DIR)plugclass.o 
 	
 $(BASE_ADDONS_DEPENDS_DIR)http/%.d:  $(BASE_ADDON_SOURCE_DIR)http/%.cpp 
 	@echo "HTTP: Updating dependency file $(notdir $@)"
-	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)http/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)http/"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/add-ons\/http\/\1.o depends\/add-ons\/http\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
+	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)http/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)http/"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $(COMPILE_FLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/add-ons\/http\/\1.o depends\/add-ons\/http\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
 
 $(BASE_ADDONS_OBJECT_DIR)http/%.o: $(BASE_ADDON_SOURCE_DIR)http/%.cpp $(BASE_ADDONS_DEPENDS_DIR)http/%.d
 	@echo "HTTP: Updating object file $(notdir $@)"

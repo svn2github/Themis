@@ -36,20 +36,20 @@ Project Start Date: October 18, 2000
 #ifndef _tcp_manager_
 #define _tcp_manager_
 
-#include "connection.h"
-#include "networkableobject.h"
+//#include "connection.h"
+//#include "networkableobject.h"
 #include <OS.h>
 #include <Locker.h>
 namespace _Themis_Networking_ {
-//	class Connection;
-	
+
+	class NetworkableObject;
+	class Connection;
 /*!
 \brief The TCP/IP connection manager class.
 
 This class is what the older TCPLayer class should have been. It is designed to handle
 multiple connections to multiple hosts quickly and efficiently.
 */
-	class Connection;
 	class TCPManager {
 		private:
 		friend class Connection;
@@ -72,20 +72,6 @@ multiple connections to multiple hosts quickly and efficiently.
 
 */
 			BLocker lock;
-#ifdef USEOPENSSL
-/*!
-\brief SSL method if available.
-
-
-*/
-			SSL_METHOD *sslmeth;
-/*!
-\brief SSL context if available.
-
-
-*/
-			SSL_CTX* sslctx;
-#endif
 /*!
 \brief The number of connection sessions reused.
 
@@ -186,21 +172,7 @@ does not terminate the connection (actively at least).
 
 */
 			bool SSLEnabled();
-#ifdef USEOPENSSL
-/*!
-\brief Returns the SSL method if available.
-
-
-*/
-			SSL_METHOD *SSLMethod();
-/*!
-\brief Returns the SSL context if available.
-
-
-*/
-			SSL_CTX *SSLContext();
-#endif
-		static const int32	DEFAULT_TIMEOUT	=	300;
+		static const int32	DEFAULT_TIMEOUT	=	30;
 		
 	};
 };

@@ -33,6 +33,7 @@ Project Start Date: October 18, 2000
 #include <Autolock.h>
 #include <signal.h>
 #include "connection.h"
+#include "networkableobject.h"
 using namespace _Themis_Networking_;
 TCPManager *TCPManager::_manager_=NULL;
 sem_id TCPManager::process_sem_1=0;
@@ -40,6 +41,7 @@ sem_id TCPManager::process_sem_2=0;
 
 TCPManager::TCPManager() {
 	Init();
+	cryptInit();
 //	lock=new BLocker(true);
 	Connection::TCPMan=this;
 	Connection::ListLock=new BLocker(true);
@@ -47,29 +49,6 @@ TCPManager::TCPManager() {
 	process_sem_2=create_sem(1,"tcp_manager_sem2");
 	signal(SIGALRM,&AlarmHandler);
 	
-#ifdef USEOPENSSL
-	printf("Initializing OpenSSL...");
-	
-	SSL_library_init();
-	SSL_load_error_strings();
-		SSLeay_add_ssl_algorithms();
-	sslmeth = SSLv23_client_method();
-	sslctx=SSL_CTX_new (sslmeth);
-	SSL_CTX_set_options(sslctx, SSL_OP_ALL);
-	SSL_CTX_set_default_verify_paths(sslctx);
-	unsigned char buf[17];
-	memset(buf,0,17);
-	RAND_egd(tmpnam(NULL));
-	 do{
-		for (int i=0;i<16;i++) {
-			srand(real_time_clock());
-			buf[i]=(real_time_clock_usecs()/system_time())%128+(rand()%128);
-		}
-		RAND_seed(buf,16);
-	}while(RAND_status()!=1);
-	printf("done.\n");
-	
-#endif
 }
 TCPManager::~TCPManager() {
 	printf("destroying connections...");
@@ -88,19 +67,11 @@ TCPManager::~TCPManager() {
 		}
 	}
 	printf("done.\n");
-#ifdef USEOPENSSL
-	printf("Destroying OpenSSL objects...");
-	fflush(stdout);
-	if (sslctx!=NULL)
-		SSL_CTX_free (sslctx);
-	printf("done.\n");
-#else
-#endif	
 //	delete lock;
 	delete Connection::ListLock;
 	delete_sem(process_sem_1);
 	delete_sem(process_sem_2);
-	
+	cryptEnd();
 	printf("============\nTCP Manager:\n============\n");
 	printf("Bytes Sent:\t%Ld\nBytes Received:\t%Ld\n",total_bytes_sent,total_bytes_received);
 	printf("Total Connections:\t%Lu\nConnections Reused:\t%Lu (%1.2f%%)\n",sessions_created,sessions_reused, (sessions_reused/((sessions_created*1.0)+((sessions_created==0)?1:0))*100.0));
@@ -122,10 +93,6 @@ void TCPManager::Init() {
 	process_sem_2=0;
 	_manager_=this;
 	
-#ifdef OPENSSL
-	sslmeth=NULL;
-	sslctx=NULL;
-#endif
 }
 
 void TCPManager::Quit() {
@@ -169,54 +136,77 @@ int32 TCPManager::_Manager_Thread() {
 			if (connect_count>0) {
 				current_time=real_time_clock();
 				for (int32 i=0; i<connect_count; i++) {
-					lock.Lock();
 					
-					connection=Connection::ConnectionAt(i);
-					if (!Connection::HasConnection(connection))
+					if (lock.LockWithTimeout(25000)==B_OK)
 					{
-						lock.Unlock();
-						continue;
-					}
-					if (connection->IsConnected()) {
-						if (!connection->NotifiedConnect()) {
-							connection->ConnectionEstablished();
-							connection->NotifyConnect();
-						}
-//						printf("[TCP Manager] Checking if data is waiting.\n");
-						if (connection->IsDataWaiting()) {
-							connection->RetrieveData();
-						}
-						
-					} else {
-						if (!connection->NotifiedDisconnect()) {
-							connection->NotifyDisconnect();
-							Connection::ConnectionList->RemoveItem(connection);
-							delete connection;
-							connection=NULL;
+//						printf("TCP Manager: lock acquired\n");
+						connection=Connection::ConnectionAt(i);
+						if (!Connection::HasConnection(connection))
+						{
 							lock.Unlock();
+							snooze(10000);
 							continue;
 						}
-						
-					}
-					if (!Connection::HasConnection(connection))
-					{
+						if (connection->IsConnected())
+						{
+							if (connection->IsInUse())
+							{
+								if (!connection->NotifiedConnect())
+								{
+									if (!connection->already_connected)
+										connection->ConnectionEstablished();
+									connection->NotifyConnect();
+								} else
+								{
+									if (connection->IsDataWaiting())
+									{
+										connection->RetrieveData();
+										if (connection->owner!=NULL)
+											connection->owner->DataIsWaiting(connection);
+									}
+								}
+							} else
+							{
+								if (connection->IsDataWaiting())
+								{
+//									printf("TCP Manager: data is waiting on unused connection; receiving and flushing data\n");
+									int32 lastused=connection->LastUsed();
+									connection->RetrieveData();
+									connection->lastusedtime=lastused;
+								}
+							}
+							if ((connection->LastUsed()!=0) && ((current_time-connection->LastUsed())>=time_out))
+							{
+//								if (connection->owner!=NULL)
+//									connection->owner->DestroyingConnectionObject(connection);
+								connection->TimeOut();
+								Disconnect(connection);
+							}
+						} else
+						{
+							if (!connection->NotifiedDisconnect())
+							{
+								connection->NotifyDisconnect();
+//								Disconnect(connection);
+							}
+							else
+							{
+								if ((connection->LastUsed()!=0) && ((current_time-connection->LastUsed())>=time_out))
+								{
+//									if (connection->owner!=NULL)
+//										connection->owner->DestroyingConnectionObject(connection);
+									connection->TimeOut();
+									Disconnect(connection);
+								}
+							}
+						}
 						lock.Unlock();
-						continue;
 					}
-					last_used=connection->LastUsed();
-					if ((last_used!=0) && ((current_time-last_used)>=time_out)) {
-						connection->TimeOut();
-						Disconnect(connection);
-						lock.Unlock();
-						continue;
-					}
-					
-					lock.Unlock();
-					
+					snooze(10000);
 				}
 				
 			}
-			snooze(7500);
+			snooze(25000);
 //			release_sem(process_sem_2);
 //		}
 			
@@ -230,8 +220,8 @@ int32 TCPManager::_Manager_Thread() {
 Connection *TCPManager::CreateConnection(NetworkableObject *net_obj,const char *host,uint16 port,bool secure,bool asynch) {
 	printf("CreateConnection begun\n");
 	Connection *connection=NULL;
-//	BAutolock alock(lock);
-//	if (alock.IsLocked()) {
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
 		int32 connections=0;
 		Connection *target_connection=NULL;
 		connections=Connection::CountConnections();
@@ -249,9 +239,10 @@ Connection *TCPManager::CreateConnection(NetworkableObject *net_obj,const char *
 			}
 		}
 		if (existing_available) {
-			connection->StartUsing();
+			printf("TCP Manager: found available connection for use. (n: %p\tc: %p)\n",net_obj,connection);
 			connection->AssignNetObject(net_obj);
-			connection->Connect();
+			connection->StartUsing();
+//			connection->Connect();
 			sessions_reused++;
 		} else {
 			connection=new Connection(net_obj,host,port,secure,asynch);
@@ -260,8 +251,8 @@ Connection *TCPManager::CreateConnection(NetworkableObject *net_obj,const char *
 			sessions_created++;
 		}
 		
-//	}
-	printf("CreateConnection is done\n");
+	}
+	printf("CreateConnection is done: %p\n",connection);
 	return connection;
 }
 void TCPManager::Disconnect(Connection *connection) {
@@ -302,29 +293,7 @@ void TCPManager::AddBytesReceived(off_t bytes) {
 }
 
 bool TCPManager::SSLEnabled() {
-#ifdef OPENSSL
 	return true;
-#else
-	return false;
-#endif	
 }
 
-#ifdef USEOPENSSL
-SSL_METHOD *TCPManager::SSLMethod() {
-	SSL_METHOD *method=NULL;
-	BAutolock alock(lock);
-	if (alock.IsLocked())
-		method=sslmeth;
-	return method;
-	
-}
-
-SSL_CTX *TCPManager::SSLContext() {
-	SSL_CTX *context=NULL;
-	BAutolock alock(lock);
-	if (alock.IsLocked()) 
-		context=sslctx;
-	return context;
-}
-#endif
 

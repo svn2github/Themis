@@ -26,39 +26,31 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@users.sourceforge.net)
 Project Start Date: October 18, 2000
 */
-#ifndef _authvw
-#define _authvw
-#include <Window.h>
-#include <View.h>
-#include <TextControl.h>
-#include <TextView.h>
-#include <Button.h>
-#include <String.h>
-class authview:public BView {
-	private:
+/*!
+	\file
+	\brief The declaration of the AuthTypeDigest class.
+
+
+*/
+#ifndef _auth_type_digest_
+#define _auth_type_digest_
+
+#include "authtype.h"
+/*!
+	\brief Digest Authentication class.
+
+	This class will handle the specifics of the Digest Authentication method described
+	in RFC 2617.
+	\note Not yet implemented.
+	@todo Implement Digest authentication based on RFC 2617.
+*/
+class AuthTypeDigest:public AuthType
+{
 	public:
-		BButton *ok,*cancel;
-		BTextControl *user,*pass;
-		BTextView *info;
-		authview(BRect frame);
-		~authview();
-		void AttachedToWindow();
-	
+	AuthTypeDigest(void);
+	AuthTypeDigest(const char *user,const char *password,const char *realm);
+	~AuthTypeDigest(void);
 };
-class AuthManager;
-struct http_request_info_st;
-class authwin:public BWindow {
-	private:
-		http_request_info_st *request;
-		authview *view;
-		BString realm;
-		bool update;
-		AuthManager *auth_manager;
-		int32 auth_method;
-	public:
-		authwin(AuthManager *AManager,const char *title,http_request_info_st *req,const char *rlm,int32 method,bool upd=false);
-		~authwin();
-		void MessageReceived(BMessage *msg);
-		bool QuitRequested();
-};
+
 #endif
+

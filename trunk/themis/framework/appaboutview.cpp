@@ -46,6 +46,7 @@ appaboutview::appaboutview(
 	info << "\t\tMark Hellegers\n";
 	info << "\t\tOlivier Milla\n";
 	info << "\t\tMichael Weirauch\n";
+	info << "\n\n\"Themis is 95% MORE Evil than Microsoft's Internet Explorer!\"\n";
 	
 	tv->MakeEditable( false );
 	tv->Insert( info.String() );

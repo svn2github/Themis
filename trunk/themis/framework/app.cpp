@@ -34,13 +34,8 @@ Project Start Date: October 18, 2000
 #include "app.h"
 #include "PrefsDefs.h"
 #include "ThemisTab.h"
-#ifndef NEWNET
-#include "tcplayer.h"
-tcplayer *TCP;
-#else
 #include <Path.h>
 using namespace _Themis_Networking_;
-#endif
 
 plugman *PluginManager;
 BMessage *AppSettings;
@@ -56,13 +51,8 @@ App::App(
 	fSiteHandler = NULL;
 	fLocker = new BLocker();
 	
-#ifndef NEWNET
-	TCP=new tcplayer;
-	TCP->Start();
-#else
 	TCPMan=new TCPManager;
 	TCPMan->Start();
-#endif
 
 	fMessageDaemon=new MessageDaemon();
 	MsgSysRegister(this);
@@ -113,11 +103,7 @@ App::App(
 	PluginManager->Window=fFirstWindow;
 	BMessenger *msgr=new BMessenger(PluginManager,NULL,NULL);
 	BMessage *msg=new BMessage(AddInitInfo);
-#ifndef NEWNET
-	msg->AddPointer("tcp_layer_ptr",TCP);
-#else
 	msg->AddPointer("tcp_manager",TCPMan);
-#endif
 	msg->AddPointer("settings_message_ptr",&AppSettings);
 	{
 		BMessage reply;	
@@ -141,10 +127,8 @@ App::~App(){
 	// delete GlobalHistory before AppSettings gets deleted
 	delete fGlobalHistory;
 	SaveSettings();
-#ifdef NEWNET
 	delete TCPMan;
 	TCPMan=NULL;
-#endif
 	if (AppSettings!=NULL) {
 		
 		delete AppSettings;
@@ -229,21 +213,10 @@ bool App::QuitRequested(){
 		printf("Done.\n");
 		PluginManager=NULL;
 	}
-#ifndef NEWNET
-	if (TCP!=NULL) {
-		printf( "telling TCP to quit\n" );
-		TCP->lock->Lock();
-		stat=TCP->Quit();
-		TCP->lock->Unlock();
-		delete TCP;
-		TCP=NULL;
-	}
-#else
 	if (TCPMan!=NULL) {
 		printf("telling TCP Manager to quit\n");
 		TCPMan->Quit();
 	}
-#endif
 	fMessageDaemon->Stop();
 	
 	printf( "end of App::QuitRequested()\n" );

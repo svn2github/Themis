@@ -26,39 +26,50 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@users.sourceforge.net)
 Project Start Date: October 18, 2000
 */
-#ifndef _authvw
-#define _authvw
-#include <Window.h>
-#include <View.h>
-#include <TextControl.h>
-#include <TextView.h>
-#include <Button.h>
-#include <String.h>
-class authview:public BView {
-	private:
-	public:
-		BButton *ok,*cancel;
-		BTextControl *user,*pass;
-		BTextView *info;
-		authview(BRect frame);
-		~authview();
-		void AttachedToWindow();
+#ifndef _auth_type_
+#define _auth_type_
+#include "cryptlib.h"
+
+#include "SupportDefs.h"
+/*!
+	\brief The base class for the various authentication types.
 	
-};
-class AuthManager;
-struct http_request_info_st;
-class authwin:public BWindow {
+	This base class keeps the encrypted representation of the password in memory.
+*/
+class AuthType
+{
 	private:
-		http_request_info_st *request;
-		authview *view;
-		BString realm;
-		bool update;
-		AuthManager *auth_manager;
-		int32 auth_method;
+	CRYPT_CONTEXT cryptContext;
+	CRYPT_ENVELOPE encryptEnvelope,decryptEnvelope;
+	protected:
+	const char *auth_realm;
+	const char *auth_user;
+	unsigned char *auth_pass;
+	const char *auth_host;
+	int16 auth_pass_len;
+	uint16 auth_port;
+	const char *auth_uri;
 	public:
-		authwin(AuthManager *AManager,const char *title,http_request_info_st *req,const char *rlm,int32 method,bool upd=false);
-		~authwin();
-		void MessageReceived(BMessage *msg);
-		bool QuitRequested();
+	AuthType(void);
+	AuthType(const char *host,uint16 port, const char *uri,const char *user,const char *password,const char *realm);
+	virtual ~AuthType(void);
+	virtual int32 AuthMode(void);
+	const char *Realm(void);
+	const char *User(void);
+	const char *Password(void);
+	const char *Host(void);
+	const char *URI(void);
+	uint16 Port(void);
+	bool SetRealm(const char *realm);
+	bool SetUser(const char *user);
+	bool SetPassword(const char *password);
+	bool SetHost(const char *host);
+	bool SetURI(const char *uri);
+	bool SetPort(uint16 port);
+	virtual void Clear(void);
+	virtual const char *Credentials(void);
+	virtual bool ValidFor(const char *Host,uint16 Port, const char *URI);
+
 };
+
 #endif

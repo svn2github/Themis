@@ -27,6 +27,8 @@ void stripendwhite(const char *orig,char *result) {
 }
 char *trim(char *target) 
 {
+	if (target==NULL)
+		return NULL;
 	char *result=NULL;
 	char *f=target,*t=target+(strlen(target)-1);
 	while (isspace(*f))

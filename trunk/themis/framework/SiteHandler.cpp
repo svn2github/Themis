@@ -323,7 +323,9 @@ SiteHandler::ReceiveBroadcast(
 					retrieve->AddInt32( "site_id", site_id );
 					retrieve->AddInt32( "url_id", url_id );
 					retrieve->AddString( "url", url.String() );
-					
+					if ( msg->what ==  SH_RELOAD_PAGE)
+						retrieve->AddBool( "reload", true );
+						
 					Broadcast( MS_TARGET_PROTOCOL, retrieve );
 					
 					delete retrieve;

@@ -1,3 +1,31 @@
+/*
+Copyright (c) 2004 Raymond "Z3R0 One" Rodgers. All Rights Reserved. 
+
+Permission is hereby granted, free of charge, to any person 
+obtaining a copy of this software and associated documentation 
+files (the "Software"), to deal in the Software without 
+restriction, including without limitation the rights to use, 
+copy, modify, merge, publish, distribute, sublicense, and/or 
+sell copies of the Software, and to permit persons to whom 
+the Software is furnished to do so, subject to the following 
+conditions: 
+
+   The above copyright notice and this permission notice 
+   shall be included in all copies or substantial portions 
+   of the Software. 
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY 
+KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE 
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
+PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS 
+OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR 
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR 
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@users.sourceforge.net)
+Project Start Date: October 18, 2000
+*/
 /*!
 \file
 \brief The header file for the cookie management subsystem.
@@ -19,7 +47,16 @@
 //Set-Cookie: VisitorID=4; expires=Wed, 18-Feb-2004 04:15:52 GMT; path=/
 //Set-Cookie: NewVisitor=Yes; expires=Wed, 19-Feb-2003 06:15:52 GMT; path=/    
 //Set-Cookie: PREF=ID=431d7dc03b37acb1:TM=1045628490:LM=1045628490:S=sq2HIMlzaeuvRebF; expires=Sun, 17-Jan-2038 19:14:07 GMT; path=/; domain=.google.com
-
+/*!
+	\brief Sort the cookies.
+	
+	This function sorts cookies first on their version number, and then on their paths.
+	The reason that they are sorted first on their version number is to make sure that
+	RFC 2109 cookies (which use the Cookie & Set-Cookie headers) are listed together and
+	separate from the RFC 2965 cookies (which use Cookie2 and Set-Cookie2 headers). In
+	truth, there's very little difference between the two, but I believe that it's important
+	to send the cookies back the way they came.
+*/
 int qsort_cookies(const void *Alpha, const void *Beta);
 
 /*!
@@ -59,7 +96,7 @@ struct cookie_st {
 	//! Location of the cookie on disk (if applicable)
 	entry_ref ref;
 	cookie_st() {
-		discard=false;
+		discard=true;//discard cookie on shutdown if not set to false later
 		secure=false;
 		name=NULL;
 		value=NULL;
@@ -67,11 +104,12 @@ struct cookie_st {
 		domain=NULL;
 		expiredate=0;
 		datereceived=0;
-		maxage=0;
+		maxage=86400;//1 day
 		comment=NULL;
 		commenturl=NULL;
 		ports=NULL;
 		next=NULL;
+		version=0;
 	}
 	~cookie_st() {
 		if (name) {
@@ -118,12 +156,18 @@ struct cookie_st {
 	
 };
 
+class HTTPv4;
 /*!
 \brief The cookie management subsystem main class.
 
 This class is the heart of the cookie management subsystem.
+@todo Add a SetCookie2 function; this function will allow for cookie names
+that are identical to other attribute names. The reason is that the Cookie2 specification
+states that the first attribute-value pair is the cookie name & value pair. The original
+specification doesn't include that, and so it's possible that cookie names that are
+identical to an attribute name will be mistaken for that attribute. Our implementation
+can be affected by this!
 */
-class http_protocol;
 class CookieManager:public MessageSystem {
 	private:
 		/*!
@@ -169,16 +213,33 @@ class CookieManager:public MessageSystem {
 		//! Stores the location of the cookie directory.
 		entry_ref cookiedirref;
 		//! Stores the cookie system's settings
-		BLocker *lock;
+		BLocker lock;
+		/*!
+			\brief Loads a specific cookie file from disk.
+		*/
 		status_t LoadCookie(cookie_st *cookie);
+		/*!
+			\brief Saves a specific cookie to disk.	
+		*/
 		status_t SaveCookie(cookie_st *cookie);
+		/*!
+			\brief Searches the cookies in memory for one that matches.
+		*/
+		cookie_st *FindCookie(const char *name,const char *path,const char *domain);
+		/*!
+			\brief Checks to see if the cookie passed in is a duplicate.
+		*/
+		bool DuplicatedCookie(cookie_st *cookie);
 	public:
 		BMessage *CookieSettings;
+		/*!
+			\brief Finds cookies appropriate for the requested domain and URI.
+		*/
 		cookie_st ** FindCookies(int32 *count,const char *domain, const char *uri,bool secure=false);
 		CookieManager();
 		~CookieManager();
-		int32 SetCookie(const char *header, const char *request_host, const char *request_uri);
-		char *GetCookie(const char *host, const char *path, bool secure=false);
+		int32 SetCookie(const char *header, const char *request_host, const char *request_uri,uint16 port,bool secure=false);
+		const char *GetCookie(const char *host, const char *path, uint16 port,bool secure=false);
 		void PrintCookies();
 		/*!
 		\brief Clears all cookies out of memory and off disk.
@@ -197,7 +258,7 @@ class CookieManager:public MessageSystem {
 		/*!
 		\brief Make sure that the settings can be stored by the http_protocol class at shutdown.
 		*/
-		friend class http_protocol;
+		friend class HTTPv4;
 		/*!
 		\brief Loads all cookies on disk into RAM.
 		*/

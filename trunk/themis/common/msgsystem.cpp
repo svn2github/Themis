@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2003 Z3R0 One. All Rights Reserved.
+Copyright (c) 2004 Z3R0 One. All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -23,7 +23,7 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
+Original Author & Project Manager: Z3R0 One (z3r0_one@users.sourceforge.net)
 Project Start Date: October 18, 2000
 */
 #include "msgsystem.h"
@@ -34,6 +34,7 @@ Project Start Date: October 18, 2000
 #include <String.h>
 volatile int32 MessageSystem::broadcast_target_count=0;
 MessageSystem::msgsysclient_st *MessageSystem::MsgSysClients=NULL;
+BMessageQueue *MessageSystem::MS_MQueue=NULL;
 BLocker MessageSystem::msgsyslock;
 sem_id MessageSystem::process_sem=0;
 sem_id MessageSystem::transmit_sem=0;
@@ -75,7 +76,7 @@ int32 MessageSystem::MS_Start_Thread(void *arg)
 	int32 retval=0;
 	obj->_ProcessMessage_(obj);
 	wait_for_thread(obj->_msg_receiver_thread_,(status_t *)&retval);
-//	printf("thread returned: %ld\n",retval);
+	printf("thread returned: %ld\n",retval);
 	
 	return retval;
 	
@@ -87,7 +88,7 @@ void MessageSystem::Debug(const char *message, int32 plugid) {
 	if (_Quit_Thread_)
 		return;
 	BMessage debug(DEBUG_INFO_MSG);
-	debug.AddInt32( "command", DEBUG_INFO_MSG );
+	debug.AddInt32( "command", COMMAND_INFO );
 	if (plugid!=-1)
 		debug.AddInt32( "pluginID", plugid );
 	debug.AddString("message",message);
@@ -95,25 +96,40 @@ void MessageSystem::Debug(const char *message, int32 plugid) {
 }
 int32 MessageSystem::_ProcessBroadcasts_(void *data) 
 {
+	if (MS_MQueue==NULL)
+		MS_MQueue=new BMessageQueue();
 	while (!_Quit_Thread_) {
-		if (acquire_sem(process_sem)==B_OK) {
+//		if (acquire_sem(process_sem)==B_OK) 
+			{
 			if (_Quit_Thread_)
 				break;
-			if (has_data(_ProcessThread_)) {
+			if (MS_MQueue==NULL)
+			{
+				printf("MS_MQueue is null! Broadcast system exiting.\n");
+				break;
+			}
+			MS_MQueue->Lock();
+			if (!MS_MQueue->IsEmpty())//has_data(_ProcessThread_))
+			{
+			MS_MQueue->Unlock();
 //				BMessage *msg;
 				thread_id sender_thread;
 				BMessage *container=NULL;
 				uint32 targets=0;
 				uint32 sender_target_id=0;
 				MessageSystem *broadcaster=NULL;
-				receive_data(&sender_thread,&container,sizeof(&container));
-			release_sem(transmit_sem);
+				MS_MQueue->Lock();
+				container=MS_MQueue->NextMessage();
+				MS_MQueue->Unlock();
+				//receive_data(&sender_thread,&container,sizeof(&container));
+		//	release_sem(transmit_sem);
 				container->FindPointer("broadcaster_pointer",(void**)&broadcaster);
 				container->FindInt32("broadcast_targets",(int32*)&targets);
 				container->FindInt32("broadcaster_target_id",(int32*)&sender_target_id);
 				BMessage *msg=new BMessage();
 				container->FindMessage("parcel",msg);
 				msg->AddPointer("_broadcast_origin_pointer_",broadcaster);
+				msg->AddString("_broadcast_origin_name_",broadcaster->MsgSysObjectName());
 				msgsysclient_st *cur=MsgSysClients;
 				volatile uint32 current_target=0;
 				bool found=false;
@@ -128,127 +144,124 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 					if (_Quit_Thread_)
 						break;
 					if (msgsyslock.LockWithTimeout(25000)==B_OK)
-					{
-					member_found=0;
-					member=NULL;
-					verifier=MsgSysClients;
-					while (verifier!=NULL)
-					{
-						if (verifier==cur)
 						{
-							atomic_add(&member_found,1);
-							break;
+						member_found=0;
+						member=NULL;
+						verifier=MsgSysClients;
+						while (verifier!=NULL)
+						{
+							if (verifier==cur)
+							{
+								atomic_add(&member_found,1);
+								break;
+							}
+							verifier=verifier->next;
 						}
-						verifier=verifier->next;
-					}
-					if (!member_found)
-					{
-						cur=MsgSysClients;
-						msgsyslock.Unlock();
-						continue;
-					}
-					if (cur->ptr==NULL) {
+						if (!member_found)
+						{
+							cur=MsgSysClients;
+							msgsyslock.Unlock();
+							continue;
+						}
+						if (cur->ptr==NULL) {
+							cur=cur->next;
+							msgsyslock.Unlock();
+							continue;
+						}
+						member_name=cur->ptr->MsgSysObjectName();
+						member=cur->ptr;
+						
+						current_target=member->BroadcastTarget();
+						switch(targets) {
+							case MS_TARGET_UNKNOWN: {
+								found=true;
+							}break;
+							case MS_TARGET_DEBUG: {
+								if (current_target==MS_TARGET_DEBUG)
+								{
+									found=true;
+									_message_targets_++;
+									member->_message_queue_.Lock();
+									member->_message_queue_.AddMessage(new BMessage(*msg));
+									member->_message_queue_.Unlock();
+									if (member->_msg_receiver_running_==0) {
+										member->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,member->MS_Name,B_LOW_PRIORITY,member);
+										resume_thread(member->_msg_receiver_thread_);
+	
+									}
+									broadcaster->broadcast_successful_receives++;
+									
+								}
+							}break;
+							case MS_TARGET_ALL: {
+								found=true;
+								_message_targets_++;
+									member->_message_queue_.Lock();
+									member->_message_queue_.AddMessage(new BMessage(*msg));
+									member->_message_queue_.Unlock();
+									if (member->_msg_receiver_running_==0) {
+										member->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,member->MS_Name,B_LOW_PRIORITY,member);
+										resume_thread(member->_msg_receiver_thread_);
+	
+									}
+								broadcaster->broadcast_successful_receives++;
+							}break;
+	
+	
+							case MS_TARGET_PROTOCOL: {
+								if ((current_target&MS_TARGET_PROTOCOL)!=0) {
+									_message_targets_++;
+									found=true;
+									broadcaster->broadcast_successful_receives++;
+									member->_message_queue_.Lock();
+									member->_message_queue_.AddMessage(new BMessage(*msg));
+									member->_message_queue_.Unlock();
+									if (member->_msg_receiver_running_==0) {
+										member->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,member->MS_Name,B_LOW_PRIORITY,member);
+										resume_thread(member->_msg_receiver_thread_);
+	
+									}
+								}							
+							}break;
+	
+	
+							case MS_TARGET_SELF: {
+								if (current_target==sender_target_id) {
+									found=true;
+									broadcaster->broadcast_successful_receives++;
+									member->_message_queue_.Lock();
+									member->_message_queue_.AddMessage(new BMessage(*msg));
+									member->_message_queue_.Unlock();
+									if (member->_msg_receiver_running_==0) {
+										member->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,member->MS_Name,B_LOW_PRIORITY,member);
+										resume_thread(member->_msg_receiver_thread_);
+	
+									}
+									
+									_message_targets_++;
+								}
+								
+							}break;
+							default: {
+								if (((current_target&targets)>=1) || (current_target==targets) ) {
+									found=true;
+									broadcaster->broadcast_successful_receives++;
+									member->_message_queue_.Lock();
+									member->_message_queue_.AddMessage(new BMessage(*msg));
+									member->_message_queue_.Unlock();
+									if (member->_msg_receiver_running_==0) {
+										member->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,member->MS_Name,B_LOW_PRIORITY,member);
+										resume_thread(member->_msg_receiver_thread_);
+	
+									}
+									_message_targets_++;
+								}
+								
+							}
+							
+						}
 						cur=cur->next;
 						msgsyslock.Unlock();
-						continue;
-					}
-					member_name=cur->ptr->MsgSysObjectName();
-					member=cur->ptr;
-					
-					current_target=member->BroadcastTarget();
-					switch(targets) {
-						case MS_TARGET_UNKNOWN: {
-							found=true;
-						}break;
-						case MS_TARGET_DEBUG: {
-							if (current_target==MS_TARGET_DEBUG)
-							{
-								found=true;
-								_message_targets_++;
-								member->_message_queue_.Lock();
-								member->_message_queue_.AddMessage(new BMessage(*msg));
-								member->_message_queue_.Unlock();
-								if (member->_msg_receiver_running_==0) {
-									member->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,member->MS_Name,B_LOW_PRIORITY,member);
-									resume_thread(member->_msg_receiver_thread_);
-
-								}
-								broadcaster->broadcast_successful_receives++;
-								
-							}
-						}break;
-						case MS_TARGET_ALL: {
-							found=true;
-							_message_targets_++;
-								member->_message_queue_.Lock();
-								member->_message_queue_.AddMessage(new BMessage(*msg));
-								member->_message_queue_.Unlock();
-								if (member->_msg_receiver_running_==0) {
-									member->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,member->MS_Name,B_LOW_PRIORITY,member);
-									resume_thread(member->_msg_receiver_thread_);
-
-								}
-							broadcaster->broadcast_successful_receives++;
-						}break;
-
-
-						case MS_TARGET_PROTOCOL: {
-							if ((current_target&MS_TARGET_PROTOCOL)!=0) {
-								
-								found=true;
-								broadcaster->broadcast_successful_receives++;
-								member->_message_queue_.Lock();
-								member->_message_queue_.AddMessage(new BMessage(*msg));
-								member->_message_queue_.Unlock();
-								if (member->_msg_receiver_running_==0) {
-									member->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,member->MS_Name,B_LOW_PRIORITY,member);
-									resume_thread(member->_msg_receiver_thread_);
-
-								}
-							}							
-						}break;
-
-
-						case MS_TARGET_SELF: {
-							if (current_target==sender_target_id) {
-								found=true;
-								broadcaster->broadcast_successful_receives++;
-								member->_message_queue_.Lock();
-								member->_message_queue_.AddMessage(new BMessage(*msg));
-								member->_message_queue_.Unlock();
-								if (member->_msg_receiver_running_==0) {
-									member->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,member->MS_Name,B_LOW_PRIORITY,member);
-									resume_thread(member->_msg_receiver_thread_);
-
-								}
-								
-//								broadcaster->broadcast_status_code=cur->ptr->ReceiveBroadcast(msg);
-								_message_targets_++;
-							}
-							
-						}break;
-						default: {
-							if (((current_target&targets)>=1) || (current_target==targets) ) {
-//								printf("Sending message to %s\n",member_name.String());
-								found=true;
-								broadcaster->broadcast_successful_receives++;
-								member->_message_queue_.Lock();
-								member->_message_queue_.AddMessage(new BMessage(*msg));
-								member->_message_queue_.Unlock();
-								if (member->_msg_receiver_running_==0) {
-									member->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,member->MS_Name,B_LOW_PRIORITY,member);
-									resume_thread(member->_msg_receiver_thread_);
-
-								}
-//								broadcaster->broadcast_status_code|=cur->ptr->ReceiveBroadcast(msg);
-								_message_targets_++;
-							}
-							
-						}
-						
-					}
-					cur=cur->next;
-					msgsyslock.Unlock();
 					}
 				}
 				atomic_add(&broadcaster->_broadcast_complete_,1);
@@ -273,6 +286,10 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 				delete msg;
 				delete container;
 				broadcaster->BroadcastFinished();
+			} else
+			{
+				MS_MQueue->Unlock();
+				snooze(10000);
 			}
 //			printf("processing pass done.\n");
 		}
@@ -288,7 +305,8 @@ void MessageSystem::Broadcast(uint32 targets,BMessage *msg)
 			return;//ignore new broadcasts if we're shutting down.
 	BAutolock alock(&local_msg_sys_lock);
 	if (alock.IsLocked()) {
-	if (acquire_sem(transmit_sem)==B_OK) {
+//	if (acquire_sem(transmit_sem)==B_OK)
+	{
 		_broadcast_complete_=0;
 		if (msg!=NULL) {
 			BMessage *container=new BMessage();
@@ -313,13 +331,12 @@ can be sent to the sender of the current message. Useful information.
 */			
 			container->AddMessage("parcel",msg);
 			_messages_sent_++;
-//			printf("sending message to processing thread\n");
-			send_data(_ProcessThread_,0,&container,sizeof(&container));
-//			printf("message sent to processing thread.\n");
+			MS_MQueue->Lock();
+			MS_MQueue->AddMessage(container);
+			MS_MQueue->Unlock();
+		//	send_data(_ProcessThread_,0,&container,sizeof(&container));
 		}
-//		printf("releasing process sem\n");
-		release_sem(process_sem);
-//		printf("sem released, message should be processing now.\n");
+//		release_sem(process_sem);
 	}
 	}
 	
@@ -327,35 +344,24 @@ can be sent to the sender of the current message. Useful information.
 int32 MessageSystem::_ProcessMessage_(void *arg) 
 {
 	MessageSystem *me=(MessageSystem*)arg;
-//	BAutolock alock(&me->_processmessage_lock_);
-	
-//	if (alock.IsLocked()) {
 		volatile int32 count=0;
 		BMessage *msg;
 		me->_ms_receiver_quit_=0;
-	//	me->_processmessage_lock_.Lock();
-			if (me->_msg_receiver_running_==0)
+	//		if (me->_msg_receiver_running_==0)
 				atomic_add(&me->_msg_receiver_running_,1);
-	//	me->_processmessage_lock_.Unlock();
 		while (!me->_ms_receiver_quit_) {
-//				printf("me: %p\t%s\n",me,MsgSysObjectName());
 			if (me->_ms_receiver_quit_)
 				break;
-//			printf("count messages\n");
 			me->_message_queue_.Lock();
 			if (!me->_message_queue_.IsEmpty()) {
 				count=me->_message_queue_.CountMessages();
-//				printf("count: %ld\n",count);
 			}
 			me->_message_queue_.Unlock();
 			if (count>0) {
-//				printf("processing messages\n");
 				while (count>0) {
 					if (me->_ms_receiver_quit_)
 						break;
-	//	me->_processmessage_lock_.Lock();
 					me->_message_queue_.Lock();
-//									printf("Retrieving message\n");
 					msg=me->_message_queue_.NextMessage();
 					count=me->_message_queue_.CountMessages();
 					me->_message_queue_.Unlock();
@@ -364,29 +370,19 @@ int32 MessageSystem::_ProcessMessage_(void *arg)
 						delete msg;
 						msg=NULL;
 					}
-	//	me->_processmessage_lock_.Unlock();
 
 				}
 			}
+			me->_message_queue_.Lock();
 			if (me->_message_queue_.IsEmpty()){
-//						printf("MessageSystem: No more messages\n");
+				me->_message_queue_.Unlock();
 				break;
 			}
+			me->_message_queue_.Unlock();
 		}
-//	me->_processmessage_lock_.Lock();
-	//	printf("setting to not running\n");
-//	me->_processmessage_lock_.Unlock();
-//	atomic_add(&me->_msg_receiver_running_,-1);
-//	if (me->_msg_receiver_running_!=0)
-	//	me->_processmessage_lock_.Lock();
 
 		me->_msg_receiver_running_=0;
-	//			me->_processmessage_lock_.Unlock();
-
-	//me->_msg_receiver_thread_=0;
-//	}
-//	printf("exiting thread\n");
-//	exit_thread(0L);
+		exit_thread(0);
 	return 0L;
 }
 

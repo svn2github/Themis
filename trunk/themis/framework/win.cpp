@@ -148,7 +148,7 @@ bool Win::QuitRequested() {
 		closemsg->AddPointer( "win_to_close", this );
 		be_app_messenger.SendMessage( closemsg );
 		delete closemsg;
-		printf( "returning false\n" );
+//		printf( "returning false\n" );
 		return false;
 	}
 	else
@@ -173,13 +173,13 @@ void Win::MessageReceived(BMessage *msg) {
 			PostMessage(B_QUIT_REQUESTED);
 		}break;
 		case PlugInLoaded: {
-			printf("WIN: PlugInLoaded\n");		
+//			printf("WIN: PlugInLoaded\n");		
 			protocol_plugin *pobj=NULL;
 //			msg->PrintToStream();
 			msg->FindPointer("plugin",(void**)&pobj);
-			printf("pobj: %p\n",pobj);
+//			printf("pobj: %p\n",pobj);
 			if (pobj!=NULL) {
-				printf("Window: plugin loaded %c%c%c%c\n",(int)pobj->PlugID()>>24,(int)pobj->PlugID()>>16,(int)pobj->PlugID()>>8,(int)pobj->PlugID());
+//				printf("Window: plugin loaded %c%c%c%c\n",(int)pobj->PlugID()>>24,(int)pobj->PlugID()>>16,(int)pobj->PlugID()>>8,(int)pobj->PlugID());
 				pobj->Window=this;
 				pobj->AddMenuItems(optionsmenu);
 			} else {
@@ -213,13 +213,13 @@ void Win::MessageReceived(BMessage *msg) {
 		}break;
 		case BUTTON_BACK :
 		{
-			printf( "WIN: BUTTON_BACK\n" );
+//			printf( "WIN: BUTTON_BACK\n" );
 			
 			const char* previous = NULL;
 			previous = ( ( ThemisTab* )tabview->TabAt( tabview->Selection() ) )->GetHistory()->GetPreviousEntry();
 			if( previous != NULL )
 			{
-				printf( "previous != NULL [ %s ]\n", previous );
+//				printf( "previous != NULL [ %s ]\n", previous );
 				BMessage* backmsg = new BMessage( URL_OPEN );
 				backmsg->AddString( "url_to_open", previous );
 				backmsg->AddBool( "no_history_add", true );
@@ -233,13 +233,13 @@ void Win::MessageReceived(BMessage *msg) {
 		};
 		case BUTTON_FORWARD :
 		{
-			printf( "WIN: BUTTON_FORWARD\n" );
+//			printf( "WIN: BUTTON_FORWARD\n" );
 			
 			const char* next = NULL;
 			next = ( ( ThemisTab* )tabview->TabAt( tabview->Selection() ) )->GetHistory()->GetNextEntry();
 			if( next != NULL )
 			{
-				printf( "next != NULL [ %s ]\n", next );
+//				printf( "next != NULL [ %s ]\n", next );
 				BMessage* fwdmsg = new BMessage( URL_OPEN );
 				fwdmsg->AddString( "url_to_open", next );
 				fwdmsg->AddBool( "no_history_add", true );
@@ -261,7 +261,7 @@ void Win::MessageReceived(BMessage *msg) {
 		}
 		case BUTTON_HOME :
 		{
-			printf( "WIN: BUTTON_HOME\n" );
+//			printf( "WIN: BUTTON_HOME\n" );
 			
 			BString homepage;
 			AppSettings->FindString( kPrefsHomePage, &homepage );
@@ -279,7 +279,7 @@ void Win::MessageReceived(BMessage *msg) {
 		{
 			// this function is used for the tab-pop-up-menu function
 			// "Close other Tabs" and also for the closetabview_button
-			cout << "WIN: CLOSE_OTHER_TABS" << endl;
+//			cout << "WIN: CLOSE_OTHER_TABS" << endl;
 			
 			Lock();
 			
@@ -322,7 +322,7 @@ void Win::MessageReceived(BMessage *msg) {
 		}break;
 		case CLOSE_URLPOPUP :
 		{
-			cout << "WIN: CLOSE_URLPOPUP" << endl;
+//			cout << "WIN: CLOSE_URLPOPUP" << endl;
 			if( urlpopupwindow )
 			{
 				urlpopupwindow->Lock();
@@ -338,7 +338,7 @@ void Win::MessageReceived(BMessage *msg) {
 		}
 		case TAB_ADD :
 		{
-			cout << "WIN: TAB_ADD received" << endl;
+//			cout << "WIN: TAB_ADD received" << endl;
 			
 			// dissallow adding of new tabs, if they wouldnt fit in the
 			// window anymore, and disable newtab button
@@ -387,10 +387,10 @@ void Win::MessageReceived(BMessage *msg) {
 		case BUTTON_RELOAD :
 		case URL_OPEN :
 		{
-			if( msg->what == URL_OPEN )
-				printf( "WIN: URL_OPEN\n" );
-			else
-				printf( "WIN: BUTTON_RELOAD\n" );
+//			if( msg->what == URL_OPEN )
+//				printf( "WIN: URL_OPEN\n" );
+//			else
+//				printf( "WIN: BUTTON_RELOAD\n" );
 			
 			// close urlpopup if needed
 			if( urlpopupwindow  )
@@ -407,7 +407,7 @@ void Win::MessageReceived(BMessage *msg) {
 			else
 				url = navview->urlview->Text();
 			
-			cout << "  requested url: " << url.String() << endl;
+//			cout << "  requested url: " << url.String() << endl;
 			
 			// stop, if there is no url, or about:blank
 			if( url.Length() == 0 )
@@ -1162,7 +1162,7 @@ status_t Win::ReceiveBroadcast(BMessage *message)
 			{
 				case RENDERVIEW_POINTER :
 				{
-					printf( "  RENDERVIEW_POINTER\n" );
+//					printf( "  RENDERVIEW_POINTER\n" );
 					
 					message->PrintToStream();
 					
@@ -1209,7 +1209,7 @@ status_t Win::ReceiveBroadcast(BMessage *message)
 				}
 				case SH_WIN_LOADING_PROGRESS :
 				{
-					printf( "WIN: UH_WIN_LOADING_PROGRESS\n" );
+//					printf( "WIN: UH_WIN_LOADING_PROGRESS\n" );
 					
 					int32 id = 0;
 					message->FindInt32( "site_id", &id );

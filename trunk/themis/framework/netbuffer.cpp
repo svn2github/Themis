@@ -127,6 +127,7 @@ off_t Buffer::SetData(void *data, off_t size) {
 			if (size!=data_size) {
 				memset(buffer,0,data_size);
 				delete buffer;
+				buffer=NULL;
 				buffer=new unsigned char[size];
 			}
 			memset(buffer,0,size);

@@ -126,6 +126,7 @@ PlugClass's constructor and destructor.
 */
 class MessageSystem {
 	private:
+	static BMessageQueue *MS_MQueue;
 /*!
 \brief The number of members in the broadcast system.
 

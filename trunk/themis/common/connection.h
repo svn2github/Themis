@@ -33,7 +33,8 @@ Project Start Date: October 18, 2000
 #include <SupportDefs.h>
 #include <List.h>
 #include "netbuffer.h"
-#include "networkableobject.h"
+//#include "networkableobject.h"
+#include "cryptlib.h"
 #ifdef  USEBONE
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -45,17 +46,9 @@ Project Start Date: October 18, 2000
 
 #include <netdb.h>
 
-#ifdef USEOPENSSL
-#include <openssl/crypto.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
-#include <openssl/ssl23.h>
-#endif
 namespace _Themis_Networking_ {
 	class TCPManager;
+	class NetworkableObject;
 	/*!
 	\brief This class handles each individual connection and stores received data temporarily.
 	
@@ -115,7 +108,7 @@ namespace _Themis_Networking_ {
 	*/
 			int32 session_id;
 	/*!
-	\brief 
+	\brief A pointer to the object that is using this object.
 	
 	
 	*/
@@ -176,9 +169,6 @@ namespace _Themis_Networking_ {
 			int32 connection_result;
 		
 
-			/*
-			*	OpenSSL related stuff
-			*/
 	/*!
 	\brief 
 	
@@ -191,78 +181,28 @@ namespace _Themis_Networking_ {
 	
 	*/
 			bool nonblocking;
-		
-#ifdef USEOPENSSL
-	/*!
-	\brief 
-	
-	
-	*/
-			SSL *ssl;
-	/*!
-	\brief 
-	
-	
-	*/
-			SSL_CIPHER *cipher;
-	/*!
-	\brief 
-	
-	
-	*/
-			int32 cipher_used_bits;
-	/*!
-	\brief 
-	
-	
-	*/
-			int32 cipher_bits;
-	/*!
-	\brief 
-	
-	
-	*/
-			BIO *bio;
-	/*!
-	\brief 
-	
-	
-	*/
-			const char *ssl_version;
-	/*!
-	\brief 
-	
-	
-	*/
-			const char *cipher_name;
-	/*!
-	\brief 
-	
-	
-	*/
-			X509 *server_cert;
-	/*!
-	\brief 
-	
-	
-	*/
-			const char *server_cert_subject;
-	/*!
-	\brief 
-	
-	
-	*/
-			const char *server_cert_issuer;
-		
-		
-#endif		
+			CRYPT_SESSION cryptSession;
+			CRYPT_MODE_TYPE cryptMode;
+			CRYPT_ALGO_TYPE cryptAlgo;
+			CRYPT_CERTIFICATE ssl_certificate;
+			const char *ssl_server_name;
+			const char *ssl_org_unit_name;
+			const char *ssl_org_name;
+			const char *ssl_country_name;
+			int32 ssl_encrypt_bits;
 			int32 last_error;
 			double bytes_per_second;
 			bigtime_t first_data_received_time;
 			volatile int32 notified_connect;
 			volatile int32 notified_disconnect;
+			volatile int32 already_connected;
 		
 		public:
+			uint16 EncryptionBits();
+			const char *SSLServerName();
+			const char *SSLOrgName();
+			const char *SSLOrgUnitName();
+			const char *SSLCountry();
 			int32	Error();
 			void	ClearError();
 			static const char *	ErrorString(int32 which=NO_ERROR);
@@ -272,6 +212,16 @@ namespace _Themis_Networking_ {
 			void NotifyConnect();
 			bool NotifiedDisconnect();
 			void NotifyDisconnect();
+	/*!
+	\brief This function releases the object for further use.
+	
+	This is a secondary way to release the object for further use. By calling this function,
+	a class derived from NetworkableObject can stop using this Connection object without
+	directly calling the TCPManager. This makes it a bit quicker than calling DoneWithSession()
+	or Disconnect(), although it will not terminate the connection to the server. For
+	all intents and purposes, calling OwnerRelease() is identical to calling DoneWithSession()
+	with the exception that DoneWithSession is a TCPManager function.
+	*/
 			void OwnerRelease();
 	/*!
 	\brief 

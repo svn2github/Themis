@@ -39,10 +39,13 @@ extern "C" __declspec(dllexport)PlugClass *GetObject(void);
 #include <View.h>
 #include <Bitmap.h>
 #include "cacheplug.h"
-#include "msgsystem.h" 
+#include "msgsystem.h"
+#include <File.h>
 
 class testplug: public PlugClass{
 	public:
+		BFile *uncached_file;
+		int32 site_id, url_id;
 		uint32 cache_user_token;
 		CachePlug *CacheSys;
 		testplug(BMessage *info=NULL);

@@ -30,17 +30,24 @@ Project Start Date: October 18, 2000
 #include "connection.h"
 using namespace _Themis_Networking_;
 
-void NetworkableObject::ConnectionEstablished(Connection *connection) {
+uint32 NetworkableObject::ConnectionEstablished(Connection *connection) {
+	return STATUS_NOTIFICATION_FAILED;
 }
-void NetworkableObject::ConnectionAlreadyExists(Connection *connection) {
+uint32 NetworkableObject::ConnectionAlreadyExists(Connection *connection) {
+	return STATUS_NOTIFICATION_FAILED;
 }
-void NetworkableObject::ConnectionTerminated(Connection *connection) {
+uint32 NetworkableObject::ConnectionTerminated(Connection *connection) {
+	return STATUS_NOTIFICATION_FAILED;
 }
-void NetworkableObject::DataIsWaiting(Connection *connection) {
+uint32 NetworkableObject::DataIsWaiting(Connection *connection) {
+	return STATUS_NOTIFICATION_FAILED;
 }
-void NetworkableObject::ConnectionError(Connection *connection) {
+uint32 NetworkableObject::ConnectionError(Connection *connection) {
+	return STATUS_NOTIFICATION_FAILED;
 }
-void NetworkableObject::ConnectionFailed(Connection *connection) {
+uint32 NetworkableObject::ConnectionFailed(Connection *connection) {
+	return STATUS_NOTIFICATION_FAILED;
 }
-void NetworkableObject::DestroyingConnectionObject(Connection *connection) {
+uint32 NetworkableObject::DestroyingConnectionObject(Connection *connection) {
+	return STATUS_NOTIFICATION_FAILED;
 }

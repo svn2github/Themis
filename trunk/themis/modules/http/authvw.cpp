@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2000 Z3R0 One. All Rights Reserved.
+Copyright (c) 2004 Z3R0 One. All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -23,15 +23,20 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
+Original Author & Project Manager: Z3R0 One (z3r0_one@users.sourceforge.net)
 Project Start Date: October 18, 2000
 */
 #include "authvw.h"
 #include <stdio.h>
 #include <string.h>
 #include <String.h>
-#include "base64.h"
-extern httplayer *meHTTP;
+#include "httpv4.h"
+#include "authmanager.h"
+#include "authtypebasic.h"
+#include "authtypedigest.h"
+
+extern HTTPv4 *HTTP;
+
 #ifndef NEWNET
 extern tcplayer *__TCP;
 #endif
@@ -82,12 +87,15 @@ void authview::AttachedToWindow() {
 	
 }
 
-authwin::authwin(const char *title,http_request *req,char *rlm,bool upd)
+authwin::authwin(AuthManager *AManager,const char *title,http_request_info_st *req,const char *rlm,int32 method,bool upd)
 	:BWindow(BRect(200,200,500,400),title,B_FLOATING_WINDOW,B_NOT_CLOSABLE|B_NOT_ZOOMABLE|B_NO_WORKSPACE_ACTIVATION|B_ASYNCHRONOUS_CONTROLS,B_CURRENT_WORKSPACE) {
+	auth_manager=AManager;
 	view=new authview(Bounds());
 	update=upd;
 	realm=rlm;
 	request=req;
+	printf("request: %p\nrequest auth_info: %p\n",request,request->auth_info);
+	auth_method=method;
 	AddChild(view);
 	SetDefaultButton(view->ok);
 	BString info;
@@ -95,35 +103,13 @@ authwin::authwin(const char *title,http_request *req,char *rlm,bool upd)
 		info << "You have been requested to provide a user name\n and password for \""<<realm<<"\".";
 	} else {
 		info << "You have been requested to provide a user name\n and password for \""<<realm<<"\".\nIncorrect user name or password.";
-		char *dstr1=NULL;
-		char *dstr2=NULL;
-		uint32 size=base64::expecteddecodedsize(strlen(req->a_realm->auth));
-		dstr1=new char[size+1];
-		memset(dstr1,0,size+1);
-		
-		base64::decode(req->a_realm->auth,strlen(req->a_realm->auth),dstr1,&size);
-		if (dstr1!=NULL) {
-			dstr2=new char[size+1];
-			memset(dstr2,0,size+1);
-			memcpy(dstr2,dstr1,size);
-			char *colon=strchr(dstr2,':');
-			int32 len=0;
-			len=colon-dstr2;
-			char *u,*p;
-			u=new char[len+1];
-			memset(u,0,len+1);
-			strncpy(u,dstr2,len);
-			len=size-(len+1);
-			p=new char[len+1];
-			memset(p,0,len+1);
-			strncpy(p,colon+1,len);
-		view->user->SetText(u);
-		view->pass->SetText(p);
-			delete u;
-			delete p;
+		if ((request->auth_info!=NULL) && (request->auth_info->auth_object!=NULL))
+		{
+			view->user->SetText(request->auth_info->auth_object->User());
+			view->pass->SetText(request->auth_info->auth_object->Password());
 		}
-		
 	}
+		
 	
 	view->info->SetText(info.String());
 	Show();
@@ -134,30 +120,62 @@ authwin::~authwin() {
 }
 
 void authwin::MessageReceived(BMessage *msg) {
-printf("authwin MessageReceived:\n");
-	msg->PrintToStream();
-	
+//msg->PrintToStream();
+int32 auth_copy=auth_method;
+printf("authwin: auth method basic? %d\n",(auth_method&AuthManager::AUTHENTICATION_TYPE_BASIC));
 	switch(msg->what) {
+		case B_QUIT_REQUESTED:
+		{
+			Lock();
+			Quit();
+		}break;
 		case B_OK: {
-			printf("Entered username: %s\nEntered password: %s\n",view->user->Text(),view->pass->Text());
+//			printf("Entered username: %s\nEntered password: %s\n",view->user->Text(),view->pass->Text());
 			if (!update) {
-				
-				meHTTP->AddAuthRealm(request,(char*)realm.String(),(char*)view->user->Text(),(char*)view->pass->Text());
+				if ((auth_method&AuthManager::AUTHENTICATION_SERVER_AUTH)!=0)
+					auth_manager->AddAuthentication(request,view->user->Text(),	view->pass->Text(),realm.String(),auth_method);
+				else
+					if ((auth_method&AuthManager::AUTHENTICATION_PROXY_AUTH)!=0)
+					{
+						auth_manager->AddProxyAuthentication(request,view->user->Text(),view->pass->Text(),realm.String(),auth_copy);
+						
+					}
+					//				HTTP->AddAuthRealm(request,(char*)realm.String(),(char*)view->user->Text(),(char*)view->pass->Text());
 			} else {
-				auth_realm *realm=meHTTP->FindAuthRealm(request);
-				meHTTP->UpdateAuthRealm(realm,(char*)view->user->Text(),(char*)view->pass->Text());
-				
+				if (request->auth_info!=NULL)
+				{
+					if (request->auth_info->auth_object!=NULL)
+					{
+						AuthType *auth_object=request->auth_info->auth_object;
+						if ((auth_object->SetUser(view->user->Text())!=true) || (auth_object->SetPassword(view->pass->Text())!=true))
+						{
+//							Debug("AuthWin: Failed to update authentication information.\n");
+							printf("AuthWin: Failed to update authentication information.\n");
+							BMessenger msgr(NULL,this,NULL);
+							msgr.SendMessage(B_QUIT_REQUESTED);
+							return;
+						}
+					} else
+					{
+						auth_manager->AddAuthentication(request,view->user->Text(),	view->pass->Text(),realm.String(),auth_method);	
+					}
+				}
 			}
 			
-			meHTTP->ResubmitRequest(request);
-//			request->awin=NULL;
+			HTTP->ResubmitRequest(request);
+
+
+			request->auth_win=NULL;
 //			meHTTP->Unlock();
-			Quit();
-			PostMessage(B_QUIT_REQUESTED,this);
+status_t stat=B_OK;
+			BMessenger msgr(NULL,this,&stat);
+			msgr.SendMessage(B_QUIT_REQUESTED);
+			printf("authwin status: 0x%x\n",stat);
 		}break;
 		case B_CANCEL: {
-//			Quit();
-			PostMessage(B_QUIT_REQUESTED,this);
+			request->auth_win=NULL;
+			BMessenger msgr(NULL,this,NULL);
+			msgr.SendMessage(B_QUIT_REQUESTED);
 		}break;
 		default:
 			BWindow::MessageReceived(msg);
@@ -165,5 +183,6 @@ printf("authwin MessageReceived:\n");
 	
 }
 bool authwin::QuitRequested(){
+	printf("authwin QuitRequested\n");
 	return true;
 }

@@ -26,39 +26,48 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@users.sourceforge.net)
 Project Start Date: October 18, 2000
 */
-#ifndef _authvw
-#define _authvw
-#include <Window.h>
-#include <View.h>
-#include <TextControl.h>
-#include <TextView.h>
-#include <Button.h>
-#include <String.h>
-class authview:public BView {
-	private:
-	public:
-		BButton *ok,*cancel;
-		BTextControl *user,*pass;
-		BTextView *info;
-		authview(BRect frame);
-		~authview();
-		void AttachedToWindow();
+/*!
+\file
+\brief This file contains the declaration for the URIProcessor class.
+*/
+#ifndef _uri_processor_
+#define _uri_processor_
+
+#include <SupportDefs.h>
+/*!
+	\brief URI processing and comparison.
 	
-};
-class AuthManager;
-struct http_request_info_st;
-class authwin:public BWindow {
+	This class does some BPath like processing of path locations, specifically for
+	URLs. It includes a Contains function to help determine if the internal path
+	is a parent of the passed it location. Eventually, this will likely include
+	the unobfuscation of the URI portion of a URL that is currently a part of the
+	ProtocolPlugClass base class.
+*/
+class URIProcessor
+{
 	private:
-		http_request_info_st *request;
-		authview *view;
-		BString realm;
-		bool update;
-		AuthManager *auth_manager;
-		int32 auth_method;
+		const char *uri;
 	public:
-		authwin(AuthManager *AManager,const char *title,http_request_info_st *req,const char *rlm,int32 method,bool upd=false);
-		~authwin();
-		void MessageReceived(BMessage *msg);
-		bool QuitRequested();
+	URIProcessor(void);
+	URIProcessor(const char *URI);
+	~URIProcessor(void);
+	status_t GetParent(URIProcessor *URI);
+	bool Contains(const char *URI);
+	/*!
+		\brief Returns a const char * pointer to the URI.
+		
+		DO NOT DELETE THIS POINTER! Deleting it will cause harm to your sanity,
+		Themis, and your loved ones.
+	*/
+	const char *String(void);
+	/*!
+		\brief Returns the length of the URI.
+	*/
+	int32 Length(void);
+	const char *Set(const char *URI);
+	void operator=(const char *URI);
+	void operator=(URIProcessor &URI);
 };
+
 #endif
+

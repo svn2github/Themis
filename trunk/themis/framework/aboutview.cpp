@@ -29,14 +29,12 @@ Project Start Date: October 18, 2000
 #include "aboutview.h"
 #include <Messenger.h>
 #include <Window.h>
-#include "tcplayer.h"
 #include "app.h"
 #include "appaboutview.h"
 #include <string.h>
 #include <String.h>
 #include <TextView.h>
 #include "plugclass.h"
-extern tcplayer *TCP;
 aboutview *meAboutView;
 #define SelectionChanged 'selc'
 int sortaboutitems(const void *one,const void *two) {
@@ -112,14 +110,12 @@ aboutview::aboutview(BRect frame, const char *name, uint32 resizem, uint32 flags
 	item->listitem=new BStringItem("Themis Framework");
 	printf("item 1: %p %s\n",item->listitem, item->listitem->Text());
 	items->AddItem(item);
-#ifndef NEWNET
 	item=new about_items_st;
-	item->pointer=TCP;
+	item->pointer=NULL;
 	item->type=AboutThemisSSL;
 	item->listitem=new BStringItem("SSL");
 	printf("item 2: %p %s\n",item->listitem, item->listitem->Text());
 	items->AddItem(item);
-#endif
 	firstrun=true;
 }
 
@@ -217,16 +213,14 @@ void aboutview::MessageReceived(BMessage *msg)
 						}break;
 						case AboutThemisSSL:
 						{
-#ifndef NEWNET
 							r.right-=B_V_SCROLL_BAR_WIDTH;
 							BTextView *view;
 							view=new BTextView(r,"About SSL",r,B_FOLLOW_ALL,B_WILL_DRAW);
 							view->MakeEditable(false);
-							view->Insert(TCP->SSLAboutString());
+							view->Insert("SSL and other encryption support is provided by libcrypt:\nhttp://www.cs.auckland.ac.nz/~pgut001/cryptlib/\n");
 							BScrollView *sv=new BScrollView("about_plug_scroller",view,B_FOLLOW_ALL,B_WILL_DRAW|B_NAVIGABLE_JUMP,false,true,B_FANCY_BORDER);
 							innerbox->AddChild(sv);
 							view=NULL;
-#endif
 						}break;
 					}
 				}

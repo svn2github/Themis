@@ -195,6 +195,15 @@ const rgb_color kColorTheme = { 255, 200, 0, 255 };
 #define IH_LOAD_IMAGE			'ihli'
 #define IH_IMAGE_LOADED			'ihil'
 
+//HTTPv4 Specific message contants
+//You should only send these to MS_TARGET_PROTOCOL or specifically to the HTTP plugin
+//as what values.
+#define HTTP_POST_REQUEST		'post'
+#define HTTP_PUT_REQUEST		'_put'
+#define HTTP_GET_REQUEST		'_get'
+#define HTTP_DELETE_REQUEST		'dele'
+#define HTTP_HEAD_REQUEST		'head'
+
 //union int32torgb
 //{
 //	int32 value;

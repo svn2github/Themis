@@ -153,7 +153,6 @@ void cacheman::Unregister(uint32 usertoken)
 	CachePlug::Unregister(usertoken);
 }
 uint32 cacheman::BroadcastTarget(){
-	printf("Cache\n");
 	return MS_TARGET_CACHE_SYSTEM;
 }
 bool cacheman::RequiresHeartbeat()
@@ -162,6 +161,7 @@ bool cacheman::RequiresHeartbeat()
 }
 void cacheman::Heartbeat()
 {
+/*
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
 		CacheObject *cur=objlist,*prev=NULL;
@@ -181,7 +181,7 @@ void cacheman::Heartbeat()
 			may be saved to disk in a temporary file, and tracked with a smaller in memory structure.
 			This latter option may be implemented later if it is determined that it is the better
 			solution.
-		*/
+		* /
 		while (cur!=NULL) {
 			time_diff=difftime(current_time,cur->LastAccessTime());
 			switch(cur->Type()) {
@@ -244,7 +244,7 @@ void cacheman::Heartbeat()
 			usage. If the RAM or Disk cache is over its specified limit, then trim the files
 			first by age, then by capacity: older files should be removed first, then large newer
 			files. This will remove items from disk and/or RAM.
-		*/
+		* /
 		ssize_t ram_size=GetCacheSize(TYPE_RAM), disk_size=GetCacheSize(TYPE_DISK);
 		CacheObject **objects=NULL;
 		cur=objlist;
@@ -302,7 +302,7 @@ void cacheman::Heartbeat()
 		}
 		
 	}
-	
+*/	
 }
 int32 cacheman::CountCacheItems(uint32 which) 
 {
@@ -361,7 +361,7 @@ CacheObject *cacheman::FindObject(const char *URL)
 		}
 		cur=cur->Next();
 	}
-	return (DiskCacheObject*)cur;
+	return cur;
 }
 
 void cacheman::ClearRequests(uint32 usertoken, int32 objecttoken) 

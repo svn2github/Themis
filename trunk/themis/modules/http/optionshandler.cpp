@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2000 Z3R0 One. All Rights Reserved. 
+Copyright (c) 2004 Raymond "Z3R0 One" Rodgers. All Rights Reserved. 
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -23,16 +23,16 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
+Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@users.sourceforge.net)
 Project Start Date: October 18, 2000
 */
 
 #include "optionshandler.h"
-#include "httplayer.h"
+#include "httpv4.h"
 
 #include <Message.h>
 #include <stdio.h>
-extern httplayer *meHTTP;
+extern HTTPv4 *HTTP;
 
 http_opt_handler::http_opt_handler()
 	:BHandler("http_options_handler"){
@@ -56,21 +56,21 @@ void http_opt_handler::MessageReceived(BMessage *msg) {
 	char *bstr[3]={{"Themis"},{"IE"},{"Netscape"}};
 	switch(msg->what) {
 		case BROWSER_IDENT_THEMIS: {
-			meHTTP->use_useragent=BROWSER_IDENT_THEMIS;
+			HTTP->use_useragent=BROWSER_IDENT_THEMIS;
 		}break;
 		case BROWSER_IDENT_NETSCAPE: {
-			meHTTP->use_useragent=BROWSER_IDENT_NETSCAPE;
+			HTTP->use_useragent=BROWSER_IDENT_NETSCAPE;
 		}break;
 		case BROWSER_IDENT_IE:{
-			meHTTP->use_useragent=BROWSER_IDENT_IE;
+			HTTP->use_useragent=BROWSER_IDENT_IE;
 		}break;
 		default:
 			BHandler::MessageReceived(msg);
 	}
-	printf("Browser string is set to %s\n",bstr[meHTTP->use_useragent]);
+//	printf("Browser string is set to %s\n",bstr[meHTTP->use_useragent]);
 }
 void http_opt_handler::AddMenu(BMenu *parent) {
-	printf("hoh::AddMenu\n");
+//	printf("hoh::AddMenu\n");
 	if (parentmenu!=NULL) {
 		if (parentmenu!=parent) {
 			RemoveMenu();
@@ -78,7 +78,7 @@ void http_opt_handler::AddMenu(BMenu *parent) {
 	}
 	parentmenu=parent;
 	parentmenu->AddItem(browserident);
-	printf("hoh: add menu complete\n");
+//	printf("hoh: add menu complete\n");
 	parentmenu->InvalidateLayout();
 }
 

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2002 Raymond "Z3R0 One" Rodgers. All Rights Reserved. 
+Copyright (c) 2004 Raymond "Z3R0 One" Rodgers. All Rights Reserved. 
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 
@@ -23,7 +23,7 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
+Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@users.sourceforge.net)
 Project Start Date: October 18, 2000
 */
 #ifndef _appclass
@@ -38,9 +38,7 @@ Project Start Date: October 18, 2000
 #include "msgdaemon.h"
 #include "plugman.h"
 #include "PrefsWin.h"
-#ifdef NEWNET
 #include "tcpmanager.h"
-#endif
 #include "SiteHandler.h"
 #include "win.h"
 #include "../modules/Renderer/TRenderView.h"
@@ -131,10 +129,8 @@ class App : public BApplication, public MessageSystem
 		void						SetFirstWindow(
 										Win* newfirst );
 		
-#ifdef NEWNET
 		//! A pointer to the new network system.
 		_Themis_Networking_::TCPManager*	TCPMan;
-#endif
 
 	private:
 		//! Checks settings for missing items, and adds defaults if required.

@@ -28,19 +28,59 @@ Project Start Date: October 18, 2000
 */
 #ifndef _networkable_object_
 #define _networkable_object_
-
+#include <SupportDefs.h>
 namespace _Themis_Networking_ {
 	class Connection;
+	/*!
+		\brief Classes that will utilize the TCPManager must be derived from NetworkableObject.
+	*/
 	class NetworkableObject {
 		public:
-			virtual void ConnectionEstablished(Connection *connection);
-			virtual void ConnectionAlreadyExists(Connection *connection);
-			virtual void ConnectionTerminated(Connection *connection);
-			virtual void DataIsWaiting(Connection *connection);
-			virtual void ConnectionError(Connection *connection);
-			virtual void ConnectionFailed(Connection *connection);
-			virtual void DestroyingConnectionObject(Connection *connection);
+			/*!
+			\brief A connection to the server has been established.
+			
+			
+			*/
+			virtual uint32 ConnectionEstablished(Connection *connection);
+			/*!
+			\brief There is already a connection to this server that is available for use.
+			
+			
+			*/
+			virtual uint32 ConnectionAlreadyExists(Connection *connection);
+			/*!
+			\brief The connection to the server has terminated.
+			
+			
+			*/
+			virtual uint32 ConnectionTerminated(Connection *connection);
+			/*!
+			\brief There is data waiting to be received on this Connection.
+			
+			
+			*/
+			virtual uint32 DataIsWaiting(Connection *connection);
+			/*!
+			\brief There has been an error on this Connection.
+			
+			
+			*/
+			virtual uint32 ConnectionError(Connection *connection);
+			/*!
+			\brief The connection attempt with this Connection object was not successful.
+			
+			
+			*/
+			virtual uint32 ConnectionFailed(Connection *connection);
+			/*!
+			\brief This Connection object is about to be deleted.
+			
+			
+			*/
+			virtual uint32 DestroyingConnectionObject(Connection *connection);
 		
+		static const uint32 STATUS_NOTIFICATION_FAILED=0x0;
+		static const uint32 STATUS_NOTIFICATION_SUCCESSFUL=0x1;
 	};
 };
 
