@@ -460,7 +460,7 @@ $(BASE_ADDONS_OBJECT_DIR)HTMLParser/%.o: $(BASE_ADDON_SOURCE_DIR)HTMLParser/%.cp
 
 #domview add-on
 domvaddon: $(BASE_ADDON_INSTALL_DIR)DOMView.so
-$(BASE_ADDON_INSTALL_DIR)DOMView.so: $(COMMONOBJ) $(foreach file,$(notdir $(DOMVIEWSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)DOMView/$(file)) #commondepends domvdepends commonobjects domvobjects
+$(BASE_ADDON_INSTALL_DIR)DOMView.so: domlib $(COMMONOBJ) $(foreach file,$(notdir $(DOMVIEWSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)DOMView/$(file)) #commondepends domvdepends commonobjects domvobjects
 	@echo "Linking DOM View add-on" 
 	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)DOMView.so $(foreach file,$(notdir $(DOMVIEWSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)DOMView/$(file)) $(COMMON_OBJECT_DIR)plugclass.o $(COMMON_OBJECT_DIR)plugman.o -nostart -Xlinker $(LDFLAGS) -soname=DOMView.so -L ./ -L $(BELIBRARIES) -L$(BASE_APP_LIB_INSTALL_DIR)  -lbe -lroot -ldom -lstdc++.r4
 	@echo "DOM View add-on is now linked. Doing mimeset."
