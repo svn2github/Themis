@@ -257,7 +257,7 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 						delete done;
 						done = NULL;
 						
-						PlugMan->Broadcast( TARGET_PARSER, ALL_TARGETS, &container );
+						Broadcast( MS_TARGET_ALL, &container );
 					}
 					break;
 				}
