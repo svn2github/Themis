@@ -113,4 +113,12 @@ class HTMLParser	{
 		void startParsing( TDocumentShared aDocument );
 };
 
+class ReadException	{
+	
+	public:
+		ReadException()	{};
+		~ReadException()	{};
+
+};
+
 #endif

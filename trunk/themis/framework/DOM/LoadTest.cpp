@@ -684,8 +684,6 @@ string HTMLParser	::	getAttribute()	{
 
 string HTMLParser	::	getString( bool aConserveSpaces )	{
 
-	cout << "Getting string...\n";
-
 	string result;
 
 	if ( mPos != mContent.size() )	{
@@ -714,6 +712,10 @@ string HTMLParser	::	getString( bool aConserveSpaces )	{
 				mStringType = ATTR;
 			}
 		}
+	}
+
+	if ( mPos == mContent.size() && result == "" )	{
+		throw ReadException();
 	}
 
 	return result;
@@ -747,27 +749,33 @@ void HTMLParser	::	startParsing( TDocumentShared aDocument )	{
 	mDocument = aDocument;
 	
 	bool insideDoc = true;
+
+	try	{
 	
-	while ( insideDoc )	{
-		getTag();
-
-		if ( isDocTypeTag() )	{
-			doctypeTag();
-			continue;
+		while ( insideDoc )	{
+			getTag();
+	
+			if ( isDocTypeTag() )	{
+				doctypeTag();
+				continue;
+			}
+	
+			if ( isHtmlTag() )	{
+				htmlTag();
+				// Last tag, quit the loop
+				insideDoc = false;
+				continue;
+			}
+			
+			cout << "Unknown tag found. Skipping...\n";
+			skipTag();
+			
 		}
-
-		if ( isHtmlTag() )	{
-			htmlTag();
-			// Last tag, quit the loop
-			insideDoc = false;
-			continue;
-		}
-		
-		cout << "Unknown tag found. Skipping...\n";
-		skipTag();
-		
 	}
-
+	catch ( ReadException r )	{
+		cout << "Unexpected end of file..\n";
+		cout << "Returning partial tree\n";
+	}
 }
 
 void HTMLParser	::	doctypeTag()	{
@@ -1112,8 +1120,6 @@ void HTMLParser	::	blockLevelTag( TElementShared aParent, bool aInsideForm )	{
 
 void HTMLParser	::	textLevelTag( TElementShared aParent, bool aConserveSpaces, bool aInsideAnchor )	{
 	
-	cout << "Found text level tag\n";
-
 	if ( isFontStyleTag() ||
 		 isPhraseTag() ||
 		 isFontTag() )	{
