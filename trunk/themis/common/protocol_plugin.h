@@ -42,7 +42,7 @@ class ProtocolPlugClass: public PlugClass, public _Themis_Networking_::Networkab
 	protected:
 		static BLocker UOU_lock;
 	public:
-		ProtocolPlugClass(BMessage *info=NULL);
+		ProtocolPlugClass(BMessage *info=NULL,const char *msg_system_name=NULL);
 		BString URL;
 	
 		virtual const char *SetURL(const char* url);

@@ -54,7 +54,7 @@ int qsort_cookies(const void *Alpha, const void *Beta) {
 	return 0;
 }
 
-CookieManager::CookieManager():MessageSystem() {
+CookieManager::CookieManager():MessageSystem("Cookie Manager") {
 	MsgSysRegister(this);
 	printf("CookieManager()\n");
 	CookieSettings=new BMessage();

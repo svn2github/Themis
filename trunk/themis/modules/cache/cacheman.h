@@ -56,7 +56,7 @@ class cacheman: public CachePlug {
 		status_t CheckIndices();
 		status_t CheckMIME();
 	public:
-		cacheman(BMessage *info=NULL);
+		cacheman(BMessage *info=NULL,const char *msg_sys_name="Cache System");
 		~cacheman();
 		bool RequiresHeartbeat();
 		void Heartbeat();

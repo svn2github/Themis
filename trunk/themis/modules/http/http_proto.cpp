@@ -371,8 +371,8 @@ void http_protocol::Heartbeat() {
 	HTTP->CookieMonster->ClearExpiredCookies();
 //	HTTP->CookieMonster->PrintCookies();
 }
-http_protocol::http_protocol(BMessage *info)
-              :protocol_plugin(info)
+http_protocol::http_protocol(BMessage *info,const char *msg_sys_name)
+              :protocol_plugin(info,msg_sys_name)
  {
  	lock=new BLocker(true);
 	 

@@ -72,7 +72,7 @@ class http_protocol:public ProtocolPlugClass
 	   
     public:
 		void FindURI(const char *url,BString &host,uint16 *port,BString &uri,bool *secure);
-     http_protocol(BMessage *info=NULL);
+     http_protocol(BMessage *info=NULL, const char *msg_sys_name="HTTP Protocol");
      ~http_protocol();
      BMessage headers;
      char *PlugName(void);

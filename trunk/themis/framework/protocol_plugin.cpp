@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <ctype.h>
 BLocker ProtocolPlugClass::UOU_lock(true);
-ProtocolPlugClass::ProtocolPlugClass(BMessage *info)
-	:PlugClass(info), _Themis_Networking_::NetworkableObject()
+ProtocolPlugClass::ProtocolPlugClass(BMessage *info,const char *msg_sys_name)
+	:PlugClass(info,msg_sys_name), _Themis_Networking_::NetworkableObject()
 {
 }
 

@@ -30,8 +30,8 @@ Project Start Date: October 18, 2000
 #include <File.h>
 
 
-CachePlug::CachePlug(BMessage *info)
-	:PlugClass(info) 
+CachePlug::CachePlug(BMessage *info,const char *msg_sys_name)
+	:PlugClass(info,msg_sys_name)
 {
 	lock=new BLocker(true); // set up the locking support
 	autolock=new BAutolock(lock);// automatically lock when a thread takes control

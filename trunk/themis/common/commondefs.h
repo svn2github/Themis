@@ -58,6 +58,8 @@ to allow interoperability in some parts of the application.
 #define CacheClearFiles 'clca'
 #define CachedObject 'cobj'
 
+#define DEBUG_INFO_MSG MessageSystem::DEBUG_INFO_MSG
+
 //There are different methods of caching data according to the http rfc.
 //Define them here.
 
@@ -158,6 +160,11 @@ to allow interoperability in some parts of the application.
 #define UH_RENDER_START			'urst'	// sent by UH to renderer
 #define UH_RENDER_FINISHED		'urfi'	// snet by renderer to UH
 #define UH_WIN_LOADING_PROGRESS	'uwlp'	// sent by UH to windows
+
+
+//ImageHandler message constants
+#define IH_LOAD_IMAGE			'ihli'
+#define IH_IMAGE_LOADED			'ihil'
 
 #include <GraphicsDefs.h>
 

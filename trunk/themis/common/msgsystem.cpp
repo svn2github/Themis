@@ -27,6 +27,7 @@ Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
 #include "msgsystem.h"
+#include "plugclass.h"
 #include <Autolock.h>
 #include <stdio.h>
 #include <OS.h>
@@ -39,7 +40,7 @@ volatile int32 MessageSystem::_Quit_Thread_=0;
 thread_id MessageSystem::_ProcessThread_=0;
 volatile uint32 MessageSystem::_messages_sent_=0;
 volatile uint32 MessageSystem::_message_targets_=0;
-MessageSystem::MessageSystem(char *msg_sys_name)
+MessageSystem::MessageSystem(const char *msg_sys_name)
 {
 	MS_Name=msg_sys_name;
 	if (MS_Name==NULL)
@@ -70,7 +71,17 @@ int32 MessageSystem::MS_Start_Thread(void *arg)
 	MessageSystem *obj=(MessageSystem*)arg;
 	return obj->_ProcessMessage_(obj);
 }
-
+const char * MessageSystem::MsgSysObjectName() {
+	return MS_Name;
+}
+void MessageSystem::Debug(const char *message, int32 plugid) {
+	BMessage debug(DEBUG_INFO_MSG);
+	debug.AddInt32( "command", COMMAND_INFO );
+	if (plugid!=-1)
+		debug.AddInt32( "pluginID", plugid );
+	debug.AddString("message",message);
+	Broadcast(MS_TARGET_DEBUG,&debug);
+}
 int32 MessageSystem::_ProcessBroadcasts_(void *data) 
 {
 	while (!_Quit_Thread_) {
@@ -103,6 +114,10 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 				broadcaster->broadcast_successful_receives=0;
 				while (cur!=NULL) {
 //					printf("getting current broadcast target id\n");
+					if (cur->ptr==NULL) {
+						cur=cur->next;
+						continue;
+					}
 					current_target=cur->ptr->BroadcastTarget();
 //					printf("targets: %lu\tcurrent: %lu\tcomparison: %lu\n",targets,current_target,current_target&targets);
 					switch(targets) {
@@ -320,7 +335,33 @@ void MessageSystem::MsgSysUnregister(MessageSystem *target){
 	}
 	broadcast_target_count--;
 }
-
+int32 MessageSystem::CountMembers() {
+	int32 count=0;
+	BAutolock alock(msgsyslock);
+	if (alock.IsLocked()) {
+		msgsysclient_st *cur=MsgSysClients;
+		while (cur!=NULL) {
+			count++;
+			cur=cur->next;
+		}
+	}
+	return count;
+}
+MessageSystem *MessageSystem::GetMember(int32 index) {
+	MessageSystem *member=NULL;
+	BAutolock alock(msgsyslock);
+	if (alock.IsLocked()) {
+		msgsysclient_st *cur=MsgSysClients;
+		if ((index>=CountMembers()) || (index<0) || (cur==NULL))
+			return member;
+		for (int32 i=0; i<index; i++) {
+			cur=cur->next;
+		}
+		if (cur!=NULL)
+			member=cur->ptr;
+	}
+	return member;
+}
 void MessageSystem::MsgSysRegister(MessageSystem *target){
 	BAutolock alock(msgsyslock);
 	if (alock.IsLocked()) {
@@ -343,9 +384,12 @@ void MessageSystem::MsgSysRegister(MessageSystem *target){
 		cur->ptr=target;
 		broadcast_target_count++;
 	}
-#ifdef DEBUG
-	printf("New receiver registered; Broadcast System Members: %ld\n",broadcast_target_count);
-#endif
+//#ifdef DEBUG
+//	char output[200];
+//	sprintf(output,"New receiver registered; Broadcast System Members: %ld\n",broadcast_target_count);
+	
+//	Debug(output);
+//#endif
 }
 uint32 MessageSystem::BroadcastTarget() 
 {

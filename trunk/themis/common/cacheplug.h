@@ -57,7 +57,7 @@ class CachePlug:public PlugClass {
 		BLocker *lock; //!< This object is the locking mechanism used by the autolock.
 		BAutolock *autolock; //!< This object automatically locks the cache system when a new thread attempts to access it.
 	public:
-		CachePlug(BMessage *info=NULL);
+		CachePlug(BMessage *info=NULL,const char *msg_sys_name=NULL);
 		virtual ~CachePlug();
 /*!
 

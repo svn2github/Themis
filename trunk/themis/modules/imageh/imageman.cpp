@@ -72,6 +72,7 @@ PlugClass *GetObject(void) {
 }
 ImageMan::ImageMan(BMessage *info)
 	:PlugClass(info) {
+	printf("image handler loaded!\n");
 	imagelist=NULL;
 	CacheSys=NULL;
 	CacheSys=(CachePlug*)PlugMan->FindPlugin(CachePlugin);
@@ -176,6 +177,9 @@ status_t ImageMan::ReceiveBroadcast(BMessage *msg) {
 	switch(command) {
 		case COMMAND_INFO: {
 			switch(msg->what) {
+				case IH_LOAD_IMAGE: {
+				
+				}break;
 				case PlugInLoaded: {
 					PlugClass *pobj=NULL;
 					msg->FindPointer("plugin",(void**)&pobj);
@@ -329,9 +333,9 @@ out our stored images.
 					if (plug!=NULL)
 						plug->BroadcastReply(&types);
 				} else {	
-					BMessage container;
-					container.AddMessage("message",&types);
-					PlugMan->Broadcast(PlugID(),replyto,&container);
+				//	BMessage container;
+				//	container.AddMessage("message",&types);
+					PlugMan->Broadcast(replyto,&types);
 				}
 				
 			}

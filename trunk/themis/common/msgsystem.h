@@ -71,7 +71,7 @@ enum MsgSysTargets
 	MS_TARGET_CONTENT_AUDIO=0xa,//!< The content of the message or referenced in the message is an audio file.
 	MS_TARGET_CONTENT_VIDEO=0xc,//!< The content of the message or referenced in the message is a video file.
 	MS_TARGET_CONTENT_COOKIE=0xe,//!< The content of the message or referenced in the message is a cookie of some sort. (Probably HTTP Cookie.)
-	MS_TASRGET_CONTENT_DATA=0x10,//!< The content of the message or referenced in it is data of unknown or unspecified type.
+	MS_TARGET_CONTENT_DATA=0x10,//!< The content of the message or referenced in it is data of unknown or unspecified type.
 	MS_TARGET_CACHE=0x20,//!< Send message to cache members of the broadcast system.
 	MS_TARGET_PROTOCOL=0x40,//!< Send message to protocol members of the broadcast system.
 	MS_TARGET_HANDLER=0x80,//!< Send message to content handler members of the broadcast system.
@@ -100,7 +100,8 @@ enum MsgSysTargets
 	MS_TARGET_WINDOW=0x101a,//!< Send a message to a specific window.
 	MS_TARGET_MEMORY_CACHE=MS_TARGET_CACHE|MS_TARGET_TYPE_RAM, //!< Send a message to the cache system for a RAM cache object.
 	MS_TARGET_DISK_CACHE=MS_TARGET_CACHE|MS_TARGET_TYPE_DISK, //!< Send a message to the cache system for a disk cache object.
-	MS_TARGET_PLUG_IN_MANAGER='plgm' //!< Send a message to the plug-in manager.
+	MS_TARGET_PLUG_IN_MANAGER='plgm', //!< Send a message to the plug-in manager.
+	MS_TARGET_DEBUG='dbug' //!< Send a message to the debug window.
 };
 class MessageDaemon;
 /*!
@@ -258,12 +259,15 @@ This is the number of targets that received the most recently broadcast message.
 */
 		int32 _ProcessMessage_(void *arg);
 	public:
+		static const int32 DEBUG_INFO_MSG='dbim';
+		const char *MsgSysObjectName();
+	
 /*!
 \brief 
 
 */
-		MessageSystem(char *msg_sys_name=NULL);
-		char *MS_Name;
+		MessageSystem(const char *msg_sys_name=NULL);
+		const char *MS_Name;
 /*!
 \brief 
 
@@ -324,6 +328,9 @@ and calling this function.
 
 */
 		virtual void BroadcastFinished();
+		void Debug(const char *message,int32 plugid=-1);
+		int32 CountMembers();
+		MessageSystem *GetMember(int32 index);
 };
 
 

@@ -61,8 +61,8 @@ Project Start Date: October 18, 2000
 #define MAX_DISK_FILE_CACHE_UNUSED_TIME (ONE_MINUTE*2.0)
 #define MAX_RAM_CACHE_SIZE (15*ONE_MEGABYTE)
 #define MAX_DISK_CACHE_SIZE (50*ONE_MEGABYTE)
-cacheman::cacheman(BMessage *info)
-	:CachePlug(info) {
+cacheman::cacheman(BMessage *info,const char *msg_sys_name)
+	:CachePlug(info,msg_sys_name) {
 	lock=new BLocker(true);
 	ASp=NULL;
 	AppSettings=NULL;
@@ -165,8 +165,8 @@ void cacheman::Heartbeat()
 	if (alock.IsLocked()) {
 		CacheObject *cur=objlist,*prev=NULL;
 		time_t current_time=real_time_clock();
-		if (current_time%10==0)
-			printf("Total items in cache memory:\t%ld\n\tDisk:\t%ld\n\tRAM:\t%ld\n\tFile:\t%ld\n",CountCacheItems(),CountCacheItems(TYPE_DISK),CountCacheItems(TYPE_RAM),CountCacheItems(TYPE_DISK_FILE));
+//		if (current_time%10==0)
+//			printf("Total items in cache memory:\t%ld\n\tDisk:\t%ld\n\tRAM:\t%ld\n\tFile:\t%ld\n",CountCacheItems(),CountCacheItems(TYPE_DISK),CountCacheItems(TYPE_RAM),CountCacheItems(TYPE_DISK_FILE));
 		double time_diff;
 		/*
 			Cache Usage Aging.

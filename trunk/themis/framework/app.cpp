@@ -46,7 +46,7 @@ BMessage *AppSettings;
 
 App::App(
 	const char* appsig )
-	: BApplication( appsig ), MessageSystem()
+	: BApplication( appsig ), MessageSystem("Themis App Object")
 {
 	fQR_called = 0;
 	fAboutWin = NULL;
@@ -178,17 +178,15 @@ status_t App::BroadcastReply(BMessage *msg)
 
 void App::Pulse() 
 {
-	printf("App::Pulse - Sending Broadcast\n");
-	BMessage *test=new BMessage(6221972);
-	test->AddString("test string","hello");
-	test->AddInt32("birthday",4191977);
-	Broadcast(MS_TARGET_APPLICATION|MS_TARGET_COOKIE_MANAGER,test);
-	delete test;
 }
 
 bool App::QuitRequested(){
 	
 	printf( "App::QuitRequested()\n" );
+	printf("Message System Members:\n");
+	int32 msgmem=CountMembers();
+	for (int32 i=0; i<msgmem; i++)
+		printf("\t%s\n",(GetMember(i))->MsgSysObjectName());
 	SetPulseRate(0);
 	atomic_add(&fQR_called,1);
 	status_t stat;

@@ -28,7 +28,7 @@ Project Start Date: October 18, 2000
 */
 #include "msgdaemon.h"
 #include <Autolock.h>
-MessageDaemon::MessageDaemon():MessageSystem() {
+MessageDaemon::MessageDaemon():MessageSystem("Message System Daemon") {
 //	msgsyslock=new BLocker(true);
 	Start();
 }
