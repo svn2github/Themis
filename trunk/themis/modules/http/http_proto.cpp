@@ -257,7 +257,10 @@ status_t http_protocol::ReceiveBroadcast(BMessage *msg)
 //			printf("http proto: http locked\n");
 //			http_request *request=NULL;
 //			while (request==NULL) {
-				HTTP->AddRequest(rmsg);
+				BString url;
+				rmsg->FindString("target_url",&url);
+				if (url.ICompare("http",4)==0)
+					HTTP->AddRequest(rmsg);
 //				if (request==NULL)
 //					snooze(25000);
 //			}
