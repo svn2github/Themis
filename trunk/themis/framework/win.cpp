@@ -591,9 +591,6 @@ void Win::MessageReceived(BMessage *msg) {
 				CurrentFocus()->MakeFocus( false );
 			tabview->TabAt( selection )->View()->MakeFocus( true );
 			
-			// temporary stop
-			break;
-			
 			char *usepass=NULL;
 			char *workurl=NULL;
 			BString urlS=url.String();
