@@ -38,6 +38,7 @@ DOMLIBRARY_DEPENDS_DIR=$(BASE_LIBRARY_DEPENDS_DIR)DOM/
 TESTPLUG_DEPENDS_DIR=$(BASE_DEPENDS_DIR)testplug/
 HTMLPARSER_DEPENDS_DIR=$(BASE_DEPENDS_DIR)HTMLParser/
 IMAGEH_DEPENDS_DIR=$(BASE_ADDONS_DEPENDS_DIR)imageh/
+RENDERER_DEPENDS_DIR=$(BASE_ADDONS_DEPENDS_DIR)renderer/
 
 #object directories
 BASE_OBJECT_DIR=objects/
@@ -49,6 +50,8 @@ DOMLIBRARY_OBJECT_DIR=$(BASE_LIBRARY_OBJECT_DIR)DOM/
 TESTPLUG_OBJECT_DIR=$(BASE_OBJECT_DIR)testplug/
 HTMLPARSER_OBJECT_DIR=$(BASE_OBJECT_DIR)HTMLParser/
 IMAGEH_OBJECT_DIR=$(BASE_ADDONS_OBJECT_DIR)imageh/
+RENDERER_OBJECT_DIR=$(BASE_ADDONS_OBJECT_DIR)renderer/
+
 #source files
 FRAMEWORKSOURCES= \
 	framework/main.cpp \
@@ -74,6 +77,10 @@ FRAMEWORKSOURCES= \
 	framework/tcpmanager.cpp \
 	framework/base64.cpp
 #	framework/winview.cpp
+RENDERERSOURCES= \
+	Renderer/UIElement.cpp		\
+	Renderer/TRenderView.cpp	\
+	Renderer/TextElement.cpp	\
 COMMONSOURCES= \
 	common/plugclass.cpp \
 	common/tcplayer.cpp \
@@ -168,6 +175,8 @@ endif
 ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR) ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR) ; echo 0 ; fi)" "0"
 endif
 #add a new line similar to those below for each plug-in/add-on
+ifeq "$(shell if [ -d $(RENDERER_OBJECT_DIR) ] ; then echo 1 ; else mkdir -p $(RENDERER_OBJECT_DIR) ; echo 0 ; fi)" "0"
+endif
 #http add-on object directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)http/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)http/ ; echo 0 ; fi)" "0"
 endif
@@ -207,6 +216,8 @@ endif
 ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR) ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR) ; echo 0 ; fi)" "0"
 endif
 #add a new line similar to those below for each plug-in/add-on
+ifeq "$(shell if [ -d $(RENDERER_DEPENDS_DIR) ] ; then echo 1 ; else mkdir -p $(RENDERER_DEPENDS_DIR) ; echo 0 ; fi)" "0"
+endif
 #http add-on depends directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)http/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)http/ ; echo 0 ; fi)" "0"
 endif
@@ -235,12 +246,6 @@ endif
 ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)imageh/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)imageh/ ; echo 0 ; fi)" "0"
 endif
 
-#Detect whether we are running Zeta or R5/Dano
-STDLIBS=-lbe -ltextencoding -lroot
-ifeq "$(shell if [ -f /boot/beos/system/lib/libzeta.so ] ; then echo 1 ; else echo 0 ; fi)" "1"
-	STDLIBS+= -lzeta
-endif
-
 #Detect whether net_server or BONE is installed, and set the appropriate flags
 #to compile in/out appropriate sections. Also do the same for OpenSSL.
 #These can be detected with #ifdef statements. For instance:
@@ -255,7 +260,7 @@ NETWORKLIBS=-lsocket -lbind -lbnetapi -lopenssl
 NETWORKING=NONE
 # by default, debugging information will be included. to turn it off, remove or comment out (#) the -g
 # on the next line 
-COMPILE_FLAGS=-g -D_Themis_ -DDEBUG -DNEWNET #-Wall -DNEWNET
+COMPILE_FLAGS=-g -D_Themis_ -DDEBUG #-Wall -DNEWNET
 ifeq "$(shell if [ -f /boot/develop/headers/be/bone/sys/socket.h ] ; then echo 1 ; else echo 0 ; fi)" "1"
 	NETWORKLIBS=-lsocket -lbind -lbnetapi -I/boot/develop/headers/be/bone/ 
 	NETWORKING=BONE
@@ -376,7 +381,7 @@ $(BASE_INSTALL_DIR)Themis: $(foreach file,$(notdir $(FRAMEWORKSOURCES:.cpp=.o)),
 #$(BASE_INSTALL_DIR)Themis: frameworkdepends commondepends frameworkobjects commonobjects
 	@echo "Linking Themis."
 	@$(CC) -o$(BASE_INSTALL_DIR)Themis $(foreach file,$(notdir $(FRAMEWORKSOURCES:.cpp=.o)),$(FRAMEWORK_OBJECT_DIR)$(file)) $(foreach file,$(notdir $(COMMONSOURCES:.cpp=.o)),$(COMMON_OBJECT_DIR)$(file)) -Xlinker $(LDFLAGS) -L ./ \
-		-L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) $(NETWORKLIBS) $(STDLIBS) -lstdc++.r4 -ltranslation # -ldom
+		-L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) $(NETWORKLIBS) -lbe -ltextencoding -lroot -lstdc++.r4 -ltranslation # -ldom
 	@echo "Done linking, adding resource file."
 	@xres -o $(BASE_INSTALL_DIR)Themis framework/themis.rsrc
 	@echo "Done adding resources. Themis framework app is ready to run."
@@ -419,12 +424,29 @@ $(COMMON_DEPENDS_DIR)%.d: common/%.cpp
 $(COMMON_OBJECT_DIR)%.o: common/%.cpp $(COMMON_DEPENDS_DIR)%.d
 	@echo "Common: Updating object file $(notdir $@)"
 	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
+#renderer
+renderer: $(BASE_ADDON_INSTALL_DIR)renderer.so
+$(BASE_ADDON_INSTALL_DIR)renderer.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(notdir $(RENDERERSOURCES:.cpp=.o)),$(RENDERER_OBJECT_DIR)$(file))
+	@echo "Linking renderer..."
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)renderer.so $(foreach file,$(notdir $(RENDERERSOURCES:.cpp=.o)),$(RENDERER_OBJECT_DIR)$(file)) -nostart -Xlinker $(LDFLAGS) -soname=renderer.so -L ./ -L $(BELIBRARIES)  -lbe -ltextencoding -lroot _APP_
+	@mimeset -F $(BASE_ADDON_INSTALL_DIR)renderer.so
+	@echo "Renderer plug-in compiled and linked successfully."
+$(RENDERER_OBJECT_DIR)%.o: $(BASE_ADDON_SOURCE_DIR)renderer/%.cpp $(BASE_ADDONS_DEPENDS_DIR)renderer/%.d
+	@echo "Renderer: Updating object file $(notdir $@)"
+	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
+$(RENDERER_DEPENDS_DIR)%.d: $(BASE_ADDON_SOURCE_DIR)renderer/%.cpp 
+	@echo "Renderer: Updating dependency file $(notdir $@)"
+	@set -e;VAR1=$(shell echo "$(RENDERER_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(RENDERER_DEPENDS_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/add-ons\/renderer\/\1.o depends\/add-ons\/renderer\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
+ifneq ($(MAKECMDGOALS),clean)
+-include $(foreach file,$(BASE_ADDON_SOURCE_DIR)$(RENDERERSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)renderer/$(notdir $(file)))
+endif
+	
 
 #cache add-on
 cacheaddon: $(BASE_ADDON_INSTALL_DIR)cache.so
 $(BASE_ADDON_INSTALL_DIR)cache.so: $(BASE_INSTALL_DIR)Themis $(COMMONOBJ) $(foreach file,$(notdir $(CACHEADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)cache/$(file)) #cacheaddondepends cacheaddonobjects
 	@echo "Linking cache add-on" 
-	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)cache.so $(foreach file,$(notdir $(CACHEADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)cache/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=cache.so -L ./ -L $(BELIBRARIES)  $(STDLIBS) _APP_
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)cache.so $(foreach file,$(notdir $(CACHEADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)cache/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=cache.so -L ./ -L $(BELIBRARIES)  -lbe -ltextencoding -lroot _APP_
 	@echo "Cache add-on is now linked. Doing mimeset."
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)cache.so
 	@echo "Cache plug-in compiled and linked successfully."
@@ -565,7 +587,7 @@ $(BASE_ADDONS_OBJECT_DIR)DOMView/%.o: $(BASE_ADDON_SOURCE_DIR)DOMView/%.cpp $(BA
 httpaddon: $(BASE_ADDON_INSTALL_DIR)http_plugin.so
 $(BASE_ADDON_INSTALL_DIR)http_plugin.so: $(BASE_INSTALL_DIR)Themis $(COMMONOBJ) $(foreach file,$(notdir $(HTTPADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)http/$(file)) #commondepends httpaddondepends commonobjects httpaddonobjects
 	@echo "Linking http add-on" 
-	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)http_plugin.so  $(foreach file,$(notdir $(HTTPADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)http/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=http_plugin.so -L ./ -L $(BELIBRARIES)  $(NETWORKLIBS) $(STDLIBS) -ltranslation _APP_
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)http_plugin.so  $(foreach file,$(notdir $(HTTPADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)http/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=http_plugin.so -L ./ -L $(BELIBRARIES)  $(NETWORKLIBS) -lbe -ltextencoding -lroot -ltranslation _APP_
 	@echo "HTTP add-on is now linked. Doing mimeset."
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)http_plugin.so
 	@echo "HTTP plug-in compiled and linked successfully."
