@@ -15,12 +15,7 @@
 #include "ThemisTab.h"
 #include "ThemisTabView.h"
 #include "FakeSite.h"
-#include "ThemisIcons.h"
-
-const rgb_color kWhite = {255,255,255,255}; 
-const rgb_color kLightGray = {240,240,240,255};
-const rgb_color kGray = {221,221,221,255}; 
-const rgb_color kBlackColor = {51,51,51,255};
+#include "win.h"
 
 ThemisTab::ThemisTab( BView *view )
 	: BTab( view )
@@ -28,20 +23,18 @@ ThemisTab::ThemisTab( BView *view )
 }
 
 void
-ThemisTab::DrawTab( BView* owner, BRect frame,
-	tab_position position, bool full )
+ThemisTab::DrawTab(
+	ThemisTabView* owner,
+	BRect frame,
+	tab_position position,
+	bool full )
 {
 	//cout << "ThemisTab::DrawTab()" << endl;
 		
-	rgb_color hi;
-	rgb_color lo;
-	
-	// Save the original colors
-	hi = owner->HighColor();
-	lo = owner->LowColor();
-		
+	rgb_color hi = owner->HighColor();
+			
 	// Start a line array to draw the tab --
-	// this is faster than drawing the lines
+	// this is faster then drawing the lines
 	// one by one.
 	owner->BeginLineArray( 20 );
 	
@@ -49,82 +42,72 @@ ThemisTab::DrawTab( BView* owner, BRect frame,
 	BRect fillrect = BRect( frame.left + 3, frame.top + 2,
 			frame.right - 3, frame.bottom - 1 );
 	
-	// Do the bottom left corner, visible
-	// only on the frontmost tab.
+	// The bottom left corner
+	// ( visible only on the frontmost tab )
 	if( position != B_TAB_ANY )
 	{
 		owner->AddLine( BPoint( frame.left, frame.bottom ),
-			BPoint( frame.left + 1, frame.bottom - 1 ), kBlackColor );
+			BPoint( frame.left + 1, frame.bottom - 1 ), owner->fBlackColor );
 		owner->AddLine( BPoint( frame.left + 1, frame.bottom ),
-			BPoint( frame.left + 2, frame.bottom - 1 ), kWhite );
-		owner->AddLine( BPoint( frame.left + 2, frame.bottom ),
-			BPoint( frame.right - 2, frame.bottom ), kLightGray );
-		
-		// draw us lighter
-		owner->SetLowColor( kLightGray );
-		owner->FillRect( fillrect, B_SOLID_LOW );
-		owner->SetLowColor( lo );
+			BPoint( frame.left + 2, frame.bottom - 1 ), owner->fWhiteColor );
 	}
-	else
+	else	// an inactive tab
 	{
+		// the black line 'under' the inactive tab
 		owner->AddLine( BPoint( frame.left, frame.bottom ),
-			BPoint( frame.right, frame.bottom ), kBlackColor );
+			BPoint( frame.right, frame.bottom ), owner->fBlackColor );
 		
-		// draw us darker
-		owner->SetLowColor( kGray );
-		owner->FillRect( fillrect, B_SOLID_LOW );
-		owner->SetLowColor( lo );
+		// draw the inactive tabs background darker
+		owner->SetHighColor( owner->fInactiveTabColor );
+		owner->FillRect( fillrect, B_SOLID_HIGH );
 	}
 		
 	// Left wall -- always drawn
 	owner->AddLine( BPoint( frame.left + 1, frame.bottom - 1 ),
-		BPoint( frame.left + 1, frame.top + 2 ), kBlackColor );
+		BPoint( frame.left + 1, frame.top + 2 ), owner->fBlackColor );
 	owner->AddLine( BPoint( frame.left + 2, frame.bottom - 1 ),
-		BPoint( frame.left + 2, frame.top + 2 ), kWhite );
+		BPoint( frame.left + 2, frame.top + 2 ), owner->fWhiteColor );
 	
 	// Top-left corner -- always drawn
 	owner->AddLine( BPoint( frame.left + 2, frame.top + 1 ),
-		BPoint( frame.left + 2, frame.top + 1 ), kBlackColor );
+		BPoint( frame.left + 2, frame.top + 1 ), owner->fBlackColor );
 			
 	// Top -- always drawn
 	owner->AddLine( BPoint( frame.left + 3, frame.top ),
-		BPoint( frame.right - 3, frame.top ), kBlackColor );
+		BPoint( frame.right - 3, frame.top ), owner->fBlackColor );
 	owner->AddLine( BPoint( frame.left + 3, frame.top + 1 ),
-		BPoint( frame.right - 3, frame.top + 1 ), kWhite );	
+		BPoint( frame.right - 3, frame.top + 1 ), owner->fWhiteColor );	
 	
 	// Top-right corner -- always drawn
 	owner->AddLine( BPoint( frame.right - 2, frame.top + 1 ),
-		BPoint( frame.right - 2, frame.top + 1 ), kBlackColor );
+		BPoint( frame.right - 2, frame.top + 1 ), owner->fBlackColor );
 	
 	// Right wall -- always drawn.
 	owner->AddLine( BPoint( frame.right - 1, frame.top + 2 ),
-		BPoint( frame.right - 1, frame.bottom - 1 ), kBlackColor );
+		BPoint( frame.right - 1, frame.bottom - 1 ), owner->fBlackColor );
 	owner->AddLine( BPoint( frame.right - 2, frame.top + 2 ),
-		BPoint( frame.right - 2, frame.bottom - 1 ), kWhite );
+		BPoint( frame.right - 2, frame.bottom - 1 ), owner->fWhiteColor );
 	
 	// Bottom-right corner, only visible if the tab
 	// is either frontmost or the rightmost tab.
 	if( full )
 	{
 		owner->AddLine( BPoint( frame.right - 1, frame.bottom - 1 ),
-			BPoint( frame.right, frame.bottom ), kBlackColor );
+			BPoint( frame.right, frame.bottom ), owner->fBlackColor );
 		owner->AddLine( BPoint( frame.right - 2, frame.bottom - 1 ),
-			BPoint( frame.right - 1, frame.bottom ), kWhite );
+			BPoint( frame.right - 1, frame.bottom ), owner->fWhiteColor );
 	}
 	
-	// Draw the label by calling DrawLabel()
-	owner->SetHighColor( 0,0,0,255 );
-	owner->SetLowColor( kGray );
-	DrawLabel( owner, frame );
-		
 	owner->EndLineArray();
 	
+	// Draw the label and the fav-icon by calling DrawLabel()
+	owner->SetHighColor( 0, 0, 0, 255 );
+	DrawLabel( owner, frame );
 	owner->SetHighColor( hi );
-	owner->SetLowColor( lo );
 } 
 
 void
-ThemisTab::DrawLabel( BView* owner, BRect frame )
+ThemisTab::DrawLabel( ThemisTabView* owner, BRect frame )
 {
 	// i am drawing both, the label and the icon here, as it makes
 	// no sense to me doing nearly the same in separate functions
@@ -162,7 +145,7 @@ ThemisTab::DrawLabel( BView* owner, BRect frame )
 		// draw the icon
 		owner->SetDrawingMode( B_OP_ALPHA );
 		BBitmap* temp_fav_icon = new BBitmap( BRect( 0,0,15,15 ), B_RGB32 );
-		memcpy( temp_fav_icon->Bits(), icon_document_empty_hex, 1024 );
+		memcpy( temp_fav_icon->Bits(), ( ( Win* )owner->Window() )->bitmaps[9]->Bits(), 1024 );
 		owner->DrawBitmap( temp_fav_icon, iconframe );
 		owner->SetDrawingMode( B_OP_COPY );
 	}

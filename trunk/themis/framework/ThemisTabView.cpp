@@ -3,6 +3,8 @@
 // BeOS headers
 #include <GraphicsDefs.h>
 #include <TranslationUtils.h>
+#include <PopUpMenu.h>
+#include <MenuItem.h>
 
 // C/C++ headers
 #include <iostream>
@@ -15,28 +17,35 @@
 #include "ThemisTabView.h"
 #include "ThemisTab.h"
 #include "FakeSite.h"
+#include "ThemisNavView.h"	// ThemisPictureButton
 
 ThemisTabView::ThemisTabView(
 	BRect frame,
 	const char *name,
-	button_width width = B_WIDTH_AS_USUAL,
-	uint32 resizingmode = B_FOLLOW_ALL,
-	uint32 flags = //B_FULL_UPDATE_ON_RESIZE |
-		B_WILL_DRAW )//| B_NAVIGABLE_JUMP | //B_FRAME_EVENTS |
-		//B_NAVIGABLE )
+	button_width width,
+	uint32 resizingmode,
+	uint32 flags,
+	const rgb_color* arr )
 	: BTabView( frame, name,
-			width,
-			resizingmode,
-			flags )
+		width,
+		resizingmode,
+		flags )
 {
 	tab_width = 150.0;
 	SetTabHeight( 24.0 );
+	
+	fBackgroundColor = arr[0];
+	fInactiveTabColor = arr[1];
+	fBlackColor = arr[2];
+	fWhiteColor = arr[3];
 }
 
 void
 ThemisTabView::AttachedToWindow()
 {
-	SetViewColor( 240,240,240,0 );
+	cout << "ThemisTabView::AttachedToWindow()" << endl;
+	
+	SetViewColor( fBackgroundColor );
 	
 	CreateCloseTabViewButton();
 	
@@ -54,13 +63,13 @@ ThemisTabView::AttachedToWindow()
 void
 ThemisTabView::Draw( BRect updaterect )
 {
-	//cout << "ThemisTabView::Draw()" << endl;
+	cout << "ThemisTabView::Draw()" << endl;
 	
 	// draw the background of the tabs
 	
 	rgb_color lo = LowColor();
 	
-	SetLowColor( 240,240,240,0 );
+	SetLowColor( fBackgroundColor );
 	FillRect( updaterect, B_SOLID_LOW );
 	SetLowColor( lo );
 	
@@ -72,7 +81,7 @@ ThemisTabView::DrawBox( BRect selTabRect )
 {
 	//cout << "ThemisTabView::DrawBox()" << endl;
 
-	// i somehow do nothing here :D	
+	// we do nothing here
 }
 
 BRect
@@ -101,6 +110,14 @@ ThemisTabView::DrawTabs( void )
 		ThemisTab* temptab;
 		int li = 0;
 		
+		// calculate the number of tabs which will be drawn..
+		// some tabs may be out of window when you resized the window smaller
+		// and tabs already have had their minimum of 25 pix in width
+		// those tabs would be either out of the window or be displayed under
+		// the closetabview-button .. so we dont draw them...
+		while( ( count * tab_width ) > ( Bounds().right - 22 ) )
+			count--;
+				
 		for( li = 0; li <= count - 1; li++ )
 		{
 			temptab = ( ThemisTab* )TabAt( li );
@@ -128,10 +145,7 @@ ThemisTabView::DrawTabs( void )
 	}
 	
 	// now draw the 'line' between tabs bottom and site-content
-	rgb_color lo = LowColor();
 	rgb_color hi = HighColor();
-	SetLowColor( 240,240,240,255 );
-	SetHighColor( 51,51,51,255 );
 	
 	BRect linerect;
 	BRect updaterect = Bounds();
@@ -140,9 +154,11 @@ ThemisTabView::DrawTabs( void )
 	linerect.right = updaterect.right;
 	linerect.bottom = linerect.top + 3;
 	
-	FillRect( linerect, B_SOLID_LOW );
+	SetHighColor( fBackgroundColor );
+	FillRect( linerect, B_SOLID_HIGH );
 	
-	// and stroke a line from left to right at bottom
+	// and stroke a black line from left to right at bottom
+	SetHighColor( fBlackColor );
 	StrokeLine( BPoint( updaterect.left, linerect.bottom ),
 		BPoint( updaterect.right, linerect.bottom ), B_SOLID_HIGH );
 	
@@ -150,12 +166,11 @@ ThemisTabView::DrawTabs( void )
 	// ( the black one from rightmost tab till windows right side )
 	// the rest of the line is already drawn by the B_TAB_ANY tabs
 	BPoint startpoint;
-	startpoint.x = CountTabs() * tab_width;
+	startpoint.x = count * tab_width;
 	startpoint.y = linerect.top-1;
 	StrokeLine( startpoint, BPoint( linerect.right, linerect.top-1 ),
 		B_SOLID_HIGH );
 			
-	SetLowColor( lo );
 	SetHighColor( hi );
 	
 	return rect;
@@ -164,9 +179,9 @@ ThemisTabView::DrawTabs( void )
 void
 ThemisTabView::MakeFocus( bool focus )
 {
-	// i never want the focus on the tabs
-	// on the tabs targetview yes
-	//BTabView::MakeFocus( false );
+	// i never want the focus on the tabs,
+	// but on the tabs targetview
+	
 	if( TabAt( Selection() )->View() != NULL )
 	{	
 		Window()->CurrentFocus()->MakeFocus( false );
@@ -174,12 +189,12 @@ ThemisTabView::MakeFocus( bool focus )
 	}
 }
 
-
 void
 ThemisTabView::MouseDown( BPoint point )
 {
 	uint32 buttons;
 	//cout << "ThemisTabView::MouseDown(): point.x: " << point.x << endl;
+	
 	// stupid to get the point once again, but who cares :D
 	GetMouse( &point, &buttons, true );
 	
@@ -245,6 +260,42 @@ ThemisTabView::MouseDown( BPoint point )
 			}
 			break;
 		}
+		case B_SECONDARY_MOUSE_BUTTON :
+		{
+			cout << "ThemisTabView::MouseDown() : B_SECONDARY_MOUSE_DOWN" << endl;
+			
+			if( point.x > count * tab_width )
+				break;
+						
+			BMenuItem* selected = NULL;
+			
+			BPopUpMenu* popupmenu = new BPopUpMenu( "TABPOPUPMENU", true, false, B_ITEMS_IN_COLUMN );
+			BMenuItem* addtab = new BMenuItem( "Add new Tab", new BMessage( TAB_ADD ), 0, 0 );
+			BMenuItem* closethistab = new BMenuItem( "Close this Tab", new BMessage( TAB_CLOSE ), 0, 0 );
+			BMenuItem* closeothertabs = new BMenuItem( "Close other Tabs", new BMessage( CLOSE_OTHER_TABS ), 0, 0 );
+					
+			popupmenu->AddItem( addtab );
+			popupmenu->AddSeparatorItem();
+			popupmenu->AddItem( closethistab );
+			popupmenu->AddSeparatorItem();
+			popupmenu->AddItem( closeothertabs );
+			
+			selected = popupmenu->Go( ConvertToScreen( point ) );
+			
+			if( selected )
+			{
+				// if the message is not TAB_CLOSE
+				if( selected->Message()->what != TAB_CLOSE )
+				{
+					BMessenger* target = new BMessenger( NULL, Looper() );
+					target->SendMessage( selected->Message() );
+					break;
+				}
+				// if the message is TAB_CLOSE, we go on to B_TERTIARY_MOUSE_BUTTON
+			}
+			else
+				break;
+		}
 		case B_TERTIARY_MOUSE_BUTTON :
 		{
 			//cout << "ThemisTabView::MouseDown() : B_TERTIARY_MOUSE_DOWN" << endl;
@@ -259,10 +310,15 @@ ThemisTabView::MouseDown( BPoint point )
 				// tab isnt deleted by RemoveTab()
 				delete ( remtab );
 				
+				// if the newtab button is disabled, and no more tabs are
+				// out of range, enabled the button
+				if( ( CountTabs() * tab_width ) <= ( Bounds().right - 22 ) )
+					( ( Win* )Window() )->navview->buttons[4]->SetEnabled( true );
+								
 				// calculate new ( bigger ) size of tabs and draw again
 				DynamicTabs( false );
 				Draw( Bounds() ); 
-				
+								
 				break;
 			}
 			
@@ -387,6 +443,7 @@ ThemisTabView::CreateCloseTabViewButton()
 	
 	// the pictures
 	BPicture* onpic = NULL;
+	BPicture* overpic = NULL;
 	BPicture* activepic = NULL;
 		
 	// the view in which we will draw the Pictures
@@ -396,8 +453,8 @@ ThemisTabView::CreateCloseTabViewButton()
 	
 	Win* win = ( Win* )Window();
 	
-	// 2-icon-bitmap -> limit = 1
-	int limit = 1;	
+	// 3-pic bitmap -> limit = 2
+	int limit = 2;	
 	for( int j = 0; j <= limit; j++ )
 	{
 		// extract partial bitmaps
@@ -418,7 +475,8 @@ ThemisTabView::CreateCloseTabViewButton()
 		tempview->BeginPicture( new BPicture );
 		tempview->DrawBitmap( smallbmp );
 		if( j == 0 ) onpic = tempview->EndPicture();
-		if( j == 1 ) activepic = tempview->EndPicture();
+		if( j == 1 ) overpic = tempview->EndPicture();
+		if( j == 2 ) activepic = tempview->EndPicture();
 	}
 			
 	// create the message which will be sent to the window
@@ -426,7 +484,7 @@ ThemisTabView::CreateCloseTabViewButton()
 	closemsg->AddBool( "close_last_tab", true );
 	
 	// create the BPictureButton
-	close_tabview_button = new BPictureButton(
+	close_tabview_button = new ThemisPictureButton(
 		BRect(
 			rect.right - 20,
 			rect.top + 3,
@@ -439,9 +497,13 @@ ThemisTabView::CreateCloseTabViewButton()
 		B_ONE_STATE_BUTTON,
 		B_FOLLOW_RIGHT, B_WILL_DRAW );
 	
+	close_tabview_button->SetDisabledOn( overpic );
+	close_tabview_button->SetDisabledOff( overpic );
+	
 	// reset the bitmaps and pics
 	smallbmp = NULL;
 	onpic = NULL;
+	overpic = NULL;
 	activepic = NULL;
 		
 	// remove the tempview
@@ -529,7 +591,13 @@ ThemisTabView::SetFakeSingleView()
 	// showing and hiding did not work perfectly
 	// so i remove it
 	if( FindView( "CLOSETABVIEWPICBUTTON" ) )
+	{
+		// clean up button states..
+		close_tabview_button->SetEnabled( true );
+		close_tabview_button->SetValue( B_CONTROL_OFF );
+		
 		RemoveChild( close_tabview_button );
+	}
 			
 	fake_single_view = true;
 }

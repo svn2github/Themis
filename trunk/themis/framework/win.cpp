@@ -58,6 +58,7 @@ Win::Win(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspa
 //	AddChild(View);
 	urlpopupwindow = NULL;
 	
+	DefineInterfaceColors();
 	LoadInterfaceGraphics();
 		
 	// size limits
@@ -83,7 +84,8 @@ Win::Win(BRect frame,const char *title,window_type type,uint32 flags,uint32 wspa
 	// now we need the navigation view
 	navview = new ThemisNavView(
 		BRect( rect.left, menubar->Bounds().Height() + 1,
-			rect.right,	menubar->Bounds().Height() + 31 ) ); 
+			rect.right,	menubar->Bounds().Height() + 31 ),//
+		fColorArray );
 	AddChild( navview );
 	
 	// and finally the statusview at the bottom
@@ -187,6 +189,10 @@ void Win::MessageReceived(BMessage *msg) {
 			
 			Lock();
 			
+			// if the newtab button is disabled, enable it again
+			if( navview->buttons[4]->IsEnabled() == false )
+				navview->buttons[4]->SetEnabled( true );
+			
 			uint32 current_tab = 0;
 			uint32 count = tabview->CountTabs();
 			
@@ -236,6 +242,23 @@ void Win::MessageReceived(BMessage *msg) {
 		{
 			cout << "TAB_ADD received" << endl;
 			
+			// dissallow adding of new tabs, if they wouldnt fit in the
+			// window anymore, and disable newtab button
+			if( tabview->tab_width <= 30 )
+			{
+				// calculate if still one tab would fit and not cover
+				// the closetabview button partially
+				float width = ( tabview->CountTabs() + 1 ) * 25;
+				
+				if( Bounds().right - width <= 22 )
+				{
+					navview->buttons[4]->SetEnabled( false );
+					navview->buttons[4]->SetValue( B_CONTROL_OFF );
+					break;
+				}
+				// if we won't cover the button, go on...
+			}
+						
 			// if the prefs are not set to sth like "open new tabs hidden"
 			// we pass hidden = false to AddNewTab
 			// this selects the last tab ( the new one )
@@ -496,6 +519,12 @@ Win::FrameResized( float width, float height)
 	// calculate new tab width
 	tabview->DynamicTabs( false );
 	
+	// enable or disable the newtab button
+	if( ( tabview->CountTabs() * tabview->tab_width ) <= ( Bounds().right - 22 ) )
+		navview->buttons[4]->SetEnabled( true );
+	else
+		navview->buttons[4]->SetEnabled( false );
+	
 	// resize urlpopupwindow
 	if( urlpopupwindow != NULL )
 	{
@@ -550,7 +579,8 @@ Win::CreateTabView()
 		B_WILL_DRAW |
 		B_NAVIGABLE_JUMP |
 		B_FRAME_EVENTS |
-		B_NAVIGABLE );
+		B_NAVIGABLE,
+		fColorArray );
 	AddChild( tabview );
 	
 	// add the first tab
@@ -584,12 +614,43 @@ Win::CreateUrlPopUpWindow()
 		urlpopupwindow->Show();
 		
 		// make the urlview the focusview otherwise
-		// it wont be navigable with keyboard, better
 		// the urlpopup wouldnt be navigable by keyb
 		if( CurrentFocus() != NULL )
 			CurrentFocus()->MakeFocus( false );
-		navview->urlview->textview->MakeFocus( true );
+	 	navview->urlview->textview->MakeFocus( true );
 	}
+}
+
+void
+Win::DefineInterfaceColors()
+{
+	cout << "Win::DefineInterfaceColors()" << endl;
+		
+	// 0 - BackgroundColor
+	// 1 - InactiveTabColor
+	// 2 - BlackColor
+	// 3 - WhiteColor
+	// 4 - DarkGrayColor
+	
+	// color for all view backgrounds, active tab and tabview background
+	fColorArray[0] = ui_color( B_MENU_BACKGROUND_COLOR );
+	// color for inactive tabs
+	fColorArray[1] = fColorArray[0];
+	fColorArray[1].red -= 32;
+	fColorArray[1].green -= 32;
+	fColorArray[1].blue -= 32;
+	// black
+	fColorArray[2].red = 51;
+	fColorArray[2].green = 51;
+	fColorArray[2].blue = 51;
+	// white
+	fColorArray[3].red = 255;
+	fColorArray[3].green = 255;
+	fColorArray[3].blue = 255;
+	// dark gray
+	fColorArray[4].red = 187;
+	fColorArray[4].green = 187;
+	fColorArray[4].blue = 187;
 }
 
 void
@@ -607,7 +668,7 @@ Win::LoadInterfaceGraphics()
 	}
 	
 	// load the icons either from bitmap-file or if not present, from internal
-	// icon hexdumpslocated in "ThemisIcons.h"
+	// icon hexdumps located in "ThemisIcons.h"
 	// draw those bitmaps into BPictures and then create BPictureButtons
 
 	// initialize all bitmaps with NULL
@@ -616,40 +677,40 @@ Win::LoadInterfaceGraphics()
 	
 	// the array with file-names
 	const char* names[9];
-	// 3-icon bitmap
+	// 4-pic bitmap
 	names[0] = "button_back.png";
 	names[1] = "button_forward.png";
 	names[2] = "button_stop.png";
-	names[3] = "button_reload.png";
-	names[4] = "button_home.png";
-	names[5] = "button_go.png";
-	// 2-icon bitmap
-	names[6] = "button_newtab.png";
+	names[3] = "button_home.png";
+	names[4] = "button_newtab.png";
+	// 3-pic bitmap
+	names[5] = "button_reload.png";
+	names[6] = "button_go.png";
 	names[7] = "button_closetabview.png";
-	// 1-icon bitmap
+	// 1-pic bitmap
 	names[8] = "icon_document.png";
 	names[9] = "icon_document_empty.png";
 	
 	// the array with pointers to the hexdumps
 	const unsigned char* hexp[10];
-	// 3-icon bitmap
+	// 4-pic bitmap
 	hexp[0] = button_back_hex;
 	hexp[1] = button_forward_hex;
 	hexp[2] = button_stop_hex;
-	hexp[3] = button_reload_hex;
-	hexp[4] = button_home_hex;
-	hexp[5] = button_go_hex;
-	// 2-icon bitmap
-	hexp[6] = button_newtab_hex;
+	hexp[3] = button_home_hex;
+	hexp[4] = button_newtab_hex;
+	// 3-pic bitmap
+	hexp[5] = button_reload_hex;
+	hexp[6] = button_go_hex;
 	hexp[7] = button_closetabview_hex;
-	// 1-icon bitmap
+	// 1-pic bitmap
 	hexp[8] = icon_document_hex;
 	hexp[9] = icon_document_empty_hex;
 	
 	// a tempstring :D
 	// ( i had to move this below the 2 char arrays .. otherwise i got a
 	// seqm viol. and tstr was initialized with hexp[9] ..
-	// dunno if i did some very lousy coding mistakes or not )
+	// dunno if i did some very lousy coding mistakes or if sth is playing me a trick )
 	BString tstr( dirstr.String() );
 		
 	for( int i = 0; i < 10; i++ )
@@ -667,15 +728,15 @@ Win::LoadInterfaceGraphics()
 		{
 			// load from hexdump
 			//cout << "loading from hexdump" << endl;
-			if( i <= 5 )
+			if( i <= 4 )
+			{
+				bitmaps[i] = new BBitmap( BRect( 0,0,63,15 ), B_RGB32 );
+				memcpy( bitmaps[i]->Bits(), hexp[i], 4096 );
+			}
+			if( i >= 5 && i <= 7 )
 			{
 				bitmaps[i] = new BBitmap( BRect( 0,0,47,15 ), B_RGB32 );
 				memcpy( bitmaps[i]->Bits(), hexp[i], 3072 );
-			}
-			if( i == 6 || i == 7 )
-			{
-				bitmaps[i] = new BBitmap( BRect( 0,0,31,15 ), B_RGB32 );
-				memcpy( bitmaps[i]->Bits(), hexp[i], 2048 );
 			}
 			if( i == 8 || i == 9 )
 			{
@@ -748,7 +809,13 @@ Win::UrlTypedHandler()
 	
 	// add the urlpopupwindow if needed
 	if( list->CountItems() > 0 )
+	{
 		CreateUrlPopUpWindow();
+		// add the list
+		urlpopupwindow->Lock();
+		urlpopupwindow->ListToDisplay( list );
+		urlpopupwindow->Unlock();
+	}
 	else
 	{
 		if( urlpopupwindow != NULL )
@@ -760,10 +827,11 @@ Win::UrlTypedHandler()
 	}
 	
 	// add the list
+	/*
 	if( list->CountItems() > 0 )
 	{
 		urlpopupwindow->Lock();
 		urlpopupwindow->ListToDisplay( list );
 		urlpopupwindow->Unlock();
-	}
+	}*/
 }

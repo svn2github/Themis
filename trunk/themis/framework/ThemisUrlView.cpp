@@ -22,13 +22,16 @@ ThemisUrlView::ThemisUrlView(
 	BRect frame,
 	const char* name,
 	uint32 resizingmode,
-	uint32 flags )
+	uint32 flags,
+	const rgb_color* arr )
 	: BView(
-			frame,
-			name,
-			resizingmode,
-			flags )
+		frame,
+		name,
+		resizingmode,
+		flags )
 {
+	fDarkGrayColor = arr[4];
+	
 	BRect tvrect = Bounds();
 	tvrect.left += 22;
 	tvrect.top += 2;
@@ -64,8 +67,13 @@ ThemisUrlView::Draw( BRect updaterect )
 	
 	rgb_color hi = HighColor();	
 	
-	SetHighColor( 190,190,190 );
+	// the outer margin
+	SetHighColor( fDarkGrayColor );
 	StrokeRect( updaterect, B_SOLID_HIGH );
+	/*SetHighColor( 100,100,100 );
+	updaterect.InsetBy( 1, 1 );
+	StrokeRect( updaterect, B_SOLID_HIGH );
+	updaterect.InsetBy( -1, -1 );*/
 	
 	// draw the dropdown arrow ( i didnt like to implement another
 	// BPictureButton and Bitmap for this tiny thing )
@@ -73,7 +81,8 @@ ThemisUrlView::Draw( BRect updaterect )
 	list[0].Set( updaterect.right - 11, updaterect.bottom - 12 );
 	list[1].Set( updaterect.right - 5, updaterect.bottom - 12 );
 	list[2].Set( updaterect.right - 8, updaterect.bottom - 7 );
-	SetHighColor( 0,83,120 );
+	SetHighColor( 100, 100, 100, 255 );
+	//SetHighColor( fDarkGrayColor );
 	FillPolygon( list, 3, B_SOLID_HIGH );
 	
 	SetHighColor( hi );
@@ -145,11 +154,11 @@ ThemisUrlTextView::ThemisUrlTextView(
 	uint32 resizingmode,
 	uint32 flags )
 	: BTextView(
-			frame,
-			name,
-			textrect,
-			resizingmode,
-			flags )
+		frame,
+		name,
+		textrect,
+		resizingmode,
+		flags )
 {
 }
 
