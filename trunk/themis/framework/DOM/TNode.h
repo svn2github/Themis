@@ -40,9 +40,6 @@
 // DOM headers
 #include "DOMSupport.h"
 
-// Declarations of DOM classes
-class TNode;
-
 // Namespaces used
 using namespace std;
 using namespace boost;
