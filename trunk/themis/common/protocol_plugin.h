@@ -32,28 +32,33 @@ Project Start Date: October 18, 2000
 #include <String.h>
 #include "plugclass.h"
 #include "networkableobject.h"
+#include <Locker.h>
 /*!
 This is the base class for the protocol plug-ins.
 */
 struct connection;
 
 class ProtocolPlugClass: public PlugClass, public _Themis_Networking_::NetworkableObject {
+	protected:
+		static BLocker UOU_lock;
 	public:
-		ProtocolPlugClass(BMessage *info=NULL):PlugClass(info) {}
+		ProtocolPlugClass(BMessage *info=NULL);
 		BString URL;
 	
-		virtual const char *SetURL(const char* url) {URL=url; return URL.String();}
-		virtual BMessage *SupportedTypes(void) {return NULL;}
-		virtual void Config(BMessage *msg) {}
-		virtual void FindURI(const char *url,BString &host,int &port,BString &uri) {}
-		virtual void ParseResponse(unsigned char *resp,size_t size) {}
-		virtual unsigned char *GetDoc(BString &host,int &port,BString &uri) {return NULL;}
-		virtual unsigned char *GetDoc(const char* url) {return NULL;}
-		virtual int32 GetURL(BMessage *info) {return 0;}
-		int32 TypePrimary() {return ProtocolPlugin;}
+		virtual const char *SetURL(const char* url);
+		virtual BMessage *SupportedTypes(void);
+		virtual void Config(BMessage *msg);
+		virtual void FindURI(const char *url,BString &host,int &port,BString &uri);
+		virtual void ParseResponse(unsigned char *resp,size_t size);
+		virtual unsigned char *GetDoc(BString &host,int &port,BString &uri);
+		virtual unsigned char *GetDoc(const char* url);
+		virtual int32 GetURL(BMessage *info);
+		int32 TypePrimary();
 		virtual void ConnectionEstablished(connection *conn)=0;
 		virtual void ConnectionDisconnected(connection *conn,uint32 reason=0)=0;
 		virtual void DataWaiting(connection *conn)=0;
+		static int32 UnObfuscateURL(const char *obfuscated,char *unobfuscated, int32 max_size, bool host_only=false);
+		static int32 UnObfuscateHost(const char *obfuscated, char *unobfuscated, int32 max_size);
 		
 };
 

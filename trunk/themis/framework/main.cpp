@@ -44,12 +44,28 @@ This is the where Themis begins execution.
 #include "app.h"
 #define DEBUG 1
 #include <SupportKit.h>
-
+#include <stdio.h>
+#include "protocol_plugin.h"
 int main() {
 	SET_DEBUG_ENABLED(TRUE);
 	(new App(AppSig));
 	be_app->Run();
 	delete be_app;
 	fflush(stdout);
+	/*
+	char output[401];
+	const char *input="http://235396898359/obscure.htm";
+	ProtocolPlugClass::UnObfuscateURL(input,output,400);
+	printf("input: %s\noutput: %s\n",input,output);
+	input="http://3468664375/obscure.htm";
+	ProtocolPlugClass::UnObfuscateURL(input,output,400);
+	printf("input: %s\noutput: %s\n",input,output);
+	input="http://7763631671/obscure.htm";
+	ProtocolPlugClass::UnObfuscateURL(input,output,400);
+	printf("input: %s\noutput: %s\n",input,output);
+	input="http://3468664375@3468664375/o%62s%63ur%65%2e%68t%6D";
+	ProtocolPlugClass::UnObfuscateURL(input,output,400);
+	printf("input: %s\noutput: %s\n",input,output);
+	*/
 	return 0;
 }

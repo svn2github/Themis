@@ -80,7 +80,8 @@ FRAMEWORKSOURCES= \
 	framework/connection.cpp \
 	framework/netbuffer.cpp \
 	framework/tcpmanager.cpp \
-	framework/base64.cpp
+	framework/base64.cpp \
+	framework/protocol_plugin.cpp
 RENDERERSOURCES= \
 	Renderer/BitmapElement.cpp \
 	Renderer/BitmapLinkElement.cpp \
