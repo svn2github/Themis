@@ -1,4 +1,22 @@
 ========
+21 February 2002
+========
+Lots of little changes, and one big one that occurred a few days ago:
+
+framework/DOM/*
+Added the Document Object Model classes that Mark Hellegers has been working on.
+
+Various project files
+Updated to reflect new location of the binaries.
+
+makefile
+Updated to reflect the overnight addition of the new tcp/ip and http protocols.Not to mention the DOM and DOM test application.
+
+modules/http/httplayer.cpp and httplayer.h
+Various bug fixes, including one where the server would send the http header as it generated it rather than as a block of text. This caused a key variable to be NULL, and caused a crash.
+
+
+========
 18 February 2002
 ========
 
