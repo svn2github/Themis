@@ -48,6 +48,7 @@ class cacheman:public BHandler
    ~cacheman();
    void MessageReceived(BMessage *msg);
    status_t FindCacheDir();
+   status_t CheckIndices();
  };
 
 #endif
