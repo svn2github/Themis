@@ -98,7 +98,7 @@ TNode	::	TNode( const unsigned short aNodeType,
 
 TNode	::	~TNode()	{
 
-	printf( "Destructor called of: %s\n", getNodeName().c_str() );
+	//printf( "Destructor called of %s: %s\n", getNodeTypeString(), getNodeName().c_str() );
 
 	if ( mParentNode.get() != NULL )	{
 		// Still attached to the tree

@@ -85,7 +85,7 @@ bool HTMLParser	::	isStartTag()	{
 
 bool HTMLParser	::	isDocTypeTag()	{
 	
-	if ( !mTag.compare( "!doctype" ) )	{
+	if ( mTag == "!doctype" )	{
 		return true;
 	}
 	
@@ -95,7 +95,7 @@ bool HTMLParser	::	isDocTypeTag()	{
 
 bool HTMLParser	::	isHtmlTag()	{
 	
-	if ( !mTag.compare( "html" ) )	{
+	if ( mTag == "html" )	{
 		return true;
 	}
 	
@@ -105,7 +105,7 @@ bool HTMLParser	::	isHtmlTag()	{
 
 bool HTMLParser	::	isCommentTag()	{
 	
-	if ( !mTag.compare( "!--" ) )	{
+	if ( mTag == "!--" )	{
 		return true;
 	}
 	
@@ -115,7 +115,7 @@ bool HTMLParser	::	isCommentTag()	{
 
 bool HTMLParser	::	isHeadTag()	{
 	
-	if ( !mTag.compare( "head" ) )	{
+	if ( mTag == "head" )	{
 		return true;
 	}
 	
@@ -125,7 +125,7 @@ bool HTMLParser	::	isHeadTag()	{
 
 bool HTMLParser	::	isBodyTag()	{
 	
-	if ( !mTag.compare( "body" ) )	{
+	if ( mTag == "body" )	{
 		return true;
 	}
 	
@@ -135,7 +135,7 @@ bool HTMLParser	::	isBodyTag()	{
 
 bool HTMLParser	::	isTitleTag()	{
 	
-	if ( !mTag.compare( "title" ) )	{
+	if ( mTag == "title" )	{
 		return true;
 	}
 	
@@ -145,7 +145,7 @@ bool HTMLParser	::	isTitleTag()	{
 
 bool HTMLParser	::	isStyleTag()	{
 	
-	if ( !mTag.compare( "style" ) )	{
+	if ( mTag == "style" )	{
 		return true;
 	}
 	
@@ -155,7 +155,7 @@ bool HTMLParser	::	isStyleTag()	{
 
 bool HTMLParser	::	isScriptTag()	{
 	
-	if ( !mTag.compare( "script" ) )	{
+	if ( mTag == "script" )	{
 		return true;
 	}
 	
@@ -165,7 +165,7 @@ bool HTMLParser	::	isScriptTag()	{
 
 bool HTMLParser	::	isIsIndexTag()	{
 	
-	if ( !mTag.compare( "isindex" ) )	{
+	if ( mTag == "isindex" )	{
 		return true;
 	}
 	
@@ -175,7 +175,7 @@ bool HTMLParser	::	isIsIndexTag()	{
 
 bool HTMLParser	::	isBaseTag()	{
 	
-	if ( !mTag.compare( "base" ) )	{
+	if ( mTag == "base" )	{
 		return true;
 	}
 	
@@ -185,7 +185,7 @@ bool HTMLParser	::	isBaseTag()	{
 
 bool HTMLParser	::	isMetaTag()	{
 	
-	if ( !mTag.compare( "meta" ) )	{
+	if ( mTag == "meta" )	{
 		return true;
 	}
 	
@@ -195,7 +195,7 @@ bool HTMLParser	::	isMetaTag()	{
 
 bool HTMLParser	::	isLinkTag()	{
 	
-	if ( !mTag.compare( "link" ) )	{
+	if ( mTag == "link" )	{
 		return true;
 	}
 	
@@ -238,12 +238,12 @@ bool HTMLParser	::	isTextLevelTag()	{
 
 bool HTMLParser	::	isHeadingTag()	{
 	
-	if ( !mTag.compare( "h1" ) ||
-		 !mTag.compare( "h2" ) ||
-		 !mTag.compare( "h3" ) ||
-		 !mTag.compare( "h4" ) ||
-		 !mTag.compare( "h5" ) ||
-		 !mTag.compare( "h6" ) )	{
+	if ( mTag == "h1" ||
+		 mTag == "h2" ||
+		 mTag == "h3" ||
+		 mTag == "h4" ||
+		 mTag == "h5" ||
+		 mTag == "h6" )	{
 		return true;
 	}
 	
@@ -253,7 +253,7 @@ bool HTMLParser	::	isHeadingTag()	{
 
 bool HTMLParser	::	isAdressTag()	{
 	
-	if ( !mTag.compare( "adress" ) )	{
+	if ( mTag == "adress" )	{
 		return true;
 	}
 	
@@ -263,7 +263,7 @@ bool HTMLParser	::	isAdressTag()	{
 
 bool HTMLParser	::	isPTag()	{
 	
-	if ( !mTag.compare( "p" ) )	{
+	if ( mTag == "p" )	{
 		return true;
 	}
 	
@@ -285,7 +285,7 @@ bool HTMLParser	::	isListTag()	{
 
 bool HTMLParser	::	isULTag()	{
 	
-	if ( !mTag.compare( "ul" ) )	{
+	if ( mTag == "ul" )	{
 		return true;
 	}
 	
@@ -295,7 +295,7 @@ bool HTMLParser	::	isULTag()	{
 
 bool HTMLParser	::	isOLTag()	{
 	
-	if ( !mTag.compare( "ol" ) )	{
+	if ( mTag == "ol" )	{
 		return true;
 	}
 	
@@ -315,7 +315,7 @@ bool HTMLParser	::	isDLTag()	{
 
 bool HTMLParser	::	isLITag()	{
 	
-	if ( !mTag.compare( "li" ) )	{
+	if ( mTag == "li" )	{
 		return true;
 	}
 	
@@ -325,7 +325,7 @@ bool HTMLParser	::	isLITag()	{
 
 bool HTMLParser	::	isDDTag()	{
 	
-	if ( !mTag.compare( "dd" ) )	{
+	if ( mTag == "dd" )	{
 		return true;
 	}
 	
@@ -335,7 +335,7 @@ bool HTMLParser	::	isDDTag()	{
 
 bool HTMLParser	::	isDTTag()	{
 	
-	if ( !mTag.compare( "dt" ) )	{
+	if ( mTag == "dt" )	{
 		return true;
 	}
 	
@@ -345,7 +345,7 @@ bool HTMLParser	::	isDTTag()	{
 
 bool HTMLParser	::	isPreTag()	{
 	
-	if ( !mTag.compare( "pre" ) )	{
+	if ( mTag == "pre" )	{
 		return true;
 	}
 	
@@ -355,9 +355,9 @@ bool HTMLParser	::	isPreTag()	{
 
 bool HTMLParser	::	isBodyStyleTag()	{
 
-	if ( !mTag.compare( "div" ) ||
-		 !mTag.compare( "center" ) ||
-		 !mTag.compare( "blockquote" ) )	{
+	if ( mTag == "div" ||
+		 mTag == "center" ||
+		 mTag == "blockquote" )	{
 		return true;
 	}
 	
@@ -367,7 +367,7 @@ bool HTMLParser	::	isBodyStyleTag()	{
 
 bool HTMLParser	::	isFormTag()	{
 	
-	if ( !mTag.compare( "form" ) )	{
+	if ( mTag == "form" )	{
 		return true;
 	}
 	
@@ -377,8 +377,8 @@ bool HTMLParser	::	isFormTag()	{
 
 bool HTMLParser	::	isEmptyBlockTag()	{
 
-	if ( !mTag.compare( "isindex" ) ||
-		 !mTag.compare( "hr" ) )	{
+	if ( mTag == "isindex" ||
+		 mTag == "hr" )	{
 		return true;
 	}
 	
@@ -388,7 +388,7 @@ bool HTMLParser	::	isEmptyBlockTag()	{
 
 bool HTMLParser	::	isTableTag()	{
 	
-	if ( !mTag.compare( "table" ) )	{
+	if ( mTag == "table" )	{
 		return true;
 	}
 	
@@ -398,7 +398,7 @@ bool HTMLParser	::	isTableTag()	{
 
 bool HTMLParser	::	isTrTag()	{
 	
-	if ( !mTag.compare( "tr" ) )	{
+	if ( mTag == "tr" )	{
 		return true;
 	}
 	
@@ -408,7 +408,7 @@ bool HTMLParser	::	isTrTag()	{
 
 bool HTMLParser	::	isCaptionTag()	{
 	
-	if ( !mTag.compare( "caption" ) )	{
+	if ( mTag == "caption" )	{
 		return true;
 	}
 	
@@ -418,7 +418,7 @@ bool HTMLParser	::	isCaptionTag()	{
 
 bool HTMLParser	::	isTdTag()	{
 	
-	if ( !mTag.compare( "td" ) )	{
+	if ( mTag == "td" )	{
 		return true;
 	}
 	
@@ -428,7 +428,7 @@ bool HTMLParser	::	isTdTag()	{
 
 bool HTMLParser	::	isThTag()	{
 	
-	if ( !mTag.compare( "th" ) )	{
+	if ( mTag == "th" )	{
 		return true;
 	}
 	
@@ -439,11 +439,11 @@ bool HTMLParser	::	isThTag()	{
 bool HTMLParser	::	isFontStyleTag()	{
 	
 	if ( isFontStylePreTag() ||
-		 !mTag.compare( "i" ) ||
-		 !mTag.compare( "big" ) ||
-		 !mTag.compare( "small" ) ||
-		 !mTag.compare( "sub" ) ||
-		 !mTag.compare( "sup" ) )	{
+		 mTag == "i" ||
+		 mTag == "big" ||
+		 mTag == "small" ||
+		 mTag == "sub" ||
+		 mTag == "sup" )	{
 		return true;
 	}
 	
@@ -453,10 +453,10 @@ bool HTMLParser	::	isFontStyleTag()	{
 
 bool HTMLParser	::	isFontStylePreTag()	{
 	
-	if ( !mTag.compare( "tt" ) ||
-		 !mTag.compare( "b" ) ||
-		 !mTag.compare( "u" ) ||
-		 !mTag.compare( "strike" ) )	{
+	if ( mTag == "tt" ||
+		 mTag == "b" ||
+		 mTag == "u" ||
+		 mTag == "strike" )	{
 		return true;
 	}
 	
@@ -466,14 +466,14 @@ bool HTMLParser	::	isFontStylePreTag()	{
 
 bool HTMLParser	::	isPhraseTag()	{
 
-	if ( !mTag.compare( "em" ) ||
-		 !mTag.compare( "strong" ) ||
-		 !mTag.compare( "dfn" ) ||
-		 !mTag.compare( "code" ) ||
-		 !mTag.compare( "samp" ) ||
-		 !mTag.compare( "kbd" ) ||
-		 !mTag.compare( "var" ) ||
-		 !mTag.compare( "cite" ) )	{
+	if ( mTag == "em" ||
+		 mTag == "strong" ||
+		 mTag == "dfn" ||
+		 mTag == "code" ||
+		 mTag == "samp" ||
+		 mTag == "kbd" ||
+		 mTag == "var" ||
+		 mTag == "cite" )	{
 		return true;
 	}
 	
@@ -483,9 +483,9 @@ bool HTMLParser	::	isPhraseTag()	{
 
 bool HTMLParser	::	isFormFieldTag()	{
 	
-	if ( !mTag.compare( "input" ) ||
-		 !mTag.compare( "select" ) ||
-		 !mTag.compare( "textarea" ) )	{
+	if ( mTag == "input" ||
+		 mTag == "select" ||
+		 mTag == "textarea" )	{
 		return true;
 	}
 	
@@ -495,7 +495,7 @@ bool HTMLParser	::	isFormFieldTag()	{
 
 bool HTMLParser	::	isInputTag()	{
 	
-	if ( !mTag.compare( "input" ) )	{
+	if ( mTag == "input" )	{
 		return true;
 	}
 	
@@ -505,7 +505,7 @@ bool HTMLParser	::	isInputTag()	{
 
 bool HTMLParser	::	isSelectTag()	{
 	
-	if ( !mTag.compare( "select" ) )	{
+	if ( mTag == "select" )	{
 		return true;
 	}
 	
@@ -515,7 +515,7 @@ bool HTMLParser	::	isSelectTag()	{
 
 bool HTMLParser	::	isTextAreaTag()	{
 	
-	if ( !mTag.compare( "textarea" ) )	{
+	if ( mTag == "textarea" )	{
 		return true;
 	}
 	
@@ -525,7 +525,7 @@ bool HTMLParser	::	isTextAreaTag()	{
 
 bool HTMLParser	::	isOptionTag()	{
 	
-	if ( !mTag.compare( "option" ) )	{
+	if ( mTag == "option" )	{
 		return true;
 	}
 	
@@ -535,7 +535,7 @@ bool HTMLParser	::	isOptionTag()	{
 
 bool HTMLParser	::	isAnchorTag()	{
 	
-	if ( !mTag.compare( "a" ) )	{
+	if ( mTag == "a" )	{
 		return true;
 	}
 	
@@ -545,7 +545,7 @@ bool HTMLParser	::	isAnchorTag()	{
 
 bool HTMLParser	::	isEmptyTextTag()	{
 
-	if ( !mTag.compare( "img" ) ||
+	if ( mTag == "img" ||
 		 isEmptyTextPreTag() )	{
 		return true;
 	}
@@ -556,8 +556,8 @@ bool HTMLParser	::	isEmptyTextTag()	{
 
 bool HTMLParser	::	isEmptyTextPreTag()	{
 
-	if ( !mTag.compare( "basefont" ) ||
-		 !mTag.compare( "br" ) )	{
+	if ( mTag == "basefont" ||
+		 mTag == "br" )	{
 		return true;
 	}
 	
@@ -567,7 +567,7 @@ bool HTMLParser	::	isEmptyTextPreTag()	{
 
 bool HTMLParser	::	isAppletTag()	{
 	
-	if ( !mTag.compare( "applet" ) )	{
+	if ( mTag == "applet" )	{
 		return true;
 	}
 	
@@ -577,7 +577,7 @@ bool HTMLParser	::	isAppletTag()	{
 
 bool HTMLParser	::	isParamTag()	{
 	
-	if ( !mTag.compare( "param" ) )	{
+	if ( mTag == "param" )	{
 		return true;
 	}
 	
@@ -587,7 +587,7 @@ bool HTMLParser	::	isParamTag()	{
 
 bool HTMLParser	::	isFontTag()	{
 	
-	if ( !mTag.compare( "font" ) )	{
+	if ( mTag == "font" )	{
 		return true;
 	}
 	
@@ -597,7 +597,7 @@ bool HTMLParser	::	isFontTag()	{
 
 bool HTMLParser	::	isMapTag()	{
 	
-	if ( !mTag.compare( "map" ) )	{
+	if ( mTag == "map" )	{
 		return true;
 	}
 	
@@ -607,7 +607,7 @@ bool HTMLParser	::	isMapTag()	{
 
 bool HTMLParser	::	isAreaTag()	{
 	
-	if ( !mTag.compare( "area" ) )	{
+	if ( mTag == "area" )	{
 		return true;
 	}
 	
@@ -626,6 +626,17 @@ bool HTMLParser	::	isWhiteSpace()	{
 	
 }
 
+void HTMLParser	::	nextChar()	{
+
+	if ( mPos != mContent.size() )	{
+		mPos++;
+	}
+	else	{
+		throw ReadException();
+	}
+			
+}
+
 string HTMLParser	::	getTag()	{
 	
 	mOldPos = mPos;
@@ -634,27 +645,22 @@ string HTMLParser	::	getTag()	{
 	mTag = "";
 	mCloseTag = false;
 
-	while ( mPos != mContent.size() && mContent[mPos] != '<' )	{
+	while ( mContent[mPos] != '<' )	{
 		// Not the start of a tag yet
-		mPos++;
+		nextChar();
 	}
 	
-	if ( mPos == mContent.size() )	{
-		mTag = "";
-	}
-	else	{
-		mPos++;
-	}
+	nextChar();
 
-	if ( mPos != mContent.size() && mContent[mPos] == '/' )	{
+	if ( mContent[mPos] == '/' )	{
 		// Is an end tag
 		mCloseTag = true;
-		mPos++;
+		nextChar();
 	}
 	
-	while ( mPos != mContent.size() && !isWhiteSpace() && mContent[mPos] != '>' )	{
+	while ( !isWhiteSpace() && mContent[mPos] != '>' )	{
 		mTag += tolower( mContent[mPos] );
-		mPos++;
+		nextChar();
 	}
 	
 	return mTag;
@@ -665,21 +671,16 @@ string HTMLParser	::	getText( bool aConserveSpaces = false )	{
 	
 	mOldPos = mPos;
 	
-	while ( mPos != mContent.size() && mContent[mPos] != '>' )	{
-		mPos++;
+	while ( mContent[mPos] != '>' )	{
+		nextChar();
 	}
 	
-	if ( mPos != mContent.size() )	{
-		mPos++;
-	}
-	else	{
-		return "";
-	}
+	nextChar();
 	
 	string result;
 	char last = 's';
 	
-	while ( mPos != mContent.size() && mContent[mPos] != '<' )	{
+	while ( mContent[mPos] != '<' )	{
 		if ( !aConserveSpaces )	{
 			if ( mContent[mPos] != '\n' && mContent[mPos] != '\t' )	{
 				if ( !( mContent[mPos] == ' ' && last == ' ' ) )	{
@@ -697,7 +698,7 @@ string HTMLParser	::	getText( bool aConserveSpaces = false )	{
 		else	{
 			result += mContent[mPos];
 		}
-		mPos++;
+		nextChar();
 	}
 	
 	return result;
@@ -710,43 +711,39 @@ string HTMLParser	::	getAttrValue()	{
 	
 	string result;
 	
-	mPos++;
+	nextChar();
 	
-	while ( mPos != mContent.size() && isWhiteSpace() )	{
-		mPos++;
-	}
-	
-	if ( mPos == mContent.size() )	{
-		return result;
+	while ( isWhiteSpace() )	{
+		nextChar();
 	}
 	
 	if ( mContent[mPos] == '"' )	{
-		mPos++;
-		while ( mPos != mContent.size() && mContent[mPos] != '"' )	{
+		nextChar();
+		while ( mContent[mPos] != '"' )	{
 			result += mContent[mPos];
-			mPos++;
+			nextChar();
 		}
-		mPos++;
+		nextChar();
 		
 		return result;
 		
 	}
 
 	if ( mContent[mPos] == '\'' )	{
-		mPos++;
-		while ( mPos != mContent.size() && mContent[mPos] != '\'' )	{
+		nextChar();
+		while ( mContent[mPos] != '\'' )	{
 			result += mContent[mPos];
-			mPos++;
+			nextChar();
 		}
-		mPos++;
+		nextChar();
 		
 		return result;
 		
 	}		
 
-	while ( mPos != mContent.size() && mContent[mPos] != '>' && !isWhiteSpace() )	{
+	while ( mContent[mPos] != '>' && !isWhiteSpace() )	{
 		result += mContent[mPos];
-		mPos++;
+		nextChar();
 	}
 	
 	return result;
@@ -760,34 +757,30 @@ string HTMLParser	::	getAttribute()	{
 
 	string result;
 
-	while ( mPos != mContent.size() && isWhiteSpace() )	{
-		mPos++;
+	while ( isWhiteSpace() )	{
+		nextChar();
 	}
 	
-	if ( mPos == mContent.size() || mContent[mPos] == '>' )	{
+	if ( mContent[mPos] == '>' )	{
 		return result;
 	}
 	
 	if ( mContent[mPos] == '/' )	{
-		mPos++;
-		if ( mPos == mContent.size() || mContent[mPos] == '>' )	{
+		nextChar();
+		if ( mContent[mPos] == '>' )	{
 			cout << "End of tag. No attribute... Next character: " << mContent[mPos] << endl;
 			return result;
 		}
-		else	{
-			// Not sure if / is allowed as a start of an attribute
-			mPos--;
-		}
 	}
 	
-	while ( mPos != mContent.size() && mContent[mPos] != '=' && mContent[mPos] != '>' && !isWhiteSpace() )	{
+	while ( mContent[mPos] != '=' && mContent[mPos] != '>' && !isWhiteSpace() )	{
 		// I'm assuming case does not matter with attribute names
 		result+= tolower( mContent[mPos] );
-		mPos++;
+		nextChar();
 	}
 	
-	while ( mPos != mContent.size() && isWhiteSpace() )	{
-		mPos++;
+	while ( isWhiteSpace() )	{
+		nextChar();
 	}
 	
 	if ( mContent[mPos] != '=' )	{
@@ -803,9 +796,9 @@ string HTMLParser	::	getComment()	{
 	
 	string result;
 	
-	while ( mPos != mContent.size() && mContent[mPos] != '>' )	{
+	while ( mContent[mPos] != '>' )	{
 		result += mContent[mPos];
-		mPos++;
+		nextChar();
 	}
 	
 	char last = result[ result.size() - 1 ];
@@ -831,33 +824,31 @@ string HTMLParser	::	getString( bool aConserveSpaces )	{
 
 	string result;
 
-	if ( mPos != mContent.size() )	{
-		switch ( mContent[mPos] )	{
-			case '>' :	{
-				cout << "Getting text...\n";
-				result = getText( aConserveSpaces );
-				mStringType = TEXT;
-				break;
-			}
-			case '<' :	{
-				cout << "Getting tag...\n";
-				result = getTag();
-				mStringType = TAG;
-				break;
-			}
-			case '=' :	{
-				cout << "Getting attribute value: ";
-				result = getAttrValue();
-				cout << result << endl;
-				mStringType = ATTRVALUE;
-				break;
-			}
-			default :	{
-				cout << "Getting attribute: ";
-				result = getAttribute();
-				cout << result << endl;
-				mStringType = ATTR;
-			}
+	switch ( mContent[mPos] )	{
+		case '>' :	{
+			cout << "Getting text...\n";
+			result = getText( aConserveSpaces );
+			mStringType = TEXT;
+			break;
+		}
+		case '<' :	{
+			cout << "Getting tag...\n";
+			result = getTag();
+			mStringType = TAG;
+			break;
+		}
+		case '=' :	{
+			cout << "Getting attribute value: ";
+			result = getAttrValue();
+			cout << result << endl;
+			mStringType = ATTRVALUE;
+			break;
+		}
+		default :	{
+			cout << "Getting attribute: ";
+			result = getAttribute();
+			cout << result << endl;
+			mStringType = ATTR;
 		}
 	}
 
@@ -871,16 +862,16 @@ string HTMLParser	::	getString( bool aConserveSpaces )	{
 
 void HTMLParser	::	skipTag()	{
 	
-	while ( mPos != mContent.size() && mContent[mPos] != '>' )	{
+	while ( mContent[mPos] != '>' )	{
 		// Not the end of this tag yet
 		if ( mContent[mPos] == '"' )	{
 			// Might be a > in the quote, not sure if it is legal
-			mPos++;
-			while ( mPos != mContent.size() && mContent[mPos] != '"' )	{
-				mPos++;
+			nextChar();
+			while ( mContent[mPos] != '"' )	{
+				nextChar();
 			}
 		}
-		mPos++;
+		nextChar();
 	}
 	
 }
@@ -899,6 +890,10 @@ void HTMLParser	::	startParsing( TDocumentShared aDocument )	{
 
 	try	{
 	
+		if ( mContent.size() == 0 )	{
+			throw ReadException();
+		}
+
 		while ( insideDoc )	{
 			getTag();
 	
@@ -914,7 +909,7 @@ void HTMLParser	::	startParsing( TDocumentShared aDocument )	{
 				continue;
 			}
 			
-			cout << "startParsing: Unknown tag found: " << mTag << ". Skipping...\n";
+			cout << "startParsing: Unexpected tag found: " << mTag << ". Skipping...\n";
 			skipTag();
 			
 		}
@@ -923,6 +918,7 @@ void HTMLParser	::	startParsing( TDocumentShared aDocument )	{
 		cout << "Unexpected end of file..\n";
 		cout << "Returning partial tree\n";
 	}
+	
 }
 
 void HTMLParser	::	doctypeTag()	{
@@ -960,7 +956,7 @@ void HTMLParser	::	htmlTag()	{
 				continue;
 			}
 
-			cout << "htmlTag: Unknown tag found: " << mTag << ". Skipping...\n";
+			cout << "htmlTag: Unexpected tag found: " << mTag << ". Skipping...\n";
 			skipTag();
 
 		}
@@ -972,7 +968,7 @@ void HTMLParser	::	htmlTag()	{
 									
 			}
 			else	{
-				cout << "htmlTag: Unknown closing tag found: " << mTag << ". Skipping...\n";
+				cout << "htmlTag: Unexpected closing tag found: " << mTag << ". Skipping...\n";
 			}
 		}
 	}
@@ -1027,7 +1023,7 @@ void HTMLParser	::	headTag( TElementShared aParent )	{
 			}
 			
 			// Not a known tag
-			cout << "headTag: Unknown tag found: " << mTag << ". Skipping...\n";
+			cout << "headTag: Unexpected tag found: " << mTag << ". Skipping...\n";
 			skipTag();
 
 		}
@@ -1039,7 +1035,7 @@ void HTMLParser	::	headTag( TElementShared aParent )	{
 				insideHead = false;
 			}
 			else	{
-				cout << "headTag: Unknown closing tag found: " << mTag << ". Skipping...\n";
+				cout << "headTag: Unexpected closing tag found: " << mTag << ". Skipping...\n";
 			}
 		}
 	}
@@ -1073,7 +1069,7 @@ void HTMLParser	::	normalHeadTag( TElementShared aParent )	{
 				insideHeadLevel = false;
 			}
 			else	{
-				cout << "normalHead: Unknown closing tag found: " << mTag << ". Skipping...\n";
+				cout << "normalHead: Unexpected closing tag found: " << mTag << ". Skipping...\n";
 			}
 		}
 		else	{
@@ -1081,7 +1077,7 @@ void HTMLParser	::	normalHeadTag( TElementShared aParent )	{
 				commentTag( element );
 				continue;
 			}
-			cout << "normalHead: Unknown tag found: " << mTag << ". Skipping...\n";
+			cout << "normalHead: Unexpected tag found: " << mTag << ". Skipping...\n";
 			skipTag();
 		}
 	}
@@ -1153,7 +1149,7 @@ void HTMLParser	::	bodyStyleTag( TElementShared aParent, bool aInsideForm )	{
 					}
 		
 					// Not a known tag
-					cout << "bodyStyle: Unknown tag found: " << mTag << ". Skipping...\n";
+					cout << "bodyStyle: Unexpected tag found: " << mTag << ". Skipping...\n";
 					skipTag();
 					
 				}
@@ -1165,7 +1161,7 @@ void HTMLParser	::	bodyStyleTag( TElementShared aParent, bool aInsideForm )	{
 						insideBodyStyle = false;
 					}
 					else	{
-						cout << "bodyStyle: Unknown closing tag found: " << mTag << ". Skipping...\n";
+						cout << "bodyStyle: Unexpected closing tag found: " << mTag << ". Skipping...\n";
 					}
 				}
 				break;
@@ -1232,7 +1228,7 @@ void HTMLParser	::	adressTag( TElementShared aParent )	{
 					}
 		
 					// Not a known tag
-					cout << "adress: Unknown tag found: " << mTag << ". Skipping...\n";
+					cout << "adress: Unexpected tag found: " << mTag << ". Skipping...\n";
 					skipTag();
 					
 				}
@@ -1244,7 +1240,7 @@ void HTMLParser	::	adressTag( TElementShared aParent )	{
 						insideAdress = false;
 					}
 					else	{
-						cout << "adress: Unknown closing tag found: " << mTag << ". Skipping...\n";
+						cout << "adress: Unexpected closing tag found: " << mTag << ". Skipping...\n";
 					}
 				}
 				break;
@@ -1399,7 +1395,7 @@ void HTMLParser	::	flowLevelTag( TElementShared aParent )	{
 					}
 		
 					// Not a known tag
-					cout << "flowLevel: Unknown tag found: " << mTag << ". Skipping...\n";
+					cout << "flowLevel: Unexpected tag found: " << mTag << ". Skipping...\n";
 					skipTag();
 					
 				}
@@ -1420,7 +1416,7 @@ void HTMLParser	::	flowLevelTag( TElementShared aParent )	{
 						continue;
 					}
 
-					cout << "flowLevel: Unknown closing tag found: " << mTag << ". Skipping...\n";
+					cout << "flowLevel: Unexpected closing tag found: " << mTag << ". Skipping...\n";
 
 				}
 				break;
@@ -1505,7 +1501,7 @@ void HTMLParser	::	pTag( TElementShared aParent )	{
 						continue;
 					}
 		
-					cout << "p: Unknown closing tag found: " << mTag << ". Skipping...\n";
+					cout << "p: Unexpected closing tag found: " << mTag << ". Skipping...\n";
 		
 				}
 				else	{
@@ -1527,7 +1523,7 @@ void HTMLParser	::	pTag( TElementShared aParent )	{
 					}
 
 					// Not a known tag
-					cout << "p: Unknown tag found: " << mTag << ". Skipping...\n";
+					cout << "p: Unexpected tag found: " << mTag << ". Skipping...\n";
 					skipTag();
 
 				}
@@ -1606,7 +1602,7 @@ void HTMLParser	::	listTag( TElementShared aParent )	{
 					}
 		
 					// Not a known tag
-					cout << "list: Unknown tag found: " << mTag << ". Skipping...\n";
+					cout << "list: Unexpected tag found: " << mTag << ". Skipping...\n";
 					skipTag();
 					
 				}
@@ -1618,7 +1614,7 @@ void HTMLParser	::	listTag( TElementShared aParent )	{
 						insideList = false;
 					}
 					else	{
-						cout << "list: Unknown closing tag found: " << mTag << ". Skipping...\n";
+						cout << "list: Unexpected closing tag found: " << mTag << ". Skipping...\n";
 					}
 				}
 				break;
@@ -1683,7 +1679,7 @@ void HTMLParser	::	tableTag( TElementShared aParent )	{
 					}
 		
 					// Not a known tag
-					cout << "table: Unknown tag found: " << mTag << ". Skipping...\n";
+					cout << "table: Unexpected tag found: " << mTag << ". Skipping...\n";
 					skipTag();
 					
 				}
@@ -1695,7 +1691,7 @@ void HTMLParser	::	tableTag( TElementShared aParent )	{
 						insideTable = false;
 					}
 					else	{
-						cout << "table: Unknown closing tag found: " << mTag << ". Skipping...\n";
+						cout << "table: Unexpected closing tag found: " << mTag << ". Skipping...\n";
 					}
 				}
 				break;
@@ -1756,7 +1752,7 @@ void HTMLParser	::	trTag( TElementShared aParent )	{
 					}
 		
 					// Not a known tag
-					cout << "tr: Unknown tag found: " << mTag << ". Skipping...\n";
+					cout << "tr: Unexpected tag found: " << mTag << ". Skipping...\n";
 					skipTag();
 					
 				}
@@ -1768,7 +1764,7 @@ void HTMLParser	::	trTag( TElementShared aParent )	{
 						insideTr = false;
 					}
 					else	{
-						cout << "tr: Unknown closing tag found: " << mTag << ". Skipping...\n";
+						cout << "tr: Unexpected closing tag found: " << mTag << ". Skipping...\n";
 					}
 				}
 				break;
@@ -1825,7 +1821,7 @@ void HTMLParser	::	preTag( TElementShared aParent )	{
 						continue;
 					}
 		
-					cout << "pre: Unknown closing tag found: " << mTag << ". Skipping...\n";
+					cout << "pre: Unexpected closing tag found: " << mTag << ". Skipping...\n";
 		
 				}
 				else	{
@@ -1860,7 +1856,7 @@ void HTMLParser	::	preTag( TElementShared aParent )	{
 					}
 
 					// Not a known tag
-					cout << "pre: Unknown tag found: " << mTag << ". Skipping...\n";
+					cout << "pre: Unexpected tag found: " << mTag << ". Skipping...\n";
 					skipTag();
 
 				}
@@ -1969,7 +1965,7 @@ void HTMLParser	::	selectTag( TElementShared aParent, bool aConserveSpaces )	{
 					}
 		
 					// Not a known tag
-					cout << "select: Unknown tag found: " << mTag << ". Skipping...\n";
+					cout << "select: Unexpected tag found: " << mTag << ". Skipping...\n";
 					skipTag();
 					
 				}
@@ -1981,7 +1977,7 @@ void HTMLParser	::	selectTag( TElementShared aParent, bool aConserveSpaces )	{
 						insideSelect = false;
 					}
 					else	{
-						cout << "select: Unknown closing tag found: " << mTag << ". Skipping...\n";
+						cout << "select: Unexpected closing tag found: " << mTag << ". Skipping...\n";
 					}
 				}
 				break;
@@ -2126,7 +2122,7 @@ void HTMLParser	::	appletTag( TElementShared aParent, bool aConserveSpaces, bool
 					}
 		
 					// Not a known tag
-					cout << "applet: Unknown tag found: " << mTag << ". Skipping...\n";
+					cout << "applet: Unexpected tag found: " << mTag << ". Skipping...\n";
 					skipTag();
 					
 				}
@@ -2138,7 +2134,7 @@ void HTMLParser	::	appletTag( TElementShared aParent, bool aConserveSpaces, bool
 						insideApplet = false;
 					}
 					else	{
-						cout << "applet: Unknown closing tag found: " << mTag << ". Skipping...\n";
+						cout << "applet: Unexpected closing tag found: " << mTag << ". Skipping...\n";
 					}
 				}
 				break;
@@ -2200,7 +2196,7 @@ void HTMLParser	::	mapTag( TElementShared aParent )	{
 					}
 		
 					// Not a known tag
-					cout << "map: Unknown tag found: " << mTag << ". Skipping...\n";
+					cout << "map: Unexpected tag found: " << mTag << ". Skipping...\n";
 					skipTag();
 					
 				}
@@ -2212,7 +2208,7 @@ void HTMLParser	::	mapTag( TElementShared aParent )	{
 						insideMap = false;
 					}
 					else	{
-						cout << "map: Unknown closing tag found: " << mTag << ". Skipping...\n";
+						cout << "map: Unexpected closing tag found: " << mTag << ". Skipping...\n";
 					}
 				}
 				break;
@@ -2273,7 +2269,7 @@ void HTMLParser	::	normalTextTag( TElementShared aParent, bool aConserveSpaces, 
 						continue;
 					}
 		
-					cout << "normalText: Unknown closing tag found: " << mTag << ". Skipping...\n";
+					cout << "normalText: Unexpected closing tag found: " << mTag << ". Skipping...\n";
 		
 				}
 				else	{
@@ -2287,7 +2283,7 @@ void HTMLParser	::	normalTextTag( TElementShared aParent, bool aConserveSpaces, 
 					}
 
 					// Not a known tag
-					cout << "normalText: Unknown tag found: " << mTag << ". Skipping...\n";
+					cout << "normalText: Unexpected tag found: " << mTag << ". Skipping...\n";
 					skipTag();
 
 				}
