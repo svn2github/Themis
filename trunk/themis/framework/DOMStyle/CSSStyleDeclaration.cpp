@@ -39,9 +39,11 @@
 // DOM Style headers
 #include "CSSStyleDeclaration.hpp"
 
-CSSStyleDeclaration	::	CSSStyleDeclaration()	{
+CSSStyleDeclaration	::	CSSStyleDeclaration( CSSRulePtr aParentRule )	{
 
 	printf( "Creating CSSPrimitiveValue\n" );
+	
+	mParentRule = aParentRule;
 	
 }
 
@@ -61,51 +63,89 @@ void CSSStyleDeclaration	::	setCssText( const TDOMString aText )	{
 	
 }
 
-TDOMString CSSStyleDeclaration	::	getPropertyValue( const TDOMString aPropertyName )	{
+TDOMString CSSStyleDeclaration	::	getPropertyValue( const TDOMString aName )	{
+	
+	vector<Property>::iterator iter;
+	for ( iter = mProperties.begin(); iter != mProperties.end(); iter++ )	{
+		if ( iter->getName() == aName )	{
+				return iter->getValue();
+		}
+	}
 	
 	return "";
 	
 }
 
-CSSValuePtr CSSStyleDeclaration	::	getPropertyCSSValue( const TDOMString aPropertyName )	{
+CSSValuePtr CSSStyleDeclaration	::	getPropertyCSSValue( const TDOMString aName )	{
 	
 	return CSSValuePtr();
 	
 }
 
-TDOMString CSSStyleDeclaration	::	removeProperty( const TDOMString aPropertyName )	{
+TDOMString CSSStyleDeclaration	::	removeProperty( const TDOMString aName )	{
+	
+	vector<Property>::iterator iter;
+	for ( iter = mProperties.begin(); iter != mProperties.end(); iter++ )	{
+		if ( iter->getName() == aName )	{
+				TDOMString value = iter->getValue();
+				mProperties.erase( iter );
+				return value;
+		}
+	}
 	
 	return "";
 	
 }
 
-TDOMString CSSStyleDeclaration	::	getPropertyPriority( const TDOMString aPropertyName )	{
+TDOMString CSSStyleDeclaration	::	getPropertyPriority( const TDOMString aName )	{
 
+	vector<Property>::iterator iter;
+	for ( iter = mProperties.begin(); iter != mProperties.end(); iter++ )	{
+		if ( iter->getName() == aName )	{
+				return iter->getPriority();
+		}
+	}
+	
 	return "";
 	
 }
 
-void CSSStyleDeclaration	::	setProperty( const TDOMString aPropertyName,
-															   const TDOMString aPropertyValue,
+void CSSStyleDeclaration	::	setProperty( const TDOMString aName,
+															   const TDOMString aValue,
 															   const TDOMString aPriority )	{
 
+	vector<Property>::iterator iter;
+	for ( iter = mProperties.begin(); iter != mProperties.end(); iter++ )	{
+		if ( iter->getName() == aName )	{
+				iter->setValue( aValue );
+				iter->setPriority( aPriority );
+				return;
+		}
+	}
+	
+	Property prop( aName, aValue, aPriority );
+	mProperties.push_back( prop );
 
 }
 															   
 unsigned long CSSStyleDeclaration	::	getLength()	{
 	
-	return 0;
+	return mProperties.size();
 	
 }
 
 TDOMString CSSStyleDeclaration	::	item( unsigned long aIndex )	{
 	
-	return "";
+	if ( mProperties.size() <= aIndex )	{
+		return "";
+	}
+	
+	return mProperties[ aIndex ].getName();
 	
 }
 
 CSSRulePtr CSSStyleDeclaration	::	getParentRule()	{
 	
-	return CSSRulePtr();
+	return mParentRule;
 	
 }

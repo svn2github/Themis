@@ -177,7 +177,7 @@ class CSSPrimitiveValue	:	public CSSValue	{
 			This function sets the string value of the specified type to
 			the specified value.
 			
-			@param	aUnitType		The type of the float value.
+			@param	aStringType	The type of the string value.
 			@param	aStringValue	The value to set.
 
 			@exception	INVALID_ACCESS_ERR Thrown if the supplied type is not a

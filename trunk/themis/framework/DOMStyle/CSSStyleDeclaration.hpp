@@ -33,6 +33,10 @@
 
 // DOM Style headers
 #include "DOMStyleSupport.hpp"
+#include "Property.hpp"
+
+// Standard C++ headers
+#include <vector>
 
 // Declarations
 class CSSValue;
@@ -41,6 +45,9 @@ class CSSRule;
 // Typedefs
 typedef boost::shared_ptr<CSSValue> CSSValuePtr;
 typedef boost::shared_ptr<CSSRule> CSSRulePtr;
+
+// Namespaces used
+using namespace std;
 
 /// CSSStyleDeclaration implementation of the DOM CSS.
 
@@ -56,13 +63,17 @@ class CSSStyleDeclaration	{
 
 	private:
 		TDOMString mCssText;
+		CSSRulePtr mParentRule;
+		vector<Property> mProperties;
 
 	public:
 		/// Constructor of the CSSStyleDeclaration class.
 		/**
 			The constructor of the CSSStyleDeclaration class.
+			
+			@param aParentRule	The parent rule of the declaration.
 		*/
-		CSSStyleDeclaration();
+		CSSStyleDeclaration( CSSRulePtr aParentRule );
 		
 		/// Destructor of the CSSStyleDeclaration class.
 		/**
@@ -100,9 +111,9 @@ class CSSStyleDeclaration	{
 			as the name.
 			If the property has not been set, an empty string is returned.
 			
-			@param aPropertyName		The name of the property to get the value of.
+			@param aName		The name of the property to get the value of.
 		*/
-		TDOMString getPropertyValue( const TDOMString aPropertyName );
+		TDOMString getPropertyValue( const TDOMString aName );
 		
 		/// A function to get a CSS property value.
 		/**
@@ -111,9 +122,9 @@ class CSSStyleDeclaration	{
 			If the property has not been set or if it is a shorthand value,
 			an empty string is returned.
 
-			@param aPropertyName		The name of the property to get the value of.
+			@param aName		The name of the property to get the value of.
 		*/
-		CSSValuePtr getPropertyCSSValue( const TDOMString aPropertyName );
+		CSSValuePtr getPropertyCSSValue( const TDOMString aName );
 		
 		/// A function to remove a property.
 		/**
@@ -121,36 +132,36 @@ class CSSStyleDeclaration	{
 			as the name and returns the value.
 			If the property has not been set, an empty string is returned.
 			
-			@param aPropertyName		The name of the property to remove.
+			@param aName		The name of the property to remove.
 
 			@exception	NO_MODIFICATION_ALLOWED_ERR
 								Thrown if the declaration or a property is readonly.
 		*/
-		TDOMString removeProperty( const TDOMString aPropertyName );
+		TDOMString removeProperty( const TDOMString aName );
 		
 		/// A function to get the priority of the property.
 		/**
 			This function retrieves the priority of the property if it has been set.
 			If it has not been set, an empty string will be returned.
 			
-			@param aPropertyName		The name of the property to get the priority of.
+			@param aName		The name of the property to get the priority of.
 		*/
-		TDOMString getPropertyPriority( const TDOMString aPropertyName );
+		TDOMString getPropertyPriority( const TDOMString aName );
 		
 		/// A function to set a property.
 		/**
 			This function sets the value and priority of a property.
 			
-			@param aPropertyName		The name of the property to set.
-			@param aPropertyValue		The value to set the property to.
-			@param aPriority				The priority to set the property to.
+			@param aName		The name of the property to set.
+			@param aValue		The value to set the property to.
+			@param aPriority	The priority to set the property to.
 
 			@exception	SYNTAX_ERR	Thrown if the value is unparsable.
 			@exception	NO_MODIFICATION_ALLOWED_ERR
 								Thrown if the declaration or a property is readonly.
 		*/
-		void setProperty( const TDOMString aPropertyName,
-								  const TDOMString aPropertyValue,
+		void setProperty( const TDOMString aName,
+								  const TDOMString aValue,
 								  const TDOMString aPriority );
 								  
 		/// A function to get the number of properties in the declaration block.
