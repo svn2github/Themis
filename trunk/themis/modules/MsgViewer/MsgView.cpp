@@ -43,6 +43,7 @@
 #include <PopUpMenu.h>
 #include <MenuField.h>
 #include <MenuItem.h>
+#include <Autolock.h>
 
 // MsgViewer headers
 #include "MsgView.hpp"
@@ -125,13 +126,7 @@ void MsgView	::	MessageReceived( BMessage * aMessage )	{
 		case CHANGE_MESSAGE_VIEW:	{
 			BMenuItem * marked = mSenderMenu->FindMarked();
 			string label( marked->Label() );
-			map<string, vector<string> >::iterator it = mMessageMap.find( label );
-			if ( it != mMessageMap.end() )	{
-				mMessageView->SetText( "\0" );
-				for ( unsigned int i = 0; i < ( (*it).second ).size(); i++ )	{
-					mMessageView->Insert( ( (*it).second )[ i ].c_str() );
-				}
-			}
+			showMessages( label );
 			break;
 		}
 		default:	{
@@ -149,41 +144,64 @@ bool MsgView	::	QuitRequested()	{
 
 void MsgView	::	addMessage( string aMessage, string aSender  )	{
 
-	Lock();
-
-	string senderString = "";
-	if ( aSender == "" )	{
-		senderString = "General Messages";
-	}
-	else	{
-		senderString = aSender;
-	}
-	if ( mMessageMap.count( senderString ) != 0 )	{
-		map<string, vector<string> >::iterator i = mMessageMap.find( senderString );
-		if ( i != mMessageMap.end() )	{
-			( (*i).second ).push_back( aMessage );
+	BAutolock viewLock(this);
+	if ( viewLock.IsLocked() )	{
+		string senderString = "";
+		if ( aSender == "" )	{
+			senderString = "General Messages";
+		}
+		else	{
+			senderString = aSender;
+		}
+		if ( mMessageMap.count( senderString ) != 0 )	{
+			map<string, vector<string> >::iterator iter =
+				mMessageMap.find( senderString );
+			if ( iter != mMessageMap.end() )	{
+				vector<string> & messages = iter->second;
+				messages.push_back( aMessage );
+			}
+		}
+	
+		BMenuItem * marked = mSenderMenu->FindMarked();
+		if ( marked != NULL )	{
+			string label( marked->Label() );
+			if ( senderString == label )	{
+				showMessage( aMessage );
+			}
 		}
 	}
-
-	BMenuItem * marked = mSenderMenu->FindMarked();
-	if ( marked != NULL )	{
-		string label( marked->Label() );
-		if ( senderString == label )	{
-			mMessageView->Insert( aMessage.c_str() );
-		}
-	}
-	Unlock();
 	
 }
 
 void MsgView	::	addPlugin( string aPlugin )	{
 
-	Lock();	
-	mSenderMenu->AddItem( new BMenuItem( aPlugin.c_str(),
-						new BMessage( CHANGE_MESSAGE_VIEW ) ) );
-	vector<string> messageVector;
-	mMessageMap.insert(
-		map<string, vector<string> >::value_type( aPlugin, messageVector ) );
-	Unlock();
+	BAutolock viewLock(this);
+	if ( viewLock.IsLocked() )	{
+		mSenderMenu->AddItem( new BMenuItem( aPlugin.c_str(),
+							new BMessage( CHANGE_MESSAGE_VIEW ) ) );
+		vector<string> messageVector;
+		mMessageMap.insert(
+			map<string, vector<string> >::value_type( aPlugin, messageVector ) );
+	}
+	
+}
+
+void MsgView	::	showMessages( string aSender )	{
+
+	map<string, vector<string> >::iterator iter = mMessageMap.find( aSender );
+	if ( iter != mMessageMap.end() )	{
+		mMessageView->SetText( "\0" );
+		vector<string> & messages = iter->second;
+		for ( unsigned int i = 0; i < messages.size(); i++ )	{
+			showMessage( messages[ i ] );
+		}
+	}
+	
+}
+
+void MsgView	::	showMessage( string aMessage )	{
+
+	mMessageView->Insert( aMessage.c_str() );
+	mMessageView->Insert( "\n" );
 	
 }

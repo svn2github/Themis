@@ -118,6 +118,22 @@ class MsgView	:	public BWindow	{
 			@param	aPlugin	The name of the plugin to add.
 		*/
 		void addPlugin( string aPlugin );
+		/// A function to show the messages for a particular sender.
+		/**
+			This function shows all the messages that have been sent by
+			a particular sender.
+			
+			@param	aSender		The sender of the messages.
+		*/
+		void showMessages( string aSender );
+		/// A function to show a message.
+		/**
+			This function shows the message, given as the argument, at the end
+			of all the other messages that are already shown.
+			
+			@param aMessage		The message to show.
+		*/
+		void showMessage( string aMessage );
 		
 };
 

@@ -40,6 +40,8 @@
 
 // BeOS headers
 #include <Message.h>
+#include <Messenger.h>
+#include <Autolock.h>
 
 // MsgView headers
 #include "MsgViewer.hpp"
@@ -92,13 +94,13 @@ PlugClass * GetObject()	{
 MsgViewer	::	MsgViewer( BMessage * aInfo )
 					:	BHandler( "MsgViewer" ), PlugClass( aInfo, "MsgViewer" )	{
 
-	if ( PlugMan )	{
-		printf( "Getting plugin list\n" );
-		BMessage * list = PlugMan->GetPluginList();
-		mView = new MsgView( list );
-	}
-	else	{
-		mView = new MsgView();
+	mView = new MsgView();
+	int32 pluginCount = CountMembers();
+	for ( int32 i = 0; i < pluginCount; i++ )	{
+		MessageSystem * msgSystem = GetMember( i );
+		string name = msgSystem->MsgSysObjectName();
+		printf( "Adding %s to message viewer\n", name.c_str() );
+		mView->addPlugin( name );
 	}
 	mView->Show();
 
@@ -106,9 +108,9 @@ MsgViewer	::	MsgViewer( BMessage * aInfo )
 
 MsgViewer	::	~MsgViewer()	{
 	
-	mView->Lock();
-	mView->Quit();
-	
+	BMessenger messenger( mView );
+	messenger.SendMessage( B_QUIT_REQUESTED );
+
 }
 
 void MsgViewer	::	MessageReceived( BMessage * aMessage )	{
@@ -183,7 +185,7 @@ status_t MsgViewer	::	ReceiveBroadcast( BMessage * aMessage )	{
 						plug = PlugMan->FindPlugin( id );
 					}
 					if ( plug != NULL )	{
-						sender = plug->PlugName();
+						sender = plug->MsgSysObjectName();
 					}
 					else	{
 						sender = "General messages";
