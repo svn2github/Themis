@@ -3,6 +3,23 @@
 #To change the basic build location for the app and plugins, just change BASE_INSTALL_DIR.
 #Remember to include the '/' at the end.
 
+#platform
+PLATFORM=$(HOSTTYPE)
+
+#dependency switch
+DEPSWITCH=
+
+#includes switch
+INCSWITCH=
+
+#shared library link command
+SHAREDCMD=
+
+#link command tells compiler to pass options to linker and switch
+LINKCMD=
+LINKSWITCH=
+#
+
 #target directories
 BASE_INSTALL_DIR=Themis/
 BASE_ADDON_INSTALL_DIR=$(BASE_INSTALL_DIR)add-ons/
@@ -206,7 +223,11 @@ ifeq "$(shell if [ -f /system/lib/libsocket.so ] ; then echo 1 ; else echo 0 ; f
 else
 	NETWORKLIBS=-lnet -lnetapi
 	NETWORKING=net_server
-	COMPILE_FLAGS+= -DUSENETSERVER
+ifeq "$(PLATFORM)" "i586"
+	COMPILE_FLAGS+= -DUSENETSERVER -D _Themis_
+else
+	COMPILE_FLAGS+= -d USENETSERVER -d _Themis_
+endif
 endif
 ifeq "$(shell if [ -f /boot/develop/lib/x86/libopenssl.so ] ; then echo 1 ; else echo 0 ; fi)" "1"
 	NETWORKLIBS+= -lopenssl
@@ -216,6 +237,19 @@ else
 		NETWORKLIBS+= -lcrypto -lssl
 		COMPILE_FLAGS+= -DUSEOPENSSL
 	endif
+endif
+ifeq "$(PLATFORM)" "ppc"
+	DEPSWITCH=-make
+	COMPILE_FLAGS += -export pragma -d _PowerPC_ -cwd source -d _Themis_ -d MSIPL_USING_NAMESPACE 
+	INCSWITCH=-i
+	SHAREDCMD=-shared
+	LINKSWITCH=-l
+else
+	DEPSWITCH=-M
+	INCSWITCH=-I
+	SHAREDCMD=-nostart
+	LINKCMD=-Xlinker
+	LINKSWITCH=-L
 endif
 
 #These are the make targets. The only two that should really need to be called directly are "all" and "clean".
