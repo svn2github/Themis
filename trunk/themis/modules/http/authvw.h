@@ -52,8 +52,9 @@ class authwin:public BWindow {
 		http_request *request;
 		authview *view;
 		BString realm;
+		bool update;
 	public:
-		authwin(const char *title,http_request *req,char *rlm);
+		authwin(const char *title,http_request *req,char *rlm,bool upd=false);
 		~authwin();
 		void MessageReceived(BMessage *msg);
 		bool QuitRequested();

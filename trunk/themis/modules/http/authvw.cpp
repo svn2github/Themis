@@ -79,15 +79,46 @@ void authview::AttachedToWindow() {
 	
 }
 
-authwin::authwin(const char *title,http_request *req,char *rlm)
+authwin::authwin(const char *title,http_request *req,char *rlm,bool upd)
 	:BWindow(BRect(200,200,500,400),title,B_FLOATING_WINDOW,B_NOT_CLOSABLE|B_NOT_ZOOMABLE|B_NO_WORKSPACE_ACTIVATION|B_ASYNCHRONOUS_CONTROLS,B_CURRENT_WORKSPACE) {
 	view=new authview(Bounds());
+	update=upd;
 	realm=rlm;
 	request=req;
 	AddChild(view);
 	SetDefaultButton(view->ok);
 	BString info;
-	info << "You have been requested to provide a user name\n and password for \""<<realm<<"\".";
+	if (!update) {
+		info << "You have been requested to provide a user name\n and password for \""<<realm<<"\".";
+	} else {
+		info << "You have been requested to provide a user name\n and password for \""<<realm<<"\".\nIncorrect user name or password.";
+		unsigned char *dstr1=NULL;
+		char *dstr2=NULL;
+		long size=0;
+		meHTTP->b64decode(req->a_realm->auth,&dstr1,&size);
+		if (dstr1!=NULL) {
+			dstr2=new char[size+1];
+			memset(dstr2,0,size+1);
+			memcpy(dstr2,dstr1,size);
+			char *colon=strchr(dstr2,':');
+			int32 len=0;
+			len=colon-dstr2;
+			char *u,*p;
+			u=new char[len+1];
+			memset(u,0,len+1);
+			strncpy(u,dstr2,len);
+			len=size-(len+1);
+			p=new char[len+1];
+			memset(p,0,len+1);
+			strncpy(p,colon+1,len);
+		view->user->SetText(u);
+		view->pass->SetText(p);
+			delete u;
+			delete p;
+		}
+		
+	}
+	
 	view->info->SetText(info.String());
 	Show();
 		
@@ -97,9 +128,12 @@ authwin::~authwin() {
 }
 
 void authwin::MessageReceived(BMessage *msg) {
+printf("authwin MessageReceived:\n");
+	msg->PrintToStream();
+	
 	switch(msg->what) {
 		case B_OK: {
-			meHTTP->Lock();
+//			meHTTP->Lock();
 			meHTTP->TCP->Lock();
 			meHTTP->TCP->RequestDone(request->conn);
 			meHTTP->TCP->Unlock();
@@ -107,8 +141,19 @@ void authwin::MessageReceived(BMessage *msg) {
 			atomic_add(&request->conn_released,1);
 			request->conn=NULL;
 			request->conn_released=0;
-			meHTTP->AddAuthRealm(request,(char*)realm.String(),(char*)view->user->Text(),(char*)view->pass->Text());
-			meHTTP->Unlock();
+			printf("Entered username: %s\nEntered password: %s\n",view->user->Text(),view->pass->Text());
+			if (!update) {
+				
+				meHTTP->AddAuthRealm(request,(char*)realm.String(),(char*)view->user->Text(),(char*)view->pass->Text());
+			} else {
+				auth_realm *realm=meHTTP->FindAuthRealm(request);
+				meHTTP->UpdateAuthRealm(realm,(char*)view->user->Text(),(char*)view->pass->Text());
+				
+			}
+			
+			meHTTP->ResubmitRequest(request);
+//			request->awin=NULL;
+//			meHTTP->Unlock();
 			Quit();
 //			PostMessage(B_QUIT_REQUESTED);
 		}break;

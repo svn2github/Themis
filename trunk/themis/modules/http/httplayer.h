@@ -111,9 +111,11 @@ struct header_st {
 	}
 };
 
+class authwin;
 
 struct http_request {
 	auth_realm *a_realm;//authentication realm
+	authwin *awin;
 	char *url;
 	char *uri;
 	char *host;
@@ -141,6 +143,7 @@ struct http_request {
 	bool receivetilclosed;
 	http_request() {
 		a_realm=NULL;
+		awin=NULL;
 		url=uri=host=NULL;
 		port=80; 
 		status=0;
@@ -179,6 +182,8 @@ struct http_request {
 			cacheinfo=NULL;
 		}
 		if (storage!=NULL) {
+			//storage is malloc'ed and then realloc'ed if it's not null.
+			memset(storage,0,storagesize);
 			free(storage);
 			storage=NULL;
 			storagesize=0;

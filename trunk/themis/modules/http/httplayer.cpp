@@ -38,52 +38,27 @@ Project Start Date: October 18, 2000
 httplayer *meHTTP;
 tcplayer *__TCP;
 
-int32 L;
-int32 U;
-
 void DataReceived(connection *conn) 
 {
-	printf("http: callback function\n");
+//	printf("http: callback function\n");
 	meHTTP->DReceived(conn);
-	printf("http: callback done.\n");
+//	printf("http: callback done.\n");
 }
 int32 LockHTTP(int32 timeout)
 {
-	printf("LockHTTP %ld\n",L);
-	L++;
 	return meHTTP->Lock();
 }
 void UnlockHTTP(void) 
 {
-	printf("UnlockHTTP %ld\n",U);
-	U++;
 	meHTTP->Unlock();
 }
-
-/*
-httplayer::httplayer(tcplayer *_TCP) {
-	Basic=NULL;
-	meHTTP=this;
-	SetTCP(_TCP);
-//	file=new BFile("/var/tmp/themis_output",B_ERASE_FILE|B_CREATE_FILE|B_WRITE_ONLY);
-	UnprocessedReqs=new BList(1);
-	ResubmitReqs=new BList(1);
-	
-	requests_head=NULL;
-	quit=0;
-	http_mgr_sem=create_sem(1,"http_mgr_sem");
-	use_useragent=0;
-	PluginManager=NULL;
-	CachePlug=NULL;
-}
-*/
 httplayer::httplayer(tcplayer *_TCP) 
 {
 	lock=new BLocker("http lock",false);
 	lock->Lock();
 	printf("HTTP object at %p\nhttp tcp: %p\n",this,_TCP);
 	
-	L=U=0;
+
 	TCP=NULL;
 	if (_TCP!=NULL)
 		SetTCP(_TCP);
@@ -101,39 +76,6 @@ httplayer::httplayer(tcplayer *_TCP)
 	CachePlug=NULL;
 	lock->Unlock();
 }
-/*
-httplayer::~httplayer() {
-	printf("HTTP layer destructor\n");
-	ResubmitReqs->MakeEmpty();
-	delete ResubmitReqs;
-//	delete file;
-	http_request *req;
-	printf("removing queued request items\n");
-	while(UnprocessedReqs->CountItems()>0) {
-		req=(http_request*)UnprocessedReqs->RemoveItem((int32)0);
-		if (req!=NULL)
-			delete req;
-	}
-	delete UnprocessedReqs;
-	printf("removing other request items\n");
-	while(requests_head!=NULL) {
-//		printf("%s:%u\ndata:\n%s\n=========\n",requests_head->host,requests_head->port,(char*)requests_head->data->Buffer());
-		req=requests_head->next;
-		delete requests_head;
-		requests_head=req;
-	}
-	delete_sem(http_mgr_sem);
-	if (Basic!=NULL) {
-		auth_realm *realms=Basic->realms_head,*tr;
-		while (realms!=NULL) {
-			tr=realms->next;
-			delete realms;
-			realms=tr;
-		}
-		delete Basic;
-	}
-}
-*/
 httplayer::~httplayer() 
 {
 	http_request *req;
@@ -185,28 +127,6 @@ void httplayer::SetTCP(tcplayer *_TCP) {
 	}
 //	printf("Leaving SetTCP\n");
 }
-/*
-void httplayer::DReceived(connection *conn) {
-	printf("Data received on connection %p\n",conn);
-	http_request *req=requests_head;
-	while(req!=NULL) {
-		if ((req->conn==conn) && (req->done==0)) {
-			printf("Connection %p belongs to request %p\n",conn,req);
-			break;
-		}
-		req=req->next;
-		if (quit)
-			break;
-	}
-	
-	if (req!=NULL) {
-		printf("Data is for URI %s on %s\n",req->uri, req->host);
-		
-		if (req->datawaiting==0)
-			atomic_add(&req->datawaiting,1);	
-	}
-}
-*/
 void httplayer::DReceived(connection *conn) 
 {
 //	acquire_sem(connhandle_sem);
@@ -225,7 +145,7 @@ void httplayer::DReceived(connection *conn)
 		atomic_add(&req->datawaiting,1);
 	}
 //	release_sem(connhandle_sem);
-	printf("http: DReceived is done.\n");
+//	printf("http: DReceived is done.\n");
 }
 
 
@@ -369,16 +289,27 @@ auth_realm *httplayer::FindAuthRealm(http_request *request) {
 	if (Basic!=NULL) {
 		auth_realm *cur=Basic->realms_head;
 		while (cur!=NULL) {
+			printf("FAR: target host: %s\tcurrent: %s\n",request->host,cur->host);
+			
 			if (strcasecmp(request->host,cur->host)==0) {
+				printf("FAR: target uri: %s\tcurrent: %s\n",request->uri,cur->baseuri);
+				
 				char *uriloc=NULL;
+				if (strncasecmp(cur->baseuri,request->uri,strlen(cur->baseuri))==0) {
+					realm=cur;
+					break;
+				}
+				/*
 				uriloc=strstr(request->uri,cur->baseuri);
 				if (uriloc!=NULL) {
 					realm=cur;
 					break;
 				}
+				*/
 			}
 			if (quit)
 				break;
+			cur=cur->next;
 		}
 		
 	}
@@ -391,20 +322,30 @@ auth_realm *httplayer::AddAuthRealm(http_request *request,char *realm, char *use
 	int size=(strlen(user)+strlen(password)+1)*2;//make sure that we have plenty of room.
 	auth_realm *rlm=new auth_realm;
 	rlm->auth=new char[size+1];
+	memset(rlm->auth,0,size+1);
+	
 	size=b64encode((char*)authinfo.String(),authinfo.Length(),rlm->auth,size);
 	authinfo="nothing";
-	memset(rlm->auth+size,0,strlen(rlm->auth)-size);
+//	memset(rlm->auth+size,0,strlen(rlm->auth)-size);
 	
 	rlm->host=new char[strlen(request->host)+1];
 	memset(rlm->host,0,strlen(request->host)+1);
 	strcpy(rlm->host,request->host);
-	char *bu=strrchr(request->uri,'/');
+/*
+	char *bu=strchr(request->uri,'/');
 	if (bu!=NULL) {
 		size=bu-request->uri;
 		rlm->baseuri=new char[size+1];
 		memset(rlm->baseuri,0,size+1);
 		strncpy(rlm->baseuri,request->uri,size);
-	}
+	} else {
+*/
+		rlm->baseuri=new char[2];
+		rlm->baseuri[0]='/';
+		rlm->baseuri[1]=0;
+//	}
+	printf("base authentication path: %s\n",rlm->baseuri);
+	
 	size=strlen(realm);
 	rlm->realm=new char[size+1];
 	memset(rlm->realm,0,size+1);
@@ -419,13 +360,12 @@ auth_realm *httplayer::AddAuthRealm(http_request *request,char *realm, char *use
 		cur->next=rlm;
 	}
 	request->a_realm=rlm;
-//	CloseRequest(request);
-	
-	ResubmitRequest(request);
+//	ResubmitRequest(request);
 	return rlm;
 }
 void httplayer::UpdateAuthRealm(auth_realm *realm,char *user,char *pass) {
 	delete realm->auth;
+	realm->auth=NULL;
 	BString authinfo;
 	authinfo<<user<<":"<<pass;
 	int size=(strlen(user)+strlen(pass)+1)*2;//make sure that we have plenty of room.
@@ -452,11 +392,6 @@ void httplayer::KillRequest(http_request *request) {
 	if (request==curreq) {
 		requests_head=request->next;
 		if (!request->done) {
-/*
-			TCP->Lock();
-			TCP->RequestDone(request->conn);
-			TCP->Unlock();
-*/
 			CloseRequest(request);
 			delete request;
 		}
@@ -469,26 +404,15 @@ void httplayer::KillRequest(http_request *request) {
 		}
 		if (curreq!=NULL) {
 			if (!request->done) {
-					/*
-					TCP->Lock();
-				TCP->RequestDone(request->conn);
-					TCP->Unlock();
-					*/
-					CloseRequest(request);
+				CloseRequest(request);
 			}
 			http_request *next=request->next;
 			delete request;
 			curreq->next=next;
 		} else {
 			if (!request->done) {
-			/*
-					TCP->Lock();
-				TCP->RequestDone(request->conn);
-					TCP->Unlock();
-			*/
 				CloseRequest(request);
 			}
-			
 			delete request;
 		}
 	}
@@ -547,6 +471,9 @@ http_request *httplayer::AddRequest(BMessage *info) {
 			request->referrer=new char[refr.Length()+1];
 			memset(request->referrer,0,refr.Length()+1);
 			strcpy(request->referrer,refr.String());
+		}
+		if (info->HasPointer("authorization")) {
+			info->FindPointer("authorization",(void **)&request->a_realm);
 		}
 		
 		BString url;
@@ -625,7 +552,7 @@ char *httplayer::FindEndOfHeader(char *buffer, char **eohc) {
 	return eoh;
 }
 header_st *httplayer::AddHeader(http_request *request, char *attribute, char* value) {
-	printf("attribute: %s\t%d bytes\nvalue: %s\t%d bytes\n",attribute,strlen(attribute),value,strlen(value));
+//	printf("attribute: %s\t%d bytes\nvalue: %s\t%d bytes\n",attribute,strlen(attribute),value,strlen(value));
 	
 	header_st *cur=request->headers;
 	if (cur!=NULL) {
@@ -712,21 +639,21 @@ void httplayer::ProcessHeaders(http_request *request,void *buffer,int size) {
 				delete eohc;
 				return;
 			} else {
-				int len=eoh-buf;
-				header=new char[len+1];
-				memset(header,0,len+1);
-				strncpy(header,buf,len);
+//				int len=eoh-buf;
+//				header=new char[len+1];
+//				memset(header,0,len+1);
+//				strncpy(header,buf,len);
 			}
+		printf("buf==request->storage\n");
+		
 	}
 	
-//	printf("ProcessHeaders getting started:\n%s\n",buf);
+	printf("ProcessHeaders getting started:\n%s\n",buf);
 	
 	char *tmp=new char[5];
 	memset(tmp,0,5);
 	strncpy(tmp,buf,4);
-	for (int i=0;i<4;i++)
-		tmp[i]=toupper(tmp[i]);
-	if ((strcmp(tmp,"HTTP")==0) || (request->storage!=NULL)) {
+	if ((strcasecmp(tmp,"HTTP")==0) || (request->storage!=NULL)) {
 		delete tmp;
 //		sscanf(buf,"HTTP/%d.%d %d",&request->http_v_major,&request->http_v_minor,&request->status);
 		{
@@ -870,6 +797,8 @@ void httplayer::ProcessHeaders(http_request *request,void *buffer,int size) {
 			delete v2;
 			a=v2=NULL;
 		}
+		if (request->headers!=NULL)
+			printf("Headers added to request struct\n");
 		
 		int status=request->status/100;
 		switch(status) {
@@ -931,12 +860,47 @@ void httplayer::ProcessHeaders(http_request *request,void *buffer,int size) {
 					} else {
 						delete loc;
 						loc=NULL;
-						if (destination[0]=='/') {
-							//relative location
 							BString url("http");
 							if (request->secure)
 								url << "s";
-							url << "://"<<request->host<<":"<<request->port<<destination;
+							url << "://"<<request->host<<":"<<request->port;
+						if (destination[0]=='/') {
+							
+							url<<destination;
+						} else {
+									char *lslash=strrchr(request->uri,'/');
+									int32 len=0;
+									if (lslash!=NULL){
+										
+										len=lslash-request->uri;
+										char *cp=new char[len+1];
+										memset(cp,0,len+1);
+										strncpy(cp,request->uri,len);
+										url<<cp;
+										memset(cp,0,len+1);
+										
+										delete cp;
+										cp=NULL;
+										
+									}
+								if (destination[0]=='.') {
+									
+									char *slash=strchr(destination,'/');
+									if (slash!=NULL) {
+										url<<slash;
+										
+									}
+									
+									slash=NULL;
+									
+								} else
+									url<<destination;
+								
+						}
+						
+						
+//						if (destination[0]=='/') {
+							//relative location
 							memset(request->url,0,strlen(request->url)+1);
 							delete request->url;
 							request->url=new char[url.Length()+1];
@@ -958,11 +922,12 @@ void httplayer::ProcessHeaders(http_request *request,void *buffer,int size) {
 							ResubmitRequest(request);
 							delete eohc;
 							return;
-						}
+//						}
 					}
 				}
 			}break;
 			case 4: {
+/*
 				if (request->status==401) {
 					request->a_realm=FindAuthRealm(request);
 					
@@ -974,6 +939,7 @@ void httplayer::ProcessHeaders(http_request *request,void *buffer,int size) {
 						return;
 					}
 				}
+*/
 			}break;
 			default: {
 				//do nothing
@@ -986,185 +952,11 @@ void httplayer::ProcessHeaders(http_request *request,void *buffer,int size) {
 		delete eohc;
 	} else {
 		//we don't have an HTTP response on our hands...
-		printf("Diner says hi!\n");
-		exit(0);
-		
 		delete tmp;
 	}
 //	printf("ProcessHeaders done.\n");
 }
 
-/*
-void httplayer::ProcessHeaders(http_request *request,void *buffer,int size) {
-	printf("%s:%u\n",request->host,request->port);
-	bool conthead=false;
-	bool triggerauth=false;
-	bool http_continue=false;
-	unsigned char *eoh=NULL;
-	unsigned char *eorl=NULL;//end of response line
-	int eoh_len=4;
-	header_st *tmp=new header_st;
-	if (request->headers==NULL) {
-		
-	request->headers=tmp;
-	
-	unsigned char *buf=(unsigned char*)buffer;
-	ProcessHeadersTop:
-	if (http_continue)
-		buf=(eoh+eoh_len);
-	eoh=(unsigned char*)strstr((char*)buf,"\r\n\r\n");
-	if (eoh==NULL) {
-		eoh=(unsigned char*)strstr((char*)buf,"\n\n");
-		if (eoh==NULL) {
-			eoh=(unsigned char*)strstr((char*)buf,"\r\r");
-			if (eoh==NULL) {
-				for (int16 i=0; i<size; i++) {
-		//         fprintf(stdout,"buf[%d]: 0x%x - %c\n",i,*(buf+i),*(buf+i));
-					if ((*(buf+i))=='\0') {
-						printf("NULL found... assuming that's the end of the header!\n");
-						eoh=(unsigned char*)buf+(i-2);
-						eoh_len=eoh-buf;
-						break;
-					}
-				}//for loop
-			}//eoh is still NULL
-			else
-				eoh_len=2;
-		}
-		else
-			eoh_len=2;
-	}
-	if (eoh_len<=0) {
-		delete request->headers;
-		request->headers=NULL;
-		return;
-	}
-	
-	eorl=(unsigned char*)strstr((char*)buf,"\r\n");
-	{
-		char *data=new char[eorl-buf+1];
-		memset(data,0,(eorl-buf+1));
-		strncpy(data,(char*)buf,(eorl-buf));
-		printf("response line: %s\n",data);
-		int oldstatus=request->status;
-		//we're looking for a HTTP reponse of 100...
-		sscanf(data,"HTTP/%d.%d %d",&request->http_v_major,&request->http_v_minor,&request->status);
-		printf("http/%ld.%ld, status %d\n",request->http_v_major,request->http_v_minor,request->status);
-		if ((request->status==401) && (oldstatus==401)) {
-			if (request->a_realm!=NULL) {
-				(new authwin("Password required!",request,request->a_realm->realm));
-				ResubmitRequest(request);
-				
-			}
-			
-		}
-		
-		if (strlen(data)==(unsigned)size) {
-			printf("data received is http response only\n");
-			delete request->headers;
-			request->headers=NULL;
-			delete data;
-			return;
-		} else {
-			if (request->status==100) {//Response 100 is "Continue". It is usually immediately followed by another response line, headers, and data.
-				memset(buf,32,eorl-buf);
-				
-				http_continue=true;
-				delete data;
-				goto ProcessHeadersTop;
-			}
-		}
-		delete data;
-	}
-//	printf("buf: %p\neoh: %p\ndiff: %ld\neoh len: %d\n",buf,eoh,eoh-buf,eoh_len);
-//	printf("=========\nbuf:\n%s\n=========\neoh:\n%s\n=========\n",buf,(eoh+eoh_len));
-	char *eol=NULL;
-	char *colon=NULL;
-	char *temp=NULL;
-	
-	int pos=eorl-buf+2;
-	header_st *curhead=request->headers;
-				memset(buf,32,pos);//eorl-buf);//wipe out the response line and it's \r\n
-	while (eol<(char*)eoh) {
-		if (quit)
-			break;
-		if (curhead->name!=NULL) {
-			curhead->next=new header_st;
-			curhead=curhead->next;
-		}
-		
-		colon=strchr((char*)(buf+pos),':');
-		if (colon!=NULL) {
-			curhead->name=new char[colon-((char*)(buf+pos))+1];
-			memset(curhead->name,0,(colon-((char*)(buf+pos))+1));			
-			strncpy(curhead->name,((char*)(buf+pos)),(colon-((char*)(buf+pos))));
-			printf("header name [%ld]: %s\t",strlen(curhead->name),curhead->name);
-			fflush(stdout);
-			eol=strstr(colon,"\r\n");
-			curhead->value=new char[eol-colon+1];
-			temp=new char[eol-colon+1];
-			memset(temp,0,(eol-colon)+1);
-			strncpy(temp,(colon+1),(eol-colon)-1);
-			memset(curhead->value,0,(eol-colon)+1);
-			stripfrontwhite((const char*)temp,curhead->value);
-			printf("value: %s\n",curhead->value);
-
-		}
-		pos=(eol+2)-(char*)buf;
-		
-	}
-	printf("bytes remaining after header: %ld\n",size-((eoh-buf)+eoh_len));
-	if ((size-((eoh-buf)+eoh_len))==0) {
-//		conthead=true;
-		return;
-	}
-	if ((size-((eoh-buf)+eoh_len))<0) {
-		conthead=true;
-		return;
-	}
-	if (conthead!=true)
-		DoneWithHeaders(request);//request->headersdone=true;
-	printf("eoh: %p\n",eoh);
-	
-	if (request->chunked) {
-		sscanf((char*)eoh,"%x\r\n",&request->chunkbytesremaining);
-		printf("%x (%d)\n",request->chunkbytesremaining,request->chunkbytesremaining);
-		
-		char num[10];
-		sscanf((char*)eoh,"%s\r\n",num);
-		printf("Chunk size: %ld\n",request->chunkbytesremaining);
-		int32 bufdata=0;
-		int32 bytes=((eoh+eoh_len)+strlen(num)+1)-buf;
-		printf("header bytes: %ld\nbytes left: %ld\n",bytes,size-bytes);
-		//added at 7:25 pm on 5-Jan-02
-		unsigned char *start=NULL;
-			start=eoh+(eoh_len+strlen(num)+2);
-		
-//			DoneWithHeaders(request);
-		
-		ProcessChunkedData(request,start,(size-(eoh_len+strlen(num)+2)));
-	} else {	
-		request->bytesremaining-=(size-((eoh+eoh_len)-buf));
-		
-		if (request->bytesremaining<=0)
-			CloseRequest(request);
-		
-		request->data->WriteAt(0,(eoh+eoh_len),(size-((eoh+eoh_len)-buf)));
-	}
-		printf("[PH] Bytes remaining: %ld\n",request->chunked?request->chunkbytesremaining:request->bytesremaining);
-	}//headers were null... we're not continuing them.
-	else {
-		sscanf((char*)buffer,"%x\r\n",&request->chunkbytesremaining);
-		printf("%x (%d)\n",request->chunkbytesremaining,request->chunkbytesremaining);
-		char num[10];
-		sscanf((char*)buffer,"%s\r\n",num);
-		printf("Chunk size: %ld\n",request->chunkbytesremaining);
-		ProcessChunkedData(request,((unsigned char*)buffer)+(strlen(num)+2),size-(strlen(num)+2));
-	}
-	
-	
-}
-*/
 void httplayer::DoneWithHeaders(http_request *request) {
 	printf("DoneWithHeaders\n");
 	atomic_add(&request->headersdone,1);
@@ -1194,7 +986,7 @@ void httplayer::DoneWithHeaders(http_request *request) {
 				}
 	}//Pragma Header
 	result=FindHeader(request,"www-authenticate");
-	if (result!=NULL) {//Authentication Header
+	if ((result!=NULL) && (request->status==401)) {//Authentication Header
 				if (strncasecmp(result,"basic",5)==0) {
 					char *q1=NULL,*q2=NULL;
 					q1=strchr(result,'"');
@@ -1209,14 +1001,29 @@ void httplayer::DoneWithHeaders(http_request *request) {
 							auth_realm *realm=FindAuthRealm(rlmc,request->host);
 							if (realm!=NULL) {
 								printf("auth realm found: %p\n",realm);
+								if (realm==request->a_realm) {
+									if (request->awin==NULL)
+										request->awin=new authwin("Password required!",request,rlmc,true);
+									else
+										request->awin->Activate(true);
+								} else
+									request->awin=new authwin("Password required!",request,rlmc);
+								printf("done with auth header.\n");
 								
 							} else {
 								printf("auth realm must be added\n");
-								(new authwin("Password required!",request,rlmc));
+								if (request->awin==NULL)
+									request->awin=new authwin("Password required!",request,rlmc);
+								else
+									request->awin->Activate(true);
+								
 							}
 						} else {
 							printf("auth realm must be added\n");
-							(new authwin("Password required!",request,rlmc));
+								if (request->awin==NULL)
+									request->awin=new authwin("Password required!",request,rlmc);
+								else
+									request->awin->Activate(true);
 						}
 						delete rlmc;
 					}
@@ -1224,7 +1031,8 @@ void httplayer::DoneWithHeaders(http_request *request) {
 				}
 	}//Authentication header
 	result=NULL;
-	
+	if (request->status==401)
+		request->cache=DoesNotUseCache;
 	if (request->cache!=DoesNotUseCache) {
 		header_st *curhead;
 		if (request->secure)
@@ -1290,313 +1098,16 @@ void httplayer::DoneWithHeaders(http_request *request) {
 	}
 }
 
-/*
-void httplayer::DoneWithHeaders(http_request *request) {
-	request->headersdone=true;
-	header_st *head=request->headers,*curhead=request->headers;
-	while(curhead!=NULL) {
-			if ((strcasecmp(curhead->name,"transfer-encoding")==0) && (strcasecmp(curhead->value,"chunked")==0)) {
-				request->chunked=true;
-			
-			}
-			if (strcasecmp(curhead->name,"Content-length")==0) {
-				printf("[DWH]content length: %ld\n",atol(curhead->value));
-				request->bytesremaining=atol(curhead->value);
-			}
-			if (strcasecmp(curhead->name,"Cache-Control")==0) {
-				if (strcasecmp(curhead->value,"no-cache")==0) {
-					request->cache=DoesNotUseCache;
-				}
-			}
-			if (strcasecmp(curhead->name,"Pragma")==0) {//Pragma
-				if  (strcasecmp(curhead->value,"no-cache")==0) {
-					request->cache=DoesNotUseCache;
-				}
-			}//Pragma
-			if (strcasecmp(curhead->name,"WWW-Authenticate")==0) {
-				if (strncasecmp(curhead->value,"basic",5)==0) {
-					char *q1=NULL,*q2=NULL;
-					q1=strchr(curhead->value,'"');
-					q2=strchr(q1+1,'"');
-					if ((q1!=NULL) && (q2!=NULL)) {
-						int size=q2-(q1+1);
-							char *rlmc=new char[size+1];
-							memset(rlmc,0,size+1);
-							strncpy(rlmc,q1+1,size);
-							printf("auth realm: %s\n",rlmc);
-						if (Basic!=NULL) {
-							auth_realm *realm=FindAuthRealm(rlmc,request->host);
-							if (realm!=NULL) {
-								printf("auth realm found: %p\n",realm);
-								
-							} else {
-								printf("auth realm must be added\n");
-								(new authwin("Password required!",request,rlmc));
-							}
-						} else {
-							printf("auth realm must be added\n");
-							(new authwin("Password required!",request,rlmc));
-						}
-						delete rlmc;
-					}
-					
-				}
-			}
-		curhead=curhead->next;
-	}
-	if (request->cache!=DoesNotUseCache) {
-		if (request->secure)
-			request->cache|=EncryptCache;
-		if (request->cacheinfo==NULL) {
-			printf("preparing to make new cache\n");
-			BMessage *ci=new BMessage(CreateCacheObject);
-			curhead=request->headers;
-			ci->AddString("url",request->url);
-			ci->AddString("host",request->host);
-			ci->AddString("path",request->uri);
-			while (curhead!=NULL) {
-				ci->AddString(curhead->name,curhead->value);
-				curhead=curhead->next;
-			}
-			request->cacheinfo=new BMessage;
-			BMessenger *msgr=new BMessenger(CachePlug->Handler(),NULL,NULL);
-			msgr->SendMessage(ci,request->cacheinfo);
-			delete ci;
-			request->cacheinfo->PrintToStream();
-			if (request->data==NULL) {
-				entry_ref ref;
-				request->cacheinfo->FindRef("ref",&ref);
-				request->data=new BFile(&ref,B_READ_WRITE);
-			}
-		} else {//update the cached object if necessary
-			printf("updating cache\n");
-			entry_ref ref;
-			request->cacheinfo->FindRef("ref",&ref);
-			BMessage *ui=new BMessage(UpdateCachedObject);
-			BMessage *reply=new BMessage;
-			curhead=request->headers;
-			ui->AddString("url",request->url);
-			ui->AddString("host",request->host);
-			ui->AddString("path",request->uri);
-			ui->AddRef("ref",&ref);
-			while (curhead!=NULL) {
-				ui->AddString(curhead->name,curhead->value);
-				curhead=curhead->next;
-			}
-			BMessenger *msgr=new BMessenger(CachePlug->Handler(),NULL,NULL);
-			msgr->SendMessage(ui,reply);
-			reply->PrintToStream();
-			delete request->cacheinfo;
-			request->cacheinfo=reply;
-			delete ui;
-			if (request->data==NULL) {
-				printf("Creating cache file.\n");
-				request->data=new BFile(&ref,B_READ_WRITE);
-			}
-			
-		}
-	} else {
-		printf("doesn't use cache\n");
-		if (request->data==NULL) {
-			request->data=new BMallocIO;
-			((BMallocIO*)request->data)->SetBlockSize(1);
-			((BMallocIO*)request->data)->SetSize(1);
-		}
-	}
-			
-}
-*/
-/*
 void httplayer::ProcessChunkedData(http_request *request,void *buffer, int size) {
-	//call with last known chunk size already set in request->chunkbytesremaining
-	//and having just grabbed the chunk size.
-	printf("Process ChunkedData\n");
-	
-	if (quit)
-		return;
-	if (size<0)
-		return;
-		int pos=0;
-		char *eol=NULL;
-		char *eoh_c=NULL;
-		int eoh_len=0;
-	
-	if (request->chunkbytesremaining>0) {
-		unsigned char *ubuf=(unsigned char*)buffer;
-		char *cbuf=(char*)buffer;
-		if (request->headersdone) {
-			
-			if (request->chunkbytesremaining<size) {
-				printf("1Bytes being written:\n");
-				for (int i=0;i<request->chunkbytesremaining; i++)
-					printf("%c",cbuf[i]);
-				printf("\n\t\t*** done\n");
-				
-				request->data->Write(ubuf,request->chunkbytesremaining);
-				pos=request->chunkbytesremaining+1;
-				request->chunkbytesremaining=0;
-			} else {
-				printf("2Bytes being written:\n");
-				for (int i=0;i<size;i++)
-					printf("%c",cbuf[i]);
-				printf("\n\t\t*** done\n");
-				
-				request->data->Write(ubuf,size);
-				request->chunkbytesremaining-=size;
-				return;
-			}
-		} else {//not done with headers yet
-			printf("==========\nMore header processing to be done\n===========\n");
-			header_st *lasthead=request->headers;
-			if (lasthead!=NULL) {
-				while (lasthead->next!=NULL)
-					lasthead=lasthead->next;
-				sscanf(cbuf,"%x\r\n",&request->chunkbytesremaining);
-				printf("%x (%d)\n",request->chunkbytesremaining,request->chunkbytesremaining);
-				char num[10];
-				sscanf(cbuf,"%s\r\n",num);
-				printf("Chunk size: %ld\n",request->chunkbytesremaining);
-				if (request->chunkbytesremaining==0) {
-					CloseRequest(request);
-					return;
-					
-				}
-				
-				pos=strlen(num)+2;
-				eoh_c=strstr(cbuf,"\r\n\r\n");
-				if (eoh_c==NULL) {
-					eoh_c=strstr(cbuf,"\n\n");
-					if (eoh_c==NULL) {
-						eoh_c=strstr(cbuf,"\r\r");
-						if (eoh_c==NULL) {
-							//then what the fuck is the end of header marker??
-						} else {
-							eoh_len=2;
-						}
-					} else {
-						eoh_len=2;
-					}
-				} else {
-					eoh_len=4;
-				}
-				if (eoh_c!=NULL) {
-					char *colon=strchr(cbuf+pos,':');
-					if (colon>eoh_c) {
-						//no more headers after all... grrr...
-						DoneWithHeaders(request);
-						ProcessChunkedData(request,ubuf+(cbuf-eoh_c),(cbuf-eoh_c));
-						return;
-					}
-					eol=strstr(cbuf+pos,"\r\n");
-					int namelen=0;
-					int vallen=0;
-					char *temp;
-					while(eol<eoh_c) {
-						if (lasthead==NULL) {
-							request->headers=new header_st;
-							lasthead=request->headers;
-						} else {
-							lasthead->next=new header_st;
-							lasthead=lasthead->next;
-						}
-						colon=strchr(cbuf+pos,':');
-						if (colon!=NULL) {
-							namelen=colon-(cbuf+pos);
-							lasthead->name=new char[namelen+1];
-							memset(lasthead->name,0,namelen+1);
-							strncpy(lasthead->name,cbuf+pos,namelen);
-							printf("header name [%ld]: %s\t",namelen,lasthead->name);
-							fflush(stdout);
-							eol=strstr(colon,"\r\n");
-							vallen=eol-colon;
-							lasthead->value=new char[vallen+1];
-							temp=new char[vallen+1];
-							memset(temp,0,vallen+1);
-							strncpy(temp,colon+1,vallen-1);
-							memset(lasthead->value,0,vallen+1);
-							stripfrontwhite((const char*)temp,lasthead->value);
-							printf("value: %s\n",lasthead->value);
-							//process the header info... don't process chunked, we know that already...duh
-							
-						}
-						pos=(eol+2)-cbuf;	
-					}
-					
-					int headersize=(eoh_c+eoh_len)-cbuf;
-					
-					request->chunkbytesremaining-=headersize;
-					pos=headersize;
-					if (headersize<size) {
-						DoneWithHeaders(request);
-						if (request->chunkbytesremaining<(size-headersize)) {//we need to look for additional chunks
-							if (request->chunkbytesremaining<=0) {
-								sscanf(cbuf+pos,"%x\r\n",&request->chunkbytesremaining);
-								printf("[Post Header Chunk] %x (%d)\n",request->chunkbytesremaining,request->chunkbytesremaining);
-								sscanf(cbuf+pos,"%s\r\n",num);
-								printf("[Post Header Chunk] Chunk size: %ld\n",request->chunkbytesremaining);
-								if (request->chunkbytesremaining==0) {
-									CloseRequest(request);
-									return;
-									
-								}
-								
-							}
-							ProcessChunkedData(request,ubuf+headersize,size-headersize);
-							return;
-						} else {//write all remaining data in buffer to the collection depot.
-							request->data->Write(ubuf+headersize,size-headersize);
-							return;
-						}
-					}
-					
-				}//end of header block found
-				
-			} else {
-				//this should be an impossible situation, because we should've already received some headers to inform
-				//us that the data being processed is chunked.
-			}
-			
-		}//not done with headers yet
-		
-			sscanf(cbuf+pos,"%x\r\n",&request->chunkbytesremaining);
-			printf("%x (%d)\n",request->chunkbytesremaining,request->chunkbytesremaining);
-			
-			char num[10];
-			sscanf(cbuf+pos,"%s\r\n",num);
-	//		if (atol(num)!=request->chunkbytesremaining)
-	//			request->chunkbytesremaining=atol(num);
-			
-			printf("Chunk size: %ld\n",request->chunkbytesremaining);
-			if (request->chunkbytesremaining==0){
-				
-				CloseRequest(request);
-				return;
-				
-			}
-			
-			ProcessChunkedData(request,ubuf+pos,size-pos);
-		
-	} else {
-		//if the newest chunk size is zero, there shouldn't be any more data to be received.
-		//in short, this request should be done.
-//		CloseRequest(request);
-	}
-	
-	printf("\t********ProcessChunkedData done.********\n");
-	
-}
-*/
-void httplayer::ProcessChunkedData(http_request *request,void *buffer, int size) {
-	printf("\tProcessChunkedData()\n");
+//	printf("\tProcessChunkedData()\n");
 	if (size==0)
 		return;
-			int32 oldchunk=0;
-		printf("buffer size: %ld chunk size: %ld chunk: %ld\n",size,request->chunkbytesremaining,request->chunk);
+	int32 oldchunk=0;
+//	printf("buffer size: %ld chunk size: %ld chunk: %ld\n",size,request->chunkbytesremaining,request->chunk);
 	
 	if (size>request->chunkbytesremaining) {
 		//size is greater than chunkbytesremaining
-		printf("chr: %ld\tchunk: %ld\n",request->chunkbytesremaining,request->chunk);
-		
+//		printf("chr: %ld\tchunk: %ld\n",request->chunkbytesremaining,request->chunk);
 		if ((request->chunkbytesremaining==0) && (request->chunk==0)){
 			char *eol=(char*)memchr(((char*)buffer),'\r',20);
 			char temp[20];
@@ -1606,12 +1117,10 @@ void httplayer::ProcessChunkedData(http_request *request,void *buffer, int size)
 			strncpy(temp,(char*)buffer,len);
 			request->chunkbytesremaining=strtol(temp,&eol,16);
 			request->chunk++;
-			printf("First chunk size is %ld (0x%x) bytes\n",request->chunkbytesremaining,request->chunkbytesremaining);
+//			printf("First chunk size is %ld (0x%x) bytes\n",request->chunkbytesremaining,request->chunkbytesremaining);
 //			request->data->Write((unsigned char*)(buffer+len+2),request->chunkbytesremaining);
-			
 			ProcessChunkedData(request,(char*)buffer+len+2,size-(len+2));
 			return;
-			
 		} 
 			
 		oldchunk=request->chunkbytesremaining;
@@ -1622,39 +1131,26 @@ void httplayer::ProcessChunkedData(http_request *request,void *buffer, int size)
 //		printf("======Chunk======\n%s\n++++++++++\n",kk);
 		delete kk;
 		request->chunkbytesremaining=0;
-		
-		
 		if ((size-oldchunk)>=7) {
 			char *eol=NULL;
-			
 			char *start=NULL;
-//			if (request->chunk>0) {
-				
 			char *rem=(char*)buffer+oldchunk;
 			int32 br=size-oldchunk;
 				char *rr=new char[br+1];
 				memset(rr,0,br+1);
 				strncpy(rr,rem,br);
-				
 //			printf("========Remaining========\n%s\n++++++++++++++\n",rr);
 			delete rr;
-			
 			eol=(char*)memchr(rem,'\r',10);//strstr(rem,"\r\n");
-				
 			start=eol+2;
 			eol=(char*)memchr(start,'\r',10);
-//			} else {
-//				start=(char*)buffer;
-//			}
-			
-			
 			bool good=false;
 			//eol=strstr(start,"\r\n");
 			if ((eol!=NULL) && (*(eol+1)=='\n'))
 				good=true;
 			if ((!good) || ((eol-start)>99)) {
-				eol=start+4;
 				//guess...
+				eol=start+4;
 			}
 			
 			char *semi=strchr(start,';');
@@ -1673,30 +1169,17 @@ void httplayer::ProcessChunkedData(http_request *request,void *buffer, int size)
 			}
 			strncpy(bs,start,len);
 			request->chunkbytesremaining=strtol(bs,&semi,16);
-			printf("New Chunk size: %ld\t%s\n",request->chunkbytesremaining,bs);
+//			printf("New Chunk size: %ld\t%s\n",request->chunkbytesremaining,bs);
 			if (request->chunkbytesremaining==0) {
-				printf("\tRequest is done!\n");
+//				printf("\tRequest is done!\n");
 				CloseRequest(request);
 				return;
 			}
 			
-			printf("Call ProcessChunkedData here.\n");
+//			printf("Call ProcessChunkedData here.\n");
 			request->chunk++;
 			ProcessChunkedData(request,eol+2,size-((eol-start)+4+oldchunk));
-		} else {
-//			char *eol=strstr((char*)buffer+request->chunkbytesremaining),"\r\n");
-//			char *start=NULL;
-//			if (eol!=NULL) {
-//				start=eol+2;
-//				eol=strstr(start,"\r\n");
-//				if (eol==NULL) {
-//					if (size
-//				}
-//				
-//			}
-//			
 		}
-		
 	} else {
 		if (size<request->chunkbytesremaining) {
 			//size is less than chunkbytesremaining
@@ -1704,7 +1187,7 @@ void httplayer::ProcessChunkedData(http_request *request,void *buffer, int size)
 			request->chunkbytesremaining-=size;
 		} else {
 			//size == chunkbytesremaining
-			printf("size==chunkbytesremaining\n");
+//			printf("size==chunkbytesremaining\n");
 			
 			request->data->Write((unsigned char*)buffer,size);
 			request->chunkbytesremaining=0;
@@ -1712,47 +1195,13 @@ void httplayer::ProcessChunkedData(http_request *request,void *buffer, int size)
 		}
 		
 	}
-	printf("ProcessChunkedData done.\n");
+//	printf("ProcessChunkedData done.\n");
 }
 
 void httplayer::ProcessData(http_request *request, void *buffer, int size) {
-	printf("\tProcessData()\n");
+//	printf("\tProcessData()\n");
 
 	if (request->chunked) {
-		/*
-		if (request->chunkbytesremaining==0) {
-			char *eol=strstr((char*)buffer,"\r\n");
-			char *start=(char*)buffer;
-			if (request->chunk>0) {
-				start=eol+2;
-				eol=strstr(start,"\r\n");
-			}
-			char *semi=strchr(start,';');
-			char *bs=NULL;
-			if (semi!=NULL) {
-				int len=semi-start;
-				bs=new char[len+1];
-				memset(bs,0,len+1);
-				strncpy(bs,start,len);
-				len=0;
-			} else {
-				int len=eol-start;
-				bs=new char[len+1];
-				memset(bs,0,len+1);
-				strncpy(bs,start,len);
-				len=0;
-			}
-			char *stop=NULL;
-			int32 bsize=strtol(bs,&stop,16);
-			printf("block/chunk size should be: %ld bytes\n",bsize);
-			request->chunkbytesremaining=bsize;
-			delete bs;
-			ProcessChunkedData(request,eol+2,size-((eol+2)-(char*)buffer));
-			bsize=0;
-		} else {
-			ProcessChunkedData(request,buffer,size);
-		}
-		*/
 		ProcessChunkedData(request,buffer,size);
 	} else {
 		request->data->Write((unsigned char*)buffer,size);
@@ -1771,40 +1220,19 @@ void httplayer::ProcessData(http_request *request, void *buffer, int size) {
 		}
 		
 	}
-	printf("ProcessData done.\n");
+//	printf("ProcessData done.\n");
 	
 }
-
-/*
-void httplayer::ProcessData(http_request *request,void *buffer,int size) {
-	printf("ProcessData:\n%s\n",(char*)buffer);
-	
-	if (request->chunked) {
-		ProcessChunkedData(request,buffer,size);
-	} else {
-		request->data->Write((unsigned char*)buffer,size);
-		request->bytesremaining-=size;
-		if (request->bytesremaining<=0)
-			CloseRequest(request);
-		
-	}
-//	printf("+++++++++\nBuffer so far:===========\n%s\n----------\n",(char*)request->data->Buffer());
-	printf("Bytes remaining in request/chunk: %ld\n",request->chunked?request->chunkbytesremaining:request->bytesremaining);
-	
-	
-}
-*/
 void httplayer::CloseRequest(http_request *request) {
 //	acquire_sem(connhandle_sem);
 	//atomic_add(&request->done,1);
 	Done(request);
 	if (request->conn!=NULL) {
-		
-									TCP->Lock();
-	TCP->RequestDone(request->conn);
-					TCP->Unlock();
-	atomic_add(&request->conn_released,1);
-	request->conn=NULL;
+		TCP->Lock();
+		TCP->RequestDone(request->conn);
+		TCP->Unlock();
+		atomic_add(&request->conn_released,1);
+		request->conn=NULL;
 	}
 	if (request->conn_released!=0)
 		request->conn_released=0;
@@ -1812,18 +1240,22 @@ void httplayer::CloseRequest(http_request *request) {
 
 }
 void httplayer::SendRequest(http_request *request, char *requeststr){
+printf("http:SendRequest trying to lock TCP\n");
+	
 					TCP->Lock();
+					printf("tcp is locked\n");
+	
 			request->conn=TCP->ConnectTo('http',request->host,request->port,request->secure);
-					TCP->Unlock();
 			if (request->conn!=NULL)
 				if (request->conn->result>=0) {
 					int32 bytes=0;
-					TCP->Lock();
+//					TCP->Lock();
 					bytes=TCP->Send(&request->conn,(unsigned char *)requeststr,strlen(requeststr));
-					TCP->Unlock();
+//					TCP->Unlock();
 					printf("%ld bytes sent on connection: %p\n",bytes,request->conn);
 				} else
 					printf("The connection failed.\n");
+			TCP->Unlock();
 	
 }
 		
@@ -1843,6 +1275,8 @@ char *httplayer::BuildRequest(http_request *request){
 					current2=current2->next;
 				current2->next=request;
 			}
+			printf("current2 is %p\n",current2);
+	
 			char *temp=NULL;
 			reqstr << "GET " << request->uri <<" HTTP/1.1\r\nHost: " << request->host;
 			if (request->port!=80)
@@ -1856,6 +1290,17 @@ char *httplayer::BuildRequest(http_request *request){
 			//check authentication zones vs domain being connected to.
 			reqstr << "Connection: keep-alive\r\n";
 			auth_realm *realm=FindAuthRealm(request);
+			printf("Authentication realm: %p",realm);
+			fflush(stdout);
+			if (realm!=NULL) {
+				printf("\trealm: \"%s\"\tdata: %s",realm->realm,realm->auth);
+				fflush(stdout);
+			}
+			printf("\n");
+	
+			if (request->a_realm!=NULL)
+				realm=request->a_realm;
+	
 			if (realm!=NULL) {
 				reqstr<<"Authorization: Basic "<<realm->auth<<"\r\n";
 			}
@@ -1887,33 +1332,15 @@ char *httplayer::BuildRequest(http_request *request){
 bool httplayer::ResubmitRequest(http_request *request) {
 	if (request->done==0)
 		CloseRequest(request);
-/*
-	header_st *heads=request->headers,*tmp;
-	while (heads!=NULL) {
-		tmp=heads->next;
-		delete heads;
-		heads=tmp;
-		if (quit)
-			break;
-		
-	}
-
-	delete request->host;
-	delete request->uri;
-	FindURI(&request->url,&request->host,&request->port,&request->uri,&request->secure);
-	if (request->data!=NULL) {
-		request->data->SetSize(0);
-		delete request->data;
-		request->data=NULL;
-	}
-	request->done=0;
-	ResubmitReqs->AddItem(request);
-*/
 	BMessage *info=new BMessage;
 	info->AddString("target_url",request->url);
 	if (request->referrer!=NULL) {
 		info->AddString("referrer",request->referrer);
 	}
+	if (request->a_realm!=NULL) {
+		info->AddPointer("authorization",request->a_realm);
+	}
+	request->awin=NULL;
 	KillRequest(request);
 	AddRequest(info);
 }
@@ -1922,11 +1349,12 @@ int32 httplayer::Lock(int32 timeout)
 {
 	thread_id callingthread=find_thread(NULL),lockingthread=lock->LockingThread();
 //	printf("calling thread: %ld\tlocking thread: %ld\tlocks: %ld\n",callingthread,lockingthread,lock->CountLocks());
-	
+/*
 	if (lockingthread!=B_ERROR) {
 		if (callingthread==lockingthread)
 			return B_OK;
 	}
+*/
 	if (timeout==-1) {
 		if (lock->Lock()) {
 //			printf("calling thread %ld has gotten the lock\n",callingthread);
@@ -1942,47 +1370,12 @@ int32 httplayer::Lock(int32 timeout)
 //		printf("status %ld while calling thread %ld attempted to get the lock\n",stat,callingthread);
 		return stat;
 	}
-	
-/*
-	sem_id targetsem=0;
-	sem_info info;
-	int32 cookie=0;
-	while (get_next_sem_info(0,&cookie,&info)==B_OK) {
-		if (strcasecmp(info.name,"httplayer_sem")==0) {
-			targetsem=info.sem;
-		}
-		
-	}
-	if (targetsem==0)
-		return B_ERROR;
-	int32 result=B_ERROR;
-	if (timeout==-1) {
-		result=acquire_sem(targetsem);
-	} else {
-		result=acquire_sem_etc(targetsem,1,B_ABSOLUTE_TIMEOUT,timeout);
-	}
-	return result;
-*/
 }
 void httplayer::Unlock() 
 {
 	thread_id callingthread=find_thread(NULL),lockingthread=lock->LockingThread();
 	
 	lock->Unlock();
-/*
-	sem_id targetsem=0;
-	sem_info info;
-	int32 cookie=0;
-	while (get_next_sem_info(0,&cookie,&info)==B_OK) {
-		if (strcasecmp(info.name,"httplayer_sem")==0) {
-			targetsem=info.sem;
-		}
-		
-	}
-	if (targetsem==0)
-		return;
-	release_sem(targetsem);
-*/
 }
 void httplayer::FindURI(char **url,char **host,uint16 *port,char **uri,bool *secure) {
 	printf("finding uri...\n");
@@ -2084,8 +1477,7 @@ void httplayer::FindURI(char **url,char **host,uint16 *port,char **uri,bool *sec
 		delete nuuri;
 }
 void httplayer::Done(http_request *request) {
-	printf("Marking request as done.8&8\n\tchunked:%s\n\tbytes remaining: %ld\n",request->chunked?"yes":"no",request->chunked?request->chunkbytesremaining:request->bytesremaining);
-	
+	printf("Marking request as done.\n\tchunked:%s\n\tbytes remaining: %ld\n",request->chunked?"yes":"no",request->chunked?request->chunkbytesremaining:request->bytesremaining);
 	atomic_add(&request->done,1);
 }
 
@@ -2143,248 +1535,6 @@ int32 httplayer::LayerManager() {
 	return 0;
 }
 
-/*
-int32 httplayer::LayerManager() {
-	http_request *request=NULL,*current=NULL, *current2=NULL;
-	unsigned char *altbuffer=new unsigned char[100000];
-	uint32 altbytes=0;
-	memset(altbuffer,0,100000);
-	while (!quit) {
-		if (quit) {
-			
-			printf("LayerManager quit raised\n");
-			break;
-			
-		}
-		
-		if (current==NULL) {
-			current=requests_head;
-		}
-//		acquire_sem(connhandle_sem);
-		if (ResubmitReqs->CountItems()>0) {
-			request=(http_request *)ResubmitReqs->RemoveItem((int32)0);
-			//build request string
-			BString reqstr;
-			char *temp=NULL;
-			reqstr << "GET " << request->uri <<" HTTP/1.1\r\nHost: " << request->host;
-			if (request->port!=80)
-				reqstr<<":"<<(int)request->port;
-			
-			reqstr << "\r\nUser-agent: "<<UserAgent()<<"\r\n";
-			temp=GetSupportedTypes();
-			reqstr << temp;
-			delete temp;
-			temp=NULL;
-			//check authentication zones vs domain being connected to.
-			reqstr << "Connection: keep-alive\r\n";
-			auth_realm *realm=FindAuthRealm(request);
-			if (realm!=NULL) {
-				reqstr<<"Authorization: Basic "<<realm->auth<<"\r\n";
-			}
-			BMessage *cachestatus=CheckCacheStatus(request);
-			if (cachestatus!=NULL) {
-				request->cacheinfo=cachestatus;
-				if (request->cacheinfo!=NULL) {
-					if (request->cacheinfo->HasString("etag"))  {
-						BString str;
-						request->cacheinfo->FindString("etag",&str);
-						reqstr<<"ETag: "<<str<<"\r\n";
-					}
-					if (request->cacheinfo->HasString("last-modified")) {
-						BString str;
-						request->cacheinfo->FindString("last-modified",&str);
-						reqstr<<"If-Modified-Since: "<<str<<"\r\n";
-					}
-				}
-			}
-			reqstr << "\r\n";
-			printf("Request string:\n---------\n%s\n---------\n",reqstr.String());
-			TCP->Lock();
-			request->conn=TCP->ConnectTo('http',request->host,request->port,request->secure);
-			TCP->Unlock();
-			if (request->conn!=NULL)
-				if (request->conn->result>=0) {
-					int32 bytes=0;
-					TCP->Lock();
-					
-					bytes=TCP->Send(&request->conn,(unsigned char *)reqstr.String(),reqstr.Length());
-					TCP->Unlock();
-					printf("%ld bytes sent on connection: %p\n",bytes,request->conn);
-				}
-		}
-		
-		if (UnprocessedReqs->CountItems()>0) {
-			request=(http_request *)UnprocessedReqs->RemoveItem((int32)0);
-			current2=NULL;
-			
-			current2=requests_head;
-			if (current2==NULL) {
-				requests_head=current2=request;
-			}
-			else {
-				while (current2->next!=NULL)
-					current2=current2->next;
-				current2->next=request;
-			}
-			//build request string
-			BString reqstr;
-			char *temp=NULL;
-			reqstr << "GET " << request->uri <<" HTTP/1.1\r\nHost: " << request->host;
-			if (request->port!=80)
-				reqstr<<":"<<(int)request->port;
-			
-			reqstr << "\r\nUser-agent: "<<UserAgent()<<"\r\n";
-			temp=GetSupportedTypes();
-			reqstr << temp;
-			delete temp;
-			temp=NULL;
-			//check authentication zones vs domain being connected to.
-			reqstr << "Connection: keep-alive\r\n";
-			auth_realm *realm=FindAuthRealm(request);
-			if (realm!=NULL) {
-				reqstr<<"Authorization: Basic "<<realm->auth<<"\r\n";
-			}
-			BMessage *cachestatus=CheckCacheStatus(request);
-			if (cachestatus!=NULL) {
-				request->cacheinfo=cachestatus;
-				if (request->cacheinfo!=NULL) {
-					if (request->cacheinfo->HasString("etag"))  {
-						BString str;
-						request->cacheinfo->FindString("etag",&str);
-						reqstr<<"ETag: "<<str<<"\r\n";
-					}
-					if (request->cacheinfo->HasString("last-modified")) {
-						BString str;
-						request->cacheinfo->FindString("last-modified",&str);
-						reqstr<<"If-Modified-Since: "<<str<<"\r\n";
-					}
-				}
-			}
-			reqstr << "\r\n";
-			printf("Request string:\n---------\n%s\n---------\n",reqstr.String());
-					TCP->Lock();
-			request->conn=TCP->ConnectTo('http',request->host,request->port,request->secure);
-					TCP->Unlock();
-			if (request->conn!=NULL)
-				if (request->conn->result>=0) {
-					int32 bytes=0;
-					TCP->Lock();
-					bytes=TCP->Send(&request->conn,(unsigned char *)reqstr.String(),reqstr.Length());
-					TCP->Unlock();
-					printf("%ld bytes sent on connection: %p\n",bytes,request->conn);
-				}
-		}
-//		release_sem(connhandle_sem);
-		
-		if (current!=NULL) {
-//			printf("current %p datawaiting: %ld\n",current,current->datawaiting);
-			if (!current->done) {
-					
-			if (current->datawaiting>=1) {
-				printf("processing request for %s\n",current->url);
-				unsigned char *buff=new unsigned char[10001];
-				memset(buff,0,10001);
-				int32 bytes=0;
-				altbytes=0;
-				memset(altbuffer,0,100000);
-				do {
-					Lock();
-					
-//					if (TCP->Lock()!=true) {
-//						printf("TCP Locked by: %ld\nTCP Locks in place: %ld\nRequests: %ld\n",TCP->lock->LockingThread(),TCP->lock->CountLocks(),TCP->lock->CountLockRequests());
-//						continue;
-//					}
-					TCP->Lock();
-					bytes=TCP->Receive(&current->conn,buff,10000);
-				atomic_add(&current->datawaiting,-1);
-					TCP->Unlock();
-					if (current->headers==NULL) {
-						char *dat=(char*)buff;
-						char *eoh=NULL;
-						eoh=strstr(dat,"\r\n\r\n");
-
-						if (eoh==NULL) {
-							memmove(altbuffer+altbytes,buff,bytes);
-							altbytes+=bytes;
-							memset(buff,0,10001);
-							if (quit) {
-								Unlock();
-								
-								break;//just to make sure...
-							}
-							Unlock();
-							
-							continue;
-						}
-
-					}
-				printf("%ld bytes received\n",bytes);
-				if (altbytes==0) {
-					if (bytes>0) {
-						if ((current->headers==NULL) || (!current->headersdone)) {
-							printf("About to process headers\n");
-							ProcessHeaders(current,buff,bytes);
-						} else {
-							printf("Adding data to buffer\n");
-							ProcessData(current,buff,bytes);
-							
-							//current->data->WriteAt(current->data->BufferLength(),buff,bytes);
-						}
-						
-					}
-				} else {
-					printf("About to process headers [alt]\n");
-					ProcessHeaders(current,altbuffer,bytes);
-					memset(altbuffer,0,100000);
-					altbytes=0;
-				}
-				memset(buff,0,10001);
-				Unlock();
-					
-				if (request->done>0)
-					break;
-				if (quit)
-					break;
-					
-				}while (bytes>0);
-				
-							
-			delete buff;
-			}
-//			acquire_sem(connhandle_sem);
-			if (current->conn!=NULL)
-				if ((current->conn->open==false) && (current->done==false)) {
-					CloseRequest(current);//atomic_add(&current->done,1);
-				}
-//			release_sem(connhandle_sem);
-				
-		if ((current->done) && (!current->conn_released)){
-			
-			//TCP->RequestDone(current->conn);
-			//atomic_add(&current->conn_released,1);
-//			printf("Request:\n%s\n==========\n",(char*)current->data->Buffer());
-			
-			continue;
-			
-		}
-		}
-		
-		}
-//		if (current!=NULL)
-//		printf("current: %p\n",current);
-		
-		if (current!=NULL)
-			current=current->next;
-		else
-			continue;
-		snooze(50000);//give other processes some time
-	}
-	delete altbuffer;
-	printf("LayerManager Exiting: %s\n",quit==1?"quit issued":"something else");
-	exit_thread(0);
-	return B_OK;
-}
-*/
 
 BMessage *httplayer::CheckCacheStatus(http_request *request) {
 	if (request!=NULL) {
