@@ -4,10 +4,9 @@
 
 #include "TNamedNodeMap.h"
 
-TNamedNodeMap	::	TNamedNodeMap( const void * aNodeList = NULL, TNode * aMappedNode = NULL )	{
+TNamedNodeMap	::	TNamedNodeMap( void * aNodeList = NULL )	{
 	
 	mNodeList = (BList *) aNodeList;
-	mMappedNode = aMappedNode;
 	
 }
 
@@ -17,7 +16,7 @@ TNamedNodeMap	::	~TNamedNodeMap()	{
 
 unsigned long TNamedNodeMap	::	getLength()	{
 	
-	if ( !mNodeList )	{
+	if ( mNodeList )	{
 		return mNodeList->CountItems();
 	}
 	
@@ -34,7 +33,7 @@ TNode * TNamedNodeMap	::	getNamedItem( const TDOMString aName )	{
 	else	{		
 		for ( int i = 0; i < length; i++ )	{
 			TNode * node = (TNode *) mNodeList->ItemAt( i );
-			if ( *node->getNodeName() == aName )	{
+			if ( *( node->getNodeName() ) == aName )	{
 				return node;
 			}
 		}
@@ -45,12 +44,13 @@ TNode * TNamedNodeMap	::	getNamedItem( const TDOMString aName )	{
 
 TNode * TNamedNodeMap	::	setNamedItem( TNode * aArg )	{
 	
-	TNode * node = getNamedItem( *aArg->getNodeName() );
+	TNode * node = getNamedItem( *( aArg->getNodeName() ) );
 	if ( !node )	{
-		mMappedNode->appendChild( aArg );
+		mNodeList->AddItem( (void *) aArg );
 	}
 	else	{
-		mMappedNode->replaceChild( aArg, node );
+		removeNamedItem( *( aArg->getNodeName() ) );
+		setNamedItem( aArg );
 	}
 	
 	return node;
@@ -60,7 +60,7 @@ TNode * TNamedNodeMap	::	setNamedItem( TNode * aArg )	{
 TNode * TNamedNodeMap	::	removeNamedItem( const TDOMString aName )	{
 	
 	TNode * node = getNamedItem( aName );
-	mMappedNode->removeChild( node );
+	mNodeList->RemoveItem( node );
 
 	return node;
 

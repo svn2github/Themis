@@ -4,7 +4,7 @@
 
 #include "TAttr.h"
 
-TAttr	::	TAttr( const TDOMString aName, const bool aSpecified, const TDOMString aValue, TElement * aOwnerElement )	:	TNode( ATTRIBUTE_NODE )	{
+TAttr	::	TAttr( const TDOMString aName, const bool aSpecified, const TDOMString aValue, TElement * aOwnerElement )	:	TNode( ATTRIBUTE_NODE, aName, aValue )	{
 
 	mName = aName;
 	if ( !aOwnerElement )	{
@@ -46,6 +46,7 @@ void TAttr	::	setValue( const TDOMString aValue )	{
 	// Add a text node as a child to the attr node. Still to implement.
 	
 	mValue = aValue;
+	setNodeName( aValue );
 	mSpecified = true;
 	
 }

@@ -8,6 +8,7 @@
 #include <Application.h>
 
 #include "TNode.h"
+#include "TElement.h"
 #include "TDOMException.h"
 
 #include <string.h>

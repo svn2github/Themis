@@ -10,6 +10,9 @@
 
 #include "DOMSupport.h"
 #include "TNode.h"
+#include "TAttr.h"
+
+class TAttr;
 
 class TElement	:	public TNode	{
 	
@@ -22,6 +25,7 @@ class TElement	:	public TNode	{
 		TDOMString getTagName() const;
 		
 		TDOMString getAttribute( const TDOMString aName ) const;
+		void setAttribute( const TDOMString aName, const TDOMString aValue );
 		
 };
 

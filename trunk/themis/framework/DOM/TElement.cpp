@@ -23,8 +23,20 @@ TDOMString TElement	::	getTagName() const	{
 TDOMString TElement	::	getAttribute( const TDOMString aName ) const	{
 	
 	TNode * attribute = getAttributes()->getNamedItem( aName );
-
+	
 	return *attribute->getNodeValue();
 	
 }
 	
+void TElement	::	setAttribute( const TDOMString aName, const TDOMString aValue )	{
+	
+	TAttr * attribute = (TAttr *) getAttributes()->getNamedItem( aName );
+	if ( !attribute )	{
+		// No attribute with that name yet, so create one.
+		attribute = new TAttr( aName, true, aValue, this );
+		getAttributes()->setNamedItem( attribute );
+	}
+	else	{
+		attribute->setValue( aValue );
+	}
+}

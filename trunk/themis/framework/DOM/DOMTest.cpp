@@ -19,19 +19,27 @@ DOMTest	::	DOMTest()	:	BApplication( "application/x-vnd.Themis-DOMTest" )	{
 		printf( "Exception caught : %s\n", e.getString() );
 	}
 	
-	TNode * otherNode = new TNode( ELEMENT_NODE );
+	TElement * element = new TElement( "cookie" );
 
-	printf( "Try to append another node\n" );
+	printf( "Try to append an element\n" );
 	try	{
-		node->appendChild( otherNode );
+		node->appendChild( element );
 	}
 	catch ( TDOMException e )	{
 		printf( "Exception caught : %s\n", e.getString() );
 	}
 
+	printf( "Tag name of the element: %s\n", element->getTagName().String() );
+	
+	printf( "Add an attribute to the element\n" );
+	element->setAttribute( "me", "king" );
+	
+	printf( "Retrieve the attribute that was just created\n" );
+	printf( "Attribute me has value: %s\n", element->getAttribute( "me" ).String() );
+
 	printf( "Try to append parent to node\n" );
 	try	{
-		otherNode->appendChild( node );
+		element->appendChild( node );
 	}
 	catch ( TDOMException e )	{
 		printf( "Exception caught : %s\n", e.getString() );
@@ -55,7 +63,7 @@ DOMTest	::	DOMTest()	:	BApplication( "application/x-vnd.Themis-DOMTest" )	{
 	const TNode * newNode = node->getFirstChild();
 	
 	printf( "Test a node for sameness\n" );
-	if ( otherNode->isSameNode( newNode ) )	{
+	if ( element->isSameNode( newNode ) )	{
 		printf( "Nodes are the same\n" );
 	}
 	else	{
@@ -63,7 +71,7 @@ DOMTest	::	DOMTest()	:	BApplication( "application/x-vnd.Themis-DOMTest" )	{
 	}
 	
 	printf( "Get type of node\n" );
-	printf( "Type of node is: %s\n", otherNode->getNodeTypeString() );
+	printf( "Type of node is: %s\n", element->getNodeTypeString() );
 	
 	printf( "Cleaning up...\n" );
 

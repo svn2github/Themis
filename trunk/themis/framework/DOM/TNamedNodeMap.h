@@ -23,11 +23,11 @@ class TNamedNodeMap	{
 		// ------------------------------------------------------------------------------ 
 
 		// Support variables
-		const BList * mNodeList;
+		BList * mNodeList;
 		TNode * mMappedNode;
 		
 	public:
-		TNamedNodeMap( const void * aNodeList, TNode * aMappedNode );
+		TNamedNodeMap( void * aNodeList = NULL );
 		~TNamedNodeMap();
 		unsigned long getLength();
 		TNode * getNamedItem( const TDOMString aName ); // Still have to check if exceptions work right

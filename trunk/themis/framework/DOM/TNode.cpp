@@ -4,7 +4,7 @@
 
 #include "TNode.h"
 
-TNode	::	TNode( const unsigned short aNodeType )	{
+TNode	::	TNode( const unsigned short aNodeType, const TDOMString aNodeName = "", const TDOMString aNodeValue = "" )	{
 	
 	mNodeType = aNodeType;
 
@@ -18,13 +18,16 @@ TNode	::	TNode( const unsigned short aNodeType )	{
 
 	switch ( mNodeType )	{
 		case ELEMENT_NODE:	{
+			mNodeName->SetTo( aNodeName );
 			mAttributeList = new BList();
-			mAttributes = new TNamedNodeMap( mAttributeList, this );
+			mAttributes = new TNamedNodeMap( mAttributeList );
 			mNodeTypeString.SetTo( "ELEMENT_NODE" );
 			break;
 		}
 		case ATTRIBUTE_NODE:	{
+			mNodeName->SetTo( aNodeName );
 			mNodeValue = new TDOMString();
+			mNodeValue->SetTo( aNodeValue );
 			mNodeTypeString.SetTo( "ATTRIBUTE_NODE" );
 			break;
 		}
@@ -469,6 +472,12 @@ bool TNode	::	isChildAllowed( const TNode * aNewChild ) const	{
 
 	return false;
 
+}
+
+void TNode	::	setNodeName( const TDOMString aValue )	{
+	
+	mNodeName->SetTo( aValue );
+	
 }
 
 const char * TNode	::	getNodeTypeString() const	{

@@ -56,9 +56,10 @@ class TNode	{
 	protected:
 		// Support function
 		bool isChildAllowed( const TNode * aNewChild ) const;
+		void setNodeName( const TDOMString aValue );
 		
 	public:
-		TNode( const unsigned short aNodeType );
+		TNode( const unsigned short aNodeType, const TDOMString aNodeName = "", const TDOMString aNodeValue = "" );
 		~TNode();
 		unsigned short getNodeType() const;
 		const TDOMString * getNodeName() const;

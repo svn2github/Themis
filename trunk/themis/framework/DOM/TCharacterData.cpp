@@ -24,10 +24,6 @@ TDOMString * TCharacterData	::	getData() const	{
 
 void TCharacterData	::	setData( const TDOMString aData )	{
 
-	if ( isReadOnly() )	{
-		throw TDOMException( NO_MODIFICATION_ALLOWED_ERR );
-	}
-	
 	mData->SetTo( aData );
 	
 }
@@ -53,20 +49,12 @@ TDOMString TCharacterData	::	substringData( const unsigned long aOffset, const u
 
 void TCharacterData	::	appendData( const TDOMString aArg )	{
 
-	if ( isReadOnly() )	{
-		throw TDOMException( NO_MODIFICATION_ALLOWED_ERR );
-	}
-	
 	mData->Append( aArg );
 	
 }
 
 void TCharacterData	::	insertData( const unsigned long aOffset, const TDOMString aArg )	{
 	
-	if ( isReadOnly() )	{
-		throw TDOMException( NO_MODIFICATION_ALLOWED_ERR );
-	}
-
 	// Check if string can be inserted at the requested offset.
 	// Negative values are impossible and are not checked
 	if ( aOffset > (unsigned long) mData->CountChars() )	{
@@ -79,10 +67,6 @@ void TCharacterData	::	insertData( const unsigned long aOffset, const TDOMString
 
 void TCharacterData	::	deleteData( const unsigned long aOffset, const unsigned long aCount )	{
 	
-	if ( isReadOnly() )	{
-		throw TDOMException( NO_MODIFICATION_ALLOWED_ERR );
-	}
-
 	// Check if string can be deleted at the requested offset.
 	// Negative values are impossible and are not checked
 	if ( aOffset > (unsigned long) mData->CountChars() )	{
@@ -94,10 +78,6 @@ void TCharacterData	::	deleteData( const unsigned long aOffset, const unsigned l
 }
 
 void TCharacterData	::	replaceData( const unsigned long aOffset, const unsigned long aCount, const TDOMString aArg )	{
-
-	if ( isReadOnly() )	{
-		throw TDOMException( NO_MODIFICATION_ALLOWED_ERR );
-	}
 
 	// Check if string can be replaced at the requested offset.
 	// Negative values are impossible and are not checked
