@@ -33,7 +33,7 @@ BASE_DEPENDS_DIR=depends/
 BASE_LIBRARY_DEPENDS_DIR=$(BASE_DEPENDS_DIR)lib/
 FRAMEWORK_DEPENDS_DIR=$(BASE_DEPENDS_DIR)framework/
 BASE_ADDONS_DEPENDS_DIR=$(BASE_DEPENDS_DIR)add-ons/
-COMMON_DEPENDS_DIR=$(BASE_DEPENDS_DIR)comon/
+COMMON_DEPENDS_DIR=$(BASE_DEPENDS_DIR)common/
 DOMLIBRARY_DEPENDS_DIR=$(BASE_LIBRARY_DEPENDS_DIR)DOM/
 TESTPLUG_DEPENDS_DIR=$(BASE_DEPENDS_DIR)testplug/
 HTMLPARSER_DEPENDS_DIR=$(BASE_DEPENDS_DIR)HTMLParser/
@@ -518,15 +518,15 @@ endif
 csspaddon: $(BASE_ADDON_INSTALL_DIR)css_parser.so
 $(BASE_ADDON_INSTALL_DIR)css_parser.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(CSSPARSERSOURCES),$(BASE_ADDONS_OBJECT_DIR)CSSParser/$(notdir $(file:.cpp=.o)))
 	@echo "Linking css parser..."
-	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)css_parser.so $(foreach file,$(notdir $(CSSPARSERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)CSSParser/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=css_parser.so -L ./ -L $(BELIBRARIES)  $(STDLIBS) -lstdc++.r4 _APP_
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)css_parser.so $(foreach file,$(notdir $(CSSPARSERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)CSSParser/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=css_parser.so -L ./ -L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR)  $(STDLIBS) -lstdc++.r4 -ldom _APP_
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)css_parser.so
 	@echo "CSS Parser plug-in compiled and linked successfully."
 $(BASE_ADDONS_DEPENDS_DIR)CSSParser/%.d: $(BASE_ADDON_SOURCE_DIR)CSSParser/%.cpp 
 	@echo "CSS Parser: Updating dependency file $(notdir $@)"
-	@set -e;VAR1=$(shell echo "$(FILEPROTOCOL_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/add-ons\/CSSParser\/\1.o depends\/add-ons\/CSSParser\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
+	@set -e;$(CC) -Icommon -Iframework/DOM -I./ -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/add-ons\/CSSParser\/\1.o depends\/add-ons\/CSSParser\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
 $(BASE_ADDONS_OBJECT_DIR)CSSParser/%.o: $(BASE_ADDON_SOURCE_DIR)CSSParser/%.cpp $(BASE_ADDONS_DEPENDS_DIR)CSSParser/%.d
 	@echo "CSS Parser: Updating object file $(notdir $@)"
-	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
+	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -Iframework/DOM -I./ -c $< -o $@
 ifneq ($(MAKECMDGOALS),clean)
 -include $(foreach file,$(BASE_ADDON_SOURCE_DIR)$(CSSPARSERSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)CSSParser/$(notdir $(file)))
 endif

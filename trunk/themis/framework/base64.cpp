@@ -113,7 +113,7 @@ void base64::decode(void *in, uint32 ilen, void *out, uint32 *olen)
 		*olen=ooff;
 	} else {
 		//this needs to be handled, especially for messages divisible by 3...
-		printf("remainder: %ld\n",q);
+		printf("Base-64 Decode - Remainder: %ld\n",q);
 	}
 	
 }

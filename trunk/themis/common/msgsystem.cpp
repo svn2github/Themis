@@ -93,8 +93,9 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 //				printf("Sender: %lu\nTarget: %lu\ntest 1: %lu\ntest 2: %lu\n",sender_target_id,targets,MS_TARGET_APPLICATION&targets,MS_TARGET_UNKNOWN&targets);
 				BMessage *msg=new BMessage();
 				container->FindMessage("parcel",msg);
+				msg->AddPointer("_broadcast_origin_pointer_",broadcaster);
 //				printf("Broadcasting this message:\n");
-				msg->PrintToStream();
+//				msg->PrintToStream();
 				msgsysclient_st *cur=MsgSysClients;
 				volatile uint32 current_target=0;
 				bool found=false;

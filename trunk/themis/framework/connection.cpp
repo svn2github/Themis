@@ -38,24 +38,33 @@ using namespace _Themis_Networking_;
 BList *Connection::ConnectionList=NULL;
 BLocker *Connection::ListLock=NULL;
 TCPManager *Connection::TCPMan=NULL;
+int32 Connection::SystemReady=0;
 
 void Connection::AddToList(Connection *connection) {
-	BAutolock alock(ListLock);
-	if (alock.IsLocked()) {
-		if (ConnectionList==NULL) 	
-			ConnectionList=new BList(1);
-		ConnectionList->AddItem(connection);
-	}
-}
-void Connection::RemoveFromList(Connection *connection) {
-	BAutolock alock(ListLock);
-	if (alock.IsLocked()) {
-		ConnectionList->RemoveItem(connection);
-		if (ConnectionList->IsEmpty()) {
-			delete ConnectionList;
-			ConnectionList=NULL;
+	if (SystemReady) {
+		
+		BAutolock alock(ListLock);
+		if (alock.IsLocked()) {
+			if (ConnectionList==NULL) 	
+				ConnectionList=new BList(1);
+			ConnectionList->AddItem(connection);
 		}
 	}
+	
+}
+void Connection::RemoveFromList(Connection *connection) {
+	if (SystemReady) {
+		
+		BAutolock alock(ListLock);
+		if (alock.IsLocked()) {
+			ConnectionList->RemoveItem(connection);
+			if (ConnectionList->IsEmpty()) {
+				delete ConnectionList;
+				ConnectionList=NULL;
+			}
+		}
+	}
+	
 }
 bool Connection::HasConnection(Connection *connection) {
 	bool found=false;

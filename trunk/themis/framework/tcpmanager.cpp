@@ -78,7 +78,7 @@ TCPManager::~TCPManager() {
 		Connection *connection;
 		while (Connection::CountConnections()>0) {
 			connection=Connection::ConnectionAt(0);
-			if (Connection::HasConnection(connection))
+			if ((Connection::HasConnection(connection)) || (connection!=NULL))
 				delete connection;
 		}
 	}
@@ -130,6 +130,7 @@ void TCPManager::Quit() {
 void TCPManager::Start() {
 	thread=spawn_thread(_Thread_Starter,"TCP Manager",1,this);
 	resume_thread(thread);
+	atomic_add(&Connection::SystemReady,1);
 }
 int32 TCPManager::_Thread_Starter(void *arg) {
 	TCPManager *obj=(TCPManager *)arg;
@@ -206,6 +207,7 @@ int32 TCPManager::_Manager_Thread() {
 			
 	}
 //	set_alarm(B_INFINITE_TIMEOUT,B_PERIODIC_ALARM);
+	atomic_add(&Connection::SystemReady,-1);
 	
 	return 0;
 }

@@ -63,6 +63,8 @@ namespace _Themis_Networking_ {
 	*/
 	class Connection {
 		private:
+			static int32 SystemReady;
+		
 			friend class TCPManager; //lazy man's hack for the moment, to get
 									//access to socket_id, ssl, etc... Write functions
 									//to access these things the right way.
