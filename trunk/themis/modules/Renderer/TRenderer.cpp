@@ -75,16 +75,13 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 						break;
 					TDocumentPtr *typer = (TDocumentPtr *)buffer;
 					document = *typer;		
-					TRenderView *view = NULL;
-					message->FindPointer("renderview_pointer",(void **)&view);
-					if (!view)
-						break;
+								
 					//Start Processing in a new thread so people think it'll work faster ;-))
-					preprocess_thread_param param = {document,view,this};
-					thread_id id = spawn_thread(PreProcess,"EMWE IS MY GOD !!",30,(void *)&param);								
+					preprocess_thread_param param = {document,this,message->FindInt32("view_id")};
+					thread_id id = spawn_thread(PreProcess,"Boing! Boing! says the renderer",30,(void *)&param);								
 					resume_thread(id);
 				} break;
-/*				case ReturnedData:{ OLD WAY TO DO
+/*				case ReturnedData:{ //OLD WAY TO DO
 					BString type = message->FindString("type");
 					if (type == "dom"){
 						void *buffer = NULL;
@@ -96,9 +93,11 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 						document = *typer;
 						
 					//Start Processing
-					PreProcess(document);						
+					preprocess_thread_param param = {document,new TRenderView(UIBox(800,450),document),this};
+					thread_id id = spawn_thread(PreProcess,"\"boing boing\" says the renderer",30,(void *)&param);								
+					resume_thread(id);					
 					}
-					}break;*/
+					}break; */
 /*				case R_WELCOME:{
 					printf("RENDERER: R_WELCOME received\n");
 					BRect rect;

@@ -59,7 +59,7 @@ class Renderer : public PlugClass
 				BList		UITrees;
 				vector 		<TDocumentPtr> DOMTrees;
 				
-//				void		BroadcastPointer(TRenderView *view);
+				void		BroadcastPointer(TRenderView *view);
 				
 				//Below spreads the dark land of Processing methods.
 		//Because it's a thread_func it has to be static int32 with a single void param		
@@ -80,8 +80,8 @@ class Renderer : public PlugClass
 
 struct preprocess_thread_param {
 	TDocumentPtr 	document; 
-	TRenderView 	*view;
 	Renderer		*renderer;
+	int32			viewID;
 };
 
 #endif

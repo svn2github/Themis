@@ -14,7 +14,7 @@
 //Elements
 #include "Elements.h"
 
-/*
+
 void Renderer::BroadcastPointer(TRenderView *view)
 {
 	//Do the Broadcasting
@@ -24,20 +24,22 @@ void Renderer::BroadcastPointer(TRenderView *view)
 	message.AddPointer("data_pointer",view);
 	Broadcast(MS_TARGET_ALL,&message);
 }
-*/
+
 int32 Renderer::PreProcess(void *data)
 {
 	preprocess_thread_param *cdata = (preprocess_thread_param *)data;
-	//The size of the view doesn't matter here
-	//TRenderView *view = new TRenderView(UIBox(800,450),document);
-	
-	//Keep the node
-	cdata->view->node = cdata->document;
-	
-	//Add the DOM & the view to the list of trees.
-	cdata->renderer->UITrees.AddItem(cdata->view);
-	cdata->renderer->DOMTrees.push_back(cdata->document);
 
+	//The new view
+	TRenderView *view = new TRenderView(UIBox(800,450),cdata->document);
+	view->viewID = cdata->viewID;
+
+	BLocker *locker = new BLocker();
+	locker->Lock();
+	//Add the DOM & the view to the list of trees.
+	cdata->renderer->UITrees.AddItem(view);
+	cdata->renderer->DOMTrees.push_back(cdata->document);
+	locker->Unlock();
+	delete locker;					
 	//TODO: Get the DPI from User Option and give it to the view
 		
 	//Set the correct frame: the one specified or the one of Themis' window
@@ -60,28 +62,25 @@ int32 Renderer::PreProcess(void *data)
 		
 	//Save the BMessenger to userIntterface
 	//view->userInterface = userInterface;
-	
+
+	//Do the Broadcasting to give the view to the UI
+	BMessage message(RENDERVIEW_POINTER);
+	message.AddInt32("command",COMMAND_INFO);
+	message.AddInt32("view_id",cdata->viewID);
+	cdata->renderer->Broadcast(MS_TARGET_ALL,&message);
+						
 	//Start processing the DOM Tree
-	cdata->view->LockLooper();
+	//cdata->view->LockLooper();
 	printf("RENDERER: START PROCESSING...\n");
 	bigtime_t time = real_time_clock_usecs();
-	cdata->renderer->Process(cdata->document,cdata->view); 
+	cdata->renderer->Process(cdata->document,view); 
 	printf("RENDERER: DONE PROCESSING in %g microseconds.\n",real_time_clock_usecs() - time);
-	cdata->view->UnlockLooper();
+	//cdata->view->UnlockLooper();
 	//Update the view
-	cdata->view->Invalidate();
-	
-//	BroadcastPointer(view);
-
-	//Do the Broadcasting to say we are done with rendering
-	BMessage message(UH_RENDER_FINISHED);
-	message.AddInt32("command",COMMAND_INFO);
-	message.AddInt32("view_id",cdata->view->viewID);
-	cdata->renderer->Broadcast(MS_TARGET_ALL,&message);
+	//cdata->view->Invalidate();
 		
 	//Show the View, will be removed as soon as the REAL window uses the view
 	//(new TRenderWindow((TRenderView *)UITrees.ItemAt(UITrees.CountItems()-1)))->Show();	
-	(new BAlert("ok","and now u c ?","YES I DO !"))->Go();
 	return 0;
 }
 
@@ -93,6 +92,7 @@ void Renderer::Process( TNodePtr node, UIElement *element)
 	 
 	if ((length = children->getLength()) != 0){
 		UIBox	above_element_frame;
+		element->nextLayer = new BList(length);
 		for ( int i = length - 1; i >= 0; i--){
 			TNodePtr child = children->item(i);
 			
