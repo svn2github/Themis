@@ -9,7 +9,9 @@
 
 #include <fstream>
 #include <string>
-#include <stack>
+#include <algorithm>
+
+#include "LoadTest.h"
 
 #include "TDocument.h"
 #include "TElement.h"
@@ -17,7 +19,20 @@
 #include "TNodeList.h"
 #include "TNamedNodeMap.h"
 
-void showTree( const TNodeShared node, int spacing )	{
+HTMLParser	::	HTMLParser()	{
+
+	mPos = 0;
+	mTag = "";
+	mContent = "";
+	mCloseTag = false;
+	
+}
+
+HTMLParser	::	~HTMLParser()	{
+	
+}
+
+void HTMLParser	::	showTree( const TNodeShared node, int spacing )	{
 	
 	TNodeListShared children = node->getChildNodes();
 	int length = children->getLength();
@@ -46,12 +61,317 @@ void showTree( const TNodeShared node, int spacing )	{
 	}	
 }
 
-void showDocument( const TDocumentShared document )	{
+void HTMLParser	::	showDocument()	{
 	
 	cout << "Document layout...\n";
-	showTree( document, 1 );
+	showTree( mDocument, 1 );
 
 }
+
+void HTMLParser	::	getNextTag()	{
+	
+	// Reset the tag and tag information
+	mTag = "";
+	mCloseTag = false;
+
+	while ( mPos != mContent.size() && mContent[mPos] != '<' )	{
+		// Not the start of a tag yet
+		mPos++;
+	}
+	
+	if ( mPos == mContent.size() )	{
+		mTag = "";
+	}
+	else	{
+		mPos++;
+	}
+
+	if ( mPos != mContent.size() && mContent[mPos] == '/' )	{
+		// Is an end tag
+		mCloseTag = true;
+		mPos++;
+	}
+	
+	while ( mPos != mContent.size() && mContent[mPos] != ' ' && mContent[mPos] != '>' )	{
+		mTag += mContent[mPos];
+		mPos++;
+	}
+	
+}
+
+void HTMLParser	::	setContent( string aContent )	{
+	
+	mContent = aContent;
+	
+}
+
+void HTMLParser	::	startParsing( TDocumentShared document )	{
+	
+	mDocument = document;
+	
+	getNextTag();
+	
+	doctypeTag();
+	htmlTag();
+
+}
+
+bool HTMLParser	::	isStartTag()	{
+	
+	return !mCloseTag;
+
+}
+
+string HTMLParser	::	getText( bool conserveSpaces = true )	{
+	
+	while ( mPos != mContent.size() && mContent[mPos] != '>' )	{
+		mPos++;
+	}
+	
+	if ( mPos != mContent.size() )	{
+		mPos++;
+	}
+	else	{
+		return "";
+	}
+	
+	string result;
+	char last = 's';
+	
+	while ( mPos != mContent.size() && mContent[mPos] != '<' )	{
+		if ( !conserveSpaces )	{
+			if ( mContent[mPos] != '\n' && mContent[mPos] != '\t' )	{
+				if ( !( mContent[mPos] == ' ' && last == ' ' ) )	{
+					result += mContent[mPos];
+					last = mContent[mPos];
+				}
+			}
+		}
+		else	{
+			result += mContent[mPos];
+		}
+		mPos++;
+	}
+	
+	return result;
+	
+}	
+
+void HTMLParser	::	doctypeTag()	{
+	
+	// I don't really care about this tag for now
+	// but I'll just check to see if it's there
+	if ( !mTag.compare( "!DOCTYPE" ) )	{
+		// We've got a doctype tag
+		cout << "doctype tag found\n";
+	
+		// Get the next tag to recognize
+		getNextTag();
+
+	}
+
+}
+
+void HTMLParser	::	htmlTag()	{
+
+	if ( !mTag.compare( "html" ) )	{
+		// Found html tag
+		cout << "html tag found\n";
+
+		// Add to DOM tree
+		TElementShared element = mDocument->createElement( "html" );
+		mDocument->appendChild( element );
+		
+		// Get the next tag to recognize
+		getNextTag();
+		
+		headTag( element );
+		bodyTag( element );
+		
+		if ( !isStartTag() )	{
+			if ( !mTag.compare( "html" ) )	{
+				cout << "html closing tag found\n";
+				
+				// Get the next tag to recognize
+				getNextTag();
+			}
+		}
+	}	
+	
+}
+
+void HTMLParser	::	headTag( TElementShared parent )	{
+
+	if ( !mTag.compare( "head" ) )	{
+		// Found head tag
+		cout << "head tag found\n";
+		
+		// Add to parent
+		TElementShared element = mDocument->createElement( "head" );
+		parent->appendChild( element );
+		
+		// Get the next tag to recognize
+		getNextTag();
+		
+		bool insideHead = true;
+		
+		while ( insideHead )	{
+			if ( isStartTag() )	{
+				if ( !mTag.compare( "title" ) )	{
+					titleTag( element );
+				}
+				//styleTag();
+				//scriptTag();
+				//isindexTag();
+				//baseTag();
+				//metaTag();
+				//linkTag();
+				else	{
+					// Not a known tag
+					cout << "unknown tag found!!!\n";
+					
+					// Ignore it and go to the next one
+					getNextTag();
+				}
+			}
+			else	{			
+				if ( !mTag.compare( "head" ) )	{
+					cout << "head closing tag found\n";
+	
+					// End the while loop
+					insideHead = false;
+	
+				}
+				else	{
+					// Invalid end tag
+					// Ignore it and go to the next one
+					getNextTag();
+				}
+			}
+		}
+	}
+
+	getNextTag();
+	
+}
+
+void HTMLParser	::	titleTag( TElementShared parent )	{
+
+	// Name is already recognized in headTag
+	cout << "title tag found\n";
+
+	// Add to parent
+	TElementShared element = mDocument->createElement( "title" );
+	parent->appendChild( element );
+
+	bool insideTitle = true;
+	
+	string title;
+	
+	while ( insideTitle )	{
+		
+		title += getText();
+		
+		getNextTag();
+		if ( !isStartTag() )	{
+			if ( !mTag.compare( "title" ) )	{
+				cout << "title closing tag found\n";
+				insideTitle = false;
+			}
+		}
+	}
+
+	cout << "Title is: " << title << endl;
+	
+	getNextTag();
+	
+}
+
+void HTMLParser	::	bodyTag( TElementShared parent )	{
+	
+	if ( !mTag.compare( "body" ) )	{
+		// Found body tag
+		cout << "body tag found\n";
+
+		// Add to parent
+		TElementShared element = mDocument->createElement( "body" );
+		parent->appendChild( element );
+
+		// Ignoring the attributes for now
+		
+		// Get the next tag to recognize
+		getNextTag();
+		
+		bool insideBody = true;
+		
+		while ( insideBody )	{
+			if ( isStartTag() )	{
+				if ( !mTag.compare( "p" ) )	{
+					pTag( element );
+				}
+				else	{
+					// Not a known tag
+					cout << "unknown tag found!!!\n";
+					
+					// Ignore it and go to the next one
+					getNextTag();
+				}
+			}
+			else	{			
+				if ( !mTag.compare( "body" ) )	{
+					cout << "body closing tag found\n";
+	
+					// End the while loop
+					insideBody = false;
+	
+				}
+				else	{
+					// Invalid end tag
+					// Ignore it and go to the next one
+					getNextTag();
+				}
+			}
+		}
+	}
+
+	getNextTag();
+	
+	getNextTag();
+	
+}
+
+void HTMLParser	::	pTag( TElementShared parent )	{
+
+	// Name is already recognized in parent tag
+	cout << "p tag found\n";
+
+	// Add to parent
+	TElementShared element = mDocument->createElement( "p" );
+	parent->appendChild( element );
+	
+	bool insideP = true;
+	
+	string text;
+	
+	while ( insideP )	{
+		
+		text += getText( false );
+		
+		getNextTag();
+		if ( !isStartTag() )	{
+			if ( !mTag.compare( "p" ) )	{
+				cout << "p closing tag found\n";
+				insideP = false;
+			}
+		}
+	}
+
+	cout << "Text is:" << endl << text << endl;
+	
+	getNextTag();
+	
+}
+
 
 int main( int argc, char * argv[] )	{
 	
@@ -77,81 +397,14 @@ int main( int argc, char * argv[] )	{
 	// Create a DOM document
 	TDocumentShared document( new TDocument() );
 	document->setSmartPointer( document );
-	TNodeShared currentNode( document );
 	
-	unsigned int pos = 0;
+	// Create a HTMLParser object
+	HTMLParser htmlParser;
+	htmlParser.setContent( content );
+
+	htmlParser.startParsing( document );
 	
-	stack< string > tags;
-	
-	while ( pos != content.size() )	{
-		if ( content[pos] == '<' )	{
-			pos++;
-			if ( content[pos] == '/' )	{
-				// Closing tag
-				pos++;
-				string tag;
-				while ( pos != content.size() && content[pos] != '>' )	{
-					tag += content[pos];
-					pos++;
-				}
-				if ( tags.top() == tag )	{
-					// Tags match
-					tags.pop();
-					currentNode = currentNode->getParentNode();
-				}
-				else	{
-					cerr << "Mismatch in closing tag\n";
-					return 1;
-				}
-			}
-			else	{
-				// Opening tag
-				string tag;
-				while ( pos != content.size() && content[pos] != '/' &&
-						  content[pos] != '>' && content[pos] != ' ' )	{
-					tag += content[pos];
-					pos++;
-				}
-				TElementShared element = document->createElement( tag );
-				currentNode->appendChild( element );
-				while ( pos != content.size() && content[pos] == ' ' )	{
-					pos++;						
-				}
-				while ( content[pos] != '/' && content[pos] != '>' )	{
-					// Element has attributes
-					string attribute;
-					string value;
-					while ( pos != content.size() && content[pos] != ' '
-							  && content[pos] != '/' && content[pos] != '>'
-							  && content[pos] != '=' )	{
-						attribute += content[pos];
-						pos++;
-					}
-					if ( content[pos] == '=' )	{
-						pos++;
-						while ( pos != content.size() && content[pos] != ' '
-								  && content[pos] != '/' && content[pos] != '>' )	{
-							value += content[pos];
-							pos++;
-						}
-					}
-					while ( pos != content.size() && content[pos] == ' ' )	{
-						pos++;						
-					}
-					element->setAttribute( attribute, value );
-				}
-				if ( content[pos] != '/' )	{
-					// Tag doesn't close immediately
-					tags.push( tag );
-					currentNode = element;
-				}
-			}
-		}
-		
-		pos++;
-	}
-	
-	showDocument( document );
+	htmlParser.showDocument();
 	
 	return 0;
 	
