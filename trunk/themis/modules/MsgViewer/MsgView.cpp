@@ -16,7 +16,7 @@
 // MsgViewer headers
 #include "MsgView.hpp"
 
-MsgView	::	MsgView()
+MsgView	::	MsgView( BMessage * pluginList )
 				:	BWindow( BRect( 100, 100, 500, 200 ), "Message View", B_TITLED_WINDOW,
 									B_CURRENT_WORKSPACE )	{
 
@@ -51,6 +51,23 @@ MsgView	::	MsgView()
 		new BScrollView( "MessageScrollView", messageView, B_FOLLOW_ALL_SIDES, 0,
 								 true, true );
 	backGround->AddChild( scrollView );
+
+	if ( pluginList != NULL )	{
+		// Add the list of plugins to the popup menu.
+		int32 count = 0;
+		type_code code = B_STRING_TYPE;
+		pluginList->GetInfo( "plug_name", &code, &count );
+		const char * pluginName;
+		for ( int32 i = 0; i < count; i++ )	{
+			pluginList->FindString( "plug_name", i, &pluginName );
+			senderMenu->AddItem( new BMenuItem( pluginName,
+								new BMessage( CHANGE_MESSAGE_VIEW ) ) );
+			string pluginString( pluginName );
+			vector<string> messageVector;
+			messageMap.insert(
+				map<string, vector<string> >::value_type( pluginString, messageVector ) );
+		}
+	}	
 
 }
 
@@ -90,6 +107,7 @@ bool MsgView	::	QuitRequested()	{
 
 void MsgView	::	addMessage( const char * sender, const char * message )	{
 
+	Lock();
 	string messageString = string( message );
 	messageString += '\n';
 
@@ -99,10 +117,8 @@ void MsgView	::	addMessage( const char * sender, const char * message )	{
 		messageVector.push_back( messageString );
 		messageMap.insert(
 			map<string, vector<string> >::value_type( senderString, messageVector ) );
-		Lock();
 		senderMenu->AddItem( new BMenuItem( sender,
 																	 new BMessage( CHANGE_MESSAGE_VIEW ) ) );
-		Unlock();
 	}
 	else	{
 		map<string, vector<string> >::iterator i = messageMap.find( senderString );
@@ -111,7 +127,6 @@ void MsgView	::	addMessage( const char * sender, const char * message )	{
 		}
 	}
 
-	Lock();
 	BMenuItem * marked = senderMenu->FindMarked();
 	if ( marked != NULL )	{
 		string label( marked->Label() );
@@ -121,4 +136,16 @@ void MsgView	::	addMessage( const char * sender, const char * message )	{
 	}
 	Unlock();
 	
+}
+
+void MsgView	::	addPlugin( const char * plugin )	{
+
+	Lock();	
+	senderMenu->AddItem( new BMenuItem( plugin,
+						new BMessage( CHANGE_MESSAGE_VIEW ) ) );
+	string pluginString( plugin );
+	vector<string> messageVector;
+	messageMap.insert(
+		map<string, vector<string> >::value_type( pluginString, messageVector ) );
+	Unlock();
 }

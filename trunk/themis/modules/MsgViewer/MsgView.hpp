@@ -20,6 +20,7 @@
 // Declarations of BeOS classes
 class BTextView;
 class BPopUpMenu;
+class BMessage;
 
 // Namespaces used
 using namespace std;
@@ -35,11 +36,12 @@ class MsgView	:	public BWindow	{
 		map<string, vector<string> >  messageMap;
 	
 	public:
-		MsgView();
+		MsgView( BMessage * pluginList = NULL );
 		~MsgView();
 		void MessageReceived( BMessage * message );
 		bool QuitRequested();
 		void addMessage( const char * sender, const char * message );
+		void addPlugin( const char * plugin );
 		
 };
 

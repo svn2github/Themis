@@ -62,7 +62,14 @@ PlugClass * GetObject()	{
 MsgViewer	::	MsgViewer( BMessage * info )
 					:	BHandler( "MsgViewer" ), PlugClass( info, "MsgViewer" )	{
 
-	view = new MsgView();
+	if ( PlugMan )	{
+		printf( "Getting plugin list\n" );
+		BMessage * list = PlugMan->GetPluginList();
+		view = new MsgView( list );
+	}
+	else	{
+		view = new MsgView();
+	}
 	view->Show();
 
 }
@@ -128,6 +135,14 @@ status_t MsgViewer	::	ReceiveBroadcast( BMessage * message )	{
 	switch ( command )	{
 		case COMMAND_INFO:	{
 			switch ( message->what )	{
+				case PlugInLoaded:	{
+					PlugClass * plug = NULL;
+					message->FindPointer(  "plugin", (void **) &plug );
+					if ( plug != NULL )	{
+						view->addPlugin( plug->PlugName() );
+					}
+					break;
+				}
 				case ReturnedData:	{
 					const char * type;
 					message->FindString( "type", &type );
