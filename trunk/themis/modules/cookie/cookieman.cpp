@@ -33,7 +33,7 @@ Project Start Date: October 18, 2000
 #include <stdio.h>
 cookieman::cookieman(BMessage *info)
 	:BHandler("cookie_manager"),PlugClass(info) {
-	uses_heartbeat=true;
+	uses_heartbeat=false;
 		
 }
 

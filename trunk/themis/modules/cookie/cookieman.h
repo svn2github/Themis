@@ -26,6 +26,12 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
+/*!
+\file 
+This file contains the declaration of the cookie manager application/add-on. This
+system allows cookies to be edited outside of Themis, and configures the cookie settings
+with-in Themis.
+*/
 #ifndef cookie_man
 #define cookie_man
 
@@ -35,7 +41,7 @@ Project Start Date: October 18, 2000
 #include <Message.h>
 #include <SupportDefs.h>
 #include <StorageKit.h>
-
+ 
 class cookieman: public BHandler, public PlugClass {
 	private:
 	public:

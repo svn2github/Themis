@@ -125,23 +125,23 @@ TESTPLUGSOURCES= \
 	testplug/testplug.cpp
 HTMLPARSERSOURCES= \
 	HTMLParser/HTMLParser.cpp \
-	AttrListDeclParser.cpp \
-	BaseParser.cpp \
-	SGMLText.cpp \
-	State.cpp \
-	CommentDeclParser.cpp \
-	DTDParser.cpp \
-	DeclarationParser.cpp \
-	DocTypeDeclParser.cpp \
-	ElementDeclException.cpp \
-	ElementDeclParser.cpp \
-	ElementParser.cpp \
-	EntityDeclParser.cpp \
-	MarkedSecDeclParser.cpp \
-	Position.cpp \
-	PositionException.cpp \
-	ReadException.cpp \
-	SGMLParser.cpp 
+	HTMLParser/AttrListDeclParser.cpp \
+	HTMLParser/BaseParser.cpp \
+	HTMLParser/SGMLText.cpp \
+	HTMLParser/State.cpp \
+	HTMLParser/CommentDeclParser.cpp \
+	HTMLParser/DTDParser.cpp \
+	HTMLParser/DeclarationParser.cpp \
+	HTMLParser/DocTypeDeclParser.cpp \
+	HTMLParser/ElementDeclException.cpp \
+	HTMLParser/ElementDeclParser.cpp \
+	HTMLParser/ElementParser.cpp \
+	HTMLParser/EntityDeclParser.cpp \
+	HTMLParser/MarkedSecDeclParser.cpp \
+	HTMLParser/Position.cpp \
+	HTMLParser/PositionException.cpp \
+	HTMLParser/ReadException.cpp \
+	HTMLParser/SGMLParser.cpp 
 
 DOMVIEWSOURCES= \
 	DOMView/DOMView.cpp
@@ -496,7 +496,7 @@ $(BASE_ADDONS_OBJECT_DIR)imageh/%.o: $(BASE_ADDON_SOURCE_DIR)imageh/%.cpp $(BASE
 
 #html parser add-on
 htmlpaddon: $(BASE_ADDON_INSTALL_DIR)html_parser.so 
-$(BASE_ADDON_INSTALL_DIR)html_parser.so: domlib $(COMMONOBJ) $(foreach file,$(notdir $(HTMLPARSERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)HTMLParser/$(file)) #domlib htmlparserdepends htmlparserobjects
+$(BASE_ADDON_INSTALL_DIR)html_parser.so: domlib $(COMMONOBJ) $(foreach file,$(HTMLPARSERSOURCES),$(BASE_ADDONS_OBJECT_DIR)HTMLParser/$(notdir $(file:.cpp=.o))) #domlib htmlparserdepends htmlparserobjects
 	@echo "Linking HTML Parser add-on" 
 	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)html_parser.so $(foreach file,$(notdir $(HTMLPARSERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)HTMLParser/$(file)) $(COMMON_OBJECT_DIR)plugclass.o $(COMMON_OBJECT_DIR)plugman.o -nostart -Xlinker $(LDFLAGS) -soname=html_parser.so -L ./ -L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR)  -lbe -lroot -ldom -lstdc++.r4
 	@echo "HTML Parser add-on is now linked. Doing mimeset."
