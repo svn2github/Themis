@@ -359,7 +359,7 @@ void prefswin::MessageReceived( BMessage* msg )
 					rect.top = rect.bottom + 10;
 					rect.bottom = rect.top + 15;
 					rect.right = 200;
-					BCheckBox* IMcbox = new BCheckBox( rect, "IMCBOX", "Intelligent Maximize", new BMessage( IM_CHECKBOX ) );
+					BCheckBox* IMcbox = new BCheckBox( rect, "IMCBOX", "Intelligent Zoom", new BMessage( IM_CHECKBOX ) );
 					if( fIntelligentMaximize == false )
 						IMcbox->SetValue( 0 );
 					else

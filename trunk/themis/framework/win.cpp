@@ -1060,7 +1060,7 @@ Win::UrlTypedHandler( bool show_all )
 		typed_url.ToLower();
 	}
 	
-	printf( "  typed_url: %s length: %ld\n", typed_url.String(), typed_url.Length() );
+//	printf( "  typed_url: %s length: %ld\n", typed_url.String(), typed_url.Length() );
 		
 	int32 count = slist->CountItems();
 	

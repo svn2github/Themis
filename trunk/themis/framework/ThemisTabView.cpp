@@ -757,25 +757,25 @@ ThemisTabView::SetFakeSingleView()
 void
 ThemisTabView::SetNavButtonsByTabHistory()
 {
-	printf( "ThemisTabView::SetNavButtonsByTabHistory()\n" );
+//	printf( "ThemisTabView::SetNavButtonsByTabHistory()\n" );
 	ThemisTab* tab = ( ThemisTab* )TabAt( Selection() );
 	
 	ThemisNavView* nv = ( ( Win* )Window() )->navview;
 	
-	printf( "CurrentPosition: %d\n", tab->GetHistory()->GetCurrentPosition() );
+//	printf( "CurrentPosition: %d\n", tab->GetHistory()->GetCurrentPosition() );
 	tab->GetHistory()->PrintHistory();
 	
 	if( tab->GetHistory()->GetCurrentPosition() == 0 )
 	{
 		if( tab->GetHistory()->GetEntryCount() > 1 )
 		{
-			printf( "TABVIEW: enabling back, disabling fwd button if needed.\n" );
+//			printf( "TABVIEW: enabling back, disabling fwd button if needed.\n" );
 			nv->buttons[0]->SetMode( 0 );
 			nv->buttons[1]->SetMode( 3 );
 		}
 		else
 		{
-			printf( "TABVIEW: only one ( or no )history item. disabling back and fwd if needed.\n" );
+//			printf( "TABVIEW: only one ( or no )history item. disabling back and fwd if needed.\n" );
 			nv->buttons[0]->SetMode( 3 );
 			nv->buttons[1]->SetMode( 3 );
 		}
@@ -784,18 +784,17 @@ ThemisTabView::SetNavButtonsByTabHistory()
 	{
 		if( tab->GetHistory()->GetCurrentPosition() == ( tab->GetHistory()->GetEntryCount() - 1 ) )
 		{
-			printf( "TABVIEW: at history end. disable back, enable fwd if needed.\n" );
+//			printf( "TABVIEW: at history end. disable back, enable fwd if needed.\n" );
 			nv->buttons[0]->SetMode( 3 );
 			nv->buttons[1]->SetMode( 0 );
 		}
 		else
 		{
-			printf( "TABVIEW: in middle of history. enablind back and fwd if needed.\n" );
+//			printf( "TABVIEW: in middle of history. enablind back and fwd if needed.\n" );
 			nv->buttons[0]->SetMode( 0 );
 			nv->buttons[1]->SetMode( 0 );
 		}
 	}
-	
 }
 
 void
