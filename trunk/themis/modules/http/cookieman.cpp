@@ -5,6 +5,20 @@
 #include <ctype.h>
 #include <String.h>
 #include <Autolock.h>
+#include <Directory.h>
+#include <FindDirectory.h>
+#include <Path.h>
+#include <Mime.h>
+#include <Entry.h>
+#include <VolumeRoster.h>
+#include <Node.h>
+#include <Volume.h>
+#include <kernel/fs_index.h>
+#include <fs_attr.h>
+#include <Query.h>
+#include "commondefs.h"
+#include "http_proto.h"
+extern http_protocol *HTTP_proto;
 #ifdef _Themis_
 #include "stripwhite.h"
 #else
@@ -42,21 +56,552 @@ int qsort_cookies(const void *Alpha, const void *Beta) {
 
 CookieManager::CookieManager() {
 	printf("CookieManager()\n");
+	CookieSettings=new BMessage();
 	cookie_head=NULL;
 	lock=new BLocker("cookie manager lock",true);
+	printf("HTTP_proto: %p\n",HTTP_proto);
+	printf("AppSettings: %p\n",HTTP_proto->AppSettings);
+	if ((HTTP_proto!=NULL) && (HTTP_proto->AppSettings!=NULL))
+		if (HTTP_proto->AppSettings->HasMessage("cookie_settings"))
+			HTTP_proto->AppSettings->FindMessage("cookie_settings",CookieSettings);
+	printf("Checking MIME...\n");
+	CheckMIME();
+/*
+At the moment, there is a debate going on within myself that asks whether cookies should
+all be loaded into RAM at the start of the cookie manager or whether they should be dynamically
+loaded when needed. It's not hard to do it either way, it's just a question of memory usage
+versus coding challenge and time.
+
+For the time being, I'm going to load all cookies at start up.
+*/
+//	printf("Checking Indicies...\n");
+//	CheckIndicies();
+	printf("Finding cookie directory...\n");
+	FindCookieDirectory();
+	LoadAllCookies();
 }
 
 CookieManager::~CookieManager() {
 	printf("~CookieManager()\n");
-	if (cookie_head!=NULL) {
-		cookie_st *cur=NULL;
-		while (cookie_head!=NULL) {
-			cur=cookie_head->next;
-			delete cookie_head;
-			cookie_head=cur;
+	SaveAllCookies();
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		if (cookie_head!=NULL) {
+			cookie_st *cur=NULL;
+			while (cookie_head!=NULL) {
+				cur=cookie_head->next;
+				delete cookie_head;
+				cookie_head=cur;
+			}
 		}
 	}
 	delete lock;
+	delete CookieSettings;
+	printf("cookie mime: %s\n",ThemisCookieFile);
+	printf("shutting down at: %ld\n",time(NULL));
+}
+void CookieManager::CheckMIME() {
+	BMimeType mime(ThemisCookieFile);//application/x-Themis-cookie
+	printf("InitCheck: %ld\n",mime.InitCheck());
+	printf("MIME Type valid? %s\n",mime.IsValid()?"yes":"no");
+	if (!mime.IsInstalled()) {
+		status_t stat=mime.Install();
+		printf("Cookie MIME Type Installed (%s): %ld\n",ThemisCookieFile,stat);
+	}
+	char type[B_MIME_TYPE_LENGTH];
+	mime.GetShortDescription(type);
+	if (strcasecmp(type,"Themis Cookie File")!=0)
+		mime.SetShortDescription("Themis Cookie File");
+	mime.GetLongDescription(type);
+	if (strcasecmp(type,"Themis Cookie File")!=0)
+		mime.SetLongDescription("Themis Cookie File");
+	mime.GetPreferredApp(type);
+	if (strcasecmp(type,ThemisAppSig)!=0)
+		mime.SetPreferredApp(ThemisAppSig);
+	BMessage attrinf;
+	mime.GetAttrInfo(&attrinf);
+	bool installall=false;
+	int32 attrcount=0;
+	if (attrinf.IsEmpty())
+		installall=true;
+	else {
+		type_code typec;
+		attrinf.GetInfo("attr:name",&typec,&attrcount);
+	}
+	bool found=false;
+	//Make Themis:creceivedate a visible attribute
+	for (int32 i=0;i<attrcount;i++) {
+		BString item;
+		attrinf.FindString("attr:name",i,&item);
+		if (item=="Themis:creceivedate") {
+			found=true;
+			break;
+		}
+	}
+	if ((!found) || (installall)) {
+		attrinf.AddString("attr:name","Themis:creceivedate");
+		attrinf.AddString("attr:public_name","Date Received (GMT)");
+		attrinf.AddInt32("attr:type",B_TIME_TYPE);
+		attrinf.AddInt32("attr:width",100);
+		attrinf.AddInt32("attr:alignment",B_ALIGN_CENTER);
+		attrinf.AddBool("attr:public",true);
+		attrinf.AddBool("attr:editable",true);
+		attrinf.AddBool("attr:viewable",true);
+		attrinf.AddBool("attr:extra",false);
+	} else
+		found=false;
+	//Make Themis:domain a visible attribute
+	for (int32 i=0;i<attrcount;i++) {
+		BString item;
+		attrinf.FindString("attr:name",i,&item);
+		if (item=="Themis:domain") {
+			found=true;
+			break;
+		}
+	}
+	if ((!found) || (installall)) {
+		attrinf.AddString("attr:name","Themis:domain");
+		attrinf.AddString("attr:public_name","Domain");
+		attrinf.AddInt32("attr:type",B_STRING_TYPE);
+		attrinf.AddInt32("attr:width",200);
+		attrinf.AddInt32("attr:alignment",B_ALIGN_CENTER);
+		attrinf.AddBool("attr:public",true);
+		attrinf.AddBool("attr:editable",true);
+		attrinf.AddBool("attr:viewable",true);
+		attrinf.AddBool("attr:extra",false);
+	} else
+		found=false;
+	//Make Themis:cookiepath a visible attribute
+	for (int32 i=0;i<attrcount;i++) {
+		BString item;
+		attrinf.FindString("attr:name",i,&item);
+		if (item=="Themis:cookiepath") {
+			found=true;
+			break;
+		}
+	}
+	if ((!found) || (installall)) {
+		attrinf.AddString("attr:name","Themis:cookiepath");
+		attrinf.AddString("attr:public_name","Cookie Path");
+		attrinf.AddInt32("attr:type",B_STRING_TYPE);
+		attrinf.AddInt32("attr:width",200);
+		attrinf.AddInt32("attr:alignment",B_ALIGN_CENTER);
+		attrinf.AddBool("attr:public",true);
+		attrinf.AddBool("attr:editable",true);
+		attrinf.AddBool("attr:viewable",true);
+		attrinf.AddBool("attr:extra",false);
+	} else
+		found=false;
+	//Make Themis:cookiename a visible attribute
+	for (int32 i=0;i<attrcount;i++) {
+		BString item;
+		attrinf.FindString("attr:name",i,&item);
+		if (item=="Themis:cookiename") {
+			found=true;
+			break;
+		}
+	}
+	if ((!found) || (installall)) {
+		attrinf.AddString("attr:name","Themis:cookiename");
+		attrinf.AddString("attr:public_name","Cookie Name");
+		attrinf.AddInt32("attr:type",B_STRING_TYPE);
+		attrinf.AddInt32("attr:width",200);
+		attrinf.AddInt32("attr:alignment",B_ALIGN_CENTER);
+		attrinf.AddBool("attr:public",true);
+		attrinf.AddBool("attr:editable",true);
+		attrinf.AddBool("attr:viewable",true);
+		attrinf.AddBool("attr:extra",false);
+	} else
+		found=false;
+	//Make Themis:cookievalue a visible attribute
+	for (int32 i=0;i<attrcount;i++) {
+		BString item;
+		attrinf.FindString("attr:name",i,&item);
+		if (item=="Themis:cookievalue") {
+			found=true;
+			break;
+		}
+	}
+	if ((!found) || (installall)) {
+		attrinf.AddString("attr:name","Themis:cookievalue");
+		attrinf.AddString("attr:public_name","Cookie Value");
+		attrinf.AddInt32("attr:type",B_STRING_TYPE);
+		attrinf.AddInt32("attr:width",200);
+		attrinf.AddInt32("attr:alignment",B_ALIGN_CENTER);
+		attrinf.AddBool("attr:public",true);
+		attrinf.AddBool("attr:editable",true);
+		attrinf.AddBool("attr:viewable",true);
+		attrinf.AddBool("attr:extra",false);
+	} else
+		found=false;
+	//Make Themis:expiredate a visible attribute
+	for (int32 i=0;i<attrcount;i++) {
+		BString item;
+		attrinf.FindString("attr:name",i,&item);
+		if (item=="Themis:expiredate") {
+			found=true;
+			break;
+		}
+	}
+	if ((!found) || (installall)) {
+		attrinf.AddString("attr:name","Themis:expiredate");
+		attrinf.AddString("attr:public_name","Expiration Date (GMT)");
+		attrinf.AddInt32("attr:type",B_TIME_TYPE);
+		attrinf.AddInt32("attr:width",100);
+		attrinf.AddInt32("attr:alignment",B_ALIGN_CENTER);
+		attrinf.AddBool("attr:public",true);
+		attrinf.AddBool("attr:editable",true);
+		attrinf.AddBool("attr:viewable",true);
+		attrinf.AddBool("attr:extra",false);
+	} else
+		found=false;
+	//Make Themis:cookiesecure a visible attribute
+	for (int32 i=0;i<attrcount;i++) {
+		BString item;
+		attrinf.FindString("attr:name",i,&item);
+		if (item=="Themis:cookiesecure") {
+			found=true;
+			break;
+		}
+	}
+	if ((!found) || (installall)) {
+		attrinf.AddString("attr:name","Themis:cookiesecure");
+		attrinf.AddString("attr:public_name","Secure");
+		attrinf.AddInt32("attr:type",B_BOOL_TYPE);
+		attrinf.AddInt32("attr:width",50);
+		attrinf.AddInt32("attr:alignment",B_ALIGN_CENTER);
+		attrinf.AddBool("attr:public",true);
+		attrinf.AddBool("attr:editable",true);
+		attrinf.AddBool("attr:viewable",true);
+		attrinf.AddBool("attr:extra",false);
+	} else
+		found=false;
+	//Make Themis:cookieports a visible attribute
+	for (int32 i=0;i<attrcount;i++) {
+		BString item;
+		attrinf.FindString("attr:name",i,&item);
+		if (item=="Themis:cookieports") {
+			found=true;
+			break;
+		}
+	}
+	if ((!found) || (installall)) {
+		attrinf.AddString("attr:name","Themis:cookieports");
+		attrinf.AddString("attr:public_name","Ports");
+		attrinf.AddInt32("attr:type",B_STRING_TYPE);
+		attrinf.AddInt32("attr:width",100);
+		attrinf.AddInt32("attr:alignment",B_ALIGN_CENTER);
+		attrinf.AddBool("attr:public",true);
+		attrinf.AddBool("attr:editable",true);
+		attrinf.AddBool("attr:viewable",true);
+		attrinf.AddBool("attr:extra",false);
+	} else
+		found=false;
+	//Make Themis:cookiecomment a visible attribute
+	for (int32 i=0;i<attrcount;i++) {
+		BString item;
+		attrinf.FindString("attr:name",i,&item);
+		if (item=="Themis:cookiecomment") {
+			found=true;
+			break;
+		}
+	}
+	if ((!found) || (installall)) {
+		attrinf.AddString("attr:name","Themis:cookiecomment");
+		attrinf.AddString("attr:public_name","Comment");
+		attrinf.AddInt32("attr:type",B_STRING_TYPE);
+		attrinf.AddInt32("attr:width",200);
+		attrinf.AddInt32("attr:alignment",B_ALIGN_CENTER);
+		attrinf.AddBool("attr:public",true);
+		attrinf.AddBool("attr:editable",true);
+		attrinf.AddBool("attr:viewable",true);
+		attrinf.AddBool("attr:extra",false);
+	} else
+		found=false;
+	//Make Themis:cookiecommenturl a visible attribute
+	for (int32 i=0;i<attrcount;i++) {
+		BString item;
+		attrinf.FindString("attr:name",i,&item);
+		if (item=="Themis:cookiecommenturl") {
+			found=true;
+			break;
+		}
+	}
+	if ((!found) || (installall)) {
+		attrinf.AddString("attr:name","Themis:cookiecommenturl");
+		attrinf.AddString("attr:public_name","Comment URL");
+		attrinf.AddInt32("attr:type",B_STRING_TYPE);
+		attrinf.AddInt32("attr:width",200);
+		attrinf.AddInt32("attr:alignment",B_ALIGN_CENTER);
+		attrinf.AddBool("attr:public",true);
+		attrinf.AddBool("attr:editable",true);
+		attrinf.AddBool("attr:viewable",true);
+		attrinf.AddBool("attr:extra",false);
+	} else
+		found=false;
+	attrinf.PrintToStream();
+	mime.SetAttrInfo(&attrinf);
+}
+void CookieManager::CheckIndicies() {
+  BVolumeRoster *volr=new BVolumeRoster;
+  BVolume vol;
+  dirent *ent;
+  DIR *d;
+  char voln[256];
+  bool found;
+  while (volr->GetNextVolume(&vol)==B_NO_ERROR) {
+    if ((vol.KnowsQuery()) && (vol.KnowsAttr()) && (!vol.IsReadOnly())) {
+      memset(voln,0,256);
+      vol.GetName(voln);
+      printf("Checking %s...\n",voln);
+      d=fs_open_index_dir(vol.Device());
+      if (!d) {
+        printf("\tcouldn't open index directory.\n");
+        continue;
+       }
+	  found=false;
+      //duplicate and modify the next block as necessary to add more indices
+      //begin block
+      //BEOS:TYPE is where the file was originally found
+      //double check to make sure that the mime type index exists
+      printf("\t\tlooking for \"BEOS:TYPE\" index...");
+      fflush(stdout);
+      while((ent=fs_read_index_dir(d)))
+       {
+        if (strcasecmp(ent->d_name,"BEOS:TYPE")==0)
+         {
+          printf("found it.\n");
+          found=true;
+          break;
+         }
+       }
+      if (!found)
+       {
+        printf("created it.\n");
+        fs_create_index(vol.Device(),"BEOS:TYPE",B_STRING_TYPE,0);
+       }
+      fs_rewind_index_dir(d);
+      found=false;
+      //end block
+      //begin block
+      //Themis:creceivedate 
+      printf("\t\tlooking for \"Themis:creceivedate\" index...");
+      fflush(stdout);
+      while((ent=fs_read_index_dir(d)))
+       {
+        if (strcasecmp(ent->d_name,"Themis:creceivedate")==0)
+         {
+          printf("found it.\n");
+          found=true;
+          break;
+         }
+       }
+      if (!found)
+       {
+        printf("created it.\n");
+        fs_create_index(vol.Device(),"Themis:creceivedate",B_INT32_TYPE,0);
+       }
+      fs_rewind_index_dir(d);
+      found=false;
+      //end block
+      //begin block
+      //Themis:domain
+      printf("\t\tlooking for \"Themis:domain\" index...");
+      fflush(stdout);
+      while((ent=fs_read_index_dir(d)))
+       {
+        if (strcasecmp(ent->d_name,"Themis:domain")==0)
+         {
+          printf("found it.\n");
+          found=true;
+          break;
+         }
+       }
+      if (!found)
+       {
+        printf("created it.\n");
+        fs_create_index(vol.Device(),"Themis:domain",B_STRING_TYPE,0);
+       }
+      fs_rewind_index_dir(d);
+      found=false;
+      //end block
+      //begin block
+      //Themis:cookiepath
+      printf("\t\tlooking for \"Themis:cookiepath\" index...");
+      fflush(stdout);
+      while((ent=fs_read_index_dir(d)))
+       {
+        if (strcasecmp(ent->d_name,"Themis:cookiepath")==0)
+         {
+          printf("found it.\n");
+          found=true;
+          break;
+         }
+       }
+      if (!found)
+       {
+        printf("created it.\n");
+        fs_create_index(vol.Device(),"Themis:cookiepath",B_STRING_TYPE,0);
+       }
+      fs_rewind_index_dir(d);
+      found=false;
+      //end block
+      //begin block
+      //Themis:cookiename
+      printf("\t\tlooking for \"Themis:cookiename\" index...");
+      fflush(stdout);
+      while((ent=fs_read_index_dir(d)))
+       {
+        if (strcasecmp(ent->d_name,"Themis:cookiename")==0)
+         {
+          printf("found it.\n");
+          found=true;
+          break;
+         }
+       }
+      if (!found)
+       {
+        printf("created it.\n");
+        fs_create_index(vol.Device(),"Themis:cookiename",B_STRING_TYPE,0);
+       }
+      fs_rewind_index_dir(d);
+      found=false;
+      //end block
+      //begin block
+      //Themis:cookievalue
+      printf("\t\tlooking for \"Themis:cookievalue\" index...");
+      fflush(stdout);
+      while((ent=fs_read_index_dir(d)))
+       {
+        if (strcasecmp(ent->d_name,"Themis:cookievalue")==0)
+         {
+          printf("found it.\n");
+          found=true;
+          break;
+         }
+       }
+      if (!found)
+       {
+        printf("created it.\n");
+        fs_create_index(vol.Device(),"Themis:cookievalue",B_STRING_TYPE,0);
+       }
+      fs_rewind_index_dir(d);
+      found=false;
+      //end block
+      //begin block
+      //Themis:expiredate
+      printf("\t\tlooking for \"Themis:expiredate\" index...");
+      fflush(stdout);
+      while((ent=fs_read_index_dir(d)))
+       {
+        if (strcasecmp(ent->d_name,"Themis:expiredate")==0)
+         {
+          printf("found it.\n");
+          found=true;
+          break;
+         }
+       }
+      if (!found)
+       {
+        printf("created it.\n");
+        fs_create_index(vol.Device(),"Themis:expiredate",B_INT32_TYPE,0);
+       }
+      fs_rewind_index_dir(d);
+      found=false;
+      //end block
+      //begin block
+      //Themis:cookiesecure
+      printf("\t\tlooking for \"Themis:cookiesecure\" index...");
+      fflush(stdout);
+      while((ent=fs_read_index_dir(d)))
+       {
+        if (strcasecmp(ent->d_name,"Themis:cookiesecure")==0)
+         {
+          printf("found it.\n");
+          found=true;
+          break;
+         }
+       }
+      if (!found)
+       {
+        printf("created it.\n");
+        fs_create_index(vol.Device(),"Themis:cookiesecure",B_BOOL_TYPE,0);
+       }
+      fs_rewind_index_dir(d);
+      found=false;
+      //end block
+/*
+No index is created for Themis:cookieports, Themis:cookiecomment, or Themis:cookiecommenturl,
+as these are primarily informational and rarely used items in the cookie spec. If any of these
+items were to be utilized, it would probably be Themis:cookieports; which is a list of server
+port numbers that the cookie should be valid on. It's not something that needs to be searched.
+*/
+	 }
+   }
+   
+}
+void CookieManager::FindCookieDirectory() {
+	BPath path;
+	if (!CookieSettings->IsEmpty()) {
+		if ((*HTTP_proto->AppSettings_p)==HTTP_proto->AppSettings) {
+			FindCookieDirStartPoint:
+			BString temp;
+			if (CookieSettings->FindString("cookie_storage_directory",&temp)!=B_OK) 
+				if (CookieSettings->FindRef("cookie_ref",&cookiedirref)==B_OK) {
+					path.SetTo(&cookiedirref);
+					temp=path.Path();
+				} else {
+					HTTP_proto->AppSettings->FindString("settings_directory",&temp);
+					temp<<"/cookies";
+				}
+			BEntry ent;
+			FindCookieDirPoint1:
+			ent.SetTo(temp.String());
+			if (ent.Exists()) {
+				if (ent.IsDirectory()) {
+					ent.GetRef(&cookiedirref);
+					if (!CookieSettings->HasRef("cookie_ref"))
+						CookieSettings->AddRef("cookie_ref",&cookiedirref);
+				} else {
+					temp<<time(NULL);
+					goto FindCookieDirPoint1;
+				}
+			} else {
+			create_directory(temp.String(),0700);
+			ent.GetRef(&cookiedirref);
+			if (!CookieSettings->HasRef("cookie_ref"))
+				CookieSettings->AddRef("cookie_ref",&cookiedirref);
+			}
+		} else {
+			HTTP_proto->AppSettings=*HTTP_proto->AppSettings_p;
+			goto FindCookieDirStartPoint;
+		}
+	} else {
+		BString temp="/boot/home/config/settings/Themis/cookies";
+		BEntry ent;
+		FindCookieDirPoint2:
+		ent.SetTo(temp.String());
+		if (ent.Exists()) {
+			if (ent.IsDirectory()) {
+				ent.GetRef(&cookiedirref);
+				if (!CookieSettings->HasRef("cookie_ref"))
+					CookieSettings->AddRef("cookie_ref",&cookiedirref);
+			} else {
+				temp<<time(NULL);
+				goto FindCookieDirPoint2;
+			}
+		} else {
+			create_directory(temp.String(),0700);
+			ent.GetRef(&cookiedirref);
+			if (!CookieSettings->HasRef("cookie_ref"))
+				CookieSettings->AddRef("cookie_ref",&cookiedirref);
+		}
+	}
+		path.SetTo(&cookiedirref);
+	if (!CookieSettings->HasString("cookie_storage_directory")) {
+		CookieSettings->AddString("cookie_storage_directory",path.Path());
+	} else
+		CookieSettings->ReplaceString("cookie_storage_directory",path.Path());
 }
 void CookieManager::PrintCookies() {
 	printf("===============\n");
@@ -139,7 +684,7 @@ int32 CookieManager::SetCookie(const char *header, const char *request_host, con
 	int32 count=0;
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
-		printf("SetCookie(): %s\n",header);
+//		printf("SetCookie(): %s\n",header);
 		cookie_st *cookie=ParseHeader(header, request_host,request_uri);
 		if (cookie!=NULL) {
 					int32 cookies=0;
@@ -158,20 +703,20 @@ int32 CookieManager::SetCookie(const char *header, const char *request_host, con
 					cur->discard=true;
 				}
 				valid=Validate(cur,request_host,request_uri);
-				printf("Valid? (test) %s\n",valid? "yes":"no");
+//				printf("Valid? (test) %s\n",valid? "yes":"no");
 				if (valid) {
 					if ((cookies>0) && (cookarr!=NULL)) {
 						bool duplicated=false;
 						for (int32 i=0; i<cookies; i++) {
-							printf("Cookie comparisons:\nPointer:\t%p\t%p\n",cookarr[i],cur);
-							printf("Name:\t%s\t%s\t%d\n",cookarr[i]->name,cur->name,strcmp(cookarr[i]->name,cur->name));
-							printf("Domain:\t%s\t%s\t%d\n",cookarr[i]->domain,cur->domain,strcasecmp(cookarr[i]->domain,cur->domain));
-							printf("Path:\t%s\t%s\t%d\n",cookarr[i]->path,cur->path,strcmp(cookarr[i]->path,cur->path));
+//							printf("Cookie comparisons:\nPointer:\t%p\t%p\n",cookarr[i],cur);
+//							printf("Name:\t%s\t%s\t%d\n",cookarr[i]->name,cur->name,strcmp(cookarr[i]->name,cur->name));
+//							printf("Domain:\t%s\t%s\t%d\n",cookarr[i]->domain,cur->domain,strcasecmp(cookarr[i]->domain,cur->domain));
+//							printf("Path:\t%s\t%s\t%d\n",cookarr[i]->path,cur->path,strcmp(cookarr[i]->path,cur->path));
 							if ((strcmp(cookarr[i]->name,cur->name)==0) &&
 							(strcasecmp(cookarr[i]->domain,cur->domain)==0) &&
 							(strcmp(cookarr[i]->path,cur->path)==0)) {
 								//hey! we have this cookie already... just update the existing one...
-								printf("updating #1\n");
+//								printf("updating #1\n");
 								delete cookarr[i]->value;
 								cookarr[i]->value=new char[1+strlen(cur->value)];
 								memset(cookarr[i]->value,0,1+strlen(cur->value));
@@ -211,15 +756,15 @@ int32 CookieManager::SetCookie(const char *header, const char *request_host, con
 					if ((cookies>0) && (cookarr!=NULL)) {
 						bool duplicated=false;
 						for (int32 i=0; i<cookies; i++) {
-							printf("Cookie comparisons:\nPointer:\t%p\t%p\n",cookarr[i],cur);
-							printf("Name:\t%s\t%s\t%d\n",cookarr[i]->name,cur->name,strcmp(cookarr[i]->name,cur->name));
-							printf("Domain:\t%s\t%s\t%d\n",cookarr[i]->domain,cur->domain,strcasecmp(cookarr[i]->domain,cur->domain));
-							printf("Path:\t%s\t%s\t%d\n",cookarr[i]->path,cur->path,strcmp(cookarr[i]->path,cur->path));
+//							printf("Cookie comparisons:\nPointer:\t%p\t%p\n",cookarr[i],cur);
+//							printf("Name:\t%s\t%s\t%d\n",cookarr[i]->name,cur->name,strcmp(cookarr[i]->name,cur->name));
+//							printf("Domain:\t%s\t%s\t%d\n",cookarr[i]->domain,cur->domain,strcasecmp(cookarr[i]->domain,cur->domain));
+//							printf("Path:\t%s\t%s\t%d\n",cookarr[i]->path,cur->path,strcmp(cookarr[i]->path,cur->path));
 							if ((strcmp(cookarr[i]->name,cur->name)==0) &&
 							(strcasecmp(cookarr[i]->domain,cur->domain)==0) &&
 							(strcmp(cookarr[i]->path,cur->path)==0)) {
 								//hey! we have this cookie already... just update the existing one...
-								printf("updating #2\n");
+//								printf("updating #2\n");
 								delete cookarr[i]->value;
 								cookarr[i]->value=new char[1+strlen(cur->value)];
 								memset(cookarr[i]->value,0,1+strlen(cur->value));
@@ -257,7 +802,7 @@ int32 CookieManager::SetCookie(const char *header, const char *request_host, con
 char *CookieManager::GetCookie(const char *host, const char *path, bool secure) {
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
-		printf("GetCookie()\n");
+//		printf("GetCookie()\n");
 		int32 count=0;
 		cookie_st **cookies=FindCookies(&count,host,path,secure);
 		if ((cookies!=NULL) && (count>0)) {
@@ -282,7 +827,7 @@ char *CookieManager::GetCookie(const char *host, const char *path, bool secure) 
 void CookieManager::ClearAllCookies() {
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
-		printf("ClearAllCookies()\n");
+//		printf("ClearAllCookies()\n");
 		if (cookie_head!=NULL) {
 			cookie_st *cur=NULL;
 			while (cookie_head!=NULL) {
@@ -296,12 +841,12 @@ void CookieManager::ClearAllCookies() {
 void CookieManager::ClearExpiredCookies() {
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
-		printf("Clearing expired cookies...\n");
+//		printf("Clearing expired cookies...\n");
 		time_t currenttime=time(NULL);
 		currenttime=mktime(gmtime(&currenttime));
 		cookie_st *cur=cookie_head, *last=NULL;
 		while (cur!=NULL) {
-			printf("Expire %s: current time: %ld\texpire time: %ld\tdifference: %2.2f\n",cur->name,currenttime,cur->expiredate,difftime(cur->expiredate,currenttime));
+//			printf("Expire %s: current time: %ld\texpire time: %ld\tdifference: %2.2f\n",cur->name,currenttime,cur->expiredate,difftime(cur->expiredate,currenttime));
 			if (cur->expiredate<=currenttime) {
 				if (cur==cookie_head) {
 					cookie_head=cookie_head->next;
@@ -321,7 +866,7 @@ void CookieManager::ClearExpiredCookies() {
 	}
 }
 void CookieManager::ProcessAttributes(const char *attributes,cookie_st *cookie, const char *request_host, const char *request_uri) {
-	printf("ProcessAttributes: cookie - \"%s\" attributes - \"%s\"\n",cookie->name,attributes);
+//	printf("ProcessAttributes: cookie - \"%s\" attributes - \"%s\"\n",cookie->name,attributes);
 	cookie->datereceived=time(NULL);
 	cookie->datereceived=mktime(gmtime(&cookie->datereceived));
 	
@@ -373,13 +918,13 @@ void CookieManager::ProcessAttributes(const char *attributes,cookie_st *cookie, 
 			value=new char[len+1];
 			memset(value,0,len+1);
 			strcpy(value,equal+1);
-			printf("\tattribute: %s\n\tvalue: %s\n",item,value);
+//			printf("\tattribute: %s\n\tvalue: %s\n",item,value);
 			//damn it, the string that was broken up because of the comma might be a date...
 			if (strcasecmp(item,"expires")==0) {
 				//yep, it was... so...
 				//reassemble the date string for further processing...
 				atts[i][strlen(atts[i])+1]=' ';
-				printf("atts: %s%s\n",atts[i],atts[i+1]);
+//				printf("atts: %s%s\n",atts[i],atts[i+1]);
 	//			commas--;
 				char *datestr;
 				len=strlen(atts[i])+strlen(atts[i+1]);
@@ -408,7 +953,7 @@ void CookieManager::ProcessAttributes(const char *attributes,cookie_st *cookie, 
 				memset(tyme,0,len+1);
 				strncpy(tyme,last,len);
 				tz=space+1;
-				printf("Expiration:\n\tdate: %s\n\ttime: %s\n",date,tyme);
+//				printf("Expiration:\n\tdate: %s\n\ttime: %s\n",date,tyme);
 				char *tymearr[3];
 				tymearr[0]=strtok(tyme,":");
 				for (int i=1; i<3; i++)
@@ -416,7 +961,7 @@ void CookieManager::ProcessAttributes(const char *attributes,cookie_st *cookie, 
 				time_st.tm_hour=atoi(tymearr[0]);
 				time_st.tm_min=atoi(tymearr[1]);
 				time_st.tm_sec=atoi(tymearr[2]);
-printf("time: %d:%d:%d\n",time_st.tm_hour,time_st.tm_min,time_st.tm_sec);			
+//printf("time: %d:%d:%d\n",time_st.tm_hour,time_st.tm_min,time_st.tm_sec);			
 				delete tyme;
 				char *datearr[3];
 				datearr[0]=strtok(date,"-");
@@ -484,7 +1029,7 @@ printf("time: %d:%d:%d\n",time_st.tm_hour,time_st.tm_min,time_st.tm_sec);
 					}
 					
 				}
-				printf("tz: %s\n",tz);
+//				printf("tz: %s\n",tz);
 /*!
 \note
 Currently, this code does not take into account the presence of a GMT offset. This can
@@ -497,7 +1042,7 @@ that have an offset present.
 				
 				cookie->expiredate=mktime(&time_st);
 				cookie->maxage=cookie->expiredate-cookie->datereceived;
-				printf("time experiment: %s\n",ctime(&cookie->expiredate));
+//				printf("time experiment: %s\n",ctime(&cookie->expiredate));
 				
 				delete date;
 				delete datestr;
@@ -552,12 +1097,12 @@ that have an offset present.
 			//the attribute was a single word; not an name/value pair
 			if (strcasecmp(atts[i],"discard")==0) {
 				cookie->discard=true;
-				printf("\t*** DISCARD THIS COOKIE\n");
+//				printf("\t*** DISCARD THIS COOKIE\n");
 				
 			}
 			if (strcasecmp(atts[i],"secure")==0) {
 				cookie->secure=true;
-				printf("\t*** ONLY SEND THIS COOKIE IF SECURE\n");
+//				printf("\t*** ONLY SEND THIS COOKIE IF SECURE\n");
 			}
 			
 		}
@@ -641,7 +1186,7 @@ bool CookieManager::Validate(cookie_st *cookie, const char *request_host, const 
 		valid=true;
 		time_t currenttime=time(NULL);
 		currenttime=mktime(gmtime(&currenttime));
-		printf("expiredate: %ld\ncurrent time: %ld\n",cookie->expiredate, currenttime);
+//		printf("expiredate: %ld\ncurrent time: %ld\n",cookie->expiredate, currenttime);
 		if (cookie->expiredate<=currenttime)
 			return ValidateFail("Cookie has already expired.");
 		if ((cookie->maxage+cookie->datereceived)<=currenttime)
@@ -683,7 +1228,7 @@ With this in mind, I'm making this possibility available in code here.
 		if (cookie->path==NULL)
 			return ValidateFail("Cookie path is NULL.");
 		else {
-			printf("path: %s\n",cookie->path);
+//			printf("path: %s\n",cookie->path);
 			if (strncmp(cookie->path,request_uri,strlen(cookie->path))!=0)
 				return ValidateFail("Cookie path is not a prefix of the request URI. (4.3.2:1)");
 		}
@@ -695,7 +1240,7 @@ cookie_st * CookieManager::ParseHeader(const char *header, const char *request_h
 	BAutolock alock(lock);
 	cookie_st *cookie=NULL;
 	if (alock.IsLocked()) {
-		printf("ParseHeader()\n");
+//		printf("ParseHeader()\n");
 		
 		int32 len=strlen(header);
 		char *copy=new char[len+1];
@@ -704,7 +1249,7 @@ cookie_st * CookieManager::ParseHeader(const char *header, const char *request_h
 		char *start=strstr(copy,": ");
 		if (start!=NULL) {
 			start=start+2;
-			printf("cookie: \"%s\"\n",start);
+//			printf("cookie: \"%s\"\n",start);
 			char *semi=start;
 			int semis=0;
 			int sections=0;
@@ -717,7 +1262,7 @@ cookie_st * CookieManager::ParseHeader(const char *header, const char *request_h
 					semi=semi+1;
 				}
 			}while (semi!=NULL);
-			printf("%d semicolon(s) found\n",semis);
+//			printf("%d semicolon(s) found\n",semis);
 			sections=semis+1;
 			int commas=0;
 			char *comma=start;
@@ -729,13 +1274,13 @@ cookie_st * CookieManager::ParseHeader(const char *header, const char *request_h
 				comma=strchr(comma,',');
 				if (comma!=NULL) {
 					if (comma<semi) {
-						printf("comma found: \"%s\"\n",comma);
+//						printf("comma found: \"%s\"\n",comma);
 						commas++;
 						comma=comma+1;
 					}
 				}
 			}while ((comma<semi) && (comma!=NULL));
-			printf("%d comma[s] found in section 1\n",commas);
+//			printf("%d comma[s] found in section 1\n",commas);
 			char **nvpairs=NULL;
 			
 			nvpairs=new char*[commas+1];
@@ -781,7 +1326,7 @@ cookie_st * CookieManager::ParseHeader(const char *header, const char *request_h
 					cur->value=new char[len+1];
 					memset(cur->value,0,len+1);
 					strncpy(cur->value,equal+1,len);
-					printf("\tcookie name: %s\n\tcookie value: %s\n",cur->name,cur->value);
+//					printf("\tcookie name: %s\n\tcookie value: %s\n",cur->name,cur->value);
 					if ((i+1)<(commas+1))
 					 {
 					 	cur->next=new cookie_st;
@@ -811,7 +1356,7 @@ cookie_st * CookieManager::ParseHeader(const char *header, const char *request_h
 				temp=new char[len+1];
 				memset(temp,0,len+1);
 				strncpy(temp,last,len);
-				printf("section: %s\n",temp);
+//				printf("section: %s\n",temp);
 				section[i]=trim(temp);
 				delete temp;
 				temp=NULL;
@@ -844,3 +1389,207 @@ cookie_st * CookieManager::ParseHeader(const char *header, const char *request_h
 	}	
 	return cookie;
 }
+status_t CookieManager::LoadCookie(cookie_st *cookie) {
+	if (cookie==NULL)
+		return B_ERROR;
+		struct attr_info ai;
+		char attname[B_ATTR_NAME_LENGTH+1];
+		memset(attname,0,B_ATTR_NAME_LENGTH+1);
+		BNode node(&cookie->ref);
+		unsigned char *data=NULL;
+		BString aname;
+		node.Lock();
+		while (node.GetNextAttrName(attname)==B_OK) {
+			node.GetAttrInfo(attname,&ai);
+			aname.Truncate(0);
+			switch(ai.type) {
+				case B_INT32_TYPE:{
+					if (strcasecmp(attname,"Themis:creceivedate")==0) {
+						node.ReadAttr("Themis:creceivedate",B_INT32_TYPE,0,&cookie->datereceived,ai.size);
+					}
+					if (strcasecmp(attname,"Themis:expiredate")==0) {
+						node.ReadAttr("Themis:expiredate",B_INT32_TYPE,0,&cookie->expiredate,ai.size);
+					}
+					
+				}break;
+	
+				case B_STRING_TYPE:{
+					if (strcasecmp(attname,"Themis:domain")==0) {
+						cookie->domain=new char[ai.size+1];
+						memset(cookie->domain,0,ai.size+1);
+						node.ReadAttr("Themis:domain",B_STRING_TYPE,0,cookie->domain,ai.size);
+					}
+					if (strcasecmp(attname,"Themis:cookiepath")==0) {
+						cookie->path=new char[ai.size+1];
+						memset(cookie->path,0,ai.size+1);
+						node.ReadAttr("Themis:cookiepath",B_STRING_TYPE,0,cookie->path,ai.size);
+					}
+					if (strcasecmp(attname,"Themis:cookiename")==0) {
+						cookie->name=new char[ai.size+1];
+						memset(cookie->name,0,ai.size+1);
+						node.ReadAttr("Themis:cookiename",B_STRING_TYPE,0,cookie->name,ai.size);
+					}
+					if (strcasecmp(attname,"Themis:cookievalue")==0) {
+						cookie->value=new char[ai.size+1];
+						memset(cookie->value,0,ai.size+1);
+						node.ReadAttr("Themis:cookievalue",B_STRING_TYPE,0,cookie->value,ai.size);
+					}
+					if (strcasecmp(attname,"Themis:cookieports")==0) {
+						cookie->ports=new char[ai.size+1];
+						memset(cookie->ports,0,ai.size+1);
+						node.ReadAttr("Themis:cookieports",B_STRING_TYPE,0,cookie->ports,ai.size);
+					}
+					if (strcasecmp(attname,"Themis:cookiecomment")==0) {
+						cookie->comment=new char[ai.size+1];
+						memset(cookie->comment,0,ai.size+1);
+						node.ReadAttr("Themis:cookiecomment",B_STRING_TYPE,0,cookie->comment,ai.size);
+					}
+					if (strcasecmp(attname,"Themis:cookiecommenturl")==0) {
+						cookie->commenturl=new char[ai.size+1];
+						memset(cookie->commenturl,0,ai.size+1);
+						node.ReadAttr("Themis:cookiecommenturl",B_STRING_TYPE,0,cookie->commenturl,ai.size);
+					}
+				}break;
+	
+				case B_BOOL_TYPE:{
+					if (strcasecmp(attname,"Themis:cookiesecure")==0)
+						node.ReadAttr("Themis:cookiesecure",B_BOOL_TYPE,0,&cookie->secure,ai.size);
+				}break;
+			}
+			delete data;
+			data=NULL;
+			memset(attname,0,B_ATTR_NAME_LENGTH+1);
+		}
+		node.Unlock();
+		if ((cookie->datereceived!=0) && (cookie->expiredate!=0)) {
+			cookie->maxage=cookie->expiredate-cookie->datereceived;
+		}
+		
+	return B_OK;
+}
+
+status_t CookieManager::SaveCookie(cookie_st *cookie) {
+	if (cookie==NULL)
+		return B_ERROR;
+	if (cookie->discard)
+		return B_NO_ERROR;
+	BEntry ent(&cookie->ref,true);
+	if (ent.InitCheck()==B_OK) {
+		SaveCookiePoint1:
+		BFile file(&ent,B_CREATE_FILE|B_ERASE_FILE|B_WRITE_ONLY);
+		file.Unset();
+		BNode node(&cookie->ref);
+		node.Lock();
+		char *type=new char[strlen(ThemisCookieFile)+1];
+		memset(type,0,strlen(ThemisCookieFile)+1);
+		strcpy(type,ThemisCookieFile);
+		node.WriteAttr("BEOS:TYPE",B_STRING_TYPE,0,type,strlen(ThemisCookieFile)+1);
+		delete type;
+		node.WriteAttr("Themis:cookiesecure",B_BOOL_TYPE,0,&cookie->secure,sizeof(cookie->secure));
+						node.WriteAttr("Themis:creceivedate",B_INT32_TYPE,0,&cookie->datereceived,sizeof(cookie->datereceived));
+						node.WriteAttr("Themis:expiredate",B_INT32_TYPE,0,&cookie->expiredate,sizeof(cookie->expiredate));
+						if (cookie->domain!=NULL)
+						node.WriteAttr("Themis:domain",B_STRING_TYPE,0,cookie->domain,strlen(cookie->domain)+1);
+						if (cookie->path!=NULL)
+						node.WriteAttr("Themis:cookiepath",B_STRING_TYPE,0,cookie->path,strlen(cookie->path)+1);
+						if (cookie->name!=NULL)
+						node.WriteAttr("Themis:cookiename",B_STRING_TYPE,0,cookie->name,strlen(cookie->name)+1);
+						if (cookie->value!=NULL)
+						node.WriteAttr("Themis:cookievalue",B_STRING_TYPE,0,cookie->value,strlen(cookie->value)+1);
+						if (cookie->ports!=NULL)
+						node.WriteAttr("Themis:cookieports",B_STRING_TYPE,0,cookie->ports,strlen(cookie->ports)+1);
+						if (cookie->comment!=NULL)
+						node.WriteAttr("Themis:cookiecomment",B_STRING_TYPE,0,cookie->comment,strlen(cookie->comment)+1);
+						if (cookie->commenturl!=NULL)
+						node.WriteAttr("Themis:cookiecommenturl",B_STRING_TYPE,0,cookie->commenturl,strlen(cookie->commenturl)+1);
+		node.Unlock();
+	} else {
+		BString fname;
+		fname<<cookie->domain<<cookie->path<<cookie->name;
+		BPath path(&cookiedirref);
+		fname.ReplaceAll('/','_');
+		path.Append(fname.String());
+		ent.SetTo(path.Path());
+		ent.GetRef(&cookie->ref);
+		goto SaveCookiePoint1;
+		
+	}
+	
+	return B_OK;
+}
+
+void CookieManager::LoadAllCookies() {
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+	BPath trashpath;
+	BDirectory *trashdir;
+	if (find_directory(B_TRASH_DIRECTORY,&trashpath)==B_OK) {
+		trashdir=new BDirectory(trashpath.Path());
+	} else {
+		trashdir=new BDirectory("/boot/home/Desktop/Trash");
+	}
+		BEntry ent(&cookiedirref,true);
+		struct stat devstat;
+		ent.GetStat(&devstat);
+		BVolume vol(devstat.st_dev);
+		BQuery query;
+		query.SetVolume(&vol);
+		query.PushAttr("BEOS:TYPE");
+		query.PushString(ThemisCookieFile);
+		query.PushOp(B_EQ);
+		query.Fetch();
+		ent.Unset();
+		BPath path;
+		entry_ref ref;
+	cookie_st *curcookie=cookie_head;
+	cookie_st *nucookie=NULL;
+	int32 count=0;
+	while (query.GetNextEntry(&ent,false)==B_OK) {
+		if (trashdir->Contains(&ent))
+			continue;
+		ent.GetRef(&ref);
+		path.SetTo(&ref);
+		printf("cookie file at: %s\n",path.Path());
+		nucookie=new cookie_st;
+		nucookie->ref=ref;
+		if (curcookie==NULL) {
+			if (cookie_head==NULL) {
+				curcookie=cookie_head=nucookie;
+			} else {
+				curcookie=cookie_head;
+				while (curcookie->next!=NULL)
+					curcookie=curcookie->next;
+				curcookie->next=nucookie;
+			}
+			
+			
+		} else {
+			while (curcookie->next!=NULL)
+				curcookie=curcookie->next;
+			curcookie->next=nucookie;
+		}
+		LoadCookie(nucookie);
+		
+		count++;
+	}
+	printf("%ld cookie(s) loaded.\n",count);
+		delete trashdir;
+	}
+	PrintCookies();
+}
+
+void CookieManager::SaveAllCookies() {
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+		cookie_st *cur=cookie_head;
+		while (cur!=NULL) {
+			if (!cur->discard) {
+				SaveCookie(cur);
+			}
+			cur=cur->next;	
+		}
+		
+	}
+}
+
+

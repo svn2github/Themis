@@ -38,7 +38,7 @@ Project Start Date: October 18, 2000
   extern "C" __declspec(dllexport)status_t Initialize(void *info=NULL);
   extern "C" __declspec(dllexport)status_t Shutdown(bool now=false);
   extern "C" __declspec(dllexport)protocol_plugin* GetObject(void);
-
+class CookieManager;
 class http_protocol:public ProtocolPlugClass
    {
     private:
@@ -55,6 +55,8 @@ class http_protocol:public ProtocolPlugClass
 	 http_opt_handler *HOH;  
 	 BView *view;
 	 BWindow *win;
+	BMessage *AppSettings;
+	BMessage **AppSettings_p;
     public:
 		void FindURI(const char *url,BString &host,uint16 *port,BString &uri,bool *secure);
      http_protocol(BMessage *info=NULL);
@@ -79,5 +81,6 @@ class http_protocol:public ProtocolPlugClass
 	 BMessage *cache_reply;
 //	 bool RequiresHeartbeat(){return true;}
 	 void Heartbeat();
+	 friend class CookieManager;
    };
 #endif

@@ -13,7 +13,7 @@
 #include <time.h>
 #include <Entry.h>
 #include <Locker.h>
-
+#include <Message.h>
 
 //Set-Cookie: VisitorID=4; expires=Wed, 18-Feb-2004 04:15:52 GMT; path=/
 //Set-Cookie: NewVisitor=Yes; expires=Wed, 19-Feb-2003 06:15:52 GMT; path=/    
@@ -122,6 +122,7 @@ struct cookie_st {
 
 This class is the heart of the cookie management subsystem.
 */
+class http_protocol;
 class CookieManager {
 	private:
 		/*!
@@ -152,9 +153,26 @@ class CookieManager {
 		I took the liberty of writing it.
 		*/
 		char *stristr(const char *str1,const char *str2);
-		
+		/*!
+		\brief Locates and/or creates the cookie storage directory.
+		*/
+		void FindCookieDirectory();
+		/*!
+		\brief Checks the cookie mimetype.
+		*/
+		void CheckMIME();
+		/*!
+		\brief Checks and creates necessary indices.
+		*/
+		void CheckIndicies();
+		//! Stores the location of the cookie directory.
+		entry_ref cookiedirref;
+		//! Stores the cookie system's settings
 		BLocker *lock;
+		status_t LoadCookie(cookie_st *cookie);
+		status_t SaveCookie(cookie_st *cookie);
 	public:
+		BMessage *CookieSettings;
 		cookie_st ** FindCookies(int32 *count,const char *domain, const char *uri,bool secure=false);
 		CookieManager();
 		~CookieManager();
@@ -175,6 +193,18 @@ class CookieManager {
 		\brief This function removes expired cookies out of memory and off of disk.
 		*/
 		void ClearExpiredCookies();
+		/*!
+		\brief Make sure that the settings can be stored by the http_protocol class at shutdown.
+		*/
+		friend class http_protocol;
+		/*!
+		\brief Loads all cookies on disk into RAM.
+		*/
+		void LoadAllCookies();
+		/*!
+		\brief Saves all unexpired, non-discardable cookies to disk.
+		*/
+		void SaveAllCookies();
 		
 };
 

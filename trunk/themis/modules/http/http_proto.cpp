@@ -33,47 +33,53 @@ http_protocol *HTTP_proto;
 #include <Menu.h>
 #include <Autolock.h>
 #include "plugman.h"
+#include <Message.h>
+#include <Locker.h>
+#include <Autolock.h>
 tcplayer *TCP;
-BMessage *AppSettings;
-BMessage **AppSettings_p;
+//BMessage *AppSettings=NULL;
+//BMessage **AppSettings_p=NULL;
 //plugman *PlugMan;
 BMessage *HTTPSettings;
-
+BLocker *lock=NULL;
 status_t Initialize(void *info)
  {
+ 	lock=new BLocker(true);
+ 	BAutolock alock(lock);
+ 	if (alock.IsLocked()) {
   TCP=NULL;
-  AppSettings=NULL;
-	HTTPSettings=NULL;
+	 
+	HTTPSettings=new BMessage();
 //	 PlugMan=NULL;
   if (info!=NULL) {
 	  
 	BMessage *imsg=(BMessage *)info;
 //	if (imsg!=NULL) {
 		imsg->PrintToStream();
-		
+	  
+	  
 	 if (imsg->HasPointer("tcp_layer_ptr"))
 	 	imsg->FindPointer("tcp_layer_ptr",(void**)&TCP);
 //	}
 //	if (imsg->HasPointer("plug_manager"))
 //		imsg->FindPointer("plug_manager",(void**)&PlugMan);
 	printf("(http) TCP layer: %p\n",TCP);
-  HTTP_proto=new http_protocol(imsg);
-	 
+	http_protocol *proto=NULL;
+  proto=new http_protocol(imsg);
+	 if (proto!=HTTP_proto)
+		 proto=HTTP_proto;
 
   }else 
   	HTTP_proto=new http_protocol(NULL);
-  
+  }
   return B_OK;
  }
 status_t Shutdown(bool now)
  {
 	printf("1234 HTTP Being Shutdown\n");
-	if (AppSettings_p!=NULL) {
-		if (!AppSettings->HasMessage("http_settings_message")) {
-			AppSettings->AddMessage("http_settings_message",HTTPSettings);
-		} else
-			AppSettings->ReplaceMessage("http_settings_message",HTTPSettings);
-	}
+{
+			BAutolock alock(lock);
+	if (alock.IsLocked()) {
 	 
 //  if (now)
 	  if (HTTP_proto!=NULL)
@@ -81,8 +87,21 @@ status_t Shutdown(bool now)
 	    HTTP_proto->Stop();
   		delete HTTP_proto;
   	   }
+//	if (AppSettings_p!=NULL) {
+//
+//		if (!AppSettings->HasMessage("http_settings_message")) {
+//			AppSettings->AddMessage("http_settings_message",HTTPSettings);
+//		} else
+//			AppSettings->ReplaceMessage("http_settings_message",HTTPSettings);
+//	}
+	delete HTTPSettings;
+	 
 	TCP=NULL;
 //	PlugMan=NULL;
+}
+ }
+ 
+  delete lock;
   return B_OK;
  }
 protocol_plugin* GetObject(void)
@@ -328,7 +347,17 @@ void http_protocol::Heartbeat() {
 http_protocol::http_protocol(BMessage *info)
               :protocol_plugin(info)
  {
- 	uses_heartbeat=false;
+ 	HTTP_proto=this;
+ 	AppSettings=NULL;
+ 	AppSettings_p=NULL;
+	info->FindPointer("settings_message_ptr",(void**)&AppSettings_p);
+	if (AppSettings_p!=NULL)
+		AppSettings=*AppSettings_p;
+	else {
+		AppSettings=NULL;
+	}
+	 printf("@@!!\tAppSettings_p %p\tAppSettings %p\n",AppSettings_p,AppSettings);
+ 	uses_heartbeat=true;
  	Window=NULL;
 	 smthead=NULL;
 	 /*
@@ -359,6 +388,7 @@ http_protocol::http_protocol(BMessage *info)
  }
 http_protocol::~http_protocol() {
 	printf("http_protocol destructor\n");
+	 printf("@@##\tAppSettings_p %p\t%AppSettings %p\n",AppSettings_p,AppSettings);
 //	Stop();
 	printf("Locking HTTP Layer.\n");
 //	HTTP->Lock();
@@ -388,7 +418,12 @@ void http_protocol::Stop()
 		 
 	 	HTTP->CacheSys->Unregister(HTTP->CacheToken);
 	 }
-	 
+	 if (((*AppSettings_p)!=NULL) && (*AppSettings_p==AppSettings)) {
+	 	if (AppSettings->HasMessage("cookie_settings"))
+	 		AppSettings->ReplaceMessage("cookie_settings",HTTP->CookieMonster->CookieSettings);
+	 	else
+	 		AppSettings->AddMessage("cookie_settings",HTTP->CookieMonster->CookieSettings);
+	 }
 	printf("done unregistering.\n");
  }
 void http_protocol::AddMenuItems(BMenu *menu) {
