@@ -115,8 +115,8 @@ CacheUser* CacheUser::SetNext(CacheUser *nextuser) {
 		} else {
 			next->SetNext(nextuser);
 		}
-		return nextuser;
 	}
+	return nextuser;
 	
 }
 
@@ -130,8 +130,8 @@ CacheUser* CacheUser::SetPrevious(CacheUser *prevuser) {
 		prev=prevuser;
 		if (prev!=NULL)
 			prev->next=this;
-		return prev;
 	}
+	return prev;
 	
 }
 
@@ -141,6 +141,7 @@ uint32 CacheUser::Token() {
 
 uint32 CacheUser::SetToken(uint32 token) {
 	id=token;
+	return id;
 }
 
 void CacheUser::operator=(CacheUser &othercu) 

@@ -259,13 +259,13 @@ void Connection::ConnectionEstablished(){
 	if (alock.IsLocked()) {
 		if (use_ssl) {
 			int cryptstatus;
-			printf("CRYPT_OK: %ld\n",CRYPT_OK);
+			printf("CRYPT_OK: %d\n",CRYPT_OK);
 			cryptstatus=cryptCreateSession(&cryptSession,CRYPT_UNUSED,CRYPT_SESSION_SSL);
-			printf("session creation: %ld\n",cryptstatus);
+			printf("session creation: %d\n",cryptstatus);
 			cryptstatus=cryptSetAttribute(cryptSession,CRYPT_SESSINFO_NETWORKSOCKET,socket_id);
-			printf("passing network socket: %ld\n",cryptstatus);
+			printf("passing network socket: %d\n",cryptstatus);
 			cryptstatus=cryptSetAttribute(cryptSession,CRYPT_SESSINFO_ACTIVE,1);
-			printf("activating session: %ld\n",cryptstatus);
+			printf("activating session: %d\n",cryptstatus);
 			if (cryptStatusError(cryptstatus))
 			{
 			int errorcode,errorstrlen;
@@ -275,7 +275,7 @@ void Connection::ConnectionEstablished(){
 			errstring=new char[errorstrlen+1];
 			memset(errstring,0,errorstrlen+1);
 			cryptGetAttributeString(cryptSession,CRYPT_ATTRIBUTE_INT_ERRORMESSAGE,errstring,&errorstrlen);
-			printf("error: %ld - %s\n",errorcode,errstring);
+			printf("error: %d - %s\n",errorcode,errstring);
 			delete errstring;
 			printf("Closing connection.\n");
 			last_error=ERROR_CONNECTION_RESET;
@@ -397,7 +397,7 @@ bool Connection::IsConnected() {
 			}
 			if (FD_ISSET(socket_id,&eset)) {
 				//An exception occured...
-				printf("Exception on connection to \"%s\":\t%ld - %s\n",host_name,errno,strerror(errno));
+				printf("Exception on connection to \"%s\":\t%d - %s\n",host_name,errno,strerror(errno));
 			}
 			if ((FD_ISSET(socket_id,&rset)) || (FD_ISSET(socket_id,&wset)) ) {
 #ifdef BONE
@@ -615,10 +615,10 @@ off_t Connection::Receive(void *data, off_t max_size) {
 				break;
 			}
 			bytes=0;
-			printf("[Receive] at most %ld can be read now.\n", max_size-size);
+			printf("[Receive] at most %Ld can be read now.\n", max_size-size);
 			bytes=current->buffer->GetData((unsigned char*)data+size,max_size-size);
 			size+=bytes;
-			printf("[Receive] %ld (%ld) bytes were copied into protocol buffer.\n",bytes,size);
+			printf("[Receive] %ld (%Ld) bytes were copied into protocol buffer.\n",bytes,size);
 			prev=current;
 			current=current->next;
 			delete prev->buffer;
@@ -628,7 +628,7 @@ off_t Connection::Receive(void *data, off_t max_size) {
 		buffer_in=current;
 		lastusedtime=real_time_clock();
 		session_bytes_out+=size;
-		printf("[Connection::Receive] %ld bytes have been transferred to owner. %ld bytes left in buffer.\n\n",session_bytes_received,DataSize());
+		printf("[Connection::Receive] %Ld bytes have been transferred to owner. %Ld bytes left in buffer.\n\n",session_bytes_received,DataSize());
 		fflush(stdout);
 		lock.Unlock();
 	}

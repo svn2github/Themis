@@ -335,7 +335,7 @@ status_t plugman::UnloadAllPlugins(bool clean) {
 		delete Heartbeat_mr;
 		Heartbeat_mr=NULL;
 	}
-	
+	return B_OK;
 }
 status_t plugman::LoadPlugin(uint32 which) 
 {
@@ -781,12 +781,12 @@ void plugman::MessageReceived(BMessage *msg) {
 					strcpy(nuplug->path,path.Path());
 					nuplug->plugid=nuplug->pobj->PlugID();
 #ifdef DEBUG
-					 printf("%c%c%c%c\n",nuplug->pobj->PlugID()>>24,nuplug->pobj->PlugID()>>16,nuplug->pobj->PlugID()>>8,nuplug->pobj->PlugID());
+					 printf("%c%c%c%c\n",(char)nuplug->pobj->PlugID()>>24,(char)nuplug->pobj->PlugID()>>16,(char)nuplug->pobj->PlugID()>>8,(char)nuplug->pobj->PlugID());
 					          printf("Loaded \"%s\" (%c%c%c%c) V. %1.2f\n",nuplug->pobj->PlugName(),
-					          nuplug->pobj->PlugID()>>24,nuplug->pobj->PlugID()>>16,nuplug->pobj->PlugID()>>8,nuplug->pobj->PlugID(),
+					          (char)nuplug->pobj->PlugID()>>24,(char)nuplug->pobj->PlugID()>>16,(char)nuplug->pobj->PlugID()>>8,(char)nuplug->pobj->PlugID(),
 					          nuplug->pobj->PlugVersion());
 					if (nuplug->pobj->SecondaryID()!=0)
-						printf("\tSecondary ID: %c%c%c%c\n",nuplug->pobj->SecondaryID()>>24,nuplug->pobj->SecondaryID()>>16,nuplug->pobj->SecondaryID()>>8,nuplug->pobj->SecondaryID());
+						printf("\tSecondary ID: %c%c%c%c\n",(char)nuplug->pobj->SecondaryID()>>24,(char)nuplug->pobj->SecondaryID()>>16,(char)nuplug->pobj->SecondaryID()>>8,(char)nuplug->pobj->SecondaryID());
 #endif
 					if (!nuplug->pobj->IsPersistent()) {
 						status_t (*Shutdown)(bool);
@@ -922,7 +922,7 @@ void plugman::MessageReceived(BMessage *msg) {
 }
 status_t plugman::UnloadPlugin(uint32 which,bool clean) {
 #ifdef DEBUG
-	printf("PlugMan: Unload plugin %c%c%c%c\n",which>>24,which>>16,which>>8,which);
+	printf("PlugMan: Unload plugin %c%c%c%c\n",(char)which>>24,(char)which>>16,(char)which>>8,(char)which);
 #endif
 	
 		plugst *cur=head,*prev=NULL;

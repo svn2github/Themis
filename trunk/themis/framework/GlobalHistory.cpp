@@ -392,7 +392,7 @@ GlobalHistory::Init(
 				GlobalHistoryItem* newitem = new GlobalHistoryItem(
 					ghimsg->FindString( "url" ),
 					ghimsg->FindInt32( "time" ) );
-				printf( "  Adding the following item:\n", i );
+				printf( "  Adding the following item: %ld\n", i );
 				newitem->Print();
 				fList->AddItem( newitem, 0 );
 			}

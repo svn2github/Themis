@@ -99,7 +99,7 @@ int32 ProtocolPlugClass::UnObfuscateURL(const char *obfuscated,char *unobfuscate
 				strncpy(unobfuscated,obfuscated,(protocol_str+3)-obfuscated);
 				strncat(unobfuscated,host_str,min_c(strlen(host_str),max_size-(strlen(unobfuscated)+strlen(host_str))));
 			} else {
-				strncpy(unobfuscated,host_str,min_c(strlen(host_str),max_size));
+				strncpy(unobfuscated,host_str,min_c((int32)strlen(host_str),max_size));
 			}
 			memset(host_str,0,max_size);
 			memset(temp_str,0,max_size);
@@ -121,7 +121,7 @@ int32 ProtocolPlugClass::UnObfuscateURL(const char *obfuscated,char *unobfuscate
 			char numstr[3];
 			char *endp=NULL;
 			char c;
-			char *prev_percent=NULL,*pp,*prev_percent2;
+			char *prev_percent=NULL,*prev_percent2;
 			do {
 				memset(numstr,0,3);
 				strncpy(numstr,percent+1,2);
@@ -189,7 +189,7 @@ int32 ProtocolPlugClass::UnObfuscateHost(const char *obfuscated, char *unobfusca
 			}
 			
 			if (all_digits) {//we have a 32-bit number!
-				char *endp;
+//				char *endp;
 				uint64 largenum=0L;
 				char con[2];
 				for (int i=0; i<length; i++) {
@@ -199,7 +199,7 @@ int32 ProtocolPlugClass::UnObfuscateHost(const char *obfuscated, char *unobfusca
 				if (largenum>0xffffffff) {
 					uint32 ip_addr_32=(uint32)largenum^0xffffffff;
 					uint8 ip_addr[4];
-					uint32 total=0;
+//					uint32 total=0;
 					uint8 num=0;
 					for (int8 i=3; i>=0; i--) {
 						num=ip_addr_32%256;
@@ -211,7 +211,7 @@ int32 ProtocolPlugClass::UnObfuscateHost(const char *obfuscated, char *unobfusca
 				} else {
 					uint32 ip_addr_32=(uint32)largenum;
 					uint8 ip_addr[4];
-					uint32 total=0;
+//					uint32 total=0;
 					uint8 num=0;
 					for (int8 i=3; i>=0; i--) {
 						num=ip_addr_32%256;

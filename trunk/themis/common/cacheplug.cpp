@@ -113,15 +113,19 @@ void CachePlug::ClearAllRequests(uint32 usertoken)
 {
 }
 BMessage *CachePlug::GetInfo(uint32 usertoken, int32 objecttoken){
+	return NULL;
 }
 
 ssize_t CachePlug::Write(uint32 usertoken, int32 objecttoken, void *data, size_t size){
+	return 0L;
 }
 
 ssize_t CachePlug::Read(uint32 usertoken, int32 objecttoken, void *data, size_t size){
+	return 0L;
 }
 ssize_t CachePlug::SetLength(uint32 usertoken, int32 objecttoken, size_t length)
 {
+	return 0L;
 }
 
 void CachePlug::ClearCache(uint32 which){

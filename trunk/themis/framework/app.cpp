@@ -108,7 +108,7 @@ App::App(
 	{
 		BMessage reply;	
 		msgr->SendMessage(msg,&reply);
-		if (reply.what==B_ERROR)
+		if (reply.what==(uint32)B_ERROR)
 			printf("Problem setting plug-in initialization info.\n");
 	}
 	delete msgr;
@@ -181,7 +181,7 @@ bool App::QuitRequested(){
 	Win* w=NULL;
 	BMessenger *msgr=NULL;
 	thread_id th;
-	printf( "CountWindows(): %d\n", CountWindows() );
+	printf( "CountWindows(): %ld\n", CountWindows() );
 	while (CountWindows()>0) {
 		w=( Win* )WindowAt(0);
 		if (w!=NULL) {
@@ -316,7 +316,7 @@ void App::MessageReceived(BMessage *msg){
 			printf( "APP WINDOW_CLOSE\n" );
 			Win* closewin;
 			msg->FindPointer( "win_to_close", ( void** )&closewin );
-			printf( "mainwindowcount: %d\n", GetMainWindowCount() );
+			printf( "mainwindowcount: %ld\n", GetMainWindowCount() );
 			
 			if( closewin == NULL )
 			{

@@ -113,7 +113,7 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 			{
 			MS_MQueue->Unlock();
 //				BMessage *msg;
-				thread_id sender_thread;
+//				thread_id sender_thread;
 				BMessage *container=NULL;
 				uint32 targets=0;
 				uint32 sender_target_id=0;

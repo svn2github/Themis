@@ -1262,4 +1262,5 @@ status_t Win::ReceiveBroadcast(BMessage *message)
 			break;
 		} // case COMMAND_INFO :
 	} // switch( command )
+	return B_OK;
 }

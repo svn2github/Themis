@@ -203,7 +203,7 @@ void aboutview::MessageReceived(BMessage *msg)
 								((BTextView*)view)->Insert(temp);
 								((BTextView*)view)->Insert("\nAdd-on ID: ");
 								memset(temp,0,20);
-								sprintf(temp,"%c%c%c%c",plug->PlugID()>>24, plug->PlugID()>>16,plug->PlugID()>>8,plug->PlugID());
+								sprintf(temp,"%c%c%c%c",(char)plug->PlugID()>>24, (char)plug->PlugID()>>16,(char)plug->PlugID()>>8,(char)plug->PlugID());
 								((BTextView*)view)->Insert(temp);
 							}
 							view=NULL;

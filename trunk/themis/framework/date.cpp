@@ -349,7 +349,7 @@ int32 Date::ParseDate(const char *date)
 //					printf("GMT offset of local machine: %d\n",gmt->tm_gmtoff);
 					if ((strcasecmp("GMT",value)==0) || (strcasecmp("UT",value)==0))
 					{//Then we need to find the GMT offset of the local machine
-						printf("(GMT) local offset: %d\toffset: %d\n",local_offset,offset);
+						printf("(GMT) local offset: %ld\toffset: %ld\n",local_offset,offset);
 						local_offset-=3600;
 					}
 					/*

@@ -129,8 +129,8 @@ TabHistory::GetNextEntry()
 	else
 	{
 //		printf( "fCurrentPosition == 0\n" );
-		return NULL;
 	}
+	return NULL;
 }
 
 const char*
@@ -147,8 +147,8 @@ TabHistory::GetPreviousEntry()
 	else
 	{
 //		printf( "fCurrentPosition == fDepth\n" );
-		return NULL;
 	}
+	return NULL;
 }
 
 void

@@ -124,7 +124,7 @@ int32 TCPManager::_Manager_Thread() {
 	Connection *connection;
 	int32 connect_count;
 	int32 current_time;
-	int32 last_used;
+//	int32 last_used;
 	
 	int32 time_out=DEFAULT_TIMEOUT;
 	
