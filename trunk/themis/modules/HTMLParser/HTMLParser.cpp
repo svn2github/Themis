@@ -74,7 +74,14 @@ HTMLParser	::	HTMLParser( BMessage * info )	:	BHandler( "HTMLParser" ), PlugClas
 		userToken = cache->Register( Type(), "HTML Parser" );
 	}
 	
-	parser = new SGMLParser( "/boot/home/config/settings/Themis/dtd/HTML.4.0.Transitional.DTD" );
+	if ( appSettings != NULL )	{
+		const char * path;
+		appSettings->FindString( "DTDToUsePath", &path );
+		parser = new SGMLParser( path );
+	}
+	else	{
+		parser = NULL;
+	}
 	
 }
 
@@ -87,6 +94,7 @@ HTMLParser	::	~HTMLParser()	{
 void HTMLParser	::	MessageReceived( BMessage * message )	{
 	
 	message->PrintToStream();
+	BHandler::MessageReceived( message );
 	
 }
 
@@ -122,7 +130,7 @@ char * HTMLParser	::	PlugName()	{
 
 float HTMLParser	::	PlugVersion()	{
 	
-	return 0.0;
+	return 0.5;
 	
 }
 
@@ -194,8 +202,24 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 					if ( appSettings != NULL )	{
 						const char * path;
 						appSettings->FindString( "DTDToUsePath", &path );
-						printf( "New path: %s\n", path );
-						parser->parseDTD( path );
+						string dtdLoad = "Loading new DTD: ";
+						dtdLoad += path;
+						BMessage * messages = new BMessage( ReturnedData );
+						messages->AddInt32( "command", COMMAND_INFO );
+						messages->AddString( "type", "messages" );
+						messages->AddInt32( "pluginID", PlugID() );
+						messages->AddString( "message", dtdLoad.c_str() );
+						Broadcast( MS_TARGET_HANDLER, messages );
+						if ( parser == NULL )	{
+							parser = new SGMLParser( path );
+							parser->parseDTD();
+						}
+						else	{
+							parser->parseDTD( path );
+						}
+						messages->ReplaceString( "message", "New DTD loaded" );
+						Broadcast( MS_TARGET_HANDLER, messages );
+						delete messages;
 					}
 					break;
 				}
@@ -225,7 +249,16 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 					ssize_t fileSize = cache->GetObjectSize( userToken, fileToken );
 					
 					printf( "File size: %i\n", (int) fileSize );
-					
+					if ( fileSize == 0 )	{
+						BMessage * messages = new BMessage( ReturnedData );
+						messages->AddInt32( "command", COMMAND_INFO );
+						messages->AddString( "type", "messages" );
+						messages->AddInt32( "pluginID", PlugID() );
+						messages->AddString( "message", "Requested file is 0 bytes long. Something is wrong here" );
+						Broadcast( MS_TARGET_HANDLER, messages );
+						delete messages;
+						break;
+					}
 					string content;
 					char * buffer = new char[ 2000 ];
 					ssize_t bytesRead = 0;
@@ -250,22 +283,29 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 					
 					// Parse it
 					SGMLTextPtr	docText = SGMLTextPtr( new SGMLText( content ) );
-					mDocument = parser->parse( docText );
-					
-					printf( "Data parsed\n" );
-			
-					//showDocument();
+					if ( parser != NULL )	{
+						mDocument = parser->parse( docText );
+						printf( "Data parsed\n" );
 
-					if ( PlugMan )	{
-						BMessage * done = new BMessage( ReturnedData );
-						done->AddInt32( "command", COMMAND_INFO );
-						done->AddString( "type", "dom" );
-						done->AddPointer( "data_pointer", &mDocument );
-						
-						Broadcast( MS_TARGET_ALL, done );
+						if ( PlugMan )	{
+							BMessage * done = new BMessage( ReturnedData );
+							done->AddInt32( "command", COMMAND_INFO );
+							done->AddString( "type", "dom" );
+							done->AddPointer( "data_pointer", &mDocument );
+							Broadcast( MS_TARGET_ALL, done );
+							
+							BMessage * messages = new BMessage( ReturnedData );
+							messages->AddInt32( "command", COMMAND_INFO );
+							messages->AddString( "type", "messages" );
+							messages->AddInt32( "pluginID", PlugID() );
+							messages->AddString( "message", "File parsed" );
+							Broadcast( MS_TARGET_HANDLER, messages );
 
-						delete done;
-						done = NULL;
+							delete done;
+							delete messages;
+							done = NULL;
+							messages = NULL;
+						}
 					}
 					break;
 				}
@@ -282,12 +322,14 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * message )	{
 	
 }
 
-status_t HTMLParser		::	BroadcastReply(BMessage *message) {
+status_t HTMLParser		::	BroadcastReply(BMessage *message)	{
+
 	return B_OK;
+
 }
 
-uint32 HTMLParser	::	BroadcastTarget() 
-{
+uint32 HTMLParser	::	BroadcastTarget()	{
+
 	return MS_TARGET_HTML_PARSER;
 	
 }
