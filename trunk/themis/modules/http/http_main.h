@@ -74,7 +74,6 @@ class http_protocol:public ProtocolPlugClass
      http_protocol();
      ~http_protocol();
      BMessage headers;
-     BMallocIO *buffer,*RawBuffer; //parsed and unparsed buffers respectively
      char *PlugName(void);
      uint32 PlugID(void);
      float PlugVersion(void);
@@ -82,12 +81,6 @@ class http_protocol:public ProtocolPlugClass
      int32 SpawnThread(BMessage *info);
      bool IsPersistant(){return true;}
      void Stop();
-   //  void FindURI(const char *url,BString &host,int &port,BString &uri);
- //    void ParseResponse(unsigned char *resp,size_t size);
-  //   BMessage *ProcessRespLine(const char *data);
- //    unsigned char *GetDoc(BString &host,int &port,BString &uri);
- //    unsigned char *GetDoc(const char* url);
- //    unsigned char *GetURL(const char* url);
      int32 GetURL(BMessage *info);
      static int32 ThreadFunc(void *info);
    };
