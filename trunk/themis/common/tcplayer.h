@@ -69,7 +69,7 @@ Include *both* plugclass.h *and* plugclass.cpp in your plugin!
 
 //#define CHK_ERR(err,s) if ((err)==-1) { ERR_print_errors_fp(stdout);  }
 //#define CHK_SSL(err) if ((err)==-1) { ERR_print_errors_fp(stdout);  }
-
+/*
 class mutex {
 	public:
 		mutex(){
@@ -85,7 +85,7 @@ class mutex {
 		}
 		mutable BLocker _locker;
 };
-
+*/
 struct connection {
 	int32 proto_id;
 	uint16 port;
@@ -185,10 +185,20 @@ struct DRCallback_st
 	
 };
 
+/*!
+\brief The devil himself.
 
+The arch-nemesis of my sanity, the tcplayer class is the bottom most layer of the networking
+stack in Themis.
+\note This class is very likely to be rewritten yet again, and moved into it's own library with 
+a supporting cast of new classes to enable udp, and both tcp and udp hosting. I don't recommend
+using this class unless you absolutely, positively must. Most things can be routed through
+the HTTP add-on which utlizes this class; the HTTP add-on probably won't change too much
+in the near future other than to finish implementing it.
+*/
 class tcplayer {
 	public:
-		mutex *mtx;
+//		mutex *mtx;
 #ifdef USEOPENSSL
 		SSL_METHOD *sslmeth;
 	SSL_CTX* sslctx;

@@ -31,6 +31,10 @@ Project Start Date: October 18, 2000
 
 #include <String.h>
 #include "plugclass.h"
+
+/*!
+This is the base class for the protocol plug-ins.
+*/
 class ProtocolPlugClass: public PlugClass {
 	public:
 		ProtocolPlugClass(BMessage *info=NULL):PlugClass(info) {}

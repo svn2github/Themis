@@ -29,27 +29,29 @@ Project Start Date: October 18, 2000
 
 #ifndef _plugstruct
 #define _plugstruct
-//#include <Application.h>
 #include <KernelKit.h>
 #include <Entry.h>
 #include "plugclass.h"
 #include <string.h>
+/*!
 
+This is the linked list structure used by the plug-in manager plugman.
+*/
 struct plugst {
+	//! the id assigned to the plugin on load by BeOS.
 	image_id sysid;
-	//sysid is the id assigned to the plugin on load by BeOS.
+	//! a copy of the plug id for when it's not loaded.
 	uint32 plugid;
-	//a copy of the plug id for when it's not loaded.
+	//! is the plugin currently in memory
 	volatile bool inmemory;
-	//is the plugin currently in memory
-	PlugClass *pobj;//plugin object
-	PlugClass *(*GetObject)(void);
-	entry_ref ref;
-	node_ref nref;
-	time_t mod_time;
-	char path[B_PATH_NAME_LENGTH+B_FILE_NAME_LENGTH];
-	int32 type;
-	char *name;
+	PlugClass *pobj;//!< plugin object
+	PlugClass *(*GetObject)(void); //!< function pointer to retrieve the plug-in's object
+	entry_ref ref; //!< entry_ref of the add-on 
+	node_ref nref; //!< node_ref of the add-on
+	time_t mod_time; //!< the last modified time of the add-on
+	char path[B_PATH_NAME_LENGTH+B_FILE_NAME_LENGTH]; //!< Path and file name of the plug-in
+	int32 type; //!< The add-on's theoretical project type.
+	char *name; //!< the add-on's internal name.
 	plugst *next;
 	plugst *prev;
 	/*
@@ -65,7 +67,7 @@ struct plugst {
 			nextone->prev=current->prev;
 			delete current;
 	*/
-	volatile bool uses_heartbeat;
+	volatile bool uses_heartbeat; //!< a record of whether or not the plug-in needs a heartbeat
 	plugst() {
 		plugid=0;
 		uses_heartbeat=false;

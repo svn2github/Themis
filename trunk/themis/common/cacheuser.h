@@ -30,10 +30,10 @@ Project Start Date: October 18, 2000
 #define _cache_user_class_
 
 #include <SupportDefs.h>
-/*
+/*!
 	The CacheUser class is a support class which is never directly accessed by anything
 other than the cache system. It stores information about the application component and/or
-plug-in that wishes to use the cache system, as well as storing information read/write
+plug-in that wishes to use the cache system, as well as storing read/write
 position information for each cache object utilized. When the cache system creates a new
 CacheObject object (either by searching and finding a desired URL or by creating an actual
 file for a given URL), it is assigned one or more CacheUser objects. These objects are
@@ -44,11 +44,12 @@ as the assignment operator =.
 */
 class CacheUser {
 	private:
-		uint32 id; //cache assigned id number for the component using the cache
-		uint32 broadcast_id; //the broadcast system's target id number
-		volatile off_t readpos,writepos;//offsets of the various file pointers.
-		CacheUser *next, *prev; //these are used as part of the linked list system
-		char *name; //optional name of the component using the cache
+		uint32 id; //!< cache assigned id number for the component using the cache
+		uint32 broadcast_id; //!< the broadcast system's target id number
+		volatile off_t readpos, writepos;//!< offsets of the various file pointers.
+		CacheUser *next, //!< these are used as part of the linked list system
+		 *prev; //!< these are used as part of the linked list system
+		char *name; //!< optional name of the component using the cache
 	public:
 		CacheUser(uint32 broadcast_target,uint32 usertoken=0, const char *Name=NULL);
 		CacheUser(CacheUser *cu);
@@ -59,7 +60,7 @@ class CacheUser {
 		CacheUser *SetNext(CacheUser *nextuser);
 		CacheUser *Previous();
 		CacheUser *SetPrevious(CacheUser *prevuser);
-		void Remove(CacheUser *target); //remove the target object from the linked list, but don't delete it
+		void Remove(CacheUser *target); //!< remove the target object from the linked list, but don't delete it
 		
 		//these two functions deal with the user token/id; SetToken is not actually called
 		//in the current implementation, though the function was added just in case.
@@ -73,10 +74,10 @@ class CacheUser {
 		off_t SetWritePosition(off_t offset);
 		off_t WritePosition();
 		
-		//the assignment operator = to quickly copy an instance of this class.
+		//! the assignment operator = to quickly copy an instance of this class.
 		void operator=(CacheUser &othercu);
 		
-		//the broadcast id of the user, for notification purposes.
+		//! returns the broadcast id of the user, for notification purposes.
 		uint32 BroadcastID();
 };
 

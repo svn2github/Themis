@@ -33,7 +33,7 @@ Project Start Date: October 18, 2000
 
 #include <stdlib.h>
 #include <string.h>
-/*
+/*!
 	Supported MIME Type linked list structure.
 */
 struct smt_st {

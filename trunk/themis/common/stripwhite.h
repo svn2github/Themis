@@ -35,6 +35,10 @@ void stripendwhite(const char *orig,char *result) {
 		pos--;
 	strncpy(result,orig,pos);
 }
+/*!
+This function trims the white space off the beginning and end of a passed in character string
+and returns a brand new string (allocated with the "new" function) as the result.
+*/
 char *trim(char *target) 
 {
 	char *result=NULL;

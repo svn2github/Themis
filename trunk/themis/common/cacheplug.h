@@ -78,10 +78,10 @@ class CachePlug:public PlugClass {
 		virtual ssize_t Write(uint32 usertoken, int32 objecttoken, void *data, size_t size);
 		virtual ssize_t Read(uint32 usertoken, int32 objecttoken, void *data, size_t size);
 
-		//!returns the current object size, not counting its attributes
+		//! returns the current object size, not counting its attributes
 		virtual ssize_t GetObjectSize(uint32 usertoken, int32 objecttoken)=0;
 		
-		//!removes the contents (the data) of the file, setting its file size to zero.
+		//! removes the contents (the data) of the file, setting its file size to zero.
 		virtual void ClearContent(uint32 usertoken, int32 objecttoken)=0;
 		
 		//removes the CacheUser object for the specified user from one or all CacheObjects.
@@ -89,10 +89,10 @@ class CachePlug:public PlugClass {
 		virtual void ClearRequests(uint32 usertoken, int32 objecttoken);
 		virtual void ClearAllRequests(uint32 usertoken);
 		
-		//!get the total size of the files in the cache system specified.
+		//! get the total size of the files in the cache system specified.
 		virtual ssize_t GetCacheSize(uint32 which=TYPE_ALL)=0;
 
-		//manipulation of the write lock privilleges for any given object.
+		//! manipulation of the write lock privilleges for any given object.
 		virtual bool AcquireWriteLock(uint32 usertoken,int32 objecttoken)=0;
 		virtual void ReleaseWriteLock(uint32 usertoken, int32 objecttoken)=0;
 };
