@@ -66,6 +66,8 @@ DOMLIBRARYSOURCES= \
 	framework/DOM/TDocument.cpp
 DOMTESTSOURCES= \
 	framework/DOM/DOMTest.cpp
+DOMLOADTESTSOURCES= \
+	framework/DOM/LoadTest.cpp
 JAVASCRIPT_LIBRARY= \
 	js
 JAVASCRIPT_SUPPORT_LIBRARIES= \
@@ -388,4 +390,17 @@ domtestdepends:  $(DOMTESTSOURCES) $(foreach file,$(DOMTESTSOURCES:.cpp=.d),$(DO
 	@echo "DOM Test application depends are done."
 	
 domtestobjects: $(foreach file,$(DOMTESTSOURCES),$(DOMLIBRARY_OBJECT_DIR)$(notdir $(file:.cpp=.o)))
+	@echo "DOM Test application objects are done."
+
+#DOM LoadTest application
+domloadtest: domlib domltestdepends domltestobjects
+	@$(CC) -o $(BASE_INSTALL_DIR)DOMLoadTest $(foreach file,$(notdir $(DOMLOADTESTSOURCES:.cpp=.o)),$(DOMLIBRARY_OBJECT_DIR)$(file)) -Xlinker $(LDFLAGS) -L ./ -L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) -lbe -ldom -lstdc++.r4
+	@echo "DOM LoadTest application (DOMLoadTest) is now linked. Doing mimeset."
+	@mimeset -F $(BASE_INSTALL_DIR)DOMLoadTest
+	@cp framework/DOM/LoadTest.html $(BASE_INSTALL_DIR)
+	@echo "DOM LoadTest application (DOMLoadTest) compiled and linked successfully."
+domltestdepends:  $(DOMTESTSOURCES) $(foreach file,$(DOMLOADTESTSOURCES:.cpp=.d),$(DOMLIBRARY_DEPENDS_DIR)$(notdir $(file)))
+	@echo "DOM Test application depends are done."
+	
+domltestobjects: $(foreach file,$(DOMLOADTESTSOURCES),$(DOMLIBRARY_OBJECT_DIR)$(notdir $(file:.cpp=.o)))
 	@echo "DOM Test application objects are done."
