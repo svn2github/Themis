@@ -62,7 +62,8 @@ class Renderer : public PlugClass
 //				void		BroadcastPointer(TRenderView *view);
 				
 				//Below spreads the dark land of Processing methods.
-				void		PreProcess(TDocumentPtr document, TRenderView *view);
+		//Because it's a thread_func it has to be static int32 with a single void param		
+		static	int32		PreProcess(void *data);
 				void		Process(TNodePtr node, UIElement *view);
 				
 				int8		GetCSSDisplay(TElementPtr node);
@@ -75,6 +76,12 @@ class Renderer : public PlugClass
 				BRect		GetContainingBlock(TElementPtr node, UIElement *parentElement);
 				void		GetBoxEdges(UIBox *box, TElementPtr element, UIBox parentBox, int32 dpi);
 			
+};
+
+struct preprocess_thread_param {
+	TDocumentPtr 	document; 
+	TRenderView 	*view;
+	Renderer		*renderer;
 };
 
 #endif

@@ -1,4 +1,5 @@
 /* See header TRenderer.h for more info */
+#include <Alert.h>
 #include <Screen.h>
 
 //General
@@ -24,14 +25,18 @@ void Renderer::BroadcastPointer(TRenderView *view)
 	Broadcast(MS_TARGET_ALL,&message);
 }
 */
-void Renderer::PreProcess(TDocumentPtr document, TRenderView *view)
+int32 Renderer::PreProcess(void *data)
 {
+	preprocess_thread_param *cdata = (preprocess_thread_param *)data;
 	//The size of the view doesn't matter here
 	//TRenderView *view = new TRenderView(UIBox(800,450),document);
 	
+	//Keep the node
+	cdata->view->node = cdata->document;
+	
 	//Add the DOM & the view to the list of trees.
-	UITrees.AddItem(view);
-	DOMTrees.push_back(document);
+	cdata->renderer->UITrees.AddItem(cdata->view);
+	cdata->renderer->DOMTrees.push_back(cdata->document);
 
 	//TODO: Get the DPI from User Option and give it to the view
 		
@@ -57,25 +62,27 @@ void Renderer::PreProcess(TDocumentPtr document, TRenderView *view)
 	//view->userInterface = userInterface;
 	
 	//Start processing the DOM Tree
-	view->LockLooper();
+	cdata->view->LockLooper();
 	printf("RENDERER: START PROCESSING...\n");
 	bigtime_t time = real_time_clock_usecs();
-	Process(document,view); 
+	cdata->renderer->Process(cdata->document,cdata->view); 
 	printf("RENDERER: DONE PROCESSING in %g microseconds.\n",real_time_clock_usecs() - time);
-	view->UnlockLooper();
+	cdata->view->UnlockLooper();
 	//Update the view
-	view->Invalidate();
+	cdata->view->Invalidate();
 	
 //	BroadcastPointer(view);
 
 	//Do the Broadcasting to say we are done with rendering
 	BMessage message(UH_RENDER_FINISHED);
 	message.AddInt32("command",COMMAND_INFO);
-	message.AddInt32("view_id",view->viewID);
-	Broadcast(MS_TARGET_ALL,&message);
+	message.AddInt32("view_id",cdata->view->viewID);
+	cdata->renderer->Broadcast(MS_TARGET_ALL,&message);
 		
 	//Show the View, will be removed as soon as the REAL window uses the view
 	//(new TRenderWindow((TRenderView *)UITrees.ItemAt(UITrees.CountItems()-1)))->Show();	
+	(new BAlert("ok","and now u c ?","YES I DO !"))->Go();
+	return 0;
 }
 
 //That's the BIG one. Don't be scared and full it! Now !

@@ -79,8 +79,10 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 					message->FindPointer("renderview_pointer",(void **)&view);
 					if (!view)
 						break;
-					//Start Processing
-					PreProcess(document,view);								
+					//Start Processing in a new thread so people think it'll work faster ;-))
+					preprocess_thread_param param = {document,view,this};
+					thread_id id = spawn_thread(PreProcess,"EMWE IS MY GOD !!",30,(void *)&param);								
+					resume_thread(id);
 				} break;
 /*				case ReturnedData:{ OLD WAY TO DO
 					BString type = message->FindString("type");
