@@ -2,6 +2,7 @@
 #include "http_defines.h"
 #include <stdlib.h>
 #include <NetworkKit.h>
+#include "stripwhite.h"
 //using namespace Themis_Networking;
 http_protocol *HTTP;
 status_t Initialize(bool go)
@@ -223,12 +224,26 @@ void http_protocol::ParseResponse(unsigned char *resp,size_t size)
          while((pos=headtext.IFindFirst(":"))!=B_ERROR)
           {
            headtext.MoveInto(param,0,pos);
+           char *t=(char*)malloc(param.Length()+1);
+           memset(t,0,param.Length()+1);
+           stripfrontwhite(param.String(),t);
+           param=t;
+           memset(t,0,param.Length()+1);
+           stripendwhite(param.String(),t);
+           free(t);
            headtext.RemoveFirst(":");
 //           printf("%s\n",param.String());
            if ((last=headtext.IFindFirst(lf))!=B_ERROR)
             {
              headtext.RemoveFirst(lf);
              headtext.MoveInto(value,0,last);
+             t=(char*)malloc(value.Length()+1);
+             memset(t,0,value.Length()+1);
+             stripfrontwhite(value.String(),t);
+             value=t;
+             memset(t,0,value.Length()+1);
+             stripendwhite(value.String(),t);
+             free(t);
              printf("parameter: %s\tvalue: %s\n",param.String(),value.String());
             }
            param="";
