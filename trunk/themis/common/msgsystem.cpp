@@ -1,6 +1,7 @@
 #include "msgsystem.h"
 #include <Autolock.h>
 #include <stdio.h>
+#include <OS.h>
 volatile int32 MessageSystem::broadcast_target_count=0;
 MessageSystem::msgsysclient_st *MessageSystem::MsgSysClients=NULL;
 BLocker *MessageSystem::msgsyslock=NULL;
@@ -20,8 +21,8 @@ MessageSystem::MessageSystem(char *msg_sys_name)
 	_msg_receiver_sem_=create_sem(0,"message_receiver_sem");
 	_ms_receiver_quit_=0;
 	_msg_receiver_running_=0;
-	_msg_receiver_thread_=spawn_thread(MS_Start_Thread,MS_Name,B_LOW_PRIORITY,this);
-	resume_thread(_msg_receiver_thread_);
+//	_msg_receiver_thread_=spawn_thread(MS_Start_Thread,MS_Name,B_LOW_PRIORITY,this);
+//	resume_thread(_msg_receiver_thread_);
 }
 
 MessageSystem::~MessageSystem()
@@ -86,7 +87,10 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 							_message_targets_++;
 								cur->ptr->_message_queue_.AddMessage(new BMessage(*msg));
 								if (cur->ptr->_msg_receiver_running_==0) {
-									release_sem(cur->ptr->_msg_receiver_sem_);
+//									release_sem(cur->ptr->_msg_receiver_sem_);
+									cur->ptr->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,cur->ptr->MS_Name,B_LOW_PRIORITY,cur->ptr);
+									resume_thread(cur->ptr->_msg_receiver_thread_);
+
 								}
 							broadcaster->broadcast_successful_receives++;
 						}break;
@@ -104,7 +108,10 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 								broadcaster->broadcast_successful_receives++;
 								cur->ptr->_message_queue_.AddMessage(new BMessage(*msg));
 								if (cur->ptr->_msg_receiver_running_==0) {
-									release_sem(cur->ptr->_msg_receiver_sem_);
+//									release_sem(cur->ptr->_msg_receiver_sem_);
+									cur->ptr->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,cur->ptr->MS_Name,B_LOW_PRIORITY,cur->ptr);
+									resume_thread(cur->ptr->_msg_receiver_thread_);
+
 								}
 								
 //								broadcaster->broadcast_status_code=cur->ptr->ReceiveBroadcast(msg);
@@ -120,7 +127,10 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 								broadcaster->broadcast_successful_receives++;
 								cur->ptr->_message_queue_.AddMessage(new BMessage(*msg));
 								if (cur->ptr->_msg_receiver_running_==0) {
-									release_sem(cur->ptr->_msg_receiver_sem_);
+//									release_sem(cur->ptr->_msg_receiver_sem_);
+									cur->ptr->_msg_receiver_thread_=spawn_thread(MS_Start_Thread,cur->ptr->MS_Name,B_LOW_PRIORITY,cur->ptr);
+									resume_thread(cur->ptr->_msg_receiver_thread_);
+
 								}
 //								broadcaster->broadcast_status_code|=cur->ptr->ReceiveBroadcast(msg);
 								_message_targets_++;
@@ -196,7 +206,7 @@ int32 MessageSystem::_ProcessMessage_(void *arg)
 	volatile int32 count=0;
 	BMessage *msg;
 	while (!me->_ms_receiver_quit_) {
-		if (acquire_sem(me->_msg_receiver_sem_)==B_OK) {
+//		if (acquire_sem(me->_msg_receiver_sem_)==B_OK) {
 			if (_ms_receiver_quit_)
 				break;
 			me->_msg_receiver_running_=1;
@@ -223,10 +233,13 @@ int32 MessageSystem::_ProcessMessage_(void *arg)
 			
 			me->_msg_receiver_running_=0;
 			
-		}
+//		}
+		if (me->_message_queue_.IsEmpty())
+			break;
 		
 	}
-	
+	exit_thread(0L);
+
 }
 
 status_t MessageSystem::ReceiveBroadcast(BMessage *msg)
