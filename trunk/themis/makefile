@@ -124,7 +124,25 @@ JSADDONSOURCES= \
 TESTPLUGSOURCES= \
 	testplug/testplug.cpp
 HTMLPARSERSOURCES= \
-	HTMLParser/HTMLParser.cpp
+	HTMLParser/HTMLParser.cpp \
+	AttrListDeclParser.cpp \
+	BaseParser.cpp \
+	SGMLText.cpp \
+	State.cpp \
+	CommentDeclParser.cpp \
+	DTDParser.cpp \
+	DeclarationParser.cpp \
+	DocTypeDeclParser.cpp \
+	ElementDeclException.cpp \
+	ElementDeclParser.cpp \
+	ElementParser.cpp \
+	EntityDeclParser.cpp \
+	MarkedSecDeclParser.cpp \
+	Position.cpp \
+	PositionException.cpp \
+	ReadException.cpp \
+	SGMLParser.cpp 
+
 DOMVIEWSOURCES= \
 	DOMView/DOMView.cpp
 IMAGEHSOURCES= \
