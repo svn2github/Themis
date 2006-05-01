@@ -105,13 +105,8 @@ bool DeclarationParser	::	processExternalId( TElementPtr & entity )	{
 		}
 	}
 	
-	try	{
-		processPsPlus();
-		processSystemId();
-	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
+	processPsPlus( false );
+	processSystemId();
 	
 	return true;
 	

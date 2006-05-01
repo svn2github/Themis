@@ -243,6 +243,7 @@ void SGMLParser	::	parseDTD()	{
 		mElementParser->setDTD( mDTD );
 		mDtdParser->parse( mDefaultDtd.c_str() );
 		mDtds.insert( map<string, TDocumentPtr>::value_type( mDefaultDtd, mDTD ) );
+//		showTree( mDTD, 0 );
 	}
 	else	{
 		map<string, TDocumentPtr>::iterator i = mDtds.find( mDefaultDtd );

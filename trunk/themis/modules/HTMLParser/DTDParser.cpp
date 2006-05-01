@@ -90,25 +90,25 @@ void DTDParser	::	setDTD( TDocumentPtr aDTD )	{
 	
 }
 
-void DTDParser	::	processDeclaration()	{
+bool DTDParser	::	processDeclaration()	{
 
-	process( mMdo );
+	if ( ! process( mMdo, false ) )	{
+		return false;
+	}
 
 	State save = mDocText->saveState();
 
 	if ( entityDecl->parse( entityDecl->getEntityTexts() ) )	{
-		return;
+		return true;
 	}
-
 	if ( elementDecl->parse( entityDecl->getEntityTexts() ) )	{
-		return;
+		return true;
 	}
-
 	if ( attrListDecl->parse( entityDecl->getEntityTexts() ) )	{
-		return;
+		return true;
 	}
 
-	throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(), "Declaration expected" );
+	return false;
 	
 }
 
@@ -133,18 +133,12 @@ bool DTDParser	::	processDs()	{
 	else	{
 		mDocText->restoreState( save );
 	}
-	try	{
-		markedSecDecl->parse( entityDecl->getEntityTexts() );
+	if ( markedSecDecl->parse( entityDecl->getEntityTexts() ) )	{
 		//printf( "Marked Section declaration parsed\n" );
 		return true;
 	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
-		}
-		else	{
-			mDocText->restoreState( save );
-		}
+	else	{
+		mDocText->restoreState( save );
 	}
 
 	return false;
@@ -162,10 +156,17 @@ void DTDParser	::	processDsStar()	{
 
 TDocumentPtr DTDParser	::	parse()	{
 	
-	while ( true )	{
+	bool contentFound = true;
+	
+	while ( contentFound )	{
 		try	{
 			processDsStar();
-			processDeclaration();
+			if ( ! processDeclaration() )	{
+				throw ReadException( mDocText->getLineNr(),
+												mDocText->getCharNr(),
+												"Declaration expected",
+												GENERIC, true );
+			}
 		}
 		catch( ReadException r )	{
 			if ( r.isEof() )	{
@@ -175,7 +176,7 @@ TDocumentPtr DTDParser	::	parse()	{
 				printf( "Error on line %i, char %i, message: %s\n", r.getLineNr(), r.getCharNr(),
 						  r.getErrorMessage().c_str() );
 			}
-			return mDocument;
+			contentFound = false;
 		}
 	}
 

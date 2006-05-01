@@ -414,25 +414,24 @@ void ElementParser	::	processAttrSpecList( TNodePtr aParent )	{
 	bool attrSpecFound = true;
 	while ( attrSpecFound )	{
 		try	{
-			processAttrSpec( aParent );
+			attrSpecFound = processAttrSpec( aParent );
 		}
 		catch( ReadException r )	{
 			if ( r.isFatal() )	{
 				throw r;
-			}
-			else	{
-				attrSpecFound = false;
 			}
 		}
 	}
 	
 }
 
-void ElementParser	::	processAttrSpec( TNodePtr aParent )	{
+bool ElementParser	::	processAttrSpec( TNodePtr aParent )	{
 
 	processSStar();
 
 	TAttrPtr attr;
+	
+	bool result = false;
 	
 	State save = mDocText->saveState();
 	try	{
@@ -444,6 +443,7 @@ void ElementParser	::	processAttrSpec( TNodePtr aParent )	{
 		TNamedNodeMapPtr map = aParent->getAttributes();
 		map->setNamedItem( attr );
 		printf( "Found attr spec name: %s\n", name.c_str() );
+		result = true;
 	}
 	catch( ReadException r )	{
 		// Optional.
@@ -451,12 +451,16 @@ void ElementParser	::	processAttrSpec( TNodePtr aParent )	{
 	}
 
 	// Not entirely correct. Check later
-	string value = processAttrValueSpec();
-	if ( attr.get() != NULL )	{
-		attr->setValue( value );
+	string value = processAttrValueSpec( false );
+	if ( value != "")	{
+		printf( "Found AttrValueSpec: %s\n", value.c_str() );
+		if ( attr.get() != NULL )	{
+			attr->setValue( value );
+		}
+		result = true;
 	}
 
-	printf( "Found AttrValueSpec: %s\n", value.c_str() );
+	return result;
 	
 }
 
@@ -465,58 +469,23 @@ void ElementParser	::	skipContent( const TElementPtr & aContent )	{
 	string contentName = aContent->getNodeName();
 	printf( "Trying to skip content: %s\n", contentName.c_str() );
 
-	// Using switch statement, by only looking at the first character.
-	switch( contentName[ 0 ] )	{
-		case '(':	{
-			throw ReadException( mDocText->getLineNr(),
-											mDocText->getCharNr(),
-											"Can't skip ()" );
-			break;
-		}
-		case '?':	{
-			break;
-		}
-		case '+':	{
-			throw ReadException( mDocText->getLineNr(),
-											mDocText->getCharNr(),
-											"Can't skip +" );
-			break;
-		}
-		case '*':	{
-			break;
-		}
-		case '|':	{
-			break;
-		}
-		case '&':	{
-			throw ReadException( mDocText->getLineNr(),
-											mDocText->getCharNr(),
-											"Can't skip &" );
-			break;
-		}
-		case ',':	{
-			throw ReadException( mDocText->getLineNr(),
-											mDocText->getCharNr(),
-											"Can't skip ," );
-			break;
-		}
-		case '#':	{
-			break;
-		}
-		default:	{
-			if ( contentName == "CDATA" )	{
-				printf( "Skipping cdata\n" );
-				break;
-			}
-			if ( contentName == "EMPTY" )	{
-				printf( "Skipping empty\n" );
-				break;
-			}
-			throw ReadException( mDocText->getLineNr(),
-											mDocText->getCharNr(),
-											"Can't skip tag" );
-		}
+	int minOccurs = atoi(aContent->getAttribute("minOccurs").c_str());
+	printf("Minimum occurence: %i\n", minOccurs);
+	
+	if (minOccurs == 0)	{
+		printf("Skipping %s\n", contentName.c_str());
 	}
+	else	{
+		if ( contentName == "CDATA" || contentName == "EMPTY")	{
+			printf("Skipping %s\n", contentName.c_str());
+		}
+		else	{
+			string exceptionText = "Can't skip " + contentName;
+			throw ReadException( mDocText->getLineNr(),
+											mDocText->getCharNr(),
+											exceptionText);
+		}
+	};
 	
 }
 
@@ -549,7 +518,21 @@ void ElementParser	::	processContent( const TElementPtr & aContent,
 			break;
 		}
 		case '|':	{
-			processOr( aContent, aExceptions, aParent );
+			bool contentFound = true;
+			int count = 0;
+			while (contentFound)	{
+				try	{
+					processOr( aContent, aExceptions, aParent );
+					count++;
+				}
+				catch( ReadException r )	{
+					if ( r.isFatal() )	{
+						// Something went wrong here
+						throw r;
+					}
+					contentFound = false;
+				}
+			}
 			break;
 		}
 		case '&':	{
@@ -686,6 +669,7 @@ void ElementParser	::	processOr( const TElementPtr & aContent,
 	printf( "At or element\n" );
 
 	TNodeListPtr children = aContent->getChildNodes();
+	
 	unsigned int i = 0;
 	unsigned int length = children->getLength();
 	while ( i < length )	{
@@ -863,7 +847,7 @@ void ElementParser	::	processExceptions( const TElementPtr & aExceptions,
 void ElementParser	::	processException( const TElementPtr & aExceptions,
 															TNodePtr aParent )	{
 
-	if ( aExceptions.get() == NULL )	{
+	if ( aExceptions.get() == NULL || aExceptions->hasChildNodes() == false)	{
 		throw ReadException( mDocText->getLineNr(),
 										mDocText->getCharNr(), "No exceptions" );
 	}

@@ -115,7 +115,9 @@ bool BaseParser	::	process( const string & symbol, bool aException )	{
 
 bool BaseParser	::	processS()	{
 
-	if ( isspace( mDocText->getChar() ) || iscntrl( mDocText->getChar() ) )	{
+	char c = mDocText->getChar();
+
+	if ( isspace( c ) || iscntrl( c ) )	{
 		mDocText->nextChar();
 	}
 	else	{
@@ -164,27 +166,16 @@ bool BaseParser	::	processComment()	{
 
 bool BaseParser	::	processParEntityReference()	{
 
-	// WARNING: Doesn't need to throw an exception. Change it. !!!!
-	
 	// Fix me
 	State save = mDocText->saveState();
 	if ( ! process( mPero, false ) )	{
 		return false;
 	}
 	
-	string name = "";
-	try	{
-		name = processName();
-	}
-	catch( ReadException r )	{
-		// Probably not a parameter entity reference. Set index back
+	string name =  processName( false );
+	if ( name == "" )	{
 		mDocText->restoreState( save );
-		if ( r.isFatal() )	{
-			throw r;
-		}
-		else	{
-			return false;
-		}
+		return false;
 	}
 
 	// Can be omitted
@@ -222,16 +213,17 @@ string BaseParser	::	processLiteral()	{
 		return mLitA;
 	}
 
-	throw ReadException( mDocText->getLineNr(),
-									mDocText->getCharNr(),
-									"Literal expected" );
+	return "";
 
 }
 
-void BaseParser	::	processParLiteral( TElementPtr & entity )	{
+bool BaseParser	::	processParLiteral( TElementPtr & entity )	{
 
 	string text = "";
 	string literal = processLiteral();
+	if ( literal == "" )	{
+		return false;
+	}
 
 	unsigned int start = mDocText->getIndex();
 	unsigned int lineNr = mDocText->getLineNr();
@@ -255,12 +247,17 @@ void BaseParser	::	processParLiteral( TElementPtr & entity )	{
 
 	entity->setAttribute( "text", text );
 	
+	return true;
+	
 }
 
 string BaseParser	::	processMinLiteral()	{
 	
 	string text = "";
 	string literal = processLiteral();
+	if ( literal == "" )	{
+		return "";
+	}
 
 	bool litFound = false;
 	while ( ! litFound )	{
@@ -269,13 +266,7 @@ string BaseParser	::	processMinLiteral()	{
 		}
 		else	{
 			// Not yet found. Process replacable parameter data
-			try	{
-				text += processMinData();
-			}
-			catch( ReadException r )	{
-				r.setFatal();
-				throw r;
-			}
+			text += processMinData();
 		}
 	}
 	
@@ -294,14 +285,19 @@ string BaseParser	::	processMinData()	{
 	
 }
 
-string BaseParser	::	processName()	{
+string BaseParser	::	processName( bool aException )	{
 
 	string name = "";
 
 	if ( ! isalpha( mDocText->getChar() ) )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"Not a name" );
+		if ( aException )	{
+			throw ReadException( mDocText->getLineNr(),
+											mDocText->getCharNr(),
+											"Not a name" );
+		}
+		else	{
+			return "";
+		}
 	}
 	
 	name += toupper( mDocText->getChar() );
@@ -333,9 +329,7 @@ string BaseParser	::	processNameToken()	{
 	}
 	
 	if ( start == mDocText->getIndex() )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"Not a name token" );
+		return "";
 	}
 	
 	return token;
@@ -353,16 +347,16 @@ void BaseParser	::	processSStar()	{
 
 bool BaseParser	::	processPs()	{
 
-	if ( processComment() )	{
-		return true;
-	}
-	if ( processParEntityReference() )	{
-		return true;
-	}
 	if ( processS() )	{
 		return true;
 	}
 	if ( processEe() )	{
+		return true;
+	}
+	if ( processComment() )	{
+		return true;
+	}
+	if ( processParEntityReference() )	{
 		return true;
 	}
 
@@ -379,26 +373,33 @@ void BaseParser	::	processPsStar()	{
 	
 }
 
-void BaseParser	::	processPsPlus()	{
+bool BaseParser	::	processPsPlus( bool aException )	{
 
 	if ( ! processPs() )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"Ps expected" );
+		if ( aException )	{
+			throw ReadException( mDocText->getLineNr(),
+											mDocText->getCharNr(),
+											"Ps expected" );
+		}
+		else	{
+			return false;
+		}
 	}
 	processPsStar();
+	
+	return true;
 	
 }
 
 bool BaseParser	::	processTs()	{
 
-	if ( processParEntityReference() )	{
-		return true;
-	}
 	if ( processS() )	{
 		return true;
 	}
 	if ( processEe() )	{
+		return true;
+	}
+	if ( processParEntityReference() )	{
 		return true;
 	}
 
@@ -437,55 +438,77 @@ string BaseParser	::	processRepCharData()	{
 	
 }
 
-string BaseParser	::	processGI()	{
+string BaseParser	::	processGI( bool aException )	{
 
 	if ( mDocText->getChar() == '/' )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"Is an end tag",
-										END_TAG_FOUND );
+		if ( aException )	{
+			throw ReadException( mDocText->getLineNr(),
+											mDocText->getCharNr(),
+											"Is an end tag",
+											END_TAG_FOUND );
+		}
+		else	{
+			return "";
+		}
 	}
 
 	// Generic identifier and name are equivalent
-	return processName();
+	string name = processName( false);
+	if ( name == "" && aException )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Name expected",
+										GENERIC );
+		
+	}
+	
+	return name;
 	
 }
 
 TElementPtr BaseParser	::	processNameGroup()	{
 
-	process( mGrpo );
-
-	TElementPtr group = mDTD->createElement( "elements" );
+	if ( ! process( mGrpo, false ) )	{
+		return TElementPtr();
+	}
 
 	processTsStar();
 	
-	string name = processName();
+	string name = processName( false );
+	if ( name == "" )	{
+		return TElementPtr();
+	}
+	
+	TElementPtr group = mDTD->createElement( "elements" );
 	TElementPtr element = mDTD->createElement( name );
 	group->appendChild( element );
 
 	//TElementPtr subGroup;
 	bool inGroup = true;
 	while ( inGroup )	{
-		try	{
-			processTsStar();
-			TElementPtr connector = processConnector();
-			processTsStar();
-			name = processName();
+		processTsStar();
+		TElementPtr connector = processConnector();
+		if ( connector.get() == NULL )	{
+			inGroup = false;
+			continue;
+		}
+		processTsStar();
+		name = processName( false );
+		if ( name == "" )	{
+			inGroup = false;
+		}
+		else	{
 			element = mDTD->createElement( name );
 			group->appendChild( element );
-		}
-		catch( ReadException r )	{
-			inGroup = false;
 		}
 	}
 
 	processTsStar();
-	try	{
-		process( mGrpc );
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
+	if ( ! process( mGrpc, false ) )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Closing of name group expected",
+										GENERIC, true );
 	}
 
 	return group;
@@ -494,41 +517,40 @@ TElementPtr BaseParser	::	processNameGroup()	{
 
 string BaseParser	::	processNameTokenGroup()	{
 
-	process( mGrpo );
+	if ( ! process( mGrpo, false ) )	{
+		return "";
+	}
 	
 	processTsStar();
-	
 	processNameToken();
 	
 	bool inGroup = true;
 	while ( inGroup )	{
-		try	{
-			processTsStar();
-			processConnector();
-			processTsStar();
-			processNameToken();
+		processTsStar();
+		TElementPtr connector = processConnector();
+		if ( connector.get() == NULL )	{
+			inGroup = false;
+			continue;
 		}
-		catch( ReadException r )	{
+		processTsStar();
+		if ( processNameToken() == "" )	{
 			inGroup = false;
 		}
 	}
 	
 	processTsStar();
-	try	{
-		process( mGrpc );
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
+	if ( ! process( mGrpc, false ) )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Closing of name token group expected",
+										GENERIC, true );
 	}
 
-	return "";
+	return "nameTokenGroup";
 	
 }
 
 TElementPtr BaseParser	::	processConnector()	{
-
-	TElementPtr connector;
 
 	if ( process( mAnd, false ) )	{
 		return mDTD->createElement( mAnd );
@@ -540,23 +562,23 @@ TElementPtr BaseParser	::	processConnector()	{
 		return mDTD->createElement( mSeq );
 	}
 
-	throw ReadException( mDocText->getLineNr(),
-									mDocText->getCharNr(),
-									"Connector expected" );
+	return TElementPtr();
 
 }
 
-string BaseParser	::	processAttrValueSpec()	{
+string BaseParser	::	processAttrValueSpec( bool aException )	{
 
-	try	{
-		// Switched around from spec in book. Is easier
-		return processAttrValueLit();
+	string attrValueSpec = processAttrValueLit();
+	if ( attrValueSpec == "" )	{
+		attrValueSpec = processAttrValue();
 	}
-	catch( ReadException r )	{
-		// Do nothing
+	if ( attrValueSpec == "" && aException )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"AttrValueSpec expected" );
 	}
 
-	return processAttrValue();
+	return attrValueSpec;
 	
 }
 
@@ -564,10 +586,6 @@ string BaseParser	::	processAttrValue()	{
 
 	// FIX ME!!!!!!!!!!!!!!!!!!!!!
 	string result = processCharData( mTagc );
-	if ( result == "" )	{
-		throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(),
-										"AttrValue expected" );
-	}
 	//processNameToken();
 	
 	return result;
@@ -578,6 +596,9 @@ string BaseParser	::	processAttrValueLit()	{
 
 	string result = "";
 	string literal = processLiteral();
+	if ( literal == "" )	{
+		return "";
+	}
 
 	bool litFound = false;
 	while ( ! litFound )	{

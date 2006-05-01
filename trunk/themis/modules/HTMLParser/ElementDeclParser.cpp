@@ -43,23 +43,41 @@ bool ElementDeclParser	::	processDeclaration()	{
 		return false;
 	}
 	
-	try	{
-		processPsPlus();
-		element = processElementType();
-		processPsPlus();
-		processTagMin( minimization );
-		processPsPlus();
-		if ( ! processDeclContent( content, false ) )	{
-			// Not declared content. Must be a content model
-			processContentModel( content );
+	processPsPlus();
+	element = processElementType();
+	if ( element.get() == NULL )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Element type expected",
+										GENERIC, true );
+	}
+	processPsPlus();
+
+	if ( ! processTagMin( minimization ) )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Tag minimization expected",
+										GENERIC, true );
+	}		
+	processPsPlus();
+
+	if ( ! processDeclContent( content ) )	{
+		// Not declared content. Must be a content model
+		if ( ! processContentModel( content ) )	{
+			throw ReadException( mDocText->getLineNr(),
+											mDocText->getCharNr(),
+											"Declared content of content model expected",
+											GENERIC, true );
 		}
-		processPsStar();
-		process( mMdc );
 	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
+
+	processPsStar();
+	if ( ! process( mMdc, false ) )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Element declaration not closed correctly",
+										GENERIC, true );
+	}		
 
 	if ( element->hasChildNodes() )	{
 		// Name group.
@@ -81,34 +99,23 @@ bool ElementDeclParser	::	processDeclaration()	{
 
 TElementPtr ElementDeclParser	::	processElementType()	{
 
-	try	{
-		string name = processGI();
+	string name = processGI( false );
+	if ( name == "" )	{
+		TElementPtr group = processNameGroup();
+		if ( group.get() != NULL )	{
+			return group;
+		}
+	}
+	else	{
 		TElementPtr element = mDTD->createElement( name );
 		return element;
 	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
-		}
-	}
 
-	try	{
-		TElementPtr group = processNameGroup();
-		return group;
-	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
-		}
-	}
-	
-	throw ReadException( mDocText->getLineNr(),
-									mDocText->getCharNr(),
-									"Element type expected" );
-	
+	return TElementPtr();
+
 }
 
-void ElementDeclParser	::	processTagMin( TElementPtr aElement )	{
+bool ElementDeclParser	::	processTagMin( TElementPtr aElement )	{
 
 	if ( process( kO, false ) )	{
 		aElement->setAttribute( "start", "false" );
@@ -119,9 +126,7 @@ void ElementDeclParser	::	processTagMin( TElementPtr aElement )	{
 			aElement->setAttribute( "start", "true" );
 		}
 		else	{
-			throw ReadException( mDocText->getLineNr(),
-											mDocText->getCharNr(),
-											"Start minimization expected" );
+			return false;
 		}
 	}
 
@@ -149,11 +154,12 @@ void ElementDeclParser	::	processTagMin( TElementPtr aElement )	{
 											true );
 		}
 	}
+
+	return true;
 	
 }
 
-bool ElementDeclParser	::	processDeclContent( TElementPtr aElement,
-																	   bool aException )	{
+bool ElementDeclParser	::	processDeclContent( TElementPtr aElement )	{
 
 	if ( process( kCDATA, false ) )	{
 		TElementPtr cdata = mDTD->createElement( kCDATA );
@@ -173,134 +179,99 @@ bool ElementDeclParser	::	processDeclContent( TElementPtr aElement,
 		return true;
 	}
 
-	if ( ! aException )	{
-		return false;
-	}
-	else	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"Declared content expected" );
-	}
+	return false;
 
 }
 
-void ElementDeclParser	::	processContentModel( TElementPtr aElement )	{
+bool ElementDeclParser	::	processContentModel( TElementPtr aElement )	{
 
 	if ( ! process( kANY, false ) )	{
 		// Not ANY. Must be a model group
 		TElementPtr modelGroup = processModelGroup();
-		aElement->appendChild( modelGroup );
+		if ( modelGroup.get() == NULL )	{
+			return false;
+		}
+		else	{
+			aElement->appendChild( modelGroup );
+		}
 	}
 
-	try	{
-		processPsPlus();
+	if ( processPsPlus( false ) )	{
 		TElementPtr exceptions = processExceptions();
 		aElement->appendChild( exceptions );
 	}
-	catch( ReadException r )	{
-		// Do nothing
-	}
+	
+	return true;
 
 }
 
 TElementPtr ElementDeclParser	::	processModelGroup()	{
 	
-	process( mGrpo );
-
-	TElementPtr grpo = mDTD->createElement( "()" );
-
-	try	{
-		processTsStar();
+	if ( ! process( mGrpo, false ) )	{
+		return TElementPtr();
 	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
-		}
-	}
+
+	processTsStar();
 
 	TElementPtr firstPart;
-	try	{
-		firstPart = processContentToken();
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
+	firstPart = processContentToken();
+	if ( firstPart.get() == NULL )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Content token expected",
+										GENERIC, true );
 	}
 	
-	try	{
-		processTsStar();
-	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
-		}
-	}
+	processTsStar();
 
+//	TElementPtr grpo = mDTD->createElement( "()" );
 	TElementPtr subModelGroup;
 	bool smgFound = true;
 	while ( smgFound )	{
-		try	{
-			subModelGroup = processSubModelGroup();
-			if ( subModelGroup->getNodeName() == firstPart->getNodeName() )	{
-				firstPart->appendChild( subModelGroup->getFirstChild() );
-			}
-			else	{
-				TNodePtr first = subModelGroup->getFirstChild();
-				subModelGroup->insertBefore( firstPart, first );
-				firstPart = subModelGroup;
-			}
-		}
-		catch( ReadException r )	{
-			// No sub model group. Exit the loop
+		subModelGroup = processSubModelGroup();
+		if ( subModelGroup.get() == NULL )	{
 			smgFound = false;
+			continue;
+		}
+		if ( subModelGroup->getNodeName() == firstPart->getNodeName() )	{
+			firstPart->appendChild( subModelGroup->getFirstChild() );
+		}
+		else	{
+			TNodePtr first = subModelGroup->getFirstChild();
+			subModelGroup->insertBefore( firstPart, first );
+			firstPart = subModelGroup;
 		}
 	}
 	
-	try	{
-		process( mGrpc );
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
+	if ( ! process( mGrpc, false ) )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Model group not closed correctly",
+										GENERIC, true );
+	}		
 
-	grpo->appendChild( firstPart );
+//	grpo->appendChild( firstPart );
 
-	return processOccIndicator( grpo );
+	processOccIndicator( firstPart );
+	
+	return firstPart;
 	
 }
 
 TElementPtr ElementDeclParser	::	processSubModelGroup()	{
 
 	TElementPtr connector = processConnector();
+	if ( connector.get() == NULL )	{
+		return TElementPtr();
+	}
 	
-	try	{
-		processTsStar();
-	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
-		}
-	}
+	processTsStar();
 
 	TElementPtr contentToken;
-	try	{	
-		contentToken = processContentToken();
-		connector->appendChild( contentToken );
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
+	contentToken = processContentToken();
+	connector->appendChild( contentToken );
 	
-	try	{
-		processTsStar();
-	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
-		}
-	}
+	processTsStar();
 	
 	return connector;
 	
@@ -310,11 +281,8 @@ TElementPtr ElementDeclParser	::	processContentToken()	{
 
 	TElementPtr contentToken;
 
-	try	{
-		contentToken = processPrimContentToken();
-	}
-	catch( ReadException r )	{
-		// Not a primitive content token. Must be a model group
+	contentToken = processPrimContentToken();
+	if ( contentToken.get() == NULL )	{
 		contentToken = processModelGroup();
 	}
 
@@ -349,30 +317,30 @@ TElementPtr ElementDeclParser	::	processPrimContentToken()	{
 
 TElementPtr ElementDeclParser	::	processElementToken()	{
 
-	TElementPtr elementToken = mDTD->createElement( processGI() );
-	return processOccIndicator( elementToken );
+	string gi = processGI( false );
+	if ( gi == "" )	{
+		return TElementPtr();
+	}
+
+	TElementPtr elementToken = mDTD->createElement( gi );
+	processOccIndicator( elementToken );
+	
+	return elementToken;
 	
 }
 
-TElementPtr ElementDeclParser	::	processOccIndicator( TElementPtr aElementToken )	{
+void ElementDeclParser	::	processOccIndicator( TElementPtr aElementToken )	{
 
 	if ( process( mOpt, false ) )	{
-		TElementPtr occIndicator = mDTD->createElement( mOpt );
-		occIndicator->appendChild( aElementToken );
-		return occIndicator;
+		aElementToken->setAttribute("minOccurs", "0");
+		aElementToken->setAttribute("maxOccurs", "1");
 	}
 	if ( process( mPlus, false ) )	{
-		TElementPtr occIndicator = mDTD->createElement( mPlus );
-		occIndicator->appendChild( aElementToken );
-		return occIndicator;
+		aElementToken->setAttribute("minOccurs", "1");
 	}
 	if ( process( mRep, false ) )	{
-		TElementPtr occIndicator = mDTD->createElement( mRep );
-		occIndicator->appendChild( aElementToken );
-		return occIndicator;
+		aElementToken->setAttribute("minOccurs", "0");
 	}
-
-	return aElementToken;
 
 }
 
@@ -381,12 +349,10 @@ TElementPtr ElementDeclParser	::	processExceptions()	{
 	TElementPtr exceptions = mDTD->createElement( "exceptions" );
 	
 	if ( processExclusions( exceptions ) )	{
-		try	{
-			processPsPlus();
-		}
-		catch( ReadException r )	{
-			// Was optional. Do nothing
-		}
+		// WARNING. This looks dodgy.
+		// Probably want to have processInclusions
+		// in this if as well as outside.
+		processPsPlus( false );
 	}
 	
 	processInclusions( exceptions );
@@ -403,14 +369,14 @@ bool ElementDeclParser	::	processExclusions( TElementPtr aExceptions )	{
 
 	TElementPtr exclusions = mDTD->createElement( kMinus );
 
-	try	{
-		TElementPtr nameGroup = processNameGroup();
-		exclusions->appendChild( nameGroup );
+	TElementPtr nameGroup = processNameGroup();
+	if ( nameGroup.get() == NULL )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Name group expected",
+										GENERIC, true );
 	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
+	exclusions->appendChild( nameGroup );
 
 	aExceptions->appendChild( exclusions );
 	
@@ -420,20 +386,20 @@ bool ElementDeclParser	::	processExclusions( TElementPtr aExceptions )	{
 
 bool ElementDeclParser	::	processInclusions( TElementPtr aExceptions )	{
 
-	if ( ! process( mPlus ) )	{
+	if ( ! process( mPlus, false ) )	{
 		return false;
 	}
 
 	TElementPtr inclusions = mDTD->createElement( mPlus );
 
-	try	{
-		TElementPtr nameGroup = processNameGroup();
-		inclusions->appendChild( nameGroup );
+	TElementPtr nameGroup = processNameGroup();
+	if ( nameGroup.get() == NULL )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Name group expected",
+										GENERIC, true );
 	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
+	inclusions->appendChild( nameGroup );
 
 	aExceptions->appendChild( inclusions );
 

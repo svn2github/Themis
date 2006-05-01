@@ -9,11 +9,6 @@
 #ifndef DTDPARSER_HPP
 #define DTDPARSER_HPP
 
-// Standard C++ headers
-#include <string>
-#include <vector>
-#include <map>
-
 // Themis headers
 #include "DOMSupport.h"
 #include "TDocument.h"
@@ -30,8 +25,6 @@ class EntityDeclParser;
 class ElementDeclParser;
 class AttrListDeclParser;
 
-using namespace std;
-
 class DTDParser	:	public BaseParser	{
 	
 	protected:
@@ -43,7 +36,7 @@ class DTDParser	:	public BaseParser	{
 		AttrListDeclParser * attrListDecl;
 		
 		// Functions
-		void processDeclaration();
+		bool processDeclaration();
 		bool processDs();
 		void processDsStar();
 

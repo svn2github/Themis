@@ -40,18 +40,17 @@ bool EntityDeclParser	::	processDeclaration()	{
 		return false;
 	}
 
-	try	{
-		processPsPlus();
-		entity = processEntityName();
-		processPsPlus();
-		processEntityText( entity );
-		processPsStar();
-		process( mMdc );
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
+	processPsPlus();
+	entity = processEntityName();
+	processPsPlus();
+	processEntityText( entity );
+	processPsStar();
+	if ( ! process( mMdc, false ) )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Entity declaration not closed correctly",
+										GENERIC, true );
+	}		
 	
 	return true;
 
@@ -59,38 +58,35 @@ bool EntityDeclParser	::	processDeclaration()	{
 
 TElementPtr EntityDeclParser	::	processEntityName()	{
 	
-	try	{
-		string name = processGenEntityName();
-		TElementPtr entity = mDTD->createElement( name );
-		mCharEntities->appendChild( entity );
-		return entity;
-	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
+	TElementPtr entity;
+	
+	string name = processGenEntityName();
+	if ( name == "" )	{
+		name = processParEntityName();
+		if ( name == "" )	{
+			throw ReadException( mDocText->getLineNr(),
+											mDocText->getCharNr(),
+											"Entity name expected",
+											GENERIC, true );
+		}
+		else	{
+			entity = mDTD->createElement( name );
+			mParEntities->appendChild( entity );
 		}
 	}
-	try	{
-		string name = processParEntityName();
-		TElementPtr entity = mDTD->createElement( name );
-		mParEntities->appendChild( entity );
-		return entity;
+	else	{	
+		entity = mDTD->createElement( name );
+		mCharEntities->appendChild( entity );
 	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
+
+	return entity;
 
 }
 
 void EntityDeclParser	::	processEntityText( TElementPtr & entity )	{
 
-	try	{
-		processParLiteral( entity );
+	if ( processParLiteral( entity ) )	{
 		return;
-	}
-	catch( ReadException r )	{
-		// Do nothing
 	}
 	if ( processDataText( entity ) )	{
 		return;
@@ -122,13 +118,12 @@ bool EntityDeclParser	::	processDataText( TElementPtr & entity )	{
 		}
 	}
 
-	try	{
-		processPsPlus();
-		processParLiteral( entity );
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
+	processPsPlus();
+	if ( ! processParLiteral( entity ) )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Parameter literal expected",
+										GENERIC, true );
 	}
 
 	return true;
@@ -138,21 +133,25 @@ bool EntityDeclParser	::	processDataText( TElementPtr & entity )	{
 
 string EntityDeclParser	::	processGenEntityName()	{
 
-	return processName();
+	return processName( false );
 	
 }
 
 string EntityDeclParser	::	processParEntityName()	{
 
-	process( mPero );
+	if ( ! process( mPero, false ) )	{
+		return "";
+	}
 
-	try	{
-		processPsPlus();
-		return processName();
+	processPsPlus();
+	string name = processName( false );
+	if ( name == "" )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Parameter entity name expected",
+										GENERIC, true );
 	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
+	
+	return name;		
 	
 }

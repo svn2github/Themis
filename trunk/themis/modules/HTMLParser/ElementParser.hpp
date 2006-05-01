@@ -54,7 +54,7 @@ class ElementParser	:	public BaseParser	{
 		void processEndTag( const TDOMString & aName );
 		string processGenIdSpec();
 		void processAttrSpecList( TNodePtr aParent );
-		void processAttrSpec( TNodePtr aParent );
+		bool processAttrSpec( TNodePtr aParent );
 		void skipContent( const TElementPtr & aContent );
 		void processContent( const TElementPtr & aContent,
 										const TElementPtr & aExceptions,

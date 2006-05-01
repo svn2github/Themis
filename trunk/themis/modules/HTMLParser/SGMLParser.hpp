@@ -21,7 +21,6 @@
 // SGMLParser headers
 #include "BaseParser.hpp"
 #include "SGMLText.hpp"
-#include "Position.hpp"
 
 // Declarations of SGMLParser classes
 class CommentDeclParser;

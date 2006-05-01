@@ -39,19 +39,25 @@ bool AttrListDeclParser	::	processDeclaration()	{
 		return false;
 	}
 
-	try	{
-		processPsPlus();
-		element = processAssElementType();
-		processPsPlus();
-		TElementPtr attrDefList = processAttrDefList();
-		declaration->appendChild( attrDefList );
-		processPsStar();
-		process( mMdc );
+	processPsPlus();
+	element = processAssElementType();
+	if ( element.get() == NULL )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Attribute element type expected",
+										GENERIC, true );
 	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
+	processPsPlus();
+	TElementPtr attrDefList = processAttrDefList();
+	declaration->appendChild( attrDefList );
+	processPsStar();
+	if ( ! process( mMdc, false ) )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"AttrList not closed correctly",
+										GENERIC, true );
 	}
+		
 
 	if ( element->hasChildNodes() )	{
 		// Name group.
@@ -70,32 +76,21 @@ bool AttrListDeclParser	::	processDeclaration()	{
 }
 
 TElementPtr AttrListDeclParser	::	processAssElementType()	{
-	
-	try	{
-		string name = processGI();
+
+	string name = processGI( false );
+	if ( name == "" )	{
+		TElementPtr group = processNameGroup();
+		if ( group.get() != NULL )	{
+			return group;
+		}
+	}
+	else	{
 		TElementPtr element = mDTD->createElement( name );
 		return element;
 	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
-		}
-	}
-
-	try	{
-		TElementPtr group = processNameGroup();
-		return group;
-	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
-		}
-	}
 	
-	throw ReadException( mDocText->getLineNr(),
-									mDocText->getCharNr(),
-									"Ass Element type expected" );
-	
+	return TElementPtr();
+		
 }
 
 TElementPtr AttrListDeclParser	::	processAttrDefList()	{
@@ -107,16 +102,13 @@ TElementPtr AttrListDeclParser	::	processAttrDefList()	{
 	
 	bool adFound = true;
 	while ( adFound )	{
-		try	{
-			processPsPlus();
-			attrDef = processAttrDef();
-			attrDefList->appendChild( attrDef );
-		}
-		catch( ReadException r )	{
-			if ( r.isFatal() )	{
-				throw r;
-			}
+		processPsPlus();
+		attrDef = processAttrDef();
+		if ( attrDef.get() == NULL )	{
 			adFound = false;
+		}
+		else	{
+			attrDefList->appendChild( attrDef );
 		}
 	}
 
@@ -127,7 +119,9 @@ TElementPtr AttrListDeclParser	::	processAttrDefList()	{
 TElementPtr AttrListDeclParser	::	processAttrDef()	{
 
 	string name = processAttrName();
-	TElementPtr attrDef = mDTD->createElement( name );
+	if ( name == "" )	{
+		return TElementPtr();
+	}
 
 	try	{
 		processPsPlus();
@@ -137,14 +131,15 @@ TElementPtr AttrListDeclParser	::	processAttrDef()	{
 		throw r;
 	}
 
-	try	{	
-		string declValue = processDeclValue();
-		attrDef->setAttribute( "declValue", declValue );
+	string declValue = processDeclValue();
+	if ( declValue == "" )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Declared value expected",
+										GENERIC, true );
 	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
+	TElementPtr attrDef = mDTD->createElement( name );
+	attrDef->setAttribute( "declValue", declValue );
 
 	try	{
 		processPsPlus();
@@ -154,14 +149,14 @@ TElementPtr AttrListDeclParser	::	processAttrDef()	{
 		throw r;
 	}
 	
-	try	{	
-		string defValue = processDefValue();
-		attrDef->setAttribute( "defValue", defValue );
+	string defValue = processDefValue();
+	if ( defValue == "" )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Default value expected",
+										GENERIC, true );
 	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
+	attrDef->setAttribute( "defValue", defValue );
 
 	return attrDef;
 	
@@ -170,7 +165,7 @@ TElementPtr AttrListDeclParser	::	processAttrDef()	{
 string AttrListDeclParser	::	processAttrName()	{
 
 	// Attribute name and name are equivalent
-	return processName();
+	return processName( false );
 	
 }
 
@@ -231,36 +226,25 @@ string AttrListDeclParser	::	processDeclValue()	{
 		}
 	}
 	
-	try	{
-		processNameTokenGroup();
+	if ( processNameTokenGroup() != "" )	{
 		//printf( "Declared value: name token group\n" );
-		return "";
-	}
-	catch( ReadException r )	{
-		// Do nothing
+		return "nameTokenGroup";
 	}
 
-	throw ReadException( mDocText->getLineNr(),
-									mDocText->getCharNr(),
-									"Declared value expected" );
+	return "";
 	
 }
 
 string AttrListDeclParser	::	processDefValue()	{
 	
-	try	{
-		process( mRni );
-	}
-	catch( ReadException r )	{
+	if ( ! process( mRni, false ) )	{
 		// Must be an attribute value specification
-		processAttrValueSpec();
-		return "";
+		return processAttrValueSpec( false );
 	}
 	
 	if ( process( kFIXED, false ) )	{
 		processPsPlus();
-		processAttrValueSpec();
-		return "";
+		return processAttrValueSpec( false );
 	}
 	if ( process( kREQUIRED, false ) )	{
 		return kREQUIRED;
@@ -275,8 +259,6 @@ string AttrListDeclParser	::	processDefValue()	{
 		return kIMPLIED;
 	}
 
-	processAttrValueSpec();
-	
-	return "";
+	return processAttrValueSpec( false );
 	
 }

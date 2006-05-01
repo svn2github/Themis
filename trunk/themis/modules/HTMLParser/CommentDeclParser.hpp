@@ -9,16 +9,8 @@
 #ifndef COMMENTDECLPARSER_HPP
 #define COMMENTDECLPARSER_HPP
 
-// Standard C++ headers
-#include <map>
-#include <string>
-
 // SGMLParser headers
 #include "DeclarationParser.hpp"
-#include "Position.hpp"
-
-// Namespaces used
-using namespace std;
 
 class CommentDeclParser	:	public DeclarationParser	{
 	

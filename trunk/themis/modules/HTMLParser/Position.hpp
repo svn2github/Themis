@@ -31,12 +31,6 @@
 #ifndef POSITION_HPP
 #define POSITION_HPP
 
-// Standard C++ headers
-#include <string>
-
-// Namespaces used
-using namespace std;
-
 /// Stores the position in the document.
 
 /**

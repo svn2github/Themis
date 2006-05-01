@@ -26,44 +26,40 @@ MarkedSecDeclParser	::	~MarkedSecDeclParser()	{
 
 bool MarkedSecDeclParser	::	processDeclaration()	{
 
-	process( mMdo );
-	process( mDso );
-	
-	try	{
-		processStatusKeyWordSpec();
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
+	if ( ! process( mMdo, false ) )	{
+		return false;
 	}
 
-	try	{
-		process( mDso );
+	if ( ! process( mDso, false ) )	{
+		return false;
 	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
+	
+	processStatusKeyWordSpec();
+
+	if ( ! process( mDso, false ) )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Dso expected",
+										GENERIC, true );
 	}
 	
 	bool mscFound = false;
 	while ( ! mscFound )	{
-		try	{
-			process( mMsc );
+		if ( process( mMsc, false ) )	{
 			mscFound = true;
 		}
-		catch( ReadException r )	{
+		else	{
 			// Not found yet
 			mDocText->nextChar();
 		}
 	}
 	
-	try	{
-		process( mMdc );
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
+	if ( ! process( mMdc, false ) )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Marked section declaration not closed correctly",
+										GENERIC, true );
+	}		
 	
 	return true;
 	
@@ -72,33 +68,35 @@ bool MarkedSecDeclParser	::	processDeclaration()	{
 void MarkedSecDeclParser	::	processStatusKeyWordSpec()	{
 
 	// Fix me
-	
 	processPsPlus();
-	processStatusKeyWord();
+	if ( ! processStatusKeyWord() )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Status keyword expected",
+										GENERIC, true );
+	}
 	processPsStar();
 	
 }
 
-void MarkedSecDeclParser	::	processStatusKeyWord()	{
+bool MarkedSecDeclParser	::	processStatusKeyWord()	{
 
 	if ( process( kCDATA, false ) )	{
-		return;
+		return true;
 	}
 	if ( process( kIGNORE, false ) )	{
-		return;
+		return true;
 	}
 	if ( process( kINCLUDE, false ) )	{
-		return;
+		return true;
 	}
 	if ( process( kRCDATA, false ) )	{
-		return;
+		return true;
 	}
 	if ( process( kTEMP, false ) )	{
-		return;
+		return true;
 	}
 
-	throw ReadException( mDocText->getLineNr(),
-									mDocText->getCharNr(),
-									"Status keyword expected" );
+	return false;
 	
 }

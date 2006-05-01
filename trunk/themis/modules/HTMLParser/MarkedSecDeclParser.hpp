@@ -9,16 +9,8 @@
 #ifndef MARKEDSECDECLPARSER_HPP
 #define MARKEDSECDECLPARSER_HPP
 
-// Standard C++ headers
-#include <map>
-#include <string>
-
 // SGMLParser headers
 #include "DeclarationParser.hpp"
-#include "Position.hpp"
-
-// Namespaces used
-using namespace std;
 
 class MarkedSecDeclParser	:	public DeclarationParser	{
 	
@@ -27,7 +19,7 @@ class MarkedSecDeclParser	:	public DeclarationParser	{
 		~MarkedSecDeclParser();
 		bool processDeclaration();
 		void processStatusKeyWordSpec();
-		void processStatusKeyWord();
+		bool processStatusKeyWord();
 
 };
 

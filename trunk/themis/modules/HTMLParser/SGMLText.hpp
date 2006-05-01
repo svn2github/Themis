@@ -40,7 +40,6 @@
 
 // Standard C++ headers
 #include <string>
-#include <vector>
 
 // SGMLParser headers
 #include "Position.hpp"
@@ -66,7 +65,6 @@ class SGMLText	{
 		/**
 			Might be better to store it in just one place: The state.
 		*/
-		///vector<Position> mPositions;
 		State mState;
 		
 	public:

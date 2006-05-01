@@ -10,16 +10,11 @@
 #define ATTRLISTDECLPARSER_HPP
 
 // Standard C++ headers
-#include <map>
 #include <string>
 
 // SGMLParser headers
 #include "DeclarationParser.hpp"
 #include "SGMLText.hpp"
-#include "Position.hpp"
-
-// Namespaces used
-using namespace std;
 
 class AttrListDeclParser	:	public DeclarationParser	{
 

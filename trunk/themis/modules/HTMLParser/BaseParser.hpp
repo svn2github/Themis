@@ -33,7 +33,6 @@
 
 // Standard C++ headers
 #include <string>
-#include <vector>
 #include <map>
 
 // Boost headers
@@ -136,24 +135,24 @@ class BaseParser	{
 		bool processComment();
 		bool processParEntityReference();
 		string processLiteral();
-		void processParLiteral( TElementPtr & entity );
+		bool processParLiteral( TElementPtr & entity );
 		string processMinLiteral();
 		string processMinData();
-		string processName();
+		string processName( bool aException = true );
 		string processNameToken();
 		void processSStar();
 		bool processPs();
 		void processPsStar();
-		void processPsPlus();
+		bool processPsPlus( bool aException = true );
 		bool processTs();
 		void processTsStar();
 		string processRepParData();
 		string processRepCharData();
-		string processGI();
+		string processGI( bool aException = true );
 		TElementPtr processNameGroup();
 		string processNameTokenGroup();
 		TElementPtr processConnector();
-		string processAttrValueSpec();
+		string processAttrValueSpec( bool aException = true );
 		string processAttrValue();
 		string processAttrValueLit();
 		string processCharData( string aEndString, bool aSpaceEnd = true );

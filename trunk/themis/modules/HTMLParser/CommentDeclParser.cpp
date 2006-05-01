@@ -45,13 +45,12 @@ bool CommentDeclParser	::	processDeclaration()	{
 		}
 	}
 
-	try	{
-		process( mMdc );
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
+	if ( ! process( mMdc, false ) )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Comment declaration not closed correctly",
+										GENERIC, true );
+	}		
 	
 	return true;
 	
