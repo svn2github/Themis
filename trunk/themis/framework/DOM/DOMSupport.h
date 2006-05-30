@@ -1,6 +1,6 @@
 /* Support definitions for the DOM core
 
-	Mark Hellegers (M.H.Hellegers@stud.tue.nl)
+	Mark Hellegers (mark@firedisk.net)
 	11-12-2001
 
 */
