@@ -40,9 +40,9 @@
 
 // Themis headers
 #include "DOMSupport.h"
-#include "TDocument.h"
 
 // SGMLParser headers
+#include "SGMLSupport.hpp"
 #include "SGMLText.hpp"
 #include "Position.hpp"
 
@@ -63,10 +63,8 @@ class BaseParser	{
 	
 	protected:
 		// Variables
-		/// The resulting document tree.
-		TDocumentPtr mDocument;
 		/// The dtd to use when parsing.
-		TDocumentPtr mDTD;
+		TSchemaPtr mDTD;
 		/// The parameter entities stored in the dtd.
 		TElementPtr mParEntities;
 		/// The character entities stored in the dtd.

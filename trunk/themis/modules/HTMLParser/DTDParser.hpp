@@ -11,7 +11,6 @@
 
 // Themis headers
 #include "DOMSupport.h"
-#include "TDocument.h"
 
 // SGMLParser headers
 #include "BaseParser.hpp"
@@ -42,14 +41,14 @@ class DTDParser	:	public BaseParser	{
 
 	public:
 		// Constructor
-		DTDParser( const char * aFileName, TDocumentPtr aDTD );
+		DTDParser( const char * aFileName, TSchemaPtr aDTD );
 		// Destructor
 		~DTDParser();
 		// Setting a new DTD
-		void setDTD( TDocumentPtr aDTD );
+		void setDTD( TSchemaPtr aDTD );
 		// Parsing function
-		TDocumentPtr parse();
-		TDocumentPtr parse( const char * aFileName );
+		TSchemaPtr parse();
+		TSchemaPtr parse( const char * aFileName );
 	
 };
 

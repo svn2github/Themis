@@ -11,6 +11,7 @@
 #include "ReadException.hpp"
 #include "State.hpp"
 #include "SGMLSupport.hpp"
+#include "TSchema.hpp"
 
 // DOM headers
 #include "TNode.h"
@@ -45,7 +46,7 @@ void BaseParser	::	setDocText( SGMLTextPtr aDocText )	{
 void BaseParser	::	createDTD()	{
 
 	// Document to store information about the dtd
-	mDTD = TDocumentPtr( new TDocument() );
+	mDTD = TSchemaPtr( new TSchema() );
 
 	// Element to store parameter entities
 	mParEntities = mDTD->createElement( "parEntities" );

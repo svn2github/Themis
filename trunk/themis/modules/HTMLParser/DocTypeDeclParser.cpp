@@ -9,9 +9,10 @@
 #include "DocTypeDeclParser.hpp"
 #include "ReadException.hpp"
 #include "SGMLSupport.hpp"
+#include "TSchema.hpp"
 
 DocTypeDeclParser	::	DocTypeDeclParser( SGMLTextPtr aDocText,
-															 TDocumentPtr aDTD )
+															 TSchemaPtr aDTD )
 							:	DeclarationParser( aDocText, aDTD )	{
 
 	//printf( "Constructing DocTypeDeclParser\n" );

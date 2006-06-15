@@ -9,13 +9,14 @@
 #include "DeclarationParser.hpp"
 #include "ReadException.hpp"
 #include "SGMLSupport.hpp"
+#include "TSchema.hpp"
 
 // DOM headers
 #include "TElement.h"
 #include "TNodeList.h"
 
 DeclarationParser	::	DeclarationParser( SGMLTextPtr aDocText,
-															TDocumentPtr aDTD )
+															TSchemaPtr aDTD )
 							:	BaseParser()	{
 
 	//printf( "Constructing DeclarationParser\n" );
@@ -37,7 +38,7 @@ void DeclarationParser	::	setDocText( SGMLTextPtr aDocText )	{
 	
 }
 
-void DeclarationParser	::	setDTD( TDocumentPtr aDTD )	{
+void DeclarationParser	::	setDTD( TSchemaPtr aDTD )	{
 
 	mDTD = aDTD;
 	

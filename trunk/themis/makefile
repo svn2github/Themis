@@ -163,6 +163,7 @@ JSADDONSOURCES= \
 TESTPLUGSOURCES= \
 	testplug/testplug.cpp
 HTMLPARSERSOURCES= \
+	HTMLParser/TSchema.cpp \
 	HTMLParser/HTMLParser.cpp \
 	HTMLParser/AttrListDeclParser.cpp \
 	HTMLParser/BaseParser.cpp \

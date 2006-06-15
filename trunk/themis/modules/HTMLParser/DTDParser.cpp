@@ -20,13 +20,14 @@
 #include "EntityDeclParser.hpp"
 #include "ElementDeclParser.hpp"
 #include "AttrListDeclParser.hpp"
+#include "TSchema.hpp"
 
 // DOM headers
 #include "TNode.h"
 #include "TElement.h"
 #include "TNodeList.h"
 
-DTDParser	::	DTDParser( const char * aFileName, TDocumentPtr aDTD )
+DTDParser	::	DTDParser( const char * aFileName, TSchemaPtr aDTD )
 					:	BaseParser()	{
 	
 	//printf( "DTDParser constructed\n" );
@@ -63,7 +64,7 @@ DTDParser	::	~DTDParser()	{
 	
 }
 
-void DTDParser	::	setDTD( TDocumentPtr aDTD )	{
+void DTDParser	::	setDTD( TSchemaPtr aDTD )	{
 	
 	mDTD = aDTD;
 
@@ -154,7 +155,7 @@ void DTDParser	::	processDsStar()	{
 
 }
 
-TDocumentPtr DTDParser	::	parse()	{
+TSchemaPtr DTDParser	::	parse()	{
 	
 	bool contentFound = true;
 	
@@ -180,11 +181,11 @@ TDocumentPtr DTDParser	::	parse()	{
 		}
 	}
 
-	return mDocument;
+	return mDTD;
 	
 }
 
-TDocumentPtr DTDParser	::	parse( const char * aFileName )	{
+TSchemaPtr DTDParser	::	parse( const char * aFileName )	{
 	
 	mDocText->loadText( aFileName );
 	

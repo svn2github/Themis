@@ -18,7 +18,7 @@ class ElementDeclParser	:	public DeclarationParser	{
 		TElementPtr mElements;
 	
 	public:
-		ElementDeclParser( SGMLTextPtr aDocText, TDocumentPtr aDTD );
+		ElementDeclParser( SGMLTextPtr aDocText, TSchemaPtr aDTD );
 		~ElementDeclParser();
 		bool processDeclaration();
 		TElementPtr processElementType();

@@ -9,14 +9,14 @@
 #include "AttrListDeclParser.hpp"
 #include "ReadException.hpp"
 #include "SGMLSupport.hpp"
+#include "TSchema.hpp"
 
 // DOM headers
-#include "TDocument.h"
 #include "TElement.h"
 #include "TNodeList.h"
 
 AttrListDeclParser	::	AttrListDeclParser( SGMLTextPtr aDocText,
-															TDocumentPtr aDTD )
+															TSchemaPtr aDTD )
 							:	DeclarationParser( aDocText, aDTD )	{
 
 	mAttrLists = mDTD->createElement( "attrLists" );

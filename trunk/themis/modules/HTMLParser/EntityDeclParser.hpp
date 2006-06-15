@@ -23,7 +23,7 @@ using namespace std;
 class EntityDeclParser	:	public DeclarationParser	{
 	
 	public:
-		EntityDeclParser( SGMLTextPtr aDocText, TDocumentPtr aDTD );
+		EntityDeclParser( SGMLTextPtr aDocText, TSchemaPtr aDTD );
 		~EntityDeclParser();
 		map<string, Position> getEntityTexts();
 		bool processDeclaration();

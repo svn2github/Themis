@@ -32,10 +32,10 @@ class ElementParser	:	public BaseParser	{
 		CommentDeclParser * commentParser;
 	
 	public:
-		ElementParser( SGMLTextPtr aDocText, TDocumentPtr aDTD );
+		ElementParser( SGMLTextPtr aDocText, TSchemaPtr aDTD );
 		virtual ~ElementParser();
 		void setDocText( SGMLTextPtr aDocText );
-		void setDTD( TDocumentPtr aDTD );
+		void setDTD( TSchemaPtr aDTD );
 		void parse( const map<string, Position> & aEntityTexts, const string & aName );
 		void parse( const string & aName );	// If you don't need entities
 		TDocumentPtr getDocument() const;

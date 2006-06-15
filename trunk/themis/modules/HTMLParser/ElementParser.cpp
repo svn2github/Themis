@@ -12,6 +12,7 @@
 #include "SGMLSupport.hpp"
 #include "State.hpp"
 #include "CommentDeclParser.hpp"
+#include "TSchema.hpp"
 
 // DOM headers
 #include "TElement.h"
@@ -21,7 +22,7 @@
 #include "TAttr.h"
 
 ElementParser	::	ElementParser( SGMLTextPtr aDocText,
-												  TDocumentPtr aDTD )
+												  TSchemaPtr aDTD )
 						:	BaseParser()	{
 
 	mDocText = aDocText;
@@ -50,7 +51,7 @@ void ElementParser	::	setDocText( SGMLTextPtr aDocText )	{
 	
 }
 
-void ElementParser	::	setDTD( TDocumentPtr aDTD )	{
+void ElementParser	::	setDTD( TSchemaPtr aDTD )	{
 
 	mDTD = aDTD;
 	

@@ -15,7 +15,7 @@
 class MarkedSecDeclParser	:	public DeclarationParser	{
 	
 	public:
-		MarkedSecDeclParser( SGMLTextPtr aDocText, TDocumentPtr aDTD );
+		MarkedSecDeclParser( SGMLTextPtr aDocText, TSchemaPtr aDTD );
 		~MarkedSecDeclParser();
 		bool processDeclaration();
 		void processStatusKeyWordSpec();

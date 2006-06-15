@@ -9,13 +9,13 @@
 #include "EntityDeclParser.hpp"
 #include "ReadException.hpp"
 #include "SGMLSupport.hpp"
+#include "TSchema.hpp"
 
 // DOM headers
-#include "TDocument.h"
 #include "TElement.h"
 
 EntityDeclParser	::	EntityDeclParser( SGMLTextPtr aDocText,
-													  TDocumentPtr aDTD )
+													  TSchemaPtr aDTD )
 								:	DeclarationParser( aDocText, aDTD )	{
 
 }

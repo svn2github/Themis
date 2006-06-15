@@ -19,6 +19,7 @@
 #include "DTDParser.hpp"
 #include "DocTypeDeclParser.hpp"
 #include "ElementParser.hpp"
+#include "TSchema.hpp"
 
 // DOM headers
 #include "TNode.h"
@@ -201,11 +202,12 @@ TDocumentPtr SGMLParser	::	parse()	{
 		}
 	}
 
-	mDocument = mElementParser->getDocument();
-	showTree( mDocument, 0 );
+	TDocumentPtr document = mElementParser->getDocument();
+
+	showTree( document, 0 );
 	printf( "Finished with document\n" );
 
-	return mDocument;
+	return document;
 	
 }
 
@@ -242,11 +244,11 @@ void SGMLParser	::	parseDTD()	{
 		mDocTypeDecl->setDTD( mDTD );
 		mElementParser->setDTD( mDTD );
 		mDtdParser->parse( mDefaultDtd.c_str() );
-		mDtds.insert( map<string, TDocumentPtr>::value_type( mDefaultDtd, mDTD ) );
+		mDtds.insert( map<string, TSchemaPtr>::value_type( mDefaultDtd, mDTD ) );
 //		showTree( mDTD, 0 );
 	}
 	else	{
-		map<string, TDocumentPtr>::iterator i = mDtds.find( mDefaultDtd );
+		map<string, TSchemaPtr>::iterator i = mDtds.find( mDefaultDtd );
 		mDTD = (*i).second;
 	}
 	

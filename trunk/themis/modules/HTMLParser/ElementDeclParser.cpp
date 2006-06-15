@@ -9,15 +9,15 @@
 #include "ElementDeclParser.hpp"
 #include "ReadException.hpp"
 #include "SGMLSupport.hpp"
+#include "TSchema.hpp"
 
 // DOM headers
-#include "TDocument.h"
 #include "TElement.h"
 #include "TNodeList.h"
 #include "TNamedNodeMap.h"
 
 ElementDeclParser	::	ElementDeclParser( SGMLTextPtr aDocText,
-															 TDocumentPtr aDTD )
+															 TSchemaPtr aDTD )
 							:	DeclarationParser( aDocText, aDTD )	{
 
 	// Element to store the element declarations of the DTD

@@ -42,7 +42,7 @@ class SGMLParser	:	public BaseParser	{
 		DTDParser * mDtdParser;
 		DocTypeDeclParser * mDocTypeDecl;
 		ElementParser * mElementParser;
-		map<string, TDocumentPtr> mDtds;
+		map<string, TSchemaPtr> mDtds;
 		string mDefaultDtd;
 		
 		// Functions

@@ -23,10 +23,10 @@ using namespace std;
 class DeclarationParser	:	public BaseParser	{
 	
 	public:
-		DeclarationParser( SGMLTextPtr aDocText, TDocumentPtr aDTD );
+		DeclarationParser( SGMLTextPtr aDocText, TSchemaPtr aDTD );
 		virtual ~DeclarationParser();
 		void setDocText( SGMLTextPtr aDocText );
-		void setDTD( TDocumentPtr aDTD );
+		void setDTD( TSchemaPtr aDTD );
 		bool parse( const map<string, Position> & aEntityTexts );
 		bool parse();	// If you don't need entities
 		virtual bool processDeclaration();

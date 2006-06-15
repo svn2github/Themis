@@ -51,4 +51,19 @@ const string kSYSTEM		= "SYSTEM";
 const string kPUBLIC		= "PUBLIC";
 const string kDOCTYPE	= "DOCTYPE";
 
+// Boost headers
+#include "boost/shared_ptr.hpp"
+#include "boost/weak_ptr.hpp"
+
+// Class declarations
+class TElementDeclaration;
+class TSchema;
+
+// Typedefs used
+typedef boost::weak_ptr<TElementDeclaration> TElementDeclarationWeak;
+typedef boost::shared_ptr<TElementDeclaration> TElementDeclarationPtr;
+
+typedef boost::weak_ptr<TSchema> TSchemaWeak;
+typedef boost::shared_ptr<TSchema> TSchemaPtr;
+
 #endif
