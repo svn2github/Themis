@@ -22,7 +22,7 @@ class ElementDeclParser	:	public DeclarationParser	{
 		~ElementDeclParser();
 		bool processDeclaration();
 		TElementPtr processElementType();
-		bool processTagMin( TElementPtr aElement );
+		bool processTagMin( TElementDeclarationPtr aDeclaration );
 		bool processDeclContent( TElementPtr aElement );
 		bool processContentModel( TElementPtr aElement );
 		TElementPtr processModelGroup();

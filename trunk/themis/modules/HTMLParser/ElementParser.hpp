@@ -40,13 +40,13 @@ class ElementParser	:	public BaseParser	{
 		void parse( const string & aName );	// If you don't need entities
 		TDocumentPtr getDocument() const;
 		void processElementContent( const TDOMString & aName,
-												   const TElementPtr & aElementDecl,
+												   const TElementDeclarationPtr & aElementDecl,
 												   TNodePtr aParent );
 		void processUnknownTags( TNodePtr aParent );
 		bool processUnknownStartTag( TNodePtr aParent );
 		bool processUnknownEndTag();
 		void processElement( const TDOMString & aName,
-										const TElementPtr & aElementDecl,
+										const TElementDeclarationPtr & aDeclaration,
 										TNodePtr aParent );
 		TElementPtr processStartTag( const TDOMString & aName,
 													const TElementPtr & elementDecl,
@@ -86,8 +86,8 @@ class ElementParser	:	public BaseParser	{
 		void processExceptions( const TElementPtr & aExceptions, TNodePtr aParent );
 		void processException( const TElementPtr & aExceptions, TNodePtr aParent );
 		void processExceptionOtherContent();
-		TElementPtr getElementDecl( const string & aName,
-												   TElementPtr declarations ) const;
+		TElementDeclarationPtr getElementDecl( const string & aName,
+												   				   TElementPtr declarations ) const;
 		void processComments();
 		bool processCommentDeclaration();
 		TElementPtr getElement( TElementPtr aElement,

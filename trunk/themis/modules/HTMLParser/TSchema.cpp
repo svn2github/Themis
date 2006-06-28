@@ -35,6 +35,7 @@
 
 // SGMLParser headers
 #include "TSchema.hpp"
+#include "TElementDeclaration.hpp"
 
 TSchema::	TSchema()
 	:	TDocument()	{
@@ -43,4 +44,13 @@ TSchema::	TSchema()
 
 TSchema	::	~TSchema()	{
 	
+}
+
+TElementDeclarationPtr	TSchema	::	createElementDeclaration()	{
+
+	TDocumentPtr thisDocument = shared_static_cast<TDocument>( shared_from_this() );
+	TElementDeclarationPtr result( new TElementDeclaration( thisDocument ) );
+
+	return result;
+
 }

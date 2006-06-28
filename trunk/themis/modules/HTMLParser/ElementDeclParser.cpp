@@ -10,6 +10,7 @@
 #include "ReadException.hpp"
 #include "SGMLSupport.hpp"
 #include "TSchema.hpp"
+#include "TElementDeclaration.hpp"
 
 // DOM headers
 #include "TElement.h"
@@ -33,8 +34,7 @@ ElementDeclParser	::	~ElementDeclParser()	{
 bool ElementDeclParser	::	processDeclaration()	{
 
 	// Define an element to store the element declaration
-	TElementPtr declaration = mDTD->createElement( "declaration" );
-	TElementPtr minimization = mDTD->createElement( "minimization" );
+	TElementDeclarationPtr declaration = mDTD->createElementDeclaration();
 	TElementPtr content = mDTD->createElement( "content" );
 	TElementPtr element;
 
@@ -53,7 +53,7 @@ bool ElementDeclParser	::	processDeclaration()	{
 	}
 	processPsPlus();
 
-	if ( ! processTagMin( minimization ) )	{
+	if ( ! processTagMin( declaration ) )	{
 		throw ReadException( mDocText->getLineNr(),
 										mDocText->getCharNr(),
 										"Tag minimization expected",
@@ -88,7 +88,6 @@ bool ElementDeclParser	::	processDeclaration()	{
 		declaration->appendChild( elements );
 		elements->appendChild( element );
 	}
-	declaration->appendChild( minimization );
 	declaration->appendChild( content );
 	
 	mElements->appendChild( declaration );
@@ -115,15 +114,18 @@ TElementPtr ElementDeclParser	::	processElementType()	{
 
 }
 
-bool ElementDeclParser	::	processTagMin( TElementPtr aElement )	{
+bool ElementDeclParser	::	processTagMin( TElementDeclarationPtr aDeclaration )	{
+
+	bool start = false;
+	bool end = false;
 
 	if ( process( kO, false ) )	{
-		aElement->setAttribute( "start", "false" );
+		start = false;
 	}
 	else	{
 		// Not O minimization. Try minus
 		if ( process( kMinus, false ) )	{
-			aElement->setAttribute( "start", "true" );
+			start = true;
 		}
 		else	{
 			return false;
@@ -139,12 +141,12 @@ bool ElementDeclParser	::	processTagMin( TElementPtr aElement )	{
 	}
 	
 	if ( process( kO, false ) )	{
-		aElement->setAttribute( "end", "false" );
+		end = false;
 	}
 	else	{
 		// Not O minimization. Try minus
 		if ( process( kMinus, false ) )	{
-			aElement->setAttribute( "end", "true" );
+			end = true;
 		}
 		else	{
 			throw ReadException( mDocText->getLineNr(),
@@ -154,6 +156,8 @@ bool ElementDeclParser	::	processTagMin( TElementPtr aElement )	{
 											true );
 		}
 	}
+
+	aDeclaration->setMinimization( start, end );
 
 	return true;
 	

@@ -25,40 +25,57 @@
 	
 	Original Author: 	Mark Hellegers (mark@firedisk.net)
 	Project Start Date: October 18, 2000
-	Class Start Date: June 12, 2006
+	Class Start Date: June 05, 2006
 */
 
-/*	TSchema
-	Stores an XML Schema (DTD).
-
-	Mark Hellegers (mark@firedisk.net)
-	12-06-2006
+/*
+	ElementDeclaration implementation
+	See TElementDeclaration.hpp for some more information
 */
 
-#ifndef TSCHEMA_HPP
-#define TSCHEMA_HPP
+// SGMLParser headers
+#include "TElementDeclaration.hpp"
 
-// DOM headers
-#include "SGMLSupport.hpp"
-#include "TDocument.h"
-
-/// Class to store a schema.
-
-/**
-	This class stores an XML schema.
-	It is based on a DOM document and provides
-	a few functions to make it easy to parse an SGML document.
-	It currently only directly supports a DTD schema.
-*/
-
-class TSchema	:	public TDocument	{
-
-	public:
-		TSchema();
-		~TSchema();
-		
-		TElementDeclarationPtr createElementDeclaration();
+TElementDeclaration::	TElementDeclaration( const TDocumentPtr aOwnerDocument )
+	:	TElement(aOwnerDocument, "declaration" )	{
 	
-};
+}
 
-#endif
+TElementDeclaration	::	~TElementDeclaration()	{
+	
+}
+
+void TElementDeclaration	::	setMinimization( bool aStart, bool aEnd )	{
+	
+	if ( aStart ) {
+		setAttribute( "start", "true" );
+	}
+	else {
+		setAttribute( "start", "false" );
+	}
+	if ( aEnd ) {
+		setAttribute( "end", "true" );
+	}
+	else {
+		setAttribute( "end", "false" );
+	}
+
+}
+
+void TElementDeclaration	::	getMinimization( bool & aStart, bool & aEnd )	{
+	
+	if ( getAttribute( "start" ) == "true" )	{
+		aStart = true;
+	}
+	else	{
+		aStart = false;
+	}
+
+	if ( getAttribute( "end" ) == "true" )	{
+		aEnd = true;
+	}
+	else	{
+		aEnd = false;
+	}
+	
+}

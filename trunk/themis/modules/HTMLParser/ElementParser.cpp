@@ -13,6 +13,7 @@
 #include "State.hpp"
 #include "CommentDeclParser.hpp"
 #include "TSchema.hpp"
+#include "TElementDeclaration.hpp"
 
 // DOM headers
 #include "TElement.h"
@@ -90,8 +91,8 @@ void ElementParser	::	parse( const string & aName )	{
 	
 	mName = aName;
 	
-	TElementPtr elementDecl = getElementDecl( aName, mElements );
-	processElementContent( aName, elementDecl, mDocument );
+	TElementDeclarationPtr declaration = getElementDecl( aName, mElements );
+	processElementContent( aName, declaration, mDocument );
 	
 }
 
@@ -102,7 +103,7 @@ TDocumentPtr ElementParser	::	getDocument() const	{
 }
 
 void ElementParser	::	processElementContent( const TDOMString & aName,
-																	const TElementPtr & aElementDecl,
+																	const TElementDeclarationPtr & aDeclaration,
 																	TNodePtr aParent )	{
 
 	bool contentFound = true;
@@ -114,7 +115,7 @@ void ElementParser	::	processElementContent( const TDOMString & aName,
 		}
 	}
 
-	processElement( aName, aElementDecl, aParent );
+	processElement( aName, aDeclaration, aParent );
 																		
 }
 
@@ -229,7 +230,7 @@ bool ElementParser	::	processUnknownEndTag()	{
 }
 
 void ElementParser	::	processElement( const TDOMString & aName,
-														const TElementPtr & aElementDecl,
+														const TElementDeclarationPtr & aDeclaration,
 														 TNodePtr aParent )	{
 		
 	printf( "Trying to find: %s\n", aName.c_str() );
@@ -237,23 +238,12 @@ void ElementParser	::	processElement( const TDOMString & aName,
 	// Setup the minimization
 	bool start = true;
 	bool end = true;
-	TElementPtr minimization = getElement( aElementDecl, "minimization" );
-	if ( minimization.get() != NULL )	{
-		// Get the start tag minimization
-		if ( minimization->getAttribute( "start" ) == "false" )	{
-			start = false;
-		}
-		// Get the end tag minimization
-		if ( minimization->getAttribute( "end" ) == "false" )	{
-			printf( "End tag not required\n" );
-			end = false;
-		}
-	}
+	aDeclaration->getMinimization( start, end );
 
 	TNodePtr tag;
 	State save = mDocText->saveState();
 	try	{
-		TElementPtr element = processStartTag( aName, aElementDecl, aParent );
+		TElementPtr element = processStartTag( aName, aDeclaration, aParent );
 		// Cast it to a node
 		tag = shared_static_cast<TNode>( element );
 	}
@@ -272,7 +262,7 @@ void ElementParser	::	processElement( const TDOMString & aName,
 	processUnknownTags( aParent );
 
 	// Get the content model
-	TElementPtr content = getElement( aElementDecl, "content" );
+	TElementPtr content = getElement( aDeclaration, "content" );
 	if ( content.get() != NULL )	{
 		TNodePtr childContent = content->getFirstChild();
 		TElementPtr baseContent = shared_static_cast<TElement>( childContent );
@@ -564,8 +554,8 @@ void ElementParser	::	processContent( const TElementPtr & aContent,
 				break;
 			}
 			printf( "At tag\n" );
-			TElementPtr elementDecl = getElementDecl( contentName, mElements );
-			processElementContent( contentName, elementDecl, aParent );
+			TElementDeclarationPtr declaration = getElementDecl( contentName, mElements );
+			processElementContent( contentName, declaration, aParent );
 			printf( "Finished tag\n" );
 		}
 	}
@@ -867,10 +857,10 @@ void ElementParser	::	processException( const TElementPtr & aExceptions,
 		TNodePtr child = children->item( i );
 		TDOMString name = child->getNodeName();
 		printf( "Looking at exception %s\n", name.c_str() );
-		TElementPtr element = getElementDecl( name, mElements );
 		if ( name == token || token == "" )	{
 			try	{
-				processElement( name, element, aParent );
+				TElementDeclarationPtr declaration = getElementDecl( name, mElements );
+				processElement( name, declaration, aParent );
 				printf( "Finished exception\n" );
 				return;
 			}
@@ -929,8 +919,8 @@ void ElementParser	::	processExceptionOtherContent()	{
 
 }
 
-TElementPtr ElementParser	::	getElementDecl( const string & aName,
-																	TElementPtr declarations ) const	{
+TElementDeclarationPtr ElementParser	::	getElementDecl( const string & aName,
+																					TElementPtr declarations ) const	{
 	
 	//printf( "Trying to get declaration: %s\n", aName.c_str() );
 
@@ -944,8 +934,8 @@ TElementPtr ElementParser	::	getElementDecl( const string & aName,
 			parent = parent->getParentNode();
 			if ( parent->getNodeName() == "declaration" )	{
 				// This is the one we want.
-				TElementPtr declaration =
-					shared_static_cast<TElement>( parent );
+				TElementDeclarationPtr declaration =
+					shared_static_cast<TElementDeclaration>( parent );
 				return declaration;
 			}
 		}

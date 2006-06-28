@@ -25,40 +25,39 @@
 	
 	Original Author: 	Mark Hellegers (mark@firedisk.net)
 	Project Start Date: October 18, 2000
-	Class Start Date: June 12, 2006
+	Class Start Date: June 08, 2006
 */
 
-/*	TSchema
-	Stores an XML Schema (DTD).
+/*	TSchemaRule
+	Stores an element declaration from a DTD.
 
 	Mark Hellegers (mark@firedisk.net)
-	12-06-2006
+	08-06-2006
 */
 
-#ifndef TSCHEMA_HPP
-#define TSCHEMA_HPP
+#ifndef TELEMENTDECLARATION_HPP
+#define TELEMENTDECLARATION_HPP
 
 // DOM headers
-#include "SGMLSupport.hpp"
-#include "TDocument.h"
+#include "DOMSupport.h"
+#include "TElement.h"
 
-/// Class to store a schema.
+/// Class to store an element declaration.
 
 /**
-	This class stores an XML schema.
-	It is based on a DOM document and provides
+	This class stores an element declaration.
+	It is based on a DOM element and provides
 	a few functions to make it easy to parse an SGML document.
-	It currently only directly supports a DTD schema.
 */
 
-class TSchema	:	public TDocument	{
+class TElementDeclaration	:	public TElement	{
 
 	public:
-		TSchema();
-		~TSchema();
-		
-		TElementDeclarationPtr createElementDeclaration();
+		TElementDeclaration( const TDocumentPtr aOwnerDocument );
+		~TElementDeclaration();
 	
+		void setMinimization( bool aStart = true, bool aEnd = true );
+		void getMinimization( bool & aStart, bool & aEnd );
 };
 
 #endif
