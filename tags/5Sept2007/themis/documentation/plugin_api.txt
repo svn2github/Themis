@@ -1,0 +1,69 @@
+Plug-in API
+======
+
+All Themis plug-ins should be derived from the PlugClass class described in common/plugclass.h and common/plugclass.cpp. Most, however, will not derive directly from this class but from several subclasses:
+
+	ProtocolPlugClass
+	HTMLPlugClass (not yet available)
+	ImagePlugClass (not yet available)
+	MediaPlugClass (not yet available)
+
+Note: The cache plug-in is an example of a class derived directly from PlugClass although most plug-ins will fall into categories that are already defined in the subclasses. Please use the base class as little as possible.
+
+The base class PlugClass serves as a common reference for data between all plug-ins. It allows the Themis framework to determine what the plug-in's function is, it's requirements (such as adding it to the plug-in manager's handlers list if it's a handler subclass), starting and/or stopping threads, retrieving data, etc. The PlugClass is the one of the few things all plug-ins should have in common.
+
+In addition to PlugClass, you will need three exported functions in your plug-in:
+
+	status_t Initialize(void *info=NULL);
+	status_t Shutdown(bool now=false);
+	PlugClass *GetObject(void);
+
+The Initialize() should create a PlugClass object and the GetObject() returns a pointer to it. Shutdown() should naturally destroy this object in the appropriate manner. See the http and cache plug-ins for examples on creating these functions. Note that you should export the functions with the following lines somewhere in your plug-in:
+
+	extern "C" __declspec(dllexport)status_t Initialize(void *info=NULL);
+	extern "C" __declspec(dllexport)status_t Shutdown(bool now=false);
+	extern "C" __declspec(dllexport)protocol_plugin* GetObject(void);
+
+
+PlugClass Functions
+============
+
+PlugClass()
+====================
+The class constructor can be passed a BMessage containing important data, such as pointers, that the class might use. This BMessage would be passed from the calling function somewhere within the Themis framework application, usually the plug-in manager, to initialize the entire class. BE AWARE THAT THE CLASS ISN'T NECESSARILY BEING UTILIZED AT THE TIME OF CONSTRUCTION! The plug-in manager, for instance, instantiates a plug-in's PlugClass object to get data about the plug-in including the version number, type of plug-in, how it's handled, etc.
+
+The functionality of most plug-ins should be done in a BHandler, BLooper, or standard thread that is not utilized upon instantiation of the object. Your class *can* be a BHandler or BLooper in itself, but don't rely upon the object being around for long, *UNLESS* you return true in the IsPersistant() function. Otherwise, your plug-in will be unloaded almost immediately when the plug-in manager starts up, and before new web pages are visited after visiting a page where your plug-in is used.
+
+~PlugClass()
++=======
+This is called whenever your plug-in object is destroyed.
+
+PlugID() & SecondaryID()
+===============
+These are 32-bit integer values that should, more or less, uniquely identify your plug-in. Although it isn't really necessary, you may assemble a four (4) character abbreviation for your plug-in's name and/or function and return this value from PlugID(). If your value is the same as another plug-in's (such as what might occur with the HTML plug-ins), you MUST return a secondary value as well to distinguish it from other plug-ins of the same type. See plugclass.h for examples.
+
+PlugName() & PlugVersion()
+=================
+These return the plug-in name and version respectively. At this time, these functions serve informational purposes only.
+
+NeedsThread(), SpawnThread(), StartThread(), Thread(), & Stop()
+========================================
+
+TypePrimary() & TypeSecondary()
+=====================
+
+IsHandler() & Handler()
+==============
+
+IsPersistant()
+========
+If your plug-in needs to be in memory, and possibly running during the all the time that Themis is running, this function MUST return true. Otherwise, it should return false or not be defined at all.
+
+IsLooper(), Looper(), & Run()
+=================
+
+IsView(), View(), & Parent()
+=================
+
+SetRef() & Ref()
+==========
