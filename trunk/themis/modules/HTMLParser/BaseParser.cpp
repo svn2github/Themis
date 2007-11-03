@@ -88,29 +88,35 @@ void BaseParser	::	setupSyntax()	{
 
 bool BaseParser	::	process( const string & symbol, bool aException )	{
 
-	State save = mDocText->saveState();
 	unsigned int i = 0;
-	while ( i < symbol.size() )	{
-		if ( mDocText->getChar() == symbol[ i ] )	{
-			mDocText->nextChar();
-			i++;
-		}
-		else	{
-			mDocText->restoreState( save );
-			if ( ! aException )	{
-				return false;
+	if ( mDocText->getChar() == symbol[ i ] )	{
+		State save = mDocText->saveState();
+		mDocText->nextChar();
+		i++;
+		while ( i < symbol.size() )	{
+			if ( mDocText->getChar() == symbol[ i ] )	{
+				mDocText->nextChar();
+				i++;
 			}
 			else	{
-				string error = "Expected ";
-				error += symbol;
-				throw ReadException( mDocText->getLineNr(),
-												mDocText->getCharNr(),
-												error );
+				mDocText->restoreState( save );
+				if ( ! aException )	{
+					return false;
+				}
+				else	{
+					string error = "Expected ";
+					error += symbol;
+					throw ReadException( mDocText->getLineNr(),
+													mDocText->getCharNr(),
+													error );
+				}
 			}
 		}
+		return true;
 	}
-	
-	return true;
+	else {
+		return false;
+	}
 	
 }
 
