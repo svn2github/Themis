@@ -115,7 +115,16 @@ bool BaseParser	::	process( const string & symbol, bool aException )	{
 		return true;
 	}
 	else {
-		return false;
+		if ( ! aException )	{
+			return false;
+		}
+		else	{
+			string error = "Expected ";
+			error += symbol;
+			throw ReadException( mDocText->getLineNr(),
+											mDocText->getCharNr(),
+											error );
+		}
 	}
 	
 }
