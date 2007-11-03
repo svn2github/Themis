@@ -99,9 +99,9 @@ class SGMLText	{
 		*/
 		void loadText( const char * aDocument );
 		/// A function to go to the next character.
-		const char nextChar();
+		char nextChar();
 		/// A function to get the current character.
-		const char getChar();
+		char getChar();
 		/// A function to add an entity.
 		/**
 			This function adds an entity position to the text.

@@ -42,6 +42,9 @@
 #include "SGMLText.hpp"
 #include "ReadException.hpp"
 
+// Namespaces used
+using std::ifstream;
+
 SGMLText	::	SGMLText( const string & aText )	{
 	
 	mText = aText;
@@ -69,21 +72,21 @@ void SGMLText	::	reset( bool clearText )	{
 
 void SGMLText	::	loadText( const char * aDocument )	{
 	
+	const int bufferSize = 1024;
+	char buffer[bufferSize];
+	
 	mText.erase();
 
 	// Load text
 	if ( aDocument != NULL )	{
 		ifstream file( aDocument );
 	
-		char ch;
-		while ( file.get( ch ) )	{
-			// Check for \r. Had something to do with dos line endings, I think.
-			if ( ch == '\r' )	{
-				mText += '\n';
+		while ( file.get(buffer, bufferSize, '\0' ) )	{
+			int count = file.gcount();
+			if (count < bufferSize - 1) {
+				file.ignore();
 			}
-			else	{
-				mText += ch;
-			}
+			mText.append(buffer, count);
 		};
 	}
 
@@ -91,7 +94,7 @@ void SGMLText	::	loadText( const char * aDocument )	{
 	
 }
 
-const char SGMLText	::	nextChar()	{
+char SGMLText	::	nextChar()	{
 
 	Position & current = mState.top();
 	
@@ -115,7 +118,7 @@ const char SGMLText	::	nextChar()	{
 
 }
 
-const char SGMLText	::	getChar()	{
+char SGMLText	::	getChar()	{
 
 	// WARNING: Might be dodgy if a zero length entity was just pushed on the stack
 	
