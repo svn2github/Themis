@@ -339,11 +339,15 @@ void ElementDeclParser	::	processOccIndicator( TElementPtr aElementToken )	{
 		aElementToken->setAttribute("minOccurs", "0");
 		aElementToken->setAttribute("maxOccurs", "1");
 	}
-	if ( process( mPlus, false ) )	{
-		aElementToken->setAttribute("minOccurs", "1");
-	}
-	if ( process( mRep, false ) )	{
-		aElementToken->setAttribute("minOccurs", "0");
+	else {
+		if ( process( mPlus, false ) )	{
+			aElementToken->setAttribute("minOccurs", "1");
+		}
+		else {
+			if ( process( mRep, false ) )	{
+				aElementToken->setAttribute("minOccurs", "0");
+			}
+		}
 	}
 
 }
