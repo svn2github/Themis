@@ -188,25 +188,19 @@ bool BaseParser	::	processParEntityReference()	{
 	// Can be omitted
 	process( mRefc, false );
 
-	TNodeListPtr children = mParEntities->getChildNodes();
-
-	for ( unsigned int i = 0; i < children->getLength(); i++ )	{
-		TNodePtr node = children->item( i );
-		if ( node->getNodeName() == name )	{
-			TElementPtr child = shared_static_cast<TElement>( node );
-			// Check what kind of text it is
-			if ( child->getAttribute( "type" ) != kPUBLIC )	{
-				Position entityPosition = mEntityTexts[ name ];
-				if ( entityPosition.getSize() != 0 )	{
-					mDocText->addEntity( entityPosition );
-				}
-			}
-			else	{
-				//printf( "Equal to PUBLIC\n" );
-			}
+	TNodeListPtr entities = mParEntities->getElementsByTagName(name);
+	TNodePtr node = entities->item(0);
+	TElementPtr entity = shared_static_cast<TElement>( node );
+	if ( entity->getAttribute( "type" ) != kPUBLIC )	{
+		Position entityPosition = mEntityTexts[ name ];
+		if ( entityPosition.getSize() != 0 )	{
+			mDocText->addEntity( entityPosition );
 		}
 	}
-	
+	else	{
+		//printf( "Equal to PUBLIC\n" );
+	}
+
 	return true;
 	
 }
