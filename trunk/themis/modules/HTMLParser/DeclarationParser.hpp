@@ -18,7 +18,8 @@
 #include "Position.hpp"
 
 // Namespaces used
-using namespace std;
+using std::map;
+using std::string;
 
 class DeclarationParser	:	public BaseParser	{
 	

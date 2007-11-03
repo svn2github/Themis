@@ -32,9 +32,6 @@
 	See ReadException.hpp for more information
 */
 
-// Standard C headers
-#include <stdio.h>
-
 // ReadException headers
 #include "ReadException.hpp"
 

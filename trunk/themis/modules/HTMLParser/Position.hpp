@@ -79,7 +79,9 @@ class Position	{
 		*/
 		~Position();
 		/// A function to get the index of the current position.
-		unsigned int getIndex() const;
+		inline unsigned int getIndex() const	{
+			return mIndex;
+		}
 		/// A function to get the line number of the current position.
 		unsigned int getLineNr() const;
 		/// A function to get the character number of the current position.

@@ -414,31 +414,3 @@ bool ElementDeclParser	::	processInclusions( TElementPtr aExceptions )	{
 	return true;
 	
 }
-
-void ElementDeclParser	::	showTree( const TNodePtr aNode, int aSpacing )	{
-	
-	TNodeListPtr children = aNode->getChildNodes();
-	int length = children->getLength();
-	if ( length != 0 )	{
-		for ( int i = 0; i < length; i++ )	{
-			TNodePtr child = children->item( i );
-			for ( int j = 0; j < aSpacing; j++ )	{
-				cout << "  ";
-			}
-			cout << "Child name: " << child->getNodeName().c_str() << endl;
-			if ( child->getNodeType() == ELEMENT_NODE )	{
-				// Check for attributes
-				TNamedNodeMapPtr attributes = child->getAttributes();
-				for ( unsigned int j = 0; j < attributes->getLength(); j++ )	{
-					TNodePtr attr = attributes->item( j );
-					for ( int j = 0; j < aSpacing + 1; j++ )	{
-						cout << "  ";
-					}
-					cout << "Attribute " << attr->getNodeName();
-					cout << " with value " << attr->getNodeValue() << endl;
-				}
-			}
-			showTree( child, aSpacing + 1 );
-		}
-	}	
-}

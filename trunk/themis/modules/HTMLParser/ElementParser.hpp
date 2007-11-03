@@ -18,7 +18,7 @@
 #include "Position.hpp"
 
 // Namespaces used
-using namespace std;
+using std::string;
 
 // Declarations of SGMLParser classes
 class CommentDeclParser;

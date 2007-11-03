@@ -35,7 +35,7 @@
 #include <string>
 
 // Namespaces used
-using namespace std;
+using std::string;
 
 /// The reason for the exception
 

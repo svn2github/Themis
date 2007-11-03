@@ -14,9 +14,10 @@
 
 // SGMLParser headers
 #include "DeclarationParser.hpp"
+#include "SGMLText.hpp"
 
 // Namespaces used
-using namespace std;
+using std::string;
 
 class DocTypeDeclParser	:	public DeclarationParser	{
 	

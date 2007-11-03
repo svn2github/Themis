@@ -47,7 +47,7 @@
 #include "Position.hpp"
 
 // Namespaces used
-using namespace std;
+using std::string;
 
 // Typedefinitions
 typedef boost::shared_ptr<SGMLText> SGMLTextPtr;

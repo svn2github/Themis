@@ -38,7 +38,7 @@
 #include "Position.hpp"
 
 // Namespaces used
-using namespace std;
+using std::vector;
 
 /// Stores the state of a document.
 

@@ -32,9 +32,6 @@
 	See Position.hpp for more information
 */
 
-// Standard C headers
-#include <stdio.h>
-
 // SGMLParser headers
 #include "Position.hpp"
 
@@ -53,11 +50,13 @@ Position	::	~Position()	{
 	
 }
 
+/*
 unsigned int Position	::	getIndex() const	{
 	
 	return mIndex;
 	
 }
+*/
 
 unsigned int Position	::	getLineNr()	const	{
 	

@@ -28,7 +28,8 @@ class DTDParser;
 class DocTypeDeclParser;
 class ElementParser;
 
-using namespace std;
+// Namespaces used
+using std::string;
 
 class SGMLParser	:	public BaseParser	{
 	

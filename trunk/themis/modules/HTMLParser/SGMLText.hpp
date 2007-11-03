@@ -46,7 +46,7 @@
 #include "State.hpp"
 
 // Namespaces used
-using namespace std;
+using std::string;
 
 /// Class to store an SGML text.
 

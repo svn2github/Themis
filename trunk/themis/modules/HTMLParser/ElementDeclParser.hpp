@@ -35,9 +35,6 @@ class ElementDeclParser	:	public DeclarationParser	{
 		bool processExclusions( TElementPtr aExceptions );
 		bool processInclusions( TElementPtr aExceptions );
 
-		// Test function
-		void showTree( TNodePtr aNode, int aSpacing );
-	
 };
 
 #endif

@@ -12,7 +12,7 @@
 #include <string>
 
 // Namespaces used
-using namespace std;
+using std::string;
 
 // Convenience variables
 const string kENTITY		= "ENTITY";
