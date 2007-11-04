@@ -27,6 +27,7 @@ class AttrListDeclParser;
 class DTDParser	:	public BaseParser	{
 	
 	protected:
+		TSchemaPtr mDTD;
 		// Declaration parsers
 		CommentDeclParser * commentDecl;
 		MarkedSecDeclParser * markedSecDecl;
@@ -41,13 +42,12 @@ class DTDParser	:	public BaseParser	{
 
 	public:
 		// Constructor
-		DTDParser( const char * aFileName, TSchemaPtr aDTD );
+		DTDParser( TSchemaPtr aSchema );
 		// Destructor
 		~DTDParser();
-		// Setting a new DTD
-		void setDTD( TSchemaPtr aDTD );
+		// Setting a new schema
+		void setSchema( TSchemaPtr aSchema );
 		// Parsing function
-		TSchemaPtr parse();
 		TSchemaPtr parse( const char * aFileName );
 	
 };

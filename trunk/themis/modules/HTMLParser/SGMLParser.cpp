@@ -7,9 +7,6 @@
 // Standard C headers
 #include <stdio.h>
 
-// Standard C++ headers
-#include <fstream>
-
 // SGMLParser headers
 #include "SGMLParser.hpp"
 #include "ReadException.hpp"
@@ -27,25 +24,29 @@
 #include "TNodeList.h"
 #include "TNamedNodeMap.h"
 
-SGMLParser	::	SGMLParser( const char * aDtd, const char * aDocument )
-					:	BaseParser()	{
+SGMLParser	::	SGMLParser(const char * aDocument )
+			:	BaseParser( TSchemaPtr() )	{
 	
 	mDocText = SGMLTextPtr( new SGMLText() );
 	mDocText->loadText( aDocument );
 
+	createDTD();
+	
 	// Create declaration parsers
-	setupParsers( aDtd );
+	setupParsers();
 	
 }
 
-SGMLParser	::	SGMLParser( const char * aDtd, SGMLTextPtr aDocument )
-					:	BaseParser()	{
+SGMLParser	::	SGMLParser(SGMLTextPtr aDocument )
+			:	BaseParser( TSchemaPtr() )	{
 	
 	// Load text
 	mDocText = aDocument;
 
+	createDTD();
+	
 	// Create declaration parsers
-	setupParsers( aDtd );
+	setupParsers();
 	
 }
 
@@ -60,18 +61,25 @@ SGMLParser	::	~SGMLParser()	{
 	
 }
 
-void SGMLParser	::	setupParsers( const char * aDtd )	{
+void SGMLParser	::	createDTD()	{
+
+	// Document to store information about the dtd
+	mSchema = TSchemaPtr( new TSchema() );
+	mSchema->setup();
+	setSchema( mSchema );
+
+}
+
+void SGMLParser	::	setupParsers()	{
 
 	mCommentDecl =
-		new CommentDeclParser( mDocText, mDTD );
+		new CommentDeclParser( mDocText, mSchema );
 	mDtdParser =
-		new DTDParser( aDtd, mDTD );
+		new DTDParser( mSchema );
 	mDocTypeDecl =
-		new DocTypeDeclParser( mDocText, mDTD );
+		new DocTypeDeclParser( mDocText, mSchema );
 	mElementParser =
-		new ElementParser( mDocText, mDTD );
-
-	mDefaultDtd = aDtd;
+		new ElementParser( mDocText, mSchema );
 
 }
 
@@ -180,13 +188,20 @@ void SGMLParser	::	processDocElement()	{
 	
 }
 
-TDocumentPtr SGMLParser	::	parse()	{
+TDocumentPtr SGMLParser	::	parse( const char * aDtd, SGMLTextPtr aDocument )	{
+
+	// Load text
+	mDocText = aDocument;
+	mCommentDecl->setDocText( mDocText );
+	mDocTypeDecl->setDocText( mDocText );
+	mElementParser->setDocText( mDocText );
+
+	parseDTD( aDtd );
 	
-	parseDTD();
-	//showTree( mDTD, 0 );
+//	showTree( mDTD, 0 );
 
 	mDocText->reset();
-	
+
 	try	{
 		processSStar();
 		processProlog();
@@ -206,58 +221,56 @@ TDocumentPtr SGMLParser	::	parse()	{
 
 	showTree( document, 0 );
 	printf( "Finished with document\n" );
-
 	return document;
+	
 	
 }
 
-TDocumentPtr SGMLParser	::	parse( const char * aDocument )	{
-
+TDocumentPtr SGMLParser	::	parse( const char * aDtd, const char * aDocument )	{
 
 	mDocText->loadText( aDocument );
 	
-	TDocumentPtr result = parse();
+	TDocumentPtr result = parse( aDtd, mDocText );
 	
 	return result;
 	
 }
 
-TDocumentPtr SGMLParser	::	parse( SGMLTextPtr aDocument )	{
-
-	// Load text
-	mDocText = aDocument;
-	mCommentDecl->setDocText( mDocText );
-	mDocTypeDecl->setDocText( mDocText );
-	mElementParser->setDocText( mDocText );
-
-	return parse();
-	
-}
-
-void SGMLParser	::	parseDTD()	{
-
-	if ( mDtds.count( mDefaultDtd ) == 0 )	{
-		printf( "Parsing DTD\n" );
-		//createDTD();
-		mCommentDecl->setDTD( mDTD );
-		mDtdParser->setDTD( mDTD );
-		mDocTypeDecl->setDTD( mDTD );
-		mElementParser->setDTD( mDTD );
-		mDtdParser->parse( mDefaultDtd.c_str() );
-		mDtds.insert( map<string, TSchemaPtr>::value_type( mDefaultDtd, mDTD ) );
-//		showTree( mDTD, 0 );
-	}
-	else	{
-		map<string, TSchemaPtr>::iterator i = mDtds.find( mDefaultDtd );
-		mDTD = (*i).second;
-	}
-	
-}
-
 void SGMLParser	::	parseDTD( const char * aDtd )	{
 
-	mDefaultDtd = aDtd;
-	parseDTD();
+	printf("Requested dtd: %s\n", aDtd);
+	printf("Default dtd: %s\n", mDefaultDtd.c_str());
+	
+	string dtd = aDtd;
+	// Find out if the requested DTD is the one currently loaded.
+	if (dtd != mDefaultDtd) {
+		if ( mDtds.count( dtd ) == 0 )	{
+			// The DTD is not in the repository yet.
+			// Figure out if this is the first DTD we create.
+			if (mDtds.size() != 0) {
+				// We already have a DTD, so we have to create a new one.
+				createDTD();
+				mCommentDecl->setSchema( mSchema );
+				mDtdParser->setSchema( mSchema );
+				mDocTypeDecl->setSchema( mSchema );
+				mElementParser->setSchema( mSchema );
+			}
+			// Parse it and add it to the repository.
+			printf( "Parsing DTD\n" );
+			mDtdParser->parse(aDtd);
+			mDtds.insert( map<string, TSchemaPtr>::value_type( mDefaultDtd, mSchema ) );
+		}
+		else	{
+			map<string, TSchemaPtr>::iterator i = mDtds.find( dtd );
+			printf("Found an existing DTD\n");
+			mSchema = (*i).second;
+			mCommentDecl->setSchema( mSchema );
+			mDtdParser->setSchema( mSchema );
+			mDocTypeDecl->setSchema( mSchema );
+			mElementParser->setSchema( mSchema );
+		}
+		mDefaultDtd = aDtd;
+	}
 	
 }
 
@@ -269,19 +282,19 @@ void SGMLParser	::	showTree( const TNodePtr aNode, int aSpacing )	{
 		for ( int i = 0; i < length; i++ )	{
 			TNodePtr child = children->item( i );
 			for ( int j = 0; j < aSpacing; j++ )	{
-				cout << "  ";
+				printf("  ");
 			}
-			cout << "Child name: " << child->getNodeName().c_str() << endl;
+			printf("Child name: %s\n", child->getNodeName().c_str());
 			if ( child->getNodeType() == ELEMENT_NODE )	{
 				// Check for attributes
 				TNamedNodeMapPtr attributes = child->getAttributes();
 				for ( unsigned int j = 0; j < attributes->getLength(); j++ )	{
 					TNodePtr attr = attributes->item( j );
 					for ( int j = 0; j < aSpacing + 1; j++ )	{
-						cout << "  ";
+						printf("  ");
 					}
-					cout << "Attribute " << attr->getNodeName();
-					cout << " with value " << attr->getNodeValue() << endl;
+					printf("Attribute %s", attr->getNodeName().c_str());
+					printf(" with value %s\n", attr->getNodeValue().c_str());
 				}
 			}
 			showTree( child, aSpacing + 1 );
@@ -292,12 +305,12 @@ void SGMLParser	::	showTree( const TNodePtr aNode, int aSpacing )	{
 int main( int argc, char * argv[] )	{
 	
 	if ( argc < 3 )	{
-		cout << "Please supply a dtd and a document to load\n";
+		printf("Please supply a dtd and a document to load\n");
 		return 1;
 	}
 	
-	SGMLParser * sgmlParser = new SGMLParser( argv[ 1 ], argv[ 2 ] );
-	TDocumentPtr dtd = sgmlParser->parse();
+	SGMLParser * sgmlParser = new SGMLParser();
+	TDocumentPtr dtd = sgmlParser->parse( argv[ 1 ], argv[ 2 ] );
 
 	delete sgmlParser;
 	

@@ -41,6 +41,7 @@
 // DOM headers
 #include "SGMLSupport.hpp"
 #include "TDocument.h"
+#include "TElement.h"
 
 /// Class to store a schema.
 
@@ -53,11 +54,22 @@
 
 class TSchema	:	public TDocument	{
 
+	private:
+		TElementPtr mElements;
+		TElementPtr mAttrLists;
+		TElementPtr mCharEntities;
+		TElementPtr mParEntities;
+
 	public:
 		TSchema();
 		~TSchema();
 		
+		void setup();
 		TElementDeclarationPtr createElementDeclaration();
+		TElementPtr getElements();
+		TElementPtr	getAttrLists();
+		TElementPtr getCharEntities();
+		TElementPtr getParEntities();
 	
 };
 

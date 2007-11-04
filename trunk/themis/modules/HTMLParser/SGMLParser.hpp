@@ -28,12 +28,14 @@ class DTDParser;
 class DocTypeDeclParser;
 class ElementParser;
 
-// Namespaces used
 using std::string;
+using std::vector;
+using std::map;
 
 class SGMLParser	:	public BaseParser	{
 	
 	private:
+		void createDTD();
 		// Test function
 		void showTree( TNodePtr aNode, int aSpacing );
 
@@ -47,7 +49,7 @@ class SGMLParser	:	public BaseParser	{
 		string mDefaultDtd;
 		
 		// Functions
-		void setupParsers( const char * aDtd );
+		void setupParsers();
 		void processSGMLDocument();
 		void processSGMLDocEntity();
 		void processProlog();
@@ -61,15 +63,13 @@ class SGMLParser	:	public BaseParser	{
 
 	public:
 		// Constructor
-		SGMLParser( const char * aDtd, const char * aDocument = NULL );
-		SGMLParser( const char * aDtd, SGMLTextPtr aDocument );
+		SGMLParser( const char * aDocument = NULL );
+		SGMLParser( SGMLTextPtr aDocument );
 		// Destructor
 		~SGMLParser();
 		// Parsing functions
-		TDocumentPtr parse();
-		TDocumentPtr parse( const char * aDocument );
-		TDocumentPtr parse( SGMLTextPtr aDocument );
-		void parseDTD();
+		TDocumentPtr parse( const char * aDtd, SGMLTextPtr aDocument );
+		TDocumentPtr parse( const char * aDtd, const char * aDocument );
 		void parseDTD( const char * aDtd );
 	
 };

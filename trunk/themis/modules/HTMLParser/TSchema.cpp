@@ -36,13 +36,42 @@
 // SGMLParser headers
 #include "TSchema.hpp"
 #include "TElementDeclaration.hpp"
+#include "ElementDeclException.hpp"
+
+// DOM headers
+#include "TNode.h"
+#include "TNodeList.h"
+#include "TElement.h"
+
+// Standard C headers
+#include <stdio.h>
 
 TSchema::	TSchema()
-	:	TDocument()	{
-	
+		:	TDocument()	{
+
 }
 
 TSchema	::	~TSchema()	{
+	
+}
+
+void TSchema	::	setup()	{
+
+	// Element to store parameter entities
+	mParEntities = createElement( "parEntities" );
+	appendChild(mParEntities);
+
+	// Element to store character entities
+	mCharEntities = createElement( "charEntities" );
+	appendChild(mCharEntities);
+
+	// Element to store character entities
+	mElements = createElement( "elements" );
+	appendChild(mElements);
+	
+	// Element to store attribute lists.
+	mAttrLists = createElement( "attrLists" );
+	appendChild(mAttrLists);
 	
 }
 
@@ -53,4 +82,24 @@ TElementDeclarationPtr	TSchema	::	createElementDeclaration()	{
 
 	return result;
 
+}
+
+TElementPtr	TSchema	::	getElements() {
+
+	return mElements;
+}
+
+TElementPtr	TSchema	::	getAttrLists() {
+
+	return mAttrLists;
+}
+
+TElementPtr	TSchema	::	getCharEntities() {
+
+	return mCharEntities;
+}
+
+TElementPtr	TSchema	::	getParEntities() {
+
+	return mParEntities;
 }

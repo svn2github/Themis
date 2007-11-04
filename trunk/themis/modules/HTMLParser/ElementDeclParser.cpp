@@ -18,13 +18,9 @@
 #include "TNamedNodeMap.h"
 
 ElementDeclParser	::	ElementDeclParser( SGMLTextPtr aDocText,
-															 TSchemaPtr aDTD )
-							:	DeclarationParser( aDocText, aDTD )	{
+										   TSchemaPtr aDTD )
+					:	DeclarationParser( aDocText, aDTD )	{
 
-	// Element to store the element declarations of the DTD
-	mElements = mDTD->createElement( "elements" );
-	mDTD->appendChild( mElements );
-	
 }
 
 ElementDeclParser	::	~ElementDeclParser()	{
@@ -34,8 +30,8 @@ ElementDeclParser	::	~ElementDeclParser()	{
 bool ElementDeclParser	::	processDeclaration()	{
 
 	// Define an element to store the element declaration
-	TElementDeclarationPtr declaration = mDTD->createElementDeclaration();
-	TElementPtr content = mDTD->createElement( "content" );
+	TElementDeclarationPtr declaration = mSchema->createElementDeclaration();
+	TElementPtr content = mSchema->createElement( "content" );
 	TElementPtr element;
 
 	//process( mMdo );
@@ -84,9 +80,9 @@ bool ElementDeclParser	::	processDeclaration()	{
 		declaration->appendChild( element );
 	}
 	else	{
-		TElementPtr elements = mDTD->createElement( "elements" );
-		declaration->appendChild( elements );
+		TElementPtr elements = mSchema->createElement( "elements" );
 		elements->appendChild( element );
+		declaration->appendChild( elements );
 	}
 	declaration->appendChild( content );
 	
@@ -106,7 +102,7 @@ TElementPtr ElementDeclParser	::	processElementType()	{
 		}
 	}
 	else	{
-		TElementPtr element = mDTD->createElement( name );
+		TElementPtr element = mSchema->createElement( name );
 		return element;
 	}
 
@@ -166,19 +162,20 @@ bool ElementDeclParser	::	processTagMin( TElementDeclarationPtr aDeclaration )	{
 bool ElementDeclParser	::	processDeclContent( TElementPtr aElement )	{
 
 	if ( process( kCDATA, false ) )	{
-		TElementPtr cdata = mDTD->createElement( kCDATA );
+		TElementPtr cdata = mSchema->createElement( kCDATA );
 		aElement->appendChild( cdata );
 		return true;
 	}
 
 	if ( process( kRCDATA, false ) )	{
-		TElementPtr rcdata = mDTD->createElement( kRCDATA );
+		TElementPtr rcdata = mSchema->createElement( kRCDATA );
 		aElement->appendChild( rcdata );
 		return true;
 	}
 		
 	if ( process( kEMPTY, false ) )	{
-		TElementPtr empty = mDTD->createElement( kEMPTY );
+		// This declaration doesn't have any content.
+		TElementPtr empty = mSchema->createElement( kEMPTY );
 		aElement->appendChild( empty );
 		return true;
 	}
@@ -305,7 +302,7 @@ TElementPtr ElementDeclParser	::	processPrimContentToken()	{
 	else	{
 		if ( process( kPCDATA, false ) )	{
 			primContentToken =
-				mDTD->createElement( mRni + kPCDATA );
+				mSchema->createElement( mRni + kPCDATA );
 		}
 		else	{
 			throw ReadException( mDocText->getLineNr(),
@@ -326,7 +323,7 @@ TElementPtr ElementDeclParser	::	processElementToken()	{
 		return TElementPtr();
 	}
 
-	TElementPtr elementToken = mDTD->createElement( gi );
+	TElementPtr elementToken = mSchema->createElement( gi );
 	processOccIndicator( elementToken );
 	
 	return elementToken;
@@ -353,8 +350,8 @@ void ElementDeclParser	::	processOccIndicator( TElementPtr aElementToken )	{
 }
 
 TElementPtr ElementDeclParser	::	processExceptions()	{
-	
-	TElementPtr exceptions = mDTD->createElement( "exceptions" );
+
+	TElementPtr exceptions = mSchema->createElement( "exceptions" );
 	
 	if ( processExclusions( exceptions ) )	{
 		// WARNING. This looks dodgy.
@@ -375,7 +372,7 @@ bool ElementDeclParser	::	processExclusions( TElementPtr aExceptions )	{
 		return false;
 	}
 
-	TElementPtr exclusions = mDTD->createElement( kMinus );
+	TElementPtr exclusions = mSchema->createElement( kMinus );
 
 	TElementPtr nameGroup = processNameGroup();
 	if ( nameGroup.get() == NULL )	{
@@ -398,7 +395,7 @@ bool ElementDeclParser	::	processInclusions( TElementPtr aExceptions )	{
 		return false;
 	}
 
-	TElementPtr inclusions = mDTD->createElement( mPlus );
+	TElementPtr inclusions = mSchema->createElement( mPlus );
 
 	TElementPtr nameGroup = processNameGroup();
 	if ( nameGroup.get() == NULL )	{

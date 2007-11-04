@@ -15,15 +15,14 @@
 #include "TElement.h"
 #include "TNodeList.h"
 
-DeclarationParser	::	DeclarationParser( SGMLTextPtr aDocText,
-															TSchemaPtr aDTD )
-							:	BaseParser()	{
+DeclarationParser	::	DeclarationParser(SGMLTextPtr aDocText,
+										  TSchemaPtr aSchema )
+					:	BaseParser( aSchema )	{
 
 	//printf( "Constructing DeclarationParser\n" );
 	
 	setDocText( aDocText );
 
-	setDTD( aDTD );	
 }
 
 DeclarationParser	::	~DeclarationParser()	{
@@ -35,27 +34,6 @@ DeclarationParser	::	~DeclarationParser()	{
 void DeclarationParser	::	setDocText( SGMLTextPtr aDocText )	{
 	
 	mDocText = aDocText;
-	
-}
-
-void DeclarationParser	::	setDTD( TSchemaPtr aDTD )	{
-
-	mDTD = aDTD;
-	
-	TNodeListPtr list = mDTD->getChildNodes();
-	unsigned int length = list->getLength();
-	for ( unsigned int i = 0; i < length; i++ )	{
-		TNodePtr node = list->item( i );
-		TElementPtr element = shared_static_cast<TElement>( node );
-		if ( element->getNodeName() == "parEntities" )	{
-			mParEntities = element;
-		}
-		if ( element->getNodeName() == "charEntities" )	{
-			mCharEntities = element;
-		}
-	}
-	
-	mEntityTexts.clear();
 	
 }
 
@@ -76,6 +54,106 @@ bool DeclarationParser	::	parse()	{
 bool DeclarationParser	::	processDeclaration()	{
 	
 	return false;
+	
+}
+
+TElementPtr DeclarationParser	::	processConnector()	{
+
+	if ( process( mAnd, false ) )	{
+		return mSchema->createElement( mAnd );
+	}
+	if ( process( mOr, false ) )	{
+		return mSchema->createElement( mOr );
+	}
+	if ( process( mSeq, false ) )	{
+		return mSchema->createElement( mSeq );
+	}
+
+	return TElementPtr();
+
+}
+
+string DeclarationParser	::	processNameTokenGroup()	{
+
+	if ( ! process( mGrpo, false ) )	{
+		return "";
+	}
+	
+	processTsStar();
+	processNameToken();
+	
+	bool inGroup = true;
+	while ( inGroup )	{
+		processTsStar();
+		TElementPtr connector = processConnector();
+		if ( connector.get() == NULL )	{
+			inGroup = false;
+			continue;
+		}
+		processTsStar();
+		if ( processNameToken() == "" )	{
+			inGroup = false;
+		}
+	}
+	
+	processTsStar();
+	if ( ! process( mGrpc, false ) )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Closing of name token group expected",
+										GENERIC, true );
+	}
+
+	return "nameTokenGroup";
+	
+}
+
+TElementPtr DeclarationParser	::	processNameGroup()	{
+
+	if ( ! process( mGrpo, false ) )	{
+		return TElementPtr();
+	}
+
+	processTsStar();
+	
+	string name = processName( false );
+	if ( name == "" )	{
+		return TElementPtr();
+	}
+	
+	TElementPtr group = mSchema->createElement( "elements" );
+	TElementPtr element = mSchema->createElement( name );
+	group->appendChild( element );
+
+	//TElementPtr subGroup;
+	bool inGroup = true;
+	while ( inGroup )	{
+		processTsStar();
+		TElementPtr connector = processConnector();
+		if ( connector.get() == NULL )	{
+			inGroup = false;
+			continue;
+		}
+		processTsStar();
+		name = processName( false );
+		if ( name == "" )	{
+			inGroup = false;
+		}
+		else	{
+			element = mSchema->createElement( name );
+			group->appendChild( element );
+		}
+	}
+
+	processTsStar();
+	if ( ! process( mGrpc, false ) )	{
+		throw ReadException( mDocText->getLineNr(),
+										mDocText->getCharNr(),
+										"Closing of name group expected",
+										GENERIC, true );
+	}
+
+	return group;
 	
 }
 

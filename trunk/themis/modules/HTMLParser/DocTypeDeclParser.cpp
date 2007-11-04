@@ -48,7 +48,7 @@ bool DocTypeDeclParser	::	processDeclaration()	{
 		throw r;
 	}
 	
-	TElementPtr extId = mDTD->createElement( "externalId" );
+	TElementPtr extId = mSchema->createElement( "externalId" );
 	
 	try	{
 		processPsPlus();

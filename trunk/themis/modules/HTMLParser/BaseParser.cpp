@@ -18,16 +18,16 @@
 #include "TElement.h"
 #include "TNodeList.h"
 
-BaseParser	::	BaseParser()	{
+BaseParser	::	BaseParser( TSchemaPtr aSchema )	{
 	
 	//printf( "BaseParser constructed\n" );
 
 	// SGMLText to store the text
 	mDocText = SGMLTextPtr( new SGMLText() );
 
-	createDTD();
-
 	setupSyntax();
+
+	setSchema( aSchema );
 
 }
 
@@ -37,24 +37,23 @@ BaseParser	::	~BaseParser()	{
 	
 }
 
-void BaseParser	::	setDocText( SGMLTextPtr aDocText )	{
-	
-	mDocText = aDocText;
+void BaseParser	::	setSchema( TSchemaPtr aSchema )	{
+
+	// Setup the shortcuts if the schema has been filled.
+	if (aSchema.get() != NULL) {
+		mSchema = aSchema;
+		mCharEntities = mSchema->getCharEntities();
+		mParEntities = mSchema->getParEntities();
+		mElements = mSchema->getElements();
+		mAttrLists = mSchema->getAttrLists();
+		mEntityTexts.clear();
+	}
 	
 }
 
-void BaseParser	::	createDTD()	{
-
-	// Document to store information about the dtd
-	mDTD = TSchemaPtr( new TSchema() );
-
-	// Element to store parameter entities
-	mParEntities = mDTD->createElement( "parEntities" );
-	mDTD->appendChild( mParEntities );
-
-	// Element to store character entities
-	mCharEntities = mDTD->createElement( "charEntities" );
-	mDTD->appendChild( mCharEntities );
+void BaseParser	::	setDocText( SGMLTextPtr aDocText )	{
+	
+	mDocText = aDocText;
 	
 }
 
@@ -70,9 +69,9 @@ void BaseParser	::	setupSyntax()	{
 	mRefc	= ";";
 	mCom	= "--";
 	mPero	= "%";
-	mLit		= "\"";
+	mLit	= "\"";
 	mLitA	= "'";
-	mRni		= "#";
+	mRni	= "#";
 	mOpt	= "?";
 	mPlus	= "+";
 	mRep	= "*";
@@ -81,7 +80,7 @@ void BaseParser	::	setupSyntax()	{
 	mSeq	= ",";
 	mStago	= "<";
 	mTagc	= ">";
-	mEtago	=	"</";
+	mEtago	= "</";
 	mVi		= "=";
 
 }
@@ -474,106 +473,6 @@ string BaseParser	::	processGI( bool aException )	{
 	
 	return name;
 	
-}
-
-TElementPtr BaseParser	::	processNameGroup()	{
-
-	if ( ! process( mGrpo, false ) )	{
-		return TElementPtr();
-	}
-
-	processTsStar();
-	
-	string name = processName( false );
-	if ( name == "" )	{
-		return TElementPtr();
-	}
-	
-	TElementPtr group = mDTD->createElement( "elements" );
-	TElementPtr element = mDTD->createElement( name );
-	group->appendChild( element );
-
-	//TElementPtr subGroup;
-	bool inGroup = true;
-	while ( inGroup )	{
-		processTsStar();
-		TElementPtr connector = processConnector();
-		if ( connector.get() == NULL )	{
-			inGroup = false;
-			continue;
-		}
-		processTsStar();
-		name = processName( false );
-		if ( name == "" )	{
-			inGroup = false;
-		}
-		else	{
-			element = mDTD->createElement( name );
-			group->appendChild( element );
-		}
-	}
-
-	processTsStar();
-	if ( ! process( mGrpc, false ) )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"Closing of name group expected",
-										GENERIC, true );
-	}
-
-	return group;
-	
-}
-
-string BaseParser	::	processNameTokenGroup()	{
-
-	if ( ! process( mGrpo, false ) )	{
-		return "";
-	}
-	
-	processTsStar();
-	processNameToken();
-	
-	bool inGroup = true;
-	while ( inGroup )	{
-		processTsStar();
-		TElementPtr connector = processConnector();
-		if ( connector.get() == NULL )	{
-			inGroup = false;
-			continue;
-		}
-		processTsStar();
-		if ( processNameToken() == "" )	{
-			inGroup = false;
-		}
-	}
-	
-	processTsStar();
-	if ( ! process( mGrpc, false ) )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"Closing of name token group expected",
-										GENERIC, true );
-	}
-
-	return "nameTokenGroup";
-	
-}
-
-TElementPtr BaseParser	::	processConnector()	{
-
-	if ( process( mAnd, false ) )	{
-		return mDTD->createElement( mAnd );
-	}
-	if ( process( mOr, false ) )	{
-		return mDTD->createElement( mOr );
-	}
-	if ( process( mSeq, false ) )	{
-		return mDTD->createElement( mSeq );
-	}
-
-	return TElementPtr();
-
 }
 
 string BaseParser	::	processAttrValueSpec( bool aException )	{

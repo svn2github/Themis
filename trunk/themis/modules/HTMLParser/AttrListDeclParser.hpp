@@ -18,9 +18,6 @@
 
 class AttrListDeclParser	:	public DeclarationParser	{
 
-	private:
-		TElementPtr mAttrLists;
-		
 	public:
 		AttrListDeclParser( SGMLTextPtr aDocText, TSchemaPtr aDTD );
 		~AttrListDeclParser();

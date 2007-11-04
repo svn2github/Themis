@@ -74,15 +74,8 @@ HTMLParser	::	HTMLParser( BMessage * aInfo )
 	if ( mCache != NULL )	{
 		mUserToken = mCache->Register( Type(), "HTML Parser" );
 	}
-	
-	if ( appSettings != NULL )	{
-		const char * path;
-		appSettings->FindString( kPrefsActiveDTDPath, &path );
-		mParser = new SGMLParser( path );
-	}
-	else	{
-		mParser = NULL;
-	}
+
+	mParser = new SGMLParser();
 	
 }
 
@@ -193,12 +186,9 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * aMessage )	{
 						dtdLoad += path;
 						Debug( dtdLoad.c_str(), PlugID() );
 						if ( mParser == NULL )	{
-							mParser = new SGMLParser( path );
-							mParser->parseDTD();
+							mParser = new SGMLParser();
 						}
-						else	{
-							mParser->parseDTD( path );
-						}
+						mParser->parseDTD( path );
 						Debug( "New DTD loaded", PlugID() );
 					}
 					break;
@@ -271,7 +261,9 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * aMessage )	{
 					// Parse it
 					SGMLTextPtr	docText = SGMLTextPtr( new SGMLText( content ) );
 					if ( mParser != NULL )	{
-						mDocument = mParser->parse( docText );
+						const char * path;
+						appSettings->FindString( kPrefsActiveDTDPath, &path );
+						mDocument = mParser->parse( path, docText );
 						// A bit messy. Variable url is still valid. Check back to start of case.
 						string urlString( url );
 						mDocument->setDocumentURI( urlString );

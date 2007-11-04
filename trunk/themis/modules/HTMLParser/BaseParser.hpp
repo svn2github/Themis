@@ -47,6 +47,7 @@
 #include "Position.hpp"
 
 // Namespaces used
+using std::map;
 using std::string;
 
 // Typedefinitions
@@ -63,12 +64,16 @@ class BaseParser	{
 	
 	protected:
 		// Variables
-		/// The dtd to use when parsing.
-		TSchemaPtr mDTD;
-		/// The parameter entities stored in the dtd.
+		/// The schema needed to parse or store information in.
+		TSchemaPtr mSchema;
+		/// The parameter entities stored in the schema.
 		TElementPtr mParEntities;
-		/// The character entities stored in the dtd.
+		/// The character entities stored in the schema.
 		TElementPtr mCharEntities;
+		/// The elements stored in the schema.
+		TElementPtr mElements;
+		/// The attribute lists stored in the schema.
+		TElementPtr mAttrLists;
 		/// The SGML text to parse.
 		SGMLTextPtr mDocText;
 		
@@ -125,7 +130,6 @@ class BaseParser	{
 		string mVi;
 		
 		// Functions
-		void createDTD();
 		void setupSyntax();
 		bool process( const string & symbol, bool aException = true );
 		bool processS();
@@ -147,9 +151,6 @@ class BaseParser	{
 		string processRepParData();
 		string processRepCharData();
 		string processGI( bool aException = true );
-		TElementPtr processNameGroup();
-		string processNameTokenGroup();
-		TElementPtr processConnector();
 		string processAttrValueSpec( bool aException = true );
 		string processAttrValue();
 		string processAttrValueLit();
@@ -160,15 +161,16 @@ class BaseParser	{
 		/// Constructor of the BaseParser class.
 		/**
 			The constructor of the BaseParser class. It creates a new sgml text
-			and a DTD and sets up the syntax.
+			and a schema and sets up the syntax.
 		*/
-		BaseParser();
+		BaseParser( TSchemaPtr aSchema );
 		/// Destructor of the BaseParser class.
 		/**
 			The destructor of the BaseParser class does nothing.
 			Everything is cleaned up	automatically.
 		*/
 		virtual ~BaseParser();
+		void setSchema( TSchemaPtr aSchema );
 		/// Set the document text to the argument.
 		/**
 			Set the document text to the text provided in the argument.
@@ -176,7 +178,7 @@ class BaseParser	{
 			@param	aDocText	The document text to set the parser to.
 		*/
 		virtual void setDocText( SGMLTextPtr aDocText );
-	
+
 };
 
 #endif

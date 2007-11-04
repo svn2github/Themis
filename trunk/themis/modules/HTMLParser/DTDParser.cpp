@@ -27,28 +27,22 @@
 #include "TElement.h"
 #include "TNodeList.h"
 
-DTDParser	::	DTDParser( const char * aFileName, TSchemaPtr aDTD )
-					:	BaseParser()	{
+DTDParser	::	DTDParser( TSchemaPtr aSchema )
+			:	BaseParser( aSchema )	{
 	
-	//printf( "DTDParser constructed\n" );
-
-	// Load text
 	mDocText = SGMLTextPtr( new SGMLText() );
-	mDocText->loadText( aFileName );
-		
-	mDTD = aDTD;
 	
 	// Create declaration parsers
 	commentDecl =
-		new CommentDeclParser( mDocText, mDTD );
+		new CommentDeclParser( mDocText, mSchema );
 	markedSecDecl =
-		new MarkedSecDeclParser( mDocText, mDTD );
+		new MarkedSecDeclParser( mDocText, mSchema );
 	entityDecl =
-		new EntityDeclParser( mDocText, mDTD );
+		new EntityDeclParser( mDocText, mSchema );
 	elementDecl =
-		new ElementDeclParser( mDocText, mDTD );
+		new ElementDeclParser( mDocText, mSchema );
 	attrListDecl =
-		new AttrListDeclParser( mDocText, mDTD );
+		new AttrListDeclParser( mDocText, mSchema );
 
 }
 
@@ -64,31 +58,16 @@ DTDParser	::	~DTDParser()	{
 	
 }
 
-void DTDParser	::	setDTD( TSchemaPtr aDTD )	{
-	
-	mDTD = aDTD;
+void DTDParser	::	setSchema( TSchemaPtr aSchema )	{
 
-	TNodeListPtr list = mDTD->getChildNodes();
-	unsigned int length = list->getLength();
-	for ( unsigned int i = 0; i < length; i++ )	{
-		TNodePtr node = list->item( i );
-		TElementPtr element = shared_static_cast<TElement>( node );
-		if ( element->getNodeName() == "parEntities" )	{
-			mParEntities = element;
-		}
-		if ( element->getNodeName() == "charEntities" )	{
-			mCharEntities = element;
-		}
-	}
-	
-	commentDecl->setDTD( mDTD );
-	markedSecDecl->setDTD( mDTD );
-	entityDecl->setDTD( mDTD );
-	elementDecl->setDTD( mDTD );
-	attrListDecl->setDTD( mDTD );
+	commentDecl->setSchema( mSchema );
+	markedSecDecl->setSchema( mSchema );
+	entityDecl->setSchema( mSchema );
+	elementDecl->setSchema( mSchema );
+	attrListDecl->setSchema( mSchema );
 
-	mEntityTexts.clear();
-	
+	BaseParser::setSchema( mSchema );
+
 }
 
 bool DTDParser	::	processDeclaration()	{
@@ -155,7 +134,9 @@ void DTDParser	::	processDsStar()	{
 
 }
 
-TSchemaPtr DTDParser	::	parse()	{
+TSchemaPtr DTDParser	::	parse( const char * aFileName )	{
+	
+	mDocText->loadText( aFileName );
 	
 	bool contentFound = true;
 	
@@ -182,13 +163,5 @@ TSchemaPtr DTDParser	::	parse()	{
 	}
 
 	return mDTD;
-	
-}
-
-TSchemaPtr DTDParser	::	parse( const char * aFileName )	{
-	
-	mDocText->loadText( aFileName );
-	
-	return parse();
 	
 }

@@ -16,11 +16,9 @@
 #include "TNodeList.h"
 
 AttrListDeclParser	::	AttrListDeclParser( SGMLTextPtr aDocText,
-															TSchemaPtr aDTD )
-							:	DeclarationParser( aDocText, aDTD )	{
+											TSchemaPtr aDTD )
+					:	DeclarationParser( aDocText, aDTD )	{
 
-	mAttrLists = mDTD->createElement( "attrLists" );
-	mDTD->appendChild( mAttrLists );
 	
 }
 
@@ -31,7 +29,7 @@ AttrListDeclParser	::	~AttrListDeclParser()	{
 bool AttrListDeclParser	::	processDeclaration()	{
 
 	// Define an element to store the attribute list declaration
-	TElementPtr declaration = mDTD->createElement( "declaration" );
+	TElementPtr declaration = mSchema->createElement( "declaration" );
 	TElementPtr element;
 	
 	//process( mMdo );
@@ -64,7 +62,7 @@ bool AttrListDeclParser	::	processDeclaration()	{
 		declaration->appendChild( element );
 	}
 	else	{
-		TElementPtr elements = mDTD->createElement( "elements" );
+		TElementPtr elements = mSchema->createElement( "elements" );
 		declaration->appendChild( elements );
 		elements->appendChild( element );
 	}
@@ -85,7 +83,7 @@ TElementPtr AttrListDeclParser	::	processAssElementType()	{
 		}
 	}
 	else	{
-		TElementPtr element = mDTD->createElement( name );
+		TElementPtr element = mSchema->createElement( name );
 		return element;
 	}
 	
@@ -95,7 +93,7 @@ TElementPtr AttrListDeclParser	::	processAssElementType()	{
 
 TElementPtr AttrListDeclParser	::	processAttrDefList()	{
 
-	TElementPtr attrDefList = mDTD->createElement( "attributes" );
+	TElementPtr attrDefList = mSchema->createElement( "attributes" );
 
 	TElementPtr attrDef = processAttrDef();
 	attrDefList->appendChild( attrDef );
@@ -138,7 +136,7 @@ TElementPtr AttrListDeclParser	::	processAttrDef()	{
 										"Declared value expected",
 										GENERIC, true );
 	}
-	TElementPtr attrDef = mDTD->createElement( name );
+	TElementPtr attrDef = mSchema->createElement( name );
 	attrDef->setAttribute( "declValue", declValue );
 
 	try	{

@@ -24,13 +24,15 @@ using std::string;
 class DeclarationParser	:	public BaseParser	{
 	
 	public:
-		DeclarationParser( SGMLTextPtr aDocText, TSchemaPtr aDTD );
+		DeclarationParser( SGMLTextPtr aDocText, TSchemaPtr aSchema );
 		virtual ~DeclarationParser();
 		void setDocText( SGMLTextPtr aDocText );
-		void setDTD( TSchemaPtr aDTD );
 		bool parse( const map<string, Position> & aEntityTexts );
 		bool parse();	// If you don't need entities
 		virtual bool processDeclaration();
+		TElementPtr processConnector();
+		string processNameTokenGroup();
+		TElementPtr processNameGroup();
 		bool processExtEntitySpec( TElementPtr & entity );
 		bool processExternalId( TElementPtr & entity );
 		string processPublicId();

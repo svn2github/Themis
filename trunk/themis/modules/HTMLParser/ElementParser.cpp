@@ -22,16 +22,14 @@
 #include "TText.h"
 #include "TAttr.h"
 
-ElementParser	::	ElementParser( SGMLTextPtr aDocText,
-												  TSchemaPtr aDTD )
-						:	BaseParser()	{
+ElementParser	::	ElementParser(SGMLTextPtr aDocText,
+								  TSchemaPtr aSchema )
+				:	BaseParser( aSchema )	{
 
 	mDocText = aDocText;
 
-	setDTD( aDTD );	
-
 	// Comment declaration parser
-	commentParser = new CommentDeclParser( aDocText, mDTD );
+	commentParser = new CommentDeclParser( aDocText, mSchema );
 
 	// Document to store the element tree
 	mDocument = TDocumentPtr( new TDocument() );
@@ -52,32 +50,6 @@ void ElementParser	::	setDocText( SGMLTextPtr aDocText )	{
 	
 }
 
-void ElementParser	::	setDTD( TSchemaPtr aDTD )	{
-
-	mDTD = aDTD;
-	
-	TNodeListPtr list = mDTD->getChildNodes();
-	unsigned int length = list->getLength();
-	for ( unsigned int i = 0; i < length; i++ )	{
-		TNodePtr node = list->item( i );
-		TElementPtr element = shared_static_cast<TElement>( node );
-		if ( element->getNodeName() == "parEntities" )	{
-			mParEntities = element;
-		}
-		if ( element->getNodeName() == "charEntities" )	{
-			printf( "Char entities section found\n" );
-			mCharEntities = element;
-		}
-		if ( element->getNodeName() == "elements" )	{
-			printf( "Elements section found\n" );
-			mElements = element;
-		}
-	}
-
-	mEntityTexts.clear();
-	
-}
-
 void ElementParser	::	parse( const map<string, Position> & aEntityTexts,
 										  const string & aName )	{
 
@@ -91,7 +63,9 @@ void ElementParser	::	parse( const string & aName )	{
 	
 	mName = aName;
 	
+	printf("Getting element declaration\n");
 	TElementDeclarationPtr declaration = getElementDecl( aName, mElements );
+	printf("Got element declaration\n");
 	processElementContent( aName, declaration, mDocument );
 	
 }

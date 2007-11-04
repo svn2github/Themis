@@ -10,9 +10,9 @@
 #include "ReadException.hpp"
 #include "SGMLSupport.hpp"
 
-MarkedSecDeclParser	::	MarkedSecDeclParser( SGMLTextPtr aDocText,
-																	 TSchemaPtr aDTD )
-								:	DeclarationParser( aDocText, aDTD )	{
+MarkedSecDeclParser	::	MarkedSecDeclParser(SGMLTextPtr aDocText,
+											TSchemaPtr aDTD )
+					:	DeclarationParser( aDocText, aDTD )	{
 
 	//printf( "Constructing MarkedSecDeclParser\n" );
 	

@@ -70,12 +70,12 @@ TElementPtr EntityDeclParser	::	processEntityName()	{
 											GENERIC, true );
 		}
 		else	{
-			entity = mDTD->createElement( name );
+			entity = mSchema->createElement( name );
 			mParEntities->appendChild( entity );
 		}
 	}
 	else	{	
-		entity = mDTD->createElement( name );
+		entity = mSchema->createElement( name );
 		mCharEntities->appendChild( entity );
 	}
 

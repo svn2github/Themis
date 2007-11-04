@@ -14,9 +14,6 @@
 
 class ElementDeclParser	:	public DeclarationParser	{
 
-	private:
-		TElementPtr mElements;
-	
 	public:
 		ElementDeclParser( SGMLTextPtr aDocText, TSchemaPtr aDTD );
 		~ElementDeclParser();
