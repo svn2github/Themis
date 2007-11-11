@@ -67,18 +67,20 @@ void BitmapElement::EFrameResized(float width, float height)
 {
 	ElementFrame prevFrame;
 	
-	frame = bitmap->Bounds();
-	
-	if (previousElement){	
-		prevFrame = previousElement->GetElementFrame();
-		frame.OffsetTo(prevFrame.mainFrame.ContentRect().LeftBottom()); //Move the frame to it's correct position
+	if (bitmap) {
+		frame = bitmap->Bounds();
+		
+		if (previousElement){	
+			prevFrame = previousElement->GetElementFrame();
+			frame.OffsetTo(prevFrame.mainFrame.ContentRect().LeftBottom()); //Move the frame to it's correct position
+		}
+		else {
+			prevFrame = parentElement->GetElementFrame();
+			frame.OffsetTo(prevFrame.mainFrame.ContentRect().LeftTop());	//Move the frame to it's correct position
+		}
+		
+		UIElement::EFrameResized(frame.Width(),frame.Height());
 	}
-	else {
-		prevFrame = parentElement->GetElementFrame();
-		frame.OffsetTo(prevFrame.mainFrame.ContentRect().LeftTop());	//Move the frame to it's correct position
-	}
-	
-	UIElement::EFrameResized(frame.Width(),frame.Height());
 }
 
 void BitmapElement::EMouseUp(BPoint point)
