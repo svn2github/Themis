@@ -164,6 +164,7 @@ TESTPLUGSOURCES= \
 	testplug/testplug.cpp
 HTMLPARSERSOURCES= \
 	HTMLParser/TSchema.cpp \
+	HTMLParser/TSchemaRule.cpp \
 	HTMLParser/TElementDeclaration.cpp \
 	HTMLParser/HTMLParser.cpp \
 	HTMLParser/AttrListDeclParser.cpp \
