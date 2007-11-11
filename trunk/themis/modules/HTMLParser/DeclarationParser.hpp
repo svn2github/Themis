@@ -27,8 +27,7 @@ class DeclarationParser	:	public BaseParser	{
 		DeclarationParser( SGMLTextPtr aDocText, TSchemaPtr aSchema );
 		virtual ~DeclarationParser();
 		void setDocText( SGMLTextPtr aDocText );
-		bool parse( const map<string, Position> & aEntityTexts );
-		bool parse();	// If you don't need entities
+		bool parse();
 		virtual bool processDeclaration();
 		TElementPtr processConnector();
 		string processNameTokenGroup();

@@ -103,3 +103,16 @@ TElementPtr	TSchema	::	getParEntities() {
 
 	return mParEntities;
 }
+
+void TSchema :: addEntity(const TDOMString & aName, const Position & aPosition) {
+
+	mEntityTexts.insert(
+		map<string, Position>::value_type( aName, aPosition ) );
+	
+}
+
+Position TSchema :: getEntityPosition(const TDOMString & aName) {
+
+	return mEntityTexts[ aName ];
+
+}

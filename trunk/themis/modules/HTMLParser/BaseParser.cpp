@@ -46,7 +46,6 @@ void BaseParser	::	setSchema( TSchemaPtr aSchema )	{
 		mParEntities = mSchema->getParEntities();
 		mElements = mSchema->getElements();
 		mAttrLists = mSchema->getAttrLists();
-		mEntityTexts.clear();
 	}
 	
 }
@@ -200,7 +199,7 @@ bool BaseParser	::	processParEntityReference()	{
 	TNodePtr node = entities->item(0);
 	TElementPtr entity = shared_static_cast<TElement>( node );
 	if ( entity->getAttribute( "type" ) != kPUBLIC )	{
-		Position entityPosition = mEntityTexts[ name ];
+		Position entityPosition = mSchema->getEntityPosition(name);
 		if ( entityPosition.getSize() != 0 )	{
 			mDocText->addEntity( entityPosition );
 		}
@@ -251,8 +250,7 @@ bool BaseParser	::	processParLiteral( TElementPtr & entity )	{
 
 	Position textPosition( start, mDocText->getIndex() - start - 1, lineNr, charNr );
 
-	mEntityTexts.insert(
-		map<string, Position>::value_type( entity->getNodeName(), textPosition ) );
+	mSchema->addEntity(entity->getNodeName(), textPosition);
 
 	entity->setAttribute( "text", text );
 	

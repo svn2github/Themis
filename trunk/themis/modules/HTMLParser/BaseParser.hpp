@@ -77,12 +77,6 @@ class BaseParser	{
 		/// The SGML text to parse.
 		SGMLTextPtr mDocText;
 		
-		/// The entity texts.
-		/**
-			@todo	This one needs some looking at.
-		*/
-		map<string, Position> mEntityTexts;
-		
 		// Reference syntax
 		/// Markup open declaration.
 		string mMdo;

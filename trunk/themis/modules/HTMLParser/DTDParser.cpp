@@ -60,6 +60,8 @@ DTDParser	::	~DTDParser()	{
 
 void DTDParser	::	setSchema( TSchemaPtr aSchema )	{
 
+	mSchema = aSchema;
+
 	commentDecl->setSchema( mSchema );
 	markedSecDecl->setSchema( mSchema );
 	entityDecl->setSchema( mSchema );
@@ -78,13 +80,13 @@ bool DTDParser	::	processDeclaration()	{
 
 	State save = mDocText->saveState();
 
-	if ( entityDecl->parse( entityDecl->getEntityTexts() ) )	{
+	if ( entityDecl->parse() )	{
 		return true;
 	}
-	if ( elementDecl->parse( entityDecl->getEntityTexts() ) )	{
+	if ( elementDecl->parse() )	{
 		return true;
 	}
-	if ( attrListDecl->parse( entityDecl->getEntityTexts() ) )	{
+	if ( attrListDecl->parse() )	{
 		return true;
 	}
 
@@ -113,7 +115,7 @@ bool DTDParser	::	processDs()	{
 	else	{
 		mDocText->restoreState( save );
 	}
-	if ( markedSecDecl->parse( entityDecl->getEntityTexts() ) )	{
+	if ( markedSecDecl->parse() )	{
 		//printf( "Marked Section declaration parsed\n" );
 		return true;
 	}

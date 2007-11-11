@@ -38,10 +38,21 @@
 #ifndef TSCHEMA_HPP
 #define TSCHEMA_HPP
 
+// Standard C++ headers
+#include <string>
+#include <map>
+
 // DOM headers
-#include "SGMLSupport.hpp"
 #include "TDocument.h"
 #include "TElement.h"
+
+// SGMLParser headers
+#include "SGMLSupport.hpp"
+#include "Position.hpp"
+
+// Namespaces used
+using std::map;
+using std::string;
 
 /// Class to store a schema.
 
@@ -59,6 +70,7 @@ class TSchema	:	public TDocument	{
 		TElementPtr mAttrLists;
 		TElementPtr mCharEntities;
 		TElementPtr mParEntities;
+		map<string, Position> mEntityTexts;
 
 	public:
 		TSchema();
@@ -70,6 +82,8 @@ class TSchema	:	public TDocument	{
 		TElementPtr	getAttrLists();
 		TElementPtr getCharEntities();
 		TElementPtr getParEntities();
+		void addEntity(const TDOMString & aName, const Position & aPosition);
+		Position getEntityPosition(const TDOMString & aName);
 	
 };
 

@@ -34,8 +34,7 @@ class ElementParser	:	public BaseParser	{
 		ElementParser( SGMLTextPtr aDocText, TSchemaPtr aSchema );
 		virtual ~ElementParser();
 		void setDocText( SGMLTextPtr aDocText );
-		void parse( const map<string, Position> & aEntityTexts, const string & aName );
-		void parse( const string & aName );	// If you don't need entities
+		void parse( const string & aName );
 		TDocumentPtr getDocument() const;
 		void processElementContent( const TDOMString & aName,
 												   const TElementDeclarationPtr & aElementDecl,

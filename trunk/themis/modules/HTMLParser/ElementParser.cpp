@@ -50,22 +50,11 @@ void ElementParser	::	setDocText( SGMLTextPtr aDocText )	{
 	
 }
 
-void ElementParser	::	parse( const map<string, Position> & aEntityTexts,
-										  const string & aName )	{
-
-	mEntityTexts = aEntityTexts;
-
-	parse( aName );
-	
-}
-
 void ElementParser	::	parse( const string & aName )	{
 	
 	mName = aName;
 	
-	printf("Getting element declaration\n");
 	TElementDeclarationPtr declaration = getElementDecl( aName, mElements );
-	printf("Got element declaration\n");
 	processElementContent( aName, declaration, mDocument );
 	
 }

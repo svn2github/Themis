@@ -24,12 +24,6 @@ EntityDeclParser	::	~EntityDeclParser()	{
 
 }
 
-map<string, Position> EntityDeclParser	::	getEntityTexts()	{
-	
-	return mEntityTexts;
-	
-}
-
 bool EntityDeclParser	::	processDeclaration()	{
 
 	// Create an element to store the entity

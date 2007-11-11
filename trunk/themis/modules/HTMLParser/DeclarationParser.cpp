@@ -37,14 +37,6 @@ void DeclarationParser	::	setDocText( SGMLTextPtr aDocText )	{
 	
 }
 
-bool DeclarationParser	::	parse( const map<string, Position> & aEntityTexts )	{
-
-	mEntityTexts = aEntityTexts;
-
-	return processDeclaration();
-	
-}
-
 bool DeclarationParser	::	parse()	{
 	
 	return processDeclaration();
