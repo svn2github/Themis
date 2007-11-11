@@ -84,7 +84,10 @@ bool ElementDeclParser	::	processDeclaration()	{
 		elements->appendChild( element );
 		declaration->appendChild( elements );
 	}
-	declaration->appendChild( content );
+	// Only add the content model if it has one.
+	if ( content->hasChildNodes() ) {
+		declaration->appendChild( content );
+	}
 	
 	mElements->appendChild( declaration );
 	
@@ -175,8 +178,6 @@ bool ElementDeclParser	::	processDeclContent( TElementPtr aElement )	{
 		
 	if ( process( kEMPTY, false ) )	{
 		// This declaration doesn't have any content.
-		TElementPtr empty = mSchema->createElement( kEMPTY );
-		aElement->appendChild( empty );
 		return true;
 	}
 
@@ -199,7 +200,9 @@ bool ElementDeclParser	::	processContentModel( TElementPtr aElement )	{
 
 	if ( processPsPlus( false ) )	{
 		TElementPtr exceptions = processExceptions();
-		aElement->appendChild( exceptions );
+		if (exceptions->hasChildNodes()) {
+			aElement->appendChild( exceptions );
+		}
 	}
 	
 	return true;

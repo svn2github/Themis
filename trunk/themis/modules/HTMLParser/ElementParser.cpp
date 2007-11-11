@@ -780,18 +780,21 @@ void ElementParser	::	processDataText( const TElementPtr & aContent,
 void ElementParser	::	processExceptions( const TElementPtr & aExceptions,
 															TNodePtr aParent )	{
 	
-	bool exceptionFound = true;
-	while ( exceptionFound )	{
-		try	{
-			processExceptionOtherContent();
-			processException( aExceptions, aParent );
-		}
-		catch( ReadException r )	{
-			if ( r.isFatal() || r.isEndTag() )	{
-				throw r;
+	// Figure out if there actually are exceptions.
+	if (aExceptions.get() != NULL) {
+		bool exceptionFound = true;
+		while ( exceptionFound )	{
+			try	{
+				processExceptionOtherContent();
+				processException( aExceptions, aParent );
 			}
-			else	{
-				exceptionFound = false;
+			catch( ReadException r )	{
+				if ( r.isFatal() || r.isEndTag() )	{
+					throw r;
+				}
+				else	{
+					exceptionFound = false;
+				}
 			}
 		}
 	}
