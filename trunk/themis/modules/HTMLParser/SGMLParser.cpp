@@ -151,15 +151,7 @@ void SGMLParser	::	processOtherPrologStar()	{
 
 void SGMLParser	::	processBaseDocTypeDecl()	{
 
-	try	{
-		mDocTypeDecl->parse();
-	}
-	catch( ReadException r )	{
-		// Only throwing when fatal, because most documents lack the doctype declaration
-		if ( r.isFatal() )	{
-			throw r;
-		}
-	}
+	mDocTypeDecl->parse();
 	
 }
 

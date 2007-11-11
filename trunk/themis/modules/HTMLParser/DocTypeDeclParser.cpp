@@ -29,49 +29,53 @@ DocTypeDeclParser	::	~DocTypeDeclParser()	{
 
 bool DocTypeDeclParser	::	processDeclaration()	{
 	
-	process( mMdo );
-	process( kDOCTYPE );
-
-	try	{
-		processPsPlus();
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
+	bool result = process( mMdo, false );
+	if (result) {
+		result = process( kDOCTYPE, false );
 	
-	try	{
-		mDocTypeName = processDocTypeName();
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
-	
-	TElementPtr extId = mSchema->createElement( "externalId" );
-	
-	try	{
-		processPsPlus();
-		processExternalId( extId );
-	}
-	catch( ReadException r )	{
-		if ( r.isFatal() )	{
-			throw r;
+		if (result) {
+			try	{
+				processPsPlus();
+			}
+			catch( ReadException r )	{
+				r.setFatal();
+				throw r;
+			}
+			
+			try	{
+				mDocTypeName = processDocTypeName();
+			}
+			catch( ReadException r )	{
+				r.setFatal();
+				throw r;
+			}
+			
+			TElementPtr extId = mSchema->createElement( "externalId" );
+			
+			try	{
+				processPsPlus();
+				processExternalId( extId );
+			}
+			catch( ReadException r )	{
+				if ( r.isFatal() )	{
+					throw r;
+				}
+				// Is optional
+			}
+		
+			// Leaving out document type declaration subset
+			
+			try	{
+				process( mMdc );
+			}
+			catch( ReadException r )	{
+				r.setFatal();
+				throw r;
+			}
 		}
-		// Is optional
-	}
-
-	// Leaving out document type declaration subset
-	
-	try	{
-		process( mMdc );
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
 	}
 	
-	return true;
+	return result;
 	
 }
 
