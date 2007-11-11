@@ -54,7 +54,7 @@ void ElementParser	::	parse( const string & aName )	{
 	
 	mName = aName;
 	
-	TElementDeclarationPtr declaration = getElementDecl( aName, mElements );
+	TElementDeclarationPtr declaration = mSchema->getDeclaration(aName);
 	processElementContent( aName, declaration, mDocument );
 	
 }
@@ -123,7 +123,7 @@ bool ElementParser	::	processUnknownStartTag( TNodePtr aParent )	{
 	}
 	
 	try	{
-		getElementDecl( name, mElements );
+		mSchema->getDeclaration(name);
 		mDocText->restoreState( save );
 		return false;
 	}
@@ -167,7 +167,7 @@ bool ElementParser	::	processUnknownEndTag()	{
 	}
 
 	try	{
-		getElementDecl( name, mElements );
+		mSchema->getDeclaration(name);
 		mDocText->restoreState( save );
 		return false;
 	}
@@ -517,7 +517,7 @@ void ElementParser	::	processContent( const TElementPtr & aContent,
 				break;
 			}
 			printf( "At tag\n" );
-			TElementDeclarationPtr declaration = getElementDecl( contentName, mElements );
+			TElementDeclarationPtr declaration = mSchema->getDeclaration(contentName);
 			processElementContent( contentName, declaration, aParent );
 			printf( "Finished tag\n" );
 		}
@@ -825,7 +825,7 @@ void ElementParser	::	processException( const TElementPtr & aExceptions,
 		printf( "Looking at exception %s\n", name.c_str() );
 		if ( name == token || token == "" )	{
 			try	{
-				TElementDeclarationPtr declaration = getElementDecl( name, mElements );
+				TElementDeclarationPtr declaration = mSchema->getDeclaration(name);
 				processElement( name, declaration, aParent );
 				printf( "Finished exception\n" );
 				return;
@@ -884,33 +884,6 @@ void ElementParser	::	processExceptionOtherContent()	{
 	}
 
 }
-
-TElementDeclarationPtr ElementParser	::	getElementDecl( const string & aName,
-																					TElementPtr declarations ) const	{
-	
-	//printf( "Trying to get declaration: %s\n", aName.c_str() );
-
-	TNodeListPtr results = declarations->getElementsByTagName( aName );
-	unsigned int length = results->getLength();
-	unsigned int i = 0;
-	while ( i < length )	{
-		TNodePtr node = results->item( i );
-		TNodePtr parent = node->getParentNode();
-		if ( parent->getNodeName() == "elements" )	{
-			parent = parent->getParentNode();
-			if ( parent->getNodeName() == "declaration" )	{
-				// This is the one we want.
-				TElementDeclarationPtr declaration =
-					shared_static_cast<TElementDeclaration>( parent );
-				return declaration;
-			}
-		}
-		i++;
-	}
-
-	throw ElementDeclException();
-	
-}	
 
 void ElementParser	::	processComments()	{
 

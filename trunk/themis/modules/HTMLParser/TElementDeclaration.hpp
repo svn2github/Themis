@@ -42,6 +42,9 @@
 #include "DOMSupport.h"
 #include "TElement.h"
 
+// SGMLParser headers
+#include "TSchemaRule.hpp"
+
 /// Class to store an element declaration.
 
 /**
@@ -50,7 +53,7 @@
 	a few functions to make it easy to parse an SGML document.
 */
 
-class TElementDeclaration	:	public TElement	{
+class TElementDeclaration	:	public TSchemaRule	{
 
 	public:
 		TElementDeclaration( const TDocumentPtr aOwnerDocument );

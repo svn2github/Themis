@@ -25,67 +25,48 @@
 	
 	Original Author: 	Mark Hellegers (mark@firedisk.net)
 	Project Start Date: October 18, 2000
-	Class Start Date: June 12, 2006
+	Class Start Date: June 05, 2006
 */
 
-/*	TSchema
-	Stores an XML Schema (DTD).
+/*	TSchemaRule
+	Stores a schema rule from a DTD.
 
 	Mark Hellegers (mark@firedisk.net)
-	12-06-2006
+	05-06-2006
 */
 
-#ifndef TSCHEMA_HPP
-#define TSCHEMA_HPP
-
-// Standard C++ headers
-#include <string>
-#include <map>
+#ifndef TSCHEMARULE_HPP
+#define TSCHEMARULE_HPP
 
 // DOM headers
-#include "TDocument.h"
+#include "DOMSupport.h"
 #include "TElement.h"
+#include "TNodeList.h"
 
-// SGMLParser headers
-#include "SGMLSupport.hpp"
-#include "Position.hpp"
-
-// Namespaces used
-using std::map;
-using std::string;
-
-/// Class to store a schema.
+/// Class to store a schema rule.
 
 /**
-	This class stores an XML schema.
-	It is based on a DOM document and provides
+	This class stores a schema rule.
+	It is based on a DOM element and provides
 	a few functions to make it easy to parse an SGML document.
-	It currently only directly supports a DTD schema.
 */
 
-class TSchema	:	public TDocument	{
+class TSchemaRule	:	public TElement	{
 
 	private:
 		TElementPtr mElements;
-		TElementPtr mAttrLists;
-		TElementPtr mCharEntities;
-		TElementPtr mParEntities;
-		map<string, Position> mEntityTexts;
+		TElementPtr mContent;
+			
+		bool computeSubEmpty(TElementPtr subRule);
+		TNodeListPtr computeSubFirst(TElementPtr subRule);
 
 	public:
-		TSchema();
-		~TSchema();
-		
-		void setup();
-		TElementDeclarationPtr createElementDeclaration();
-		TElementPtr getElements();
-		TElementPtr	getAttrLists();
-		TElementPtr getCharEntities();
-		TElementPtr getParEntities();
-		void addEntity(const TDOMString & aName, const Position & aPosition);
-		Position getEntityPosition(const TDOMString & aName);
-		TElementDeclarationPtr getDeclaration(const TDOMString & aName);
-	
+		TSchemaRule(const TDocumentPtr aOwnerDocument,
+					const TDOMString aTagName);
+		~TSchemaRule();
+		void setElements(TElementPtr aElements);
+		void setContent(TElementPtr aContent);
+		bool hasRule(const TDOMString & aTagName);
 };
 
 #endif

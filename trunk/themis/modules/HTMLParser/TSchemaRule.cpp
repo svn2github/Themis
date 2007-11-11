@@ -25,67 +25,63 @@
 	
 	Original Author: 	Mark Hellegers (mark@firedisk.net)
 	Project Start Date: October 18, 2000
-	Class Start Date: June 12, 2006
+	Class Start Date: June 05, 2006
 */
 
-/*	TSchema
-	Stores an XML Schema (DTD).
-
-	Mark Hellegers (mark@firedisk.net)
-	12-06-2006
+/*
+	SchemaRule implementation
+	See TSchemaRule.h for some more information
 */
-
-#ifndef TSCHEMA_HPP
-#define TSCHEMA_HPP
-
-// Standard C++ headers
-#include <string>
-#include <map>
-
-// DOM headers
-#include "TDocument.h"
-#include "TElement.h"
 
 // SGMLParser headers
-#include "SGMLSupport.hpp"
-#include "Position.hpp"
+#include "TSchemaRule.hpp"
 
-// Namespaces used
-using std::map;
-using std::string;
+// DOM headers
+#include "TNode.h"
+#include "TElement.h"
+#include "TNodeList.h"
+#include "TDocument.h"
 
-/// Class to store a schema.
+TSchemaRule	::	TSchemaRule(const TDocumentPtr aOwnerDocument,
+						    const TDOMString aTagName)
+			:	TElement(aOwnerDocument, aTagName )	{
 
-/**
-	This class stores an XML schema.
-	It is based on a DOM document and provides
-	a few functions to make it easy to parse an SGML document.
-	It currently only directly supports a DTD schema.
-*/
+}
 
-class TSchema	:	public TDocument	{
+TSchemaRule	::	~TSchemaRule()	{
 
-	private:
-		TElementPtr mElements;
-		TElementPtr mAttrLists;
-		TElementPtr mCharEntities;
-		TElementPtr mParEntities;
-		map<string, Position> mEntityTexts;
+}
 
-	public:
-		TSchema();
-		~TSchema();
-		
-		void setup();
-		TElementDeclarationPtr createElementDeclaration();
-		TElementPtr getElements();
-		TElementPtr	getAttrLists();
-		TElementPtr getCharEntities();
-		TElementPtr getParEntities();
-		void addEntity(const TDOMString & aName, const Position & aPosition);
-		Position getEntityPosition(const TDOMString & aName);
-		TElementDeclarationPtr getDeclaration(const TDOMString & aName);
+void TSchemaRule	::	setElements(TElementPtr aElements) {
+
+	mElements = aElements;
+	appendChild(aElements);
+
+}
+
+void TSchemaRule	::	setContent(TElementPtr aContent) {
+
+	mContent = aContent;
+	appendChild(aContent);
+
+}
+
+bool TSchemaRule	::	hasRule(const TDOMString & aTagName) {
+
+	TNodeListPtr elements = mElements->getChildNodes();
+
+	unsigned int length = elements->getLength();
+	unsigned int i = 0;
+	bool foundElement = false;
+	while (i < length && !foundElement) {
+		TNodePtr elementNode = elements->item(i);
+		TElementPtr element = shared_static_cast<TElement>(elementNode);
+		if (element->getTagName() == aTagName) {
+			foundElement = true;
+		}
+		i++;
+	}
 	
-};
+	return foundElement;
 
-#endif
+}

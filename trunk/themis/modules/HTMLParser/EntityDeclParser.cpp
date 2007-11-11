@@ -26,16 +26,13 @@ EntityDeclParser	::	~EntityDeclParser()	{
 
 bool EntityDeclParser	::	processDeclaration()	{
 
-	// Create an element to store the entity
-	TElementPtr entity;
-
 	//process( mMdo );
 	if ( ! process( kENTITY, false ) )	{
 		return false;
 	}
 
 	processPsPlus();
-	entity = processEntityName();
+	TElementPtr entity = processEntityName();
 	processPsPlus();
 	processEntityText( entity );
 	processPsStar();

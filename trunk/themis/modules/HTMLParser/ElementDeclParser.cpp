@@ -77,16 +77,16 @@ bool ElementDeclParser	::	processDeclaration()	{
 
 	if ( element->hasChildNodes() )	{
 		// Name group.
-		declaration->appendChild( element );
+		declaration->setElements( element );
 	}
 	else	{
 		TElementPtr elements = mSchema->createElement( "elements" );
 		elements->appendChild( element );
-		declaration->appendChild( elements );
+		declaration->setElements( elements );
 	}
 	// Only add the content model if it has one.
 	if ( content->hasChildNodes() ) {
-		declaration->appendChild( content );
+		declaration->setContent( content );
 	}
 	
 	mElements->appendChild( declaration );

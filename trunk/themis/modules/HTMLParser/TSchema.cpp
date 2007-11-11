@@ -35,6 +35,7 @@
 
 // SGMLParser headers
 #include "TSchema.hpp"
+#include "TSchemaRule.hpp"
 #include "TElementDeclaration.hpp"
 #include "ElementDeclException.hpp"
 
@@ -72,7 +73,7 @@ void TSchema	::	setup()	{
 	// Element to store attribute lists.
 	mAttrLists = createElement( "attrLists" );
 	appendChild(mAttrLists);
-	
+
 }
 
 TElementDeclarationPtr	TSchema	::	createElementDeclaration()	{
@@ -115,4 +116,29 @@ Position TSchema :: getEntityPosition(const TDOMString & aName) {
 
 	return mEntityTexts[ aName ];
 
+}
+
+TElementDeclarationPtr TSchema	::	getDeclaration(const TDOMString & aName) {
+
+	TNodeListPtr declarations = mElements->getChildNodes();
+
+	unsigned int length = declarations->getLength();
+	unsigned int i = 0;
+	bool foundDeclaration = false;
+	TElementDeclarationPtr declaration;
+	while (i < length && !foundDeclaration) {
+		TNodePtr declarationNode = declarations->item(i);
+		declaration = shared_static_cast<TElementDeclaration>(declarationNode);
+		if (declaration->hasRule(aName)) {
+			foundDeclaration = true;
+		}
+		i++;
+	}
+
+	if (!foundDeclaration) {
+		throw ElementDeclException();
+	}
+	
+	return declaration;
+	
 }

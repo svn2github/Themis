@@ -37,7 +37,7 @@
 #include "TElementDeclaration.hpp"
 
 TElementDeclaration::	TElementDeclaration( const TDocumentPtr aOwnerDocument )
-	:	TElement(aOwnerDocument, "declaration" )	{
+	:	TSchemaRule(aOwnerDocument, "declaration" )	{
 	
 }
 
