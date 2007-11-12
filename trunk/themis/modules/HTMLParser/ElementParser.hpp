@@ -56,18 +56,6 @@ class ElementParser	:	public BaseParser	{
 		void processContent( const TElementPtr & aContent,
 										const TElementPtr & aExceptions,
 										TNodePtr aParent );
-		void processBrackets( const TElementPtr & aContent,
-										 const TElementPtr & aExceptions,
-										 TNodePtr aParent );
-		void processOptional( const TElementPtr & aContent,
-										const TElementPtr & aExceptions,
-										TNodePtr aParent );
-		void processPlus( const TElementPtr & aContent,
-								  const TElementPtr & aExceptions,
-								  TNodePtr aParent );
-		void processStar( const TElementPtr & aContent,
-								  const TElementPtr & aExceptions,
-								  TNodePtr aParent );
 		void processOr( const TElementPtr & aContent,
 								const TElementPtr & aExceptions,
 								TNodePtr aParent );

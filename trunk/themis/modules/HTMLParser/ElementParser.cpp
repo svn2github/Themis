@@ -455,22 +455,6 @@ void ElementParser	::	processContent( const TElementPtr & aContent,
 	
 	// Using switch statement, by only looking at the first character.
 	switch( contentName[ 0 ] )	{
-		case '(':	{
-			processBrackets( aContent, aExceptions, aParent );
-			break;
-		}
-		case '?':	{
-			processOptional( aContent, aExceptions, aParent );
-			break;
-		}
-		case '+':	{
-			processPlus( aContent, aExceptions, aParent );
-			break;
-		}
-		case '*':	{
-			processStar( aContent, aExceptions, aParent );
-			break;
-		}
 		case '|':	{
 			bool contentFound = true;
 			int count = 0;
@@ -522,97 +506,6 @@ void ElementParser	::	processContent( const TElementPtr & aContent,
 			printf( "Finished tag\n" );
 		}
 	}
-
-}
-
-void ElementParser	::	processBrackets( const TElementPtr & aContent,
-														  const TElementPtr & aExceptions,
-														  TNodePtr aParent )	{
-
-	printf( "At brackets\n" );
-	TNodePtr child = aContent->getFirstChild();
-	TElementPtr subContent = shared_static_cast<TElement>( child );
-	processContent( subContent, aExceptions, aParent );
-	printf( "Finished brackets\n" );
-														  	
-}
-
-void ElementParser	::	processOptional( const TElementPtr & aContent,
-														 const TElementPtr & aExceptions,
-														 TNodePtr aParent )	{
-
-	printf( "At optional element\n" );
-	TNodePtr child = aContent->getFirstChild();
-	TElementPtr subContent = shared_static_cast<TElement>( child );
-	try	{
-		processContent( subContent, aExceptions, aParent );
-	}
-	catch( ReadException r )	{
-		if ( ! r.isWrongTag() && r.isFatal() )	{
-			// Something went wrong here
-			throw r;
-		}
-		if ( r.isEndTag() )	{
-			// Let them know this.
-			throw r;
-		}
-	}
-	printf( "Finished optional element\n" );
-														  	
-}
-
-void ElementParser	::	processPlus( const TElementPtr & aContent,
-												   const TElementPtr & aExceptions,
-												   TNodePtr aParent )	{
-
-	printf( "At plus element\n" );
-	TNodePtr child = aContent->getFirstChild();
-	TElementPtr subContent = shared_static_cast<TElement>( child );
-	processContent( subContent, aExceptions, aParent );
-	bool plusFound = true;
-	while ( plusFound )	{
-		try	{
-			printf( "Going for another plus\n" );
-			processContent( subContent, aExceptions, aParent );
-		}
-		catch( ReadException r )	{
-			printf( "No plus found anymore\n" );
-			if ( r.isFatal() )	{
-				throw r;
-			}
-			else	{
-				plusFound = false;
-			}
-		}
-	}
-	printf( "Finished plus element\n" );
-													  	
-}
-
-void ElementParser	::	processStar( const TElementPtr & aContent,
-												   const TElementPtr & aExceptions,
-												   TNodePtr aParent )	{
-
-	printf( "At star element\n" );
-	TNodePtr child = aContent->getFirstChild();
-	TElementPtr subContent = shared_static_cast<TElement>( child );
-	bool starFound = true;
-	while ( starFound )	{
-		try	{
-			printf( "Going for another star\n" );
-			processContent( subContent, aExceptions, aParent );
-		}
-		catch( ReadException r )	{
-			printf( "No star found anymore\n" );
-			if ( ! r.isWrongTag() && r.isFatal() )	{
-				throw r;
-			}
-			else	{
-				starFound = false;
-			}
-		}
-	}
-	printf( "Finished star element\n" );
 
 }
 
