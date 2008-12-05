@@ -67,11 +67,11 @@ authview::authview(BRect frame)
 		r.right-=10;
 		r.bottom-=10;
 		r.top=r.bottom-20;
-		ok=new BButton(r,"okbutton","Ok",new BMessage(B_OK));
+		ok=new BButton(r,"okbutton","Ok",new BMessage((uint32)B_OK));
 		float width=r.right-r.left;
 		r.right=r.left-10;
 		r.left=r.right-width;
-		cancel=new BButton(r,"cancelbutton","Cancel",new BMessage(B_CANCEL));
+		cancel=new BButton(r,"cancelbutton","Cancel",new BMessage((uint32)B_CANCEL));
 		AddChild(info);
 		AddChild(user);
 		AddChild(pass);

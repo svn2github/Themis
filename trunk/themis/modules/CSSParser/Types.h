@@ -34,9 +34,10 @@ enum	/* return codes */
 	RC_NO_ERROR = B_OK
 };
 #else	/* !__BEOS__ */
+#ifndef HAIKU
 #	error "No BeOS, no SupportDefs.h"
 #	include <limits.h>
-
+#endif
 #	define RC_ERROR_BASE	LONG_MIN
 enum	/* return codes */
 {
