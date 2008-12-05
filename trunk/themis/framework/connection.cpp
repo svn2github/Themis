@@ -34,6 +34,10 @@ Project Start Date: October 18, 2000
 #include <errno.h>
 #include "networkableobject.h"
 #include "tcpmanager.h"
+#ifdef HAIKU
+#include <posix/sys/select.h>
+#define closesocket close
+#endif
 using namespace _Themis_Networking_;
 
 BList *Connection::ConnectionList=NULL;

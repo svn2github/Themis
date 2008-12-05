@@ -84,7 +84,7 @@ aboutview::aboutview(BRect frame, const char *name, uint32 resizem, uint32 flags
 	r.top=r.bottom-15.0;
 	r.left=(r.right/2.0)-20.0;
 	r.right=(r.right/2.0)+20.0;
-	OkB=new BButton(r,"Ok-button","Done",(new BMessage(B_OK)),B_WILL_DRAW|B_NAVIGABLE,B_FOLLOW_BOTTOM|B_FOLLOW_H_CENTER);
+	OkB=new BButton(r,"Ok-button","Done",(new BMessage((uint32)B_OK)),B_WILL_DRAW|B_NAVIGABLE,B_FOLLOW_BOTTOM|B_FOLLOW_H_CENTER);
 	OkB->MakeDefault(true);
 	AddChild(OkB);
 	items=NULL;

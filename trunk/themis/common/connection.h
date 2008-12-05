@@ -41,7 +41,11 @@ Project Start Date: October 18, 2000
 #include <unistd.h>
 #define closesocket close
 #else
+#ifdef HAIKU
+#include <posix/sys/socket.h>
+#else
 #include <socket.h>
+#endif
 #endif
 
 #include <netdb.h>

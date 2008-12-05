@@ -34,7 +34,11 @@ Include *both* plugclass.h *and* plugclass.cpp in your plugin!
 //Themis network module round 3
 #ifndef _http_main
 #define _http_main
+#ifdef HAIKU
+#include <posix/sys/socket.h>
+#else
 #include <sys/socket.h>
+#endif
 #ifdef USENETSERVER
 #include <NetKit.h>
 #endif
