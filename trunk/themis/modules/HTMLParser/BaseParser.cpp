@@ -1,558 +1,198 @@
+/*
+	Copyright (c) 2008 Mark Hellegers. All Rights Reserved.
+	
+	Permission is hereby granted, free of charge, to any person
+	obtaining a copy of this software and associated documentation
+	files (the "Software"), to deal in the Software without
+	restriction, including without limitation the rights to use,
+	copy, modify, merge, publish, distribute, sublicense, and/or
+	sell copies of the Software, and to permit persons to whom
+	the Software is furnished to do so, subject to the following
+	conditions:
+	
+	   The above copyright notice and this permission notice
+	   shall be included in all copies or substantial portions
+	   of the Software.
+	
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+	KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+	WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+	PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+	OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+	OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+	
+	Original Author: 	Mark Hellegers (mark@firedisk.net)
+	Project Start Date: October 18, 2000
+	Class Start Date: April 12, 2003
+*/
+
 /*	BaseParser implementation
 	See BaseParser.hpp for more information
 */
 
 // Standard C headers
 #include <stdio.h>
-#include <ctype.h>
-
-// BaseParser headers
-#include "BaseParser.hpp"
-#include "ReadException.hpp"
-#include "State.hpp"
-#include "SGMLSupport.hpp"
-#include "TSchema.hpp"
 
 // DOM headers
 #include "TNode.h"
-#include "TElement.h"
 #include "TNodeList.h"
+#include "TElement.h"
 
-BaseParser	::	BaseParser( TSchemaPtr aSchema )	{
-	
-	//printf( "BaseParser constructed\n" );
+// SGMLParser headers
+#include "ReadException.hpp"
+#include "TSchema.hpp"
+#include "BaseParser.hpp"
 
-	// SGMLText to store the text
-	mDocText = SGMLTextPtr( new SGMLText() );
+BaseParser :: BaseParser(SGMLScanner * aScanner, TSchemaPtr aSchema) {
 
-	setupSyntax();
+	mScanner = aScanner;
+	setSchema(aSchema);
+}
 
-	setSchema( aSchema );
+BaseParser :: ~BaseParser() {
 
 }
 
-BaseParser	::	~BaseParser()	{
+bool BaseParser :: parseParEntityReference() {
+
+	// Lookahead to see if the second token is an identifier.
+	Token lookAheadToken = mScanner->lookAhead();
+	if (lookAheadToken == IDENTIFIER_SYM) {
+		// Found a parameter entity.
+		// Discard the next token as it is the lookahead token.
+		mToken = mScanner->nextToken();
+		string tokenText = mScanner->getTokenText();
+		// See if the optional semicolon symbol exists.
+		// First, make sure we can go back in case the semicolon does not exist.
+		State refState = mScanner->saveState();
+		lookAheadToken = mScanner->lookAhead();
+		if (lookAheadToken == SEMICOLON_SYM) {
+			// Scan it.
+			mToken = mScanner->nextToken();
+		}
+		else {
+			/*
+				No semicolon.
+			 	We now have to go back to the saved state as we now have
+			 	the wrong token in the buffer.
+			*/
+			mScanner->restoreState(refState);
+		}
+//		printf("Found a parameter entity %s\n", tokenText.c_str());
+		// Insert the text of the found parameter into the SGML text.
+		TNodeListPtr entities = mParEntities->getElementsByTagName(tokenText);
+		TNodePtr node = entities->item(0);
+		TElementPtr entity = shared_static_cast<TElement>(node);
+		if (entity->getAttribute("type") != kPUBLIC) {
+			Position pos = mSchema->getEntityPosition(tokenText);
+			if (pos.getSize() != 0) {
+				mScanner->addEntity(pos);
+			}
+		}
+		else	{
+			//printf( "Equal to PUBLIC\n" );
+		}
+		mToken = mScanner->nextToken();
+		return true;
+	}
 	
-	//printf( "BaseParser destroyed\n" );
+	return false;
+
+}
+
+bool BaseParser :: parseS(Token aEndToken, Token aEndToken2) {
+	
+	bool result;
+	
+	if (mToken == SPACE_SYM) {
+		result = true;
+		mToken = mScanner->nextToken(aEndToken, aEndToken2);
+	}
+	else
+		result = false;
+
+	return result;
 	
 }
 
-void BaseParser	::	setSchema( TSchemaPtr aSchema )	{
+void BaseParser :: parseSStar(Token aEndToken, Token aEndToken2) {
+	 
+	bool sFound = true;
 
-	// Setup the shortcuts if the schema has been filled.
+	while (sFound) {
+		sFound = parseS(aEndToken, aEndToken2);
+	}
+}
+
+
+
+bool BaseParser :: parseTs() {
+	
+	bool result = false;
+	
+	if (mToken == SPACE_SYM)
+		result = true;
+	else if (mToken == PERCENTAGE_SYM)
+		result = parseParEntityReference();
+
+	return result;
+}	
+
+void BaseParser :: parseTsStar() {
+
+	while (parseTs()) {
+		mToken = mScanner->nextToken();
+	}
+
+}
+
+bool BaseParser :: parsePs() {
+	
+	bool result = false;
+	
+	if (mToken == SPACE_SYM ||
+		mToken == COMMENT_SYM)
+		result = true;
+	else if (mToken == PERCENTAGE_SYM)
+		result = parseParEntityReference();
+
+	return result;
+}	
+
+void BaseParser :: parsePsStar() {
+
+	while (parsePs()) {
+		mToken = mScanner->nextToken();
+	}
+
+}
+
+void BaseParser :: parsePsPlus() {
+
+	if (!parsePs()) {
+		throw ReadException(mScanner->getLineNr(),
+							mScanner->getCharNr(),
+							"Space expected",
+							GENERIC,
+							true);
+	}
+
+	mToken = mScanner->nextToken();
+	parsePsStar();
+
+}
+
+void BaseParser :: setSchema(TSchemaPtr aSchema) {
+	
 	if (aSchema.get() != NULL) {
 		mSchema = aSchema;
+		// Load the convenience variables.
 		mCharEntities = mSchema->getCharEntities();
 		mParEntities = mSchema->getParEntities();
 		mElements = mSchema->getElements();
 		mAttrLists = mSchema->getAttrLists();
 	}
-	
-}
-
-void BaseParser	::	setDocText( SGMLTextPtr aDocText )	{
-	
-	mDocText = aDocText;
-	
-}
-
-void BaseParser	::	setupSyntax()	{
-	
-	// Reference syntax
-	mMdo	= "<!";	
-	mMdc	= ">";
-	mGrpo	= "(";
-	mGrpc	= ")";
-	mDso	= "[";
-	mMsc	= "]]";
-	mRefc	= ";";
-	mCom	= "--";
-	mPero	= "%";
-	mLit	= "\"";
-	mLitA	= "'";
-	mRni	= "#";
-	mOpt	= "?";
-	mPlus	= "+";
-	mRep	= "*";
-	mAnd	= "&";
-	mOr		= "|";
-	mSeq	= ",";
-	mStago	= "<";
-	mTagc	= ">";
-	mEtago	= "</";
-	mVi		= "=";
-
-}
-
-bool BaseParser	::	process( const string & symbol, bool aException )	{
-
-	unsigned int i = 0;
-	if ( mDocText->getChar() == symbol[ i ] )	{
-		State save = mDocText->saveState();
-		mDocText->nextChar();
-		i++;
-		while ( i < symbol.size() )	{
-			if ( mDocText->getChar() == symbol[ i ] )	{
-				mDocText->nextChar();
-				i++;
-			}
-			else	{
-				mDocText->restoreState( save );
-				if ( ! aException )	{
-					return false;
-				}
-				else	{
-					string error = "Expected ";
-					error += symbol;
-					throw ReadException( mDocText->getLineNr(),
-													mDocText->getCharNr(),
-													error );
-				}
-			}
-		}
-		return true;
-	}
-	else {
-		if ( ! aException )	{
-			return false;
-		}
-		else	{
-			string error = "Expected ";
-			error += symbol;
-			throw ReadException( mDocText->getLineNr(),
-											mDocText->getCharNr(),
-											error );
-		}
-	}
-	
-}
-
-bool BaseParser	::	processS()	{
-
-	char c = mDocText->getChar();
-
-	if ( isspace( c ) || iscntrl( c ) )	{
-		mDocText->nextChar();
-	}
-	else	{
-		return false;
-	}
-
-	return true;
-	
-}
-
-bool BaseParser	::	processEe()	{
-	
-	if ( iscntrl( mDocText->getChar() ) )	{
-		mDocText->nextChar();
-	}
-	else	{
-		return false;
-	}
-	
-	return true;
-	
-}
-
-bool BaseParser	::	processComment()	{
-
-	string comment = "";
-
-	if ( ! process( mCom, false ) )	{
-		return false;
-	}
-	bool comFound = false;
-	while ( ! comFound )	{
-		if ( process( mCom, false ) )	{
-			comFound = true;
-		}
-		else	{
-			// Not yet found. Read next character
-			comment += mDocText->getChar();
-			mDocText->nextChar();
-		}
-	}
-	
-	return true;
-	
-}
-
-bool BaseParser	::	processParEntityReference()	{
-
-	// Fix me
-	State save = mDocText->saveState();
-	if ( ! process( mPero, false ) )	{
-		return false;
-	}
-	
-	string name =  processName( false );
-	if ( name == "" )	{
-		mDocText->restoreState( save );
-		return false;
-	}
-
-	// Can be omitted
-	process( mRefc, false );
-
-	TNodeListPtr entities = mParEntities->getElementsByTagName(name);
-	TNodePtr node = entities->item(0);
-	TElementPtr entity = shared_static_cast<TElement>( node );
-	if ( entity->getAttribute( "type" ) != kPUBLIC )	{
-		Position entityPosition = mSchema->getEntityPosition(name);
-		if ( entityPosition.getSize() != 0 )	{
-			mDocText->addEntity( entityPosition );
-		}
-	}
-	else	{
-		//printf( "Equal to PUBLIC\n" );
-	}
-
-	return true;
-	
-}
-
-string BaseParser	::	processLiteral()	{
-
-	if ( process( mLit, false ) )	{
-		return mLit;
-	}
-	if ( process( mLitA, false ) )	{
-		return mLitA;
-	}
-
-	return "";
-
-}
-
-bool BaseParser	::	processParLiteral( TElementPtr & entity )	{
-
-	string text = "";
-	string literal = processLiteral();
-	if ( literal == "" )	{
-		return false;
-	}
-
-	unsigned int start = mDocText->getIndex();
-	unsigned int lineNr = mDocText->getLineNr();
-	unsigned int charNr = mDocText->getCharNr();
-	
-	bool litFound = false;
-	while ( ! litFound )	{
-		if ( process( literal, false ) )	{
-			litFound = true;
-		}
-		else	{
-			// Not yet found. Process replacable parameter data
-			text += processRepParData();
-		}
-	}
-
-	Position textPosition( start, mDocText->getIndex() - start - 1, lineNr, charNr );
-
-	mSchema->addEntity(entity->getNodeName(), textPosition);
-
-	entity->setAttribute( "text", text );
-	
-	return true;
-	
-}
-
-string BaseParser	::	processMinLiteral()	{
-	
-	string text = "";
-	string literal = processLiteral();
-	if ( literal == "" )	{
-		return "";
-	}
-
-	bool litFound = false;
-	while ( ! litFound )	{
-		if ( process( literal, false ) )	{
-			litFound = true;
-		}
-		else	{
-			// Not yet found. Process replacable parameter data
-			text += processMinData();
-		}
-	}
-	
-	return text;
-	
-}
-
-string BaseParser	::	processMinData()	{
-	
-	// Fix me
-	string text = "";
-	text += mDocText->getChar();
-	mDocText->nextChar();
-	
-	return text;
-	
-}
-
-string BaseParser	::	processName( bool aException )	{
-
-	string name = "";
-
-	if ( ! isalpha( mDocText->getChar() ) )	{
-		if ( aException )	{
-			throw ReadException( mDocText->getLineNr(),
-											mDocText->getCharNr(),
-											"Not a name" );
-		}
-		else	{
-			return "";
-		}
-	}
-	
-	name += toupper( mDocText->getChar() );
-	char c = mDocText->nextChar();
-	
-	while ( isalnum( c ) ||
-			  c == '-' ||
-			  c == '.' )	{
-		name += toupper( c );
-		c = mDocText->nextChar();
-	}
-	
-	return name;
-	
-}
-
-string BaseParser	::	processNameToken()	{
-	
-	string token = "";
-
-	unsigned int start = mDocText->getIndex();
-	char c = mDocText->getChar();
-
-	while ( isalnum( c ) ||
-			  c == '-' ||
-			  c == '.' )	{
-		token += c;
-		c = mDocText->nextChar();
-	}
-	
-	if ( start == mDocText->getIndex() )	{
-		return "";
-	}
-	
-	return token;
-	
-}
-
-void BaseParser	::	processSStar()	{
-	
-	bool sFound = true;
-	while ( sFound )	{
-		sFound = processS();
-	}
-
-}
-
-bool BaseParser	::	processPs()	{
-
-	if ( processS() )	{
-		return true;
-	}
-	if ( processEe() )	{
-		return true;
-	}
-	if ( processComment() )	{
-		return true;
-	}
-	if ( processParEntityReference() )	{
-		return true;
-	}
-
-	return false;
-	
-}
-
-void BaseParser	::	processPsStar()	{
-
-	bool psFound = true;
-	while ( psFound )	{
-		psFound = processPs();
-	}
-	
-}
-
-bool BaseParser	::	processPsPlus( bool aException )	{
-
-	if ( ! processPs() )	{
-		if ( aException )	{
-			throw ReadException( mDocText->getLineNr(),
-											mDocText->getCharNr(),
-											"Ps expected" );
-		}
-		else	{
-			return false;
-		}
-	}
-	processPsStar();
-	
-	return true;
-	
-}
-
-bool BaseParser	::	processTs()	{
-
-	if ( processS() )	{
-		return true;
-	}
-	if ( processEe() )	{
-		return true;
-	}
-	if ( processParEntityReference() )	{
-		return true;
-	}
-
-	return false;
-		
-}
-
-void BaseParser	::	processTsStar()	{
-
-	bool tsFound = true;
-	while ( tsFound )	{
-		tsFound =	processTs();
-	}
-	
-}
-
-string BaseParser	::	processRepParData()	{
-
-	// Temporary. Fix me.
-	string text = "";
-	text += mDocText->getChar();
-	mDocText->nextChar();
-	
-	return text;
-	
-}
-
-string BaseParser	::	processRepCharData()	{
-
-	// Temporary. Fix me.
-	string text = "";
-	text += mDocText->getChar();
-	mDocText->nextChar();
-	
-	return text;
-	
-}
-
-string BaseParser	::	processGI( bool aException )	{
-
-	if ( mDocText->getChar() == '/' )	{
-		if ( aException )	{
-			throw ReadException( mDocText->getLineNr(),
-											mDocText->getCharNr(),
-											"Is an end tag",
-											END_TAG_FOUND );
-		}
-		else	{
-			return "";
-		}
-	}
-
-	// Generic identifier and name are equivalent
-	string name = processName( false);
-	if ( name == "" && aException )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"Name expected",
-										GENERIC );
-		
-	}
-	
-	return name;
-	
-}
-
-string BaseParser	::	processAttrValueSpec( bool aException )	{
-
-	string attrValueSpec = processAttrValueLit();
-	if ( attrValueSpec == "" )	{
-		attrValueSpec = processAttrValue();
-	}
-	if ( attrValueSpec == "" && aException )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"AttrValueSpec expected" );
-	}
-
-	return attrValueSpec;
-	
-}
-
-string BaseParser	::	processAttrValue()	{
-
-	// FIX ME!!!!!!!!!!!!!!!!!!!!!
-	string result = processCharData( mTagc );
-	//processNameToken();
-	
-	return result;
-	
-}
-
-string BaseParser	::	processAttrValueLit()	{
-
-	string result = "";
-	string literal = processLiteral();
-	if ( literal == "" )	{
-		return "";
-	}
-
-	bool litFound = false;
-	while ( ! litFound )	{
-		if ( process( literal, false ) )	{
-			litFound = true;
-		}
-		else	{
-			// Not yet found. Process replacable parameter data
-			result += processRepCharData();
-		}
-	}
-	
-	return result;
-	
-}
-
-string BaseParser	::	processCharData( string aEndString, bool aSpaceEnd )	{
-
-	string result;
-
-	bool dataCharFound = true;
-	while ( dataCharFound )	{
-		State save = mDocText->saveState();
-		if ( ! process( aEndString, false ) )	{
-			if ( aSpaceEnd && isspace( mDocText->getChar() ) )	{
-				dataCharFound = false;
-			}
-			else	{
-				result += processDataChar();
-			}
-		}
-		else	{
-			mDocText->restoreState( save );
-			dataCharFound = false;
-		}
-	}
-	
-	return result;
-	
-}
-
-char BaseParser	::	processDataChar()	{
-
-	char c = mDocText->getChar();
-
-	mDocText->nextChar();
-
-	return c;
 	
 }

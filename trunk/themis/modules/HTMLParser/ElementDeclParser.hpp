@@ -1,7 +1,37 @@
-/*	ElementDeclParser
-	Parses an element  declaration
+/*
+	Copyright (c) 2008 Mark Hellegers. All Rights Reserved.
 	
-	Mark Hellegers (M.H.Hellegers@stud.tue.nl)
+	Permission is hereby granted, free of charge, to any person
+	obtaining a copy of this software and associated documentation
+	files (the "Software"), to deal in the Software without
+	restriction, including without limitation the rights to use,
+	copy, modify, merge, publish, distribute, sublicense, and/or
+	sell copies of the Software, and to permit persons to whom
+	the Software is furnished to do so, subject to the following
+	conditions:
+	
+	   The above copyright notice and this permission notice
+	   shall be included in all copies or substantial portions
+	   of the Software.
+	
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+	KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+	WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+	PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+	OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+	OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+	
+	Original Author: 	Mark Hellegers (mark@firedisk.net)
+	Project Start Date: October 18, 2000
+	Class Start Date: April 11, 2003
+*/
+
+/*	EntityDeclParser
+	Parses an element declaration
+	
+	Mark Hellegers (mark@firedisk.net)
 	11-04-2003
 
 */
@@ -10,28 +40,28 @@
 #define ELEMENTDECLPARSER_HPP
 
 // SGMLParser headers
+#include "SGMLSupport.hpp"
 #include "DeclarationParser.hpp"
 
-class ElementDeclParser	:	public DeclarationParser	{
+// Declarations of SGMLParser classes
+class SGMLScanner;
 
+class ElementDeclParser : public DeclarationParser {
+	
+	private:
+		TSchemaRulePtr parseSubModelGroup();
+		TSchemaRulePtr parseContentToken();
+		TSchemaRulePtr parseModelGroup();
+		TSchemaRulePtr parseContent();
+		bool parseSingleTagMin();
+		void parseTagMin(TElementDeclarationPtr aDeclaration);
+		TElementPtr parseElementType();
+	
 	public:
-		ElementDeclParser( SGMLTextPtr aDocText, TSchemaPtr aDTD );
+		ElementDeclParser(SGMLScanner * aScanner, TSchemaPtr aSchema);
 		~ElementDeclParser();
-		bool processDeclaration();
-		TElementPtr processElementType();
-		bool processTagMin( TElementDeclarationPtr aDeclaration );
-		bool processDeclContent( TElementPtr aElement );
-		bool processContentModel( TElementPtr aElement );
-		TElementPtr processModelGroup();
-		TElementPtr processSubModelGroup();
-		TElementPtr processContentToken();
-		TElementPtr processPrimContentToken();
-		TElementPtr processElementToken();
-		void processOccIndicator( TElementPtr aElementToken );
-		TElementPtr processExceptions();
-		bool processExclusions( TElementPtr aExceptions );
-		bool processInclusions( TElementPtr aExceptions );
-
+		Token parse(Token aToken);
+	
 };
 
 #endif

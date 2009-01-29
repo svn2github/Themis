@@ -1,3 +1,33 @@
+/*
+	Copyright (c) 2008 Mark Hellegers. All Rights Reserved.
+	
+	Permission is hereby granted, free of charge, to any person
+	obtaining a copy of this software and associated documentation
+	files (the "Software"), to deal in the Software without
+	restriction, including without limitation the rights to use,
+	copy, modify, merge, publish, distribute, sublicense, and/or
+	sell copies of the Software, and to permit persons to whom
+	the Software is furnished to do so, subject to the following
+	conditions:
+	
+	   The above copyright notice and this permission notice
+	   shall be included in all copies or substantial portions
+	   of the Software.
+	
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+	KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+	WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+	PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+	OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+	OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+	
+	Original Author: 	Mark Hellegers (mark@firedisk.net)
+	Project Start Date: October 18, 2000
+	Class Start Date: April 11, 2003
+*/
+
 /*	AttrListDeclParser implementation
 	See AttrListDeclParser.hpp for more information
 */
@@ -5,258 +35,230 @@
 // Standard C headers
 #include <stdio.h>
 
-// AttrListDeclParser headers
-#include "AttrListDeclParser.hpp"
-#include "ReadException.hpp"
-#include "SGMLSupport.hpp"
-#include "TSchema.hpp"
-
 // DOM headers
 #include "TElement.h"
-#include "TNodeList.h"
 
-AttrListDeclParser	::	AttrListDeclParser( SGMLTextPtr aDocText,
-											TSchemaPtr aDTD )
-					:	DeclarationParser( aDocText, aDTD )	{
+// SGMLParser headers
+#include "SGMLScanner.hpp"
+#include "ReadException.hpp"
+#include "TSchema.hpp"
+#include "AttrListDeclParser.hpp"
 
+AttrListDeclParser :: AttrListDeclParser(SGMLScanner * aScanner, TSchemaPtr aSchema)
+				   :  DeclarationParser(aScanner, aSchema) {
+
+}
+
+AttrListDeclParser :: ~AttrListDeclParser() {
+
+}
+
+TElementPtr AttrListDeclParser :: parseAssElementType() {
+
+	TElementPtr elements;
+
+	if (mToken == LEFT_BRACKET_SYM) {
+		// It's a name group
+		mToken = mScanner->nextToken();
+		elements = parseNameGroup();
+	}
+	else if (mToken == IDENTIFIER_SYM) {
+		elements = mSchema->createElement("elements");
+		TElementPtr element = mSchema->createElement(mScanner->getTokenText());
+		elements->appendChild(element);
+		mToken = mScanner->nextToken();
+	}
+	else {
+		throw ReadException(mScanner->getLineNr(),
+							mScanner->getCharNr(),
+							"Element type expected",
+							GENERIC,
+							true);
+	}
 	
-}
-
-AttrListDeclParser	::	~AttrListDeclParser()	{
+	return elements;
 
 }
 
-bool AttrListDeclParser	::	processDeclaration()	{
-
-	// Define an element to store the attribute list declaration
-	TElementPtr declaration = mSchema->createElement( "declaration" );
-	TElementPtr element;
+string AttrListDeclParser :: parseDeclValue() {
 	
-	//process( mMdo );
-	if ( ! process( kATTLIST, false ) )	{
-		return false;
+	string tokenText = "";
+	
+	if (mToken == LEFT_BRACKET_SYM) {
+		mToken = mScanner->nextToken();
+		parseNameTokenGroup();
+		// Ho ho ho.
+		tokenText = "nameTokenGroup";
 	}
-
-	processPsPlus();
-	element = processAssElementType();
-	if ( element.get() == NULL )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"Attribute element type expected",
-										GENERIC, true );
-	}
-	processPsPlus();
-	TElementPtr attrDefList = processAttrDefList();
-	declaration->appendChild( attrDefList );
-	processPsStar();
-	if ( ! process( mMdc, false ) )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"AttrList not closed correctly",
-										GENERIC, true );
-	}
-		
-
-	if ( element->hasChildNodes() )	{
-		// Name group.
-		declaration->appendChild( element );
-	}
-	else	{
-		TElementPtr elements = mSchema->createElement( "elements" );
-		declaration->appendChild( elements );
-		elements->appendChild( element );
-	}
-
-	mAttrLists->appendChild( declaration );
-
-	return true;
-
-}
-
-TElementPtr AttrListDeclParser	::	processAssElementType()	{
-
-	string name = processGI( false );
-	if ( name == "" )	{
-		TElementPtr group = processNameGroup();
-		if ( group.get() != NULL )	{
-			return group;
+	else if (mToken == IDENTIFIER_SYM) {
+		tokenText = mScanner->getTokenText();
+		if (tokenText == kCDATA ||
+			tokenText == kENTITY ||
+			tokenText == kID ||
+			tokenText == kIDREF ||
+			tokenText == kIDREFS ||
+			tokenText == kNAME ||
+			tokenText == kNAMES ||
+			tokenText == kNMTOKEN ||
+			tokenText == kNMTOKENS ||
+			tokenText == kNUMBER ||
+			tokenText == kNUMBERS ||
+			tokenText == kNUTOKEN ||
+			tokenText == kNUTOKENS) {
+			mToken = mScanner->nextToken();
+		}
+		else {
+			throw ReadException(mScanner->getLineNr(),
+								mScanner->getCharNr(),
+								"Declared value expected",
+								GENERIC,
+								true);
 		}
 	}
-	else	{
-		TElementPtr element = mSchema->createElement( name );
-		return element;
+	else {
+		throw ReadException(mScanner->getLineNr(),
+							mScanner->getCharNr(),
+							"Declared value expected",
+							GENERIC,
+							true);
 	}
 	
-	return TElementPtr();
+	return tokenText;
 		
 }
 
-TElementPtr AttrListDeclParser	::	processAttrDefList()	{
+string AttrListDeclParser :: parseDefValue() {
 
-	TElementPtr attrDefList = mSchema->createElement( "attributes" );
+	string tokenText = "";
 
-	TElementPtr attrDef = processAttrDef();
-	attrDefList->appendChild( attrDef );
+	if (mToken == TEXT_SYM ||
+		mToken == IDENTIFIER_SYM ||
+		mToken == NUMBER_SYM) {
+		// Attr value spec, for now.
+		tokenText = mScanner->getTokenText();
+		mToken = mScanner->nextToken();
+	}
+	else if (mToken == HASH_SYM) {
+		mToken = mScanner->nextToken();
+		tokenText = mScanner->getTokenText();
+		if (tokenText == kREQUIRED ||
+			tokenText == kCURRENT ||
+			tokenText == kCONREF ||
+			tokenText == kIMPLIED) {
+			mToken = mScanner->nextToken();
+		}
+		else if (tokenText == kFIXED) {
+			mToken = mScanner->nextToken();
+			parsePsPlus();
+			if (mToken == TEXT_SYM) {
+				tokenText = mScanner->getTokenText();
+				mToken = mScanner->nextToken();
+			}
+			else {
+				throw ReadException(mScanner->getLineNr(),
+									mScanner->getCharNr(),
+									"Text expected",
+									GENERIC,
+									true);
+			}
+		}
+		else {
+			throw ReadException(mScanner->getLineNr(),
+								mScanner->getCharNr(),
+								"Default value expected",
+								GENERIC,
+								true);
+		}
+	}
+	else {
+		throw ReadException(mScanner->getLineNr(),
+							mScanner->getCharNr(),
+							"Default value expected",
+							GENERIC,
+							true);
+	}
 	
+	return tokenText;
+}
+
+TElementPtr AttrListDeclParser :: parseAttrDef(string aName) {
+
+	TElementPtr attrDef = mSchema->createElement(aName);
+	parsePsPlus();
+	string declValue = parseDeclValue();
+	attrDef->setAttribute("declValue", declValue);
+	parsePsPlus();
+	string defValue = parseDefValue();
+	attrDef->setAttribute("defValue", defValue);
+	
+	return attrDef;
+}
+
+TElementPtr AttrListDeclParser :: parseAttrDefList() {
+
+	TElementPtr attrDefList = mSchema->createElement("attributes");
+	TElementPtr attrDef;
+
+	if (mToken == IDENTIFIER_SYM) {
+		mToken = mScanner->nextToken();
+		attrDef = parseAttrDef(mScanner->getTokenText());
+		attrDefList->appendChild(attrDef);
+	}
+	else {
+		throw ReadException(mScanner->getLineNr(),
+							mScanner->getCharNr(),
+							"Attribute definition expected",
+							GENERIC,
+							true);
+	}
+
 	bool adFound = true;
-	while ( adFound )	{
-		processPsPlus();
-		attrDef = processAttrDef();
-		if ( attrDef.get() == NULL )	{
+	while (adFound) {
+		if (mToken == SPACE_SYM) {
+			parsePsPlus();
+			if (mToken == IDENTIFIER_SYM) {
+				mToken = mScanner->nextToken();
+				attrDef = parseAttrDef(mScanner->getTokenText());
+				attrDefList->appendChild(attrDef);
+			}
+			else {
+				adFound = false;
+			}
+		}
+		else {
 			adFound = false;
 		}
-		else	{
-			attrDefList->appendChild( attrDef );
-		}
 	}
-
+	
 	return attrDefList;
-	
+
 }
 
-TElementPtr AttrListDeclParser	::	processAttrDef()	{
+Token AttrListDeclParser :: parse(Token aToken) {
 
-	string name = processAttrName();
-	if ( name == "" )	{
-		return TElementPtr();
-	}
+	TElementPtr declaration = mSchema->createElement("declaration");
 
-	try	{
-		processPsPlus();
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
-
-	string declValue = processDeclValue();
-	if ( declValue == "" )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"Declared value expected",
-										GENERIC, true );
-	}
-	TElementPtr attrDef = mSchema->createElement( name );
-	attrDef->setAttribute( "declValue", declValue );
-
-	try	{
-		processPsPlus();
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
+	mToken = aToken;
 	
-	string defValue = processDefValue();
-	if ( defValue == "" )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"Default value expected",
-										GENERIC, true );
-	}
-	attrDef->setAttribute( "defValue", defValue );
+	parsePsPlus();
+	TElementPtr elements = parseAssElementType();
+	declaration->appendChild(elements);
+	parsePsPlus();
+	TElementPtr attrDefList = parseAttrDefList();
+	declaration->appendChild(attrDefList);
 
-	return attrDef;
+	// Check for optional whitespace
+	parsePsStar();
+	if (mToken != DECLARATION_END_SYM) {
+		throw ReadException(mScanner->getLineNr(),
+							mScanner->getCharNr(),
+							"Attribute list declaration not closed correctly",
+							GENERIC,
+							true);
+	}
+	mToken = mScanner->nextToken();
 	
-}
+	mAttrLists->appendChild(declaration);
 
-string AttrListDeclParser	::	processAttrName()	{
-
-	// Attribute name and name are equivalent
-	return processName( false );
-	
-}
-
-string AttrListDeclParser	::	processDeclValue()	{
-
-	if ( process( kCDATA, false ) )	{
-		return kCDATA;
-	}
-	if ( process( kENTITY, false ) )	{
-		return kENTITY;
-	}
-	if ( process( kENTITIES, false ) )	{
-		return kENTITIES;
-	}
-	if ( process( kID, false ) )	{
-		if ( process( "REF", false ) )	{
-			if ( process( "S", false ) )	{
-				return kIDREFS;
-			}
-			else	{
-				return kIDREF;
-			}
-		}
-		else	{
-			return kID;
-		}
-	}
-	if ( process( kNAME, false ) )	{
-		if ( process( "S", false ) )	{
-			return kNAMES;
-		}
-		else	{
-			return kNAME;
-		}
-	}
-	if ( process( kNMTOKEN, false ) )	{
-		if ( process( "S", false ) )	{
-			return kNMTOKENS;
-		}
-		else	{
-			return kNMTOKEN;
-		}
-	}
-	if ( process( kNUMBER, false ) )	{
-		if ( process( "S", false ) )	{
-			return kNUMBERS;
-		}
-		else	{
-			return kNUMBER;
-		}
-	}
-	if ( process( kNUTOKEN, false ) )	{
-		if ( process( "S", false ) )	{
-			return kNUTOKENS;
-		}
-		else	{
-			return kNUTOKEN;
-		}
-	}
-	
-	if ( processNameTokenGroup() != "" )	{
-		//printf( "Declared value: name token group\n" );
-		return "nameTokenGroup";
-	}
-
-	return "";
-	
-}
-
-string AttrListDeclParser	::	processDefValue()	{
-	
-	if ( ! process( mRni, false ) )	{
-		// Must be an attribute value specification
-		return processAttrValueSpec( false );
-	}
-	
-	if ( process( kFIXED, false ) )	{
-		processPsPlus();
-		return processAttrValueSpec( false );
-	}
-	if ( process( kREQUIRED, false ) )	{
-		return kREQUIRED;
-	}
-	if ( process( kCURRENT, false ) )	{
-		return kCURRENT;
-	}
-	if ( process( kCONREF, false ) )	{
-		return kCONREF;
-	}
-	if ( process( kIMPLIED, false ) )	{
-		return kIMPLIED;
-	}
-
-	return processAttrValueSpec( false );
-	
+	return mToken;
 }

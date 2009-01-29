@@ -33,49 +33,166 @@
 	See TElementDeclaration.hpp for some more information
 */
 
+// Standard C headers
+#include <stdio.h>
+
 // SGMLParser headers
 #include "TElementDeclaration.hpp"
 
-TElementDeclaration::	TElementDeclaration( const TDocumentPtr aOwnerDocument )
-	:	TSchemaRule(aOwnerDocument, "declaration" )	{
-	
-}
-
-TElementDeclaration	::	~TElementDeclaration()	{
-	
-}
-
-void TElementDeclaration	::	setMinimization( bool aStart, bool aEnd )	{
-	
-	if ( aStart ) {
-		setAttribute( "start", "true" );
-	}
-	else {
-		setAttribute( "start", "false" );
-	}
-	if ( aEnd ) {
-		setAttribute( "end", "true" );
-	}
-	else {
-		setAttribute( "end", "false" );
-	}
+TElementDeclaration :: TElementDeclaration(const TDocumentPtr aOwnerDocument)
+					: TSchemaRule(aOwnerDocument, "declaration") {
 
 }
 
-void TElementDeclaration	::	getMinimization( bool & aStart, bool & aEnd )	{
+TElementDeclaration :: ~TElementDeclaration() {
+
+}
+
+bool TElementDeclaration :: computeEmpty() {
+
+	bool subEmpty = false;
 	
-	if ( getAttribute( "start" ) == "true" )	{
+	if (mContent.get() != NULL) {
+		subEmpty = mContent->computeEmpty();
+	}
+	
+	bool start = false;
+	bool end = false;
+	getMinimization(start, end);
+	
+	mEmpty = !start && !end && subEmpty;
+	
+	return mEmpty;
+}
+
+bool TElementDeclaration :: computeFirst() {
+
+	bool changed = false;
+	std::set<string> first;
+	std::set<string> firstTags;
+	
+	if (mFirst.empty()) {
+		// The first run.
+		changed = true;
+	}
+
+	// Just add the elements name as a first token.
+	TNodeListPtr elements = mElements->getChildNodes();
+
+	unsigned int length = elements->getLength();
+	for (unsigned int i = 0; i < length; i++) {
+		TNodePtr elementNode = elements->item(i);
+		TElementPtr element = shared_static_cast<TElement>(elementNode);
+		TDOMString tagName = element->getTagName();
+		first.insert(tagName);
+		firstTags.insert(tagName);
+	}
+	
+	bool start, end;
+	getMinimization(start, end);
+
+	// Always compute the first of the content.
+	changed |= mContent->computeFirst();
+	std::set<string> firstContent = mContent->getFirst();
+	
+	if (mContent.get() != NULL && !start) {
+		// Add the content first tokens as well.
+		first.insert(firstContent.begin(), firstContent.end());
+		firstContent.insert(firstContent.begin(), firstContent.end());
+	}
+
+/*	
+	printf("First contains:\n");
+	std::set<string>::iterator iterBegin = mFirst.begin();	
+	std::set<string>::iterator iterEnd = mFirst.end();
+	while (iterBegin != iterEnd) {
+		printf("%s\n", (*iterBegin).c_str());
+		++iterBegin;
+	}
+*/
+	
+	if (changed) {
+		mFirst = first;
+		mFirstTags = firstTags;
+		mFirstContent = firstContent;
+	}
+	
+	return changed;
+	
+}
+
+void TElementDeclaration :: setMinimization(bool aStart, bool aEnd) {
+	
+	if (aStart)
+		setAttribute("start", "true");
+	else
+		setAttribute("start", "false");
+	if (aEnd)
+		setAttribute("end", "true");
+	else
+		setAttribute("end", "false");
+
+}
+
+void TElementDeclaration :: getMinimization(bool & aStart, bool & aEnd) {
+
+	if (getAttribute("start") == "true")
 		aStart = true;
-	}
-	else	{
+	else
 		aStart = false;
-	}
 
-	if ( getAttribute( "end" ) == "true" )	{
+	if (getAttribute("end") == "true")
 		aEnd = true;
-	}
-	else	{
+	else
 		aEnd = false;
+	
+}
+
+void TElementDeclaration :: setElements(TElementPtr aElements) {
+
+	mElements = aElements;
+	appendChild(aElements);
+
+}
+
+void TElementDeclaration :: setContent(TSchemaRulePtr aContent) {
+
+	mContent = aContent;
+	appendChild(aContent);
+
+}
+
+TSchemaRulePtr TElementDeclaration :: getContent() {
+
+	return mContent;
+
+}
+
+bool TElementDeclaration :: hasRule(const TDOMString & aTagName) {
+
+	bool foundElement = false;
+
+	TNodeListPtr elements = mElements->getChildNodes();
+
+	unsigned int length = elements->getLength();
+	unsigned int i = 0;
+	while (i < length && !foundElement) {
+		TNodePtr elementNode = elements->item(i);
+		TElementPtr element = shared_static_cast<TElement>(elementNode);
+		if (element->getTagName() == aTagName) {
+			foundElement = true;
+		}
+		i++;
 	}
 	
+	return foundElement;
+
+}
+
+TDOMString TElementDeclaration :: getElementName() {
+	
+	TNodePtr node = mElements->getFirstChild();
+	TElementPtr element = shared_static_cast<TElement>(node);
+	return element->getTagName();
+
 }

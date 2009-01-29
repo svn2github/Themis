@@ -98,6 +98,7 @@ class SGMLText	{
 			@param	aDocument	The document to load.
 		*/
 		void loadText( const char * aDocument );
+		void loadText(string aText);
 		/// A function to go to the next character.
 		char nextChar();
 		/// A function to get the current character.

@@ -1,3 +1,33 @@
+/*
+	Copyright (c) 2008 Mark Hellegers. All Rights Reserved.
+	
+	Permission is hereby granted, free of charge, to any person
+	obtaining a copy of this software and associated documentation
+	files (the "Software"), to deal in the Software without
+	restriction, including without limitation the rights to use,
+	copy, modify, merge, publish, distribute, sublicense, and/or
+	sell copies of the Software, and to permit persons to whom
+	the Software is furnished to do so, subject to the following
+	conditions:
+	
+	   The above copyright notice and this permission notice
+	   shall be included in all copies or substantial portions
+	   of the Software.
+	
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+	KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+	WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+	PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+	OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+	OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+	
+	Original Author: 	Mark Hellegers (mark@firedisk.net)
+	Project Start Date: October 18, 2000
+	Class Start Date: April 07, 2003
+*/
+
 /*	ElementParser implementation
 	See ElementParser.hpp for more information
 */
@@ -5,811 +35,715 @@
 // Standard C headers
 #include <stdio.h>
 
+// DOM headers
+#include "TText.h"
+#include "TDocument.h"
+
 // SGMLParser headers
 #include "ElementParser.hpp"
 #include "ReadException.hpp"
-#include "ElementDeclException.hpp"
-#include "SGMLSupport.hpp"
-#include "State.hpp"
-#include "CommentDeclParser.hpp"
 #include "TSchema.hpp"
 #include "TElementDeclaration.hpp"
+#include "CommentDeclParser.hpp"
+#include "ElementDeclException.hpp"
 
-// DOM headers
-#include "TElement.h"
-#include "TNodeList.h"
-#include "TNamedNodeMap.h"
-#include "TText.h"
-#include "TAttr.h"
+ElementParser :: ElementParser(SGMLScanner * aScanner, TSchemaPtr aSchema, TDOMString aDocTypeName)
+			  :  BaseParser(aScanner, aSchema) {
 
-ElementParser	::	ElementParser(SGMLTextPtr aDocText,
-								  TSchemaPtr aSchema )
-				:	BaseParser( aSchema )	{
+	mDocTypeName = aDocTypeName;
+	mCommentDeclParser = NULL;
 
-	mDocText = aDocText;
-
-	// Comment declaration parser
-	commentParser = new CommentDeclParser( aDocText, mSchema );
-
-	// Document to store the element tree
 	mDocument = TDocumentPtr( new TDocument() );
 
-
 }
 
-ElementParser	::	~ElementParser()	{
-
-	delete commentParser;
+ElementParser :: ~ElementParser() {
 	
 }
 
-void ElementParser	::	setDocText( SGMLTextPtr aDocText )	{
-	
-	mDocText = aDocText;
-	commentParser->setDocText( aDocText );
-	
-}
+bool ElementParser :: parseAttrSpec(TElementPtr aElement) {
 
-void ElementParser	::	parse( const string & aName )	{
+	bool result = false;
 	
-	mName = aName;
+	parseSStar();
 	
-	TElementDeclarationPtr declaration = mSchema->getDeclaration(aName);
-	processElementContent( aName, declaration, mDocument );
-	
-}
-
-TDocumentPtr ElementParser	::	getDocument() const	{
-	
-	return mDocument;
-	
-}
-
-void ElementParser	::	processElementContent( const TDOMString & aName,
-																	const TElementDeclarationPtr & aDeclaration,
-																	TNodePtr aParent )	{
-
-	bool contentFound = true;
-	while ( contentFound )	{
-		if ( ! processCommentDeclaration() )	{
-			if ( ! processS() )	{
-				contentFound = false;
+	if (mToken == IDENTIFIER_SYM) {
+		string attribute = mScanner->getTokenText();
+		mToken = mScanner->nextToken();
+		parseSStar();
+		if (mToken == EQUALS_SYM) {
+			mToken = mScanner->nextToken(SPACE_SYM, DECLARATION_END_SYM);
+			parseSStar(SPACE_SYM, DECLARATION_END_SYM);
+			if (mToken == TEXT_SYM) {
+				string value = mScanner->getTokenText();
+				aElement->setAttribute(attribute, value);
+				mToken = mScanner->nextToken();
+				result = true;
+			}
+			else {
+				string message = "Unknown token found: " + mScanner->getTokenText();
+				throw ReadException(mScanner->getLineNr(),
+									mScanner->getCharNr(),
+									message,
+									GENERIC,
+									true);
+			}
+		}
+		else {
+			if (mToken == IDENTIFIER_SYM ||
+				mToken == DECLARATION_END_SYM) {
+				// Probably an attribute, with standard value.
+				// Don't parse anything anymore as the whole attribute has been parsed.
+				aElement->setAttribute(attribute, "");
+				result = true;
+			}
+			else {
+				string message = "Unknown token found: " + mScanner->getTokenText();
+				throw ReadException(mScanner->getLineNr(),
+									mScanner->getCharNr(),
+									message,
+									GENERIC,
+									true);
 			}
 		}
 	}
-
-	processElement( aName, aDeclaration, aParent );
-																		
+	
+	return result;
 }
 
-void ElementParser	::	processUnknownTags( TNodePtr aParent )	{
-
-	bool contentFound = true;
-	while ( contentFound )	{
-		processSStar();
-		if ( processUnknownStartTag( aParent ) )	{
-			continue;
-		}
-		if ( processUnknownEndTag() )	{
-			continue;
-		}
-		contentFound = false;
-	}
-	
-}
-
-bool ElementParser	::	processUnknownStartTag( TNodePtr aParent )	{
-
-	State save = mDocText->saveState();
-
-	if ( ! process( mStago, false ) )	{
-		return false;
-	}
-	
-	// Skipping the document type specification for now
-	
-	string name = "";
-	try	{
-		name = processGenIdSpec();
-	}
-	catch( ReadException r )	{
-		mDocText->restoreState( save );
-		if ( r.isFatal() )	{
-			throw r;
-		}
-		else	{
-			return false;
-		}
-	}
-	
-	try	{
-		mSchema->getDeclaration(name);
-		mDocText->restoreState( save );
-		return false;
-	}
-	catch( ElementDeclException e )	{
-		// Element does not exist in DTD. Skip it
-		printf( "WARNING: Found element that does not exist in DTD: %s.", name.c_str() );
-		printf( " Check the HTML source or make sure this is the right DTD for this file\n" );
-		try	{
-			printf( "Processing AttrSpecList\n" );
-			processAttrSpecList( aParent );
-			processSStar();
-			process( mTagc );
-		}
-		catch( ReadException r )	{
-			r.setFatal();
-			throw r;
-		}
-	}
-	
-	return true;
-
-}
-
-bool ElementParser	::	processUnknownEndTag()	{
-	
-	State save = mDocText->saveState();
-	
-	if ( ! process( mEtago, false ) )	{
-		return false;
-	}
-	
-	// Skipping the document type specification for now
-	
-	string name = "";
-	try	{
-		name = processGenIdSpec();
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
-
-	try	{
-		mSchema->getDeclaration(name);
-		mDocText->restoreState( save );
-		return false;
-	}
-	catch( ElementDeclException e )	{
-		// Element does not exist in DTD. Skip it
-		printf( "WARNING: Found element that does not exist in DTD: %s.", name.c_str() );
-		printf( " Check the HTML source or make sure this is the right DTD for this file\n" );
-
-		processSStar();
-		
-		try	{
-			process( mTagc );
-		}
-		catch( ReadException r )	{
-			r.setFatal();
-			throw r;
-		}
-		
-	}
-	
-	return true;
-	
-}
-
-void ElementParser	::	processElement( const TDOMString & aName,
-														const TElementDeclarationPtr & aDeclaration,
-														 TNodePtr aParent )	{
-		
-	printf( "Trying to find: %s\n", aName.c_str() );
-
-	// Setup the minimization
-	bool start = true;
-	bool end = true;
-	aDeclaration->getMinimization( start, end );
-
-	TNodePtr tag;
-	State save = mDocText->saveState();
-	try	{
-		TElementPtr element = processStartTag( aName, aDeclaration, aParent );
-		// Cast it to a node
-		tag = shared_static_cast<TNode>( element );
-	}
-	catch( ReadException r )	{
-		printf( "Didn't find: %s\n", aName.c_str() );
-		mDocText->restoreState( save );
-		if ( start || r.isEndTag() )	{
-			throw r;
-		}
-		printf( "Start not required\n" );
-		// Should actually still add the element to the tree. Bit too complicated atm.
-		tag = shared_static_cast<TNode>( aParent );
-	}
-
-	// Take out any unknown tags
-	processUnknownTags( aParent );
-
-	// Get the content model
-	TElementPtr content = getElement( aDeclaration, "content" );
-	if ( content.get() != NULL )	{
-		TNodePtr childContent = content->getFirstChild();
-		TElementPtr baseContent = shared_static_cast<TElement>( childContent );
-		TElementPtr exceptions = getElement( content, "exceptions" );
-		processContent( baseContent, exceptions, tag );
-	}
-
-	// Take out any unknown tags
-	processUnknownTags( aParent );
-
-	printf( "Done with content. Trying to close up %s\n", aName.c_str() );
-	
-	save = mDocText->saveState();
-	processSStar();
-	try	{
-		processEndTag( aName );
-		printf( "Closed up %s correctly\n", aName.c_str() );
-	}
-	catch( ReadException r )	{
-		mDocText->restoreState( save );
-		if ( end )	{
-			printf( "Throwing exception on closing of %s\n", aName.c_str() );
-			throw r;
-		}
-		printf( "Closed up %s implicitly\n", aName.c_str() );
-	}
-
-	// Take out any unknown tags
-	processUnknownTags( aParent );
-	
-}
-
-TElementPtr ElementParser	::	processStartTag( const TDOMString & aName,
-																	  const TElementPtr & elementDecl,
-																	  TNodePtr aParent )	{
-	
-	try	{
-		process( mStago );
-	}
-	catch( ReadException r )	{
-		r.setReason( NO_TAG_FOUND );
-		throw r;
-	}
-	
-	// Skipping the document type specification for now
-
-	TElementPtr element;
-	
-	string name = "";
-	try	{
-		name = processGenIdSpec();
-	}
-	catch( ReadException r )	{
-		throw r;
-	}
-	if ( name == aName )	{
-		printf( "Correct element start tag found: %s\n", name.c_str() );
-		element = mDocument->createElement( name );
-		aParent->appendChild( element );
-	}
-	else	{
-		string error = "Expected start tag ";
-		error += aName;
-		ReadException exception( mDocText->getLineNr(), mDocText->getCharNr(),
-											  error, WRONG_TAG_FOUND, true );
-		exception.setWrongTag( name );
-		throw exception;
-	}
-
-	// Skipping some stuff for now
-	try	{
-		printf( "Processing AttrSpecList\n" );
-		processAttrSpecList( element );
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
-
-	processSStar();
-
-	try	{
-		process( mTagc );
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
-	
-	return element;
-	
-}
-
-void ElementParser	::	processEndTag( const TDOMString & aName )	{
-	
-	process( mEtago );
-	
-	// Skipping the document type specification for now
-	
-	string name = "";
-	try	{
-		name = processGenIdSpec();
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
-
-	if ( name != aName )	{
-		string error = "Expected closing tag ";
-		error += aName;
-		ReadException exception( mDocText->getLineNr(), mDocText->getCharNr(),
-											  error, WRONG_TAG_FOUND, true );
-		exception.setWrongTag( name );
-		throw exception;
-	}
-	
-	processSStar();
-	
-	try	{
-		process( mTagc );
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
-	
-}
-
-string ElementParser	::	processGenIdSpec()	{
-
-	// Ignoring rank stem
-
-	return processGI();
-	
-}
-
-void ElementParser	::	processAttrSpecList( TNodePtr aParent )	{
+void ElementParser :: parseAttrSpecList(TElementPtr aElement) {
 
 	bool attrSpecFound = true;
 	while ( attrSpecFound )	{
-		try	{
-			attrSpecFound = processAttrSpec( aParent );
-		}
-		catch( ReadException r )	{
-			if ( r.isFatal() )	{
-				throw r;
-			}
-		}
+		attrSpecFound = parseAttrSpec(aElement);
 	}
 	
 }
 
-bool ElementParser	::	processAttrSpec( TNodePtr aParent )	{
-
-	processSStar();
-
-	TAttrPtr attr;
+TElementPtr ElementParser :: parseStartTag() {
 	
-	bool result = false;
+	TElementPtr element;
+
+	mToken = mScanner->nextToken();
 	
-	State save = mDocText->saveState();
-	try	{
-		string name = processName();
-		processSStar();
-		process( mVi );
-		processSStar();
-		attr = mDocument->createAttribute( name );
-		TNamedNodeMapPtr map = aParent->getAttributes();
-		map->setNamedItem( attr );
-		printf( "Found attr spec name: %s\n", name.c_str() );
-		result = true;
-	}
-	catch( ReadException r )	{
-		// Optional.
-		mDocText->restoreState( save );
-	}
-
-	// Not entirely correct. Check later
-	string value = processAttrValueSpec( false );
-	if ( value != "")	{
-		printf( "Found AttrValueSpec: %s\n", value.c_str() );
-		if ( attr.get() != NULL )	{
-			attr->setValue( value );
-		}
-		result = true;
-	}
-
-	return result;
-	
-}
-
-void ElementParser	::	skipContent( const TElementPtr & aContent )	{
-
-	string contentName = aContent->getNodeName();
-	printf( "Trying to skip content: %s\n", contentName.c_str() );
-
-	int minOccurs = atoi(aContent->getAttribute("minOccurs").c_str());
-	printf("Minimum occurence: %i\n", minOccurs);
-	
-	if (minOccurs == 0)	{
-		printf("Skipping %s\n", contentName.c_str());
-	}
-	else	{
-		if ( contentName == "CDATA" || contentName == "EMPTY")	{
-			printf("Skipping %s\n", contentName.c_str());
-		}
-		else	{
-			string exceptionText = "Can't skip " + contentName;
-			throw ReadException( mDocText->getLineNr(),
-											mDocText->getCharNr(),
-											exceptionText);
-		}
-	};
-	
-}
-
-void ElementParser	::	processContent( const TElementPtr & aContent,
-														 const TElementPtr & aExceptions,
-														 TNodePtr aParent )	{
-	
-	// Moved to just before tag
-	//processExceptions( aExceptions, aParent );
-
-	string contentName = aContent->getNodeName();
-	printf( "Processing content: %s\n", contentName.c_str() );
-	
-	// Using switch statement, by only looking at the first character.
-	switch( contentName[ 0 ] )	{
-		case '|':	{
-			bool contentFound = true;
-			int count = 0;
-			while (contentFound)	{
-				try	{
-					processOr( aContent, aExceptions, aParent );
-					count++;
-				}
-				catch( ReadException r )	{
-					if ( r.isFatal() )	{
-						// Something went wrong here
-						throw r;
+	if (mToken == IDENTIFIER_SYM) {
+		string tokenName = mScanner->getTokenText();
+		element = mDocument->createElement(tokenName);
+		mToken = mScanner->nextToken();
+		switch (mToken) {
+			case SPACE_SYM: {
+				parseAttrSpecList(element);
+				if (mToken == DECLARATION_END_SYM ||
+					mToken == ELEMENT_XML_CLOSE_SYM) {
+					try {
+						TElementDeclarationPtr declaration = mSchema->getDeclaration(tokenName);
+						if (declaration->hasContentToken("CDATA")) {
+							// Will have to assume it is CDATA.
+							printf("Crap shit, but will have to parse it\n");
+							mToken = mScanner->nextToken(ELEMENT_CLOSE_SYM);
+						}
+						else {
+							mToken = mScanner->nextToken(ELEMENT_OPEN_SYM);
+						}
 					}
-					contentFound = false;
+					catch(ElementDeclException) {
+						// This element does not exist. Pretend it does, without CDATA content
+						mToken = mScanner->nextToken(ELEMENT_OPEN_SYM);
+					}
 				}
-			}
-			break;
-		}
-		case '&':	{
-			processAnd( aContent, aExceptions, aParent );
-			break;
-		}
-		case ',':	{
-			processComma( aContent, aExceptions, aParent );
-			break;
-		}
-		case '#':	{
-			processDataText( aContent, aExceptions, aParent );
-			break;
-		}
-		default:	{
-			processExceptions( aExceptions, aParent );
-			if ( contentName == "CDATA" )	{
-				printf( "At cdata\n" );
-				string cdata = processCharData( mEtago, false );
-				TTextPtr text =
-					mDocument->createText( cdata );
-				aParent->appendChild( text );
-				printf( "CDATA: %s\n", cdata.c_str() );
+				else {
+					string message = "Unknown token found: " + mScanner->getTokenText();
+					throw ReadException(mScanner->getLineNr(),
+										mScanner->getCharNr(),
+										message,
+										GENERIC,
+										true);
+				}
 				break;
 			}
-			if ( contentName == "EMPTY" )	{
-				printf( "At empty\n" );
+			case DECLARATION_END_SYM:
+			case ELEMENT_XML_CLOSE_SYM: {
+				try {
+					TElementDeclarationPtr declaration = mSchema->getDeclaration(tokenName);
+					if (declaration->hasContentToken("CDATA")) {
+						// Will have to assume it is CDATA.
+						printf("Crap shit, but will have to parse it\n");
+						mToken = mScanner->nextToken(ELEMENT_CLOSE_SYM);
+					}
+					else {
+						mToken = mScanner->nextToken(ELEMENT_OPEN_SYM);
+					}
+				}
+				catch(ElementDeclException) {
+					// This element does not exist. Pretend it does, without CDATA content
+					mToken = mScanner->nextToken(ELEMENT_OPEN_SYM);
+				}
 				break;
 			}
-			printf( "At tag\n" );
-			TElementDeclarationPtr declaration = mSchema->getDeclaration(contentName);
-			processElementContent( contentName, declaration, aParent );
-			printf( "Finished tag\n" );
-		}
-	}
-
-}
-
-void ElementParser	::	processOr( const TElementPtr & aContent,
-												 const TElementPtr & aExceptions,
-												 TNodePtr aParent )	{
-
-	printf( "At or element\n" );
-
-	TNodeListPtr children = aContent->getChildNodes();
-	
-	unsigned int i = 0;
-	unsigned int length = children->getLength();
-	while ( i < length )	{
-		TNodePtr child = children->item( i );
-		TElementPtr element = shared_static_cast<TElement>( child );
-		try	{
-			processContent( element, aExceptions, aParent );
-			return;
-		}
-		catch( ReadException r )	{
-			TNodeListPtr results;
-			switch ( r.getReason() )	{
-				case WRONG_TAG_FOUND:	{
-					results = aContent->getElementsByTagName( r.getWrongTag() );
-					break;
-				}
-				case NO_TAG_FOUND:	{
-					results = aContent->getElementsByTagName( "#PCDATA" );
-					if ( results->getLength() == 0 )	{
-						results = aContent->getElementsByTagName( kCDATA );
-					}
-					break;
-				}
-				case NO_PCDATA_FOUND:	{
-					i++;
-					continue;
-				}
-				case END_TAG_FOUND:
-				case END_OF_FILE_REACHED:	{
-					throw r;
-					break;
-				}
-				default:	{
-					if ( r.isFatal() )	{
-						throw r;
-					}
-					break;
-				}
-			}
-			if ( results.get() != NULL )	{
-				if ( results->getLength() > 0 )	{
-					TNodePtr node = results->item( 0 );
-					element = shared_static_cast<TElement>( node );
-					processContent( element, aExceptions, aParent );
-					return;
-				}
-				else	{
-					throw ReadException( mDocText->getLineNr(),
-													mDocText->getCharNr(),
-													"No tag of or children found" );
-				}
+			default: {
+				string message = "Unknown token found: " + mScanner->getTokenText();
+				throw ReadException(mScanner->getLineNr(),
+									mScanner->getCharNr(),
+									message,
+									GENERIC,
+									true);
 			}
 		}
 	}
-
-	throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(),
-									"No tag of or children found" );
-
-}
-
-void ElementParser	::	processAnd( const TElementPtr & aContent,
-												   const TElementPtr & aExceptions,
-												   TNodePtr aParent )	{
-
-	printf( "At seq element\n" );
-	TNodeListPtr children = aContent->getChildNodes();
-	bool skip = false;
-	for ( unsigned int i = 0; i < children->getLength(); i++ )	{
-		TNodePtr child = children->item( i );
-		TElementPtr element = shared_static_cast<TElement>( child );
-		if ( skip )	{
-			skipContent( element );
-		}
-		else	{
-			try	{
-				processContent( element, aExceptions, aParent );
-			}
-			catch( ReadException r )	{
-				if ( r.isEndTag() && ! r.isFatal() )	{
-					// See if we can skip the rest of the tags.
-					skip = true;
-				}
-			}
-		}
-	}
-	printf( "Finished seq element\n" );
-
-}
-
-void ElementParser	::	processComma( const TElementPtr & aContent,
-														const TElementPtr & aExceptions,
-														TNodePtr aParent )	{
-
-	printf( "At comma element\n" );
-	TNodeListPtr children = aContent->getChildNodes();
-	unsigned int length = children->getLength();
-	vector<bool> elementsDone( length, false );
-	bool progress = true;
-	while ( progress )	{
-		progress = false;
-		for ( unsigned int i = 0; i < length; i++ )	{
-			if ( elementsDone[ i ] )	{
-				// Already done. Skip to next
-				continue;
-			}
-			TNodePtr child = children->item( i );
-			TElementPtr element = shared_static_cast<TElement>( child );
-			try	{
-				processContent( element, aExceptions, aParent );
-				elementsDone[ i ] = false;
-				progress = true;
-			}
-			catch( ReadException r )	{
-				if ( ! r.isWrongTag() && r.isFatal() )	{
-					throw r;
-				}
-				if ( r.isEndTag() )	{
-					// Nothing going to happen anymore.
-					break;
-				}
-			}
-		}
-	}
-	printf( "Finished comma element\n" );
-	
-}
-
-void ElementParser	::	processDataText( const TElementPtr & aContent,
-														   const TElementPtr & aExceptions,
-														   TNodePtr aParent )	{
-
-	printf( "At data text\n" );
-	string dataText = "";
-	bool stFound = false;
-	while ( ! stFound )	{
-		if ( mDocText->getChar() != '<' )	{
-			// Not yet found. Process replacable character data
-			dataText += processRepCharData();
-		}
-		else	{
-			stFound = true;
-		}
-	}
-	if ( dataText == "" )	{
-		throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(),
-										"PCDATA expected", NO_PCDATA_FOUND );
-	}
-	TTextPtr text = mDocument->createText( dataText );
-	aParent->appendChild( text );
-	printf( "Finished data text: %s\n", dataText.c_str() );
-
-}
-
-void ElementParser	::	processExceptions( const TElementPtr & aExceptions,
-															TNodePtr aParent )	{
-	
-	// Figure out if there actually are exceptions.
-	if (aExceptions.get() != NULL) {
-		bool exceptionFound = true;
-		while ( exceptionFound )	{
-			try	{
-				processExceptionOtherContent();
-				processException( aExceptions, aParent );
-			}
-			catch( ReadException r )	{
-				if ( r.isFatal() || r.isEndTag() )	{
-					throw r;
-				}
-				else	{
-					exceptionFound = false;
-				}
-			}
-		}
-	}
-
-}
-
-void ElementParser	::	processException( const TElementPtr & aExceptions,
-															TNodePtr aParent )	{
-
-	if ( aExceptions.get() == NULL || aExceptions->hasChildNodes() == false)	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(), "No exceptions" );
-	}
-	TNodePtr plusNode = aExceptions->getFirstChild();
-	TElementPtr plus = shared_static_cast<TElement>( plusNode );
-	if ( plus->getNodeName() != mPlus )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(), "No plus exceptions" );
-	}
-	TNodePtr elementsNode = plus->getFirstChild();
-	TElementPtr elements = shared_static_cast<TElement>(elementsNode);
-
-	TNodeListPtr children = elements->getChildNodes();
-	string token = "";
-	for ( unsigned int i = 0; i < children->getLength(); i++ )	{
-		TNodePtr child = children->item( i );
-		TDOMString name = child->getNodeName();
-		printf( "Looking at exception %s\n", name.c_str() );
-		if ( name == token || token == "" )	{
-			try	{
-				TElementDeclarationPtr declaration = mSchema->getDeclaration(name);
-				processElement( name, declaration, aParent );
-				printf( "Finished exception\n" );
-				return;
-			}
-			catch( ReadException r )	{
-				switch ( r.getReason() )	{
-					case WRONG_TAG_FOUND:	{
-						token = r.getWrongTag();
-						printf( "Token: %s\n", token.c_str() );
-						break;
-					}
-					case NO_TAG_FOUND:	{
-						printf( "NO TAG FOUND\n" );
-						TNodeListPtr results = elements->getElementsByTagName( "#PCDATA" );
-						if ( results->getLength() != 0 )	{
-							token = "#PCDATA";
-						}
-						else	{
-							results = elements->getElementsByTagName( "CDATA" );
-							if ( results->getLength() != 0 )	{
-								token = "CDATA";
-							}
-						}
-						break;
-					}
-					case END_TAG_FOUND:
-					case END_OF_FILE_REACHED:	{
-						throw r;
-						break;
-					}
-					default:	{
-						if ( r.isFatal() )	{
-							throw r;
-						}
-						break;
-					}
-				}
-			}
-		}
-	}
-
-	throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(),
-									"No exception found" );
-
-}
-
-void ElementParser	::	processExceptionOtherContent()	{
-
-	bool otherContentFound = true;
-	while ( otherContentFound )	{
-		if ( ! processCommentDeclaration() )	{
-			if ( ! processS() )	{
-				otherContentFound = false;
-			}
-		}
-	}
-
-}
-
-void ElementParser	::	processComments()	{
-
-	bool commentFound = true;
-	while ( commentFound )	{
-		commentFound = processCommentDeclaration();
+	else {
+		string message = "Unknown token found: " + mScanner->getTokenText();
+		throw ReadException(mScanner->getLineNr(),
+							mScanner->getCharNr(),
+							message,
+							GENERIC,
+							true);
 	}
 	
+	return element;
+
 }
 
-bool ElementParser	::	processCommentDeclaration()	{
-
-	return commentParser->parse();
+TDOMString ElementParser :: parseEndTag() {
 	
+	TDOMString tagName = "";
+	
+	mToken = mScanner->nextToken();
+	
+	if (mToken == IDENTIFIER_SYM) {
+		tagName = mScanner->getTokenText();
+		mToken = mScanner->nextToken();
+		if (mToken == DECLARATION_END_SYM) {
+			mToken = mScanner->nextToken(ELEMENT_OPEN_SYM);
+		}
+		else {
+			string message = "Unknown token found: " + mScanner->getTokenText();
+			throw ReadException(mScanner->getLineNr(),
+								mScanner->getCharNr(),
+								message,
+								GENERIC,
+								true);
+		}
+	}
+	else {
+		string message = "Unknown token found: " + mScanner->getTokenText();
+		throw ReadException(mScanner->getLineNr(),
+							mScanner->getCharNr(),
+							message,
+							GENERIC,
+							true);
+	}
+
+	return tagName;
+
 }
 
-TElementPtr ElementParser	::	getElement( TElementPtr aElement,
-															   const TDOMString & aName )	{
+bool ElementParser :: parseDeclaration(TElementDeclarationPtr aDeclaration,
+									   TNodePtr aParentNode) {
 
-	TNodeListPtr children = aElement->getChildNodes();
-	TElementPtr result;
-	unsigned int i = 0;
-	unsigned int length = children->getLength();
 	bool found = false;
-	while ( i < length && ! found )	{
-		TNodePtr child = children->item( i );
-		if ( child->getNodeName() == aName )	{
-			result = shared_static_cast<TElement>( child );
-			found = true;
+
+	switch (mElmToken.getType()) {
+		case START_TAG: {
+			// Is the tag in the current declaration ?
+			TDOMString name = mElmToken.getName();
+			TDOMString elementName = name;
+			bool start, end;
+			aDeclaration->getMinimization(start, end);
+			bool tagTokenExists = aDeclaration->hasTagToken(name);
+			if (tagTokenExists || !start) {
+				// Get the next element token and parse again.
+				TNodePtr currentNode;
+				if (tagTokenExists) {
+					// This is the right rule. Get the next token.
+					currentNode = mElmToken.getNode();
+					aParentNode->appendChild(currentNode);
+					mElmToken = nextElmToken();
+					printf("Tag %s is correct here.\n", name.c_str());
+				}
+				else {
+					currentNode = mDocument->createElement(aDeclaration->getElementName());
+					aParentNode->appendChild(currentNode);
+					printf("Skipping optional start tag.\n");
+				}
+				// Get the content rule.
+				TSchemaRulePtr rule = aDeclaration->getContent();
+				if (rule->hasEmpty()) {
+					printf("Rule for tag %s has empty\n", name.c_str());
+				}
+				else {
+					printf("Rule for tag %s does not have empty\n", name.c_str());
+				}
+				name = mElmToken.getName();
+				printf("Trying to find: %s\n", name.c_str());
+				if (rule->hasToken(name)) {
+					printf("Rule has token\n");
+					found = parse(rule, currentNode);
+					if (found) {
+						printf("Content found correctly\n");
+					}
+					else {
+						printf("Content was not correct\n");
+					}
+				}
+				else if (rule->hasEmpty()) {
+					printf("Skipping content in parseDeclaration\n");
+				}
+				// I don't think this should be here, but we will see what happens
+				if (mElmToken.getType() == END_TAG && (elementName == mElmToken.getName())) {
+					printf("Found correct end tag: %s\n", elementName.c_str());
+					mElmToken = nextElmToken();
+					found = true;
+				}
+				else {
+					if (!end) {
+						printf("End tag not required\n");
+						found = true;
+					}
+					else {
+						printf("Found unknown token in end tag declaration part\n");
+						printf("Expected %s, found %s\n", elementName.c_str(), mElmToken.getName().c_str());
+						found = false;
+					}
+				}
+			}
+			break;
 		}
+		default: {
+			printf("Skipping element token in parseDeclaration\n");
+		}
+	}
+	
+	return found;
+}
+
+bool ElementParser :: parseSequence(TSchemaRulePtr aRule,
+									TNodePtr aParentNode) {
+	
+	bool found = true;
+	TDOMString name = mElmToken.getName();
+	
+	printf("Going into , rule\n");
+	// We need to parse all the subrules of the rule.
+	TNodeListPtr children = aRule->getChildNodes();
+	unsigned int length = children->getLength();
+	unsigned int i = 0;
+	while (i < length && found) {
+		TNodePtr child = children->item(i);
+		TSchemaRulePtr rule = shared_static_cast<TSchemaRule>(child);
+		if (rule->hasToken(name)) {
+			// Parse token with this rule.
+			printf("Parsing token with rule %u in sequence part\n", i);
+			// WARNING: Temp code
+			bool correctRule = true;
+			while (correctRule) {
+				found = parse(rule, aParentNode);
+				name = mElmToken.getName();
+				correctRule = rule->hasToken(name);
+			}
+		}
+		else if (rule->hasEmpty()) {
+			// We can skip it. It is optional.
+			printf("Skipping optional sequence rule\n");
+		}
+		else
+			found = false;
 		i++;
 	}
+	
+	return found;
+	
+}
 
-	return result;
+bool ElementParser :: parseAll(TSchemaRulePtr aRule,
+							   TNodePtr aParentNode) {
+	
+	// Pretending all (&) is the same as a sequence (,) for now
+	bool found = true;
+	TDOMString name = mElmToken.getName();
+	
+	printf("Going into & rule\n");
+	// We need to parse all the subrules of the rule.
+	TNodeListPtr children = aRule->getChildNodes();
+	unsigned int length = children->getLength();
+	unsigned int i = 0;
+	while (i < length && found) {
+		TNodePtr child = children->item(i);
+		TSchemaRulePtr rule = shared_static_cast<TSchemaRule>(child);
+		if (rule->hasToken(name)) {
+			// Parse token with this rule.
+			printf("Parsing token with rule %u in all part\n", i);
+			found = parse(rule, aParentNode);
+			name = mElmToken.getName();
+		}
+		else
+			found = false;
+		i++;
+	}
+	
+	return found;
+	
+}
+
+bool ElementParser :: parseChoice(TSchemaRulePtr aRule,
+								  TNodePtr aParentNode) {
+
+	// We need to find one rule that works.
+	bool found = false;
+	TNodeListPtr children = aRule->getChildNodes();
+	unsigned int length = children->getLength();
+	unsigned int i = 0;
+	unsigned int tokenCount = 0;
+	bool tokenFound = true;
+	TDOMString tokenName = mElmToken.getName();
+	while (tokenFound) {
+		if ((mElmToken.getType() != END_TAG) && aRule->hasToken(tokenName)) {
+			found = false;
+			i = 0;
+			while (!found && i < length) {
+				TNodePtr child = children->item(i);
+				TSchemaRulePtr rule = shared_static_cast<TSchemaRule>(child);
+				if (rule->hasToken(tokenName)) {
+					found = parse(rule, aParentNode);
+					if (found) {
+						printf("Found correct |\n");
+						tokenName = mElmToken.getName();
+						tokenCount++;
+						printf("Got next token name: %s\n", tokenName.c_str());
+					}
+					else {
+						tokenName = mElmToken.getName();
+						printf("Sub |-rule not correct. Find the next one\n");
+					}
+				}
+				i++;
+			}
+		}
+		else {
+			printf("No token found in | anymore\n");
+			tokenFound = false;
+			if (tokenCount > 0) {
+				found = true;
+			}
+			else {
+				found = false;
+			}
+		}
+	}
+
+	return found;
+
+}
+
+bool ElementParser :: parseContent(TSchemaRulePtr aRule,
+								   TNodePtr aParentNode) {
+
+	bool found = false;
+
+	TDOMString name = mElmToken.getName();
+	
+	if (name != "") {
+		if (aRule->hasChildNodes()) {
+			TNodeListPtr children = aRule->getChildNodes();
+			unsigned int length = children->getLength();
+			if (length > 1) {
+				// There are exceptions.
+				// Look if the tag is in the exceptions.
+				TNodePtr child = children->item(1);
+				TSchemaRulePtr rule = shared_static_cast<TSchemaRule>(child);
+				// Only look if it is a plus exception
+				if (rule->getAttribute("type") == "+") {
+					if (rule->hasToken(name)) {
+						// It is in the exceptions.
+						// Find the declaration of the tag and go from there.
+						TElementDeclarationPtr declaration = mSchema->getDeclaration(name);
+						found = parse(declaration, aParentNode);
+					}
+				}
+			}
+			if (length > 0) {
+				printf("Looking in normal content\n");
+				TNodePtr child = aRule->getFirstChild();
+				TSchemaRulePtr rule = shared_static_cast<TSchemaRule>(child);
+				found = parse(rule, aParentNode);
+				if (found) {
+					printf("Content found correctly in parseContent\n");
+				}
+				else {
+					printf("Content was not correct in parseContent\n");
+				}
+			}
+			// Hmm, there could still be exceptions.
+			// Loop until we can't find any anymore.
+			if (length > 1) {
+				printf("Looking for any extra exceptions\n");
+				TNodePtr child = children->item(1);
+				TSchemaRulePtr rule = shared_static_cast<TSchemaRule>(child);
+				if (rule->getAttribute("type") == "+") {
+					bool exceptionFound = true;
+					while (exceptionFound) {
+						name = mElmToken.getName();
+						if (rule->hasToken(name)) {
+							// It is in the exceptions.
+							// Find the declaration of the tag and go from there.
+							TElementDeclarationPtr declaration = mSchema->getDeclaration(name);
+							found = parseDeclaration(declaration, aParentNode);
+						}
+						else {
+							exceptionFound = false;
+						}
+					}
+				}
+			}
+		}
+		else {
+			printf("Empty content unsupported right now\n");
+		}
+	}
+	else {
+		printf("Unsupported content in parseContent\n");
+	}
+	
+	return found;
+}
+
+Token ElementParser :: parse(ElementToken aElmToken, TSchemaRulePtr aRule) {
+	
+	mElmToken = aElmToken;
+	parse(aRule, mDocument);
+
+	// Fallback.
+	printf("Going to fallback mode\n");
+	while (mElmToken.getType() != NONE) {
+		switch (mElmToken.getType()) {
+			case START_TAG: {
+				printf("Start tag: %s\n", mElmToken.getName().c_str());
+				break;
+			}
+			case END_TAG: {
+				printf("End tag: %s\n", mElmToken.getName().c_str());
+				break;
+			}
+			case SPACE: {
+				printf("Space\n");
+				break;
+			}
+			case TEXT: {
+				printf("Text\n");
+				break;
+			}
+			default: {
+				printf("Something else\n");
+			}
+		}
+		mElmToken = nextElmToken();
+	}
+
+	return mToken;
+
+	
+}
+
+bool ElementParser :: parse(TSchemaRulePtr aRule, TNodePtr aParentNode) {
+
+	bool found = false;
+
+	switch (mElmToken.getType()) {
+		case START_TAG: {
+			// We need to find the declaration.
+			TDOMString name = mElmToken.getName();
+			printf("Looking for start tag: %s\n", name.c_str());
+			if (aRule->hasToken(name)) {
+				printf("Rule contains %s\n", name.c_str());
+				string ruleName = aRule->getTagName();
+				printf("Rule name: %s\n", ruleName.c_str());
+				if (ruleName == "declaration") {
+					TElementDeclarationPtr declaration = shared_static_cast<TElementDeclaration>(aRule);
+					found = parseDeclaration(declaration, aParentNode);
+					if (found) {
+						printf("Declaration correct\n");
+					}
+					else {
+						printf("Declaration incorrect\n");
+					}
+				}
+				else if (ruleName == "content") {
+					found = parseContent(aRule, aParentNode);
+				}
+				else if (ruleName == ",") {
+					found = parseSequence(aRule, aParentNode);
+				}
+				else if (ruleName == "&") {
+					found = parseAll(aRule, aParentNode);
+				}
+				else if (ruleName == "|") {
+					found = parseChoice(aRule, aParentNode);
+				}
+				else {
+					// Could be an element declaration.
+					try {
+						TElementDeclarationPtr declaration = mSchema->getDeclaration(ruleName);
+						found = parse(declaration, aParentNode);
+					}
+					catch(ElementDeclException e) {
+						// Nope. Do nothing for now.
+					}
+				}
+			}
+			else if (aRule->hasEmpty()) {
+				printf("Rule contains empty.\n");
+			}
+			break;
+		}
+		case TEXT: {
+			printf("Found text\n");
+			TDOMString name = mElmToken.getName();
+			if (aRule->hasToken(name)) {
+				printf("Rule contains %s\n", name.c_str());
+				string ruleName = aRule->getTagName();
+				printf("Rule name: %s\n", ruleName.c_str());
+				if (ruleName == "declaration") {
+					printf("Parsing text in declaration ?\n");
+					TElementDeclarationPtr declaration = shared_static_cast<TElementDeclaration>(aRule);
+					found = parseDeclaration(declaration, aParentNode);
+				}
+				else if (ruleName == "content") {
+					printf("Parsing text in content\n");
+					found = parseContent(aRule, aParentNode);
+				}
+				else if (ruleName == name) {
+					printf("Text is correct here.\n");
+					// Get the next element token and return true.
+					aParentNode->appendChild(mElmToken.getNode());
+					mElmToken = nextElmToken();
+					found = true;
+				}
+				else if (ruleName == "|") {
+					printf("Parsing text in choice\n");
+					found = parseChoice(aRule, aParentNode);
+				}
+				else {
+					printf("Skipping element token for text\n");
+				}
+			}
+			else {
+				printf("Hmmm\n");
+			}
+			break;
+		}
+		default: {
+			printf("Skipping element token\n");
+			mElmToken = nextElmToken();
+		}
+	}
+
+	return found;
+
+}
+
+ElementToken ElementParser :: nextElmToken(bool aSkipSpace) {
+
+	bool elmTokenFound = false;
+	ElementToken elmToken;
+	
+	while (!elmTokenFound) {
+		switch (mToken) {
+			case SPACE_SYM: {
+				if (!aSkipSpace) {
+					elmToken = ElementToken(SPACE, mScanner->getTokenText());
+					mToken = mScanner->nextToken();
+//					printf("Found space\n"); 
+		
+					elmTokenFound = true;
+				}
+				else {
+					mToken = mScanner->nextToken();
+				}
+				break;
+			}
+			case ELEMENT_OPEN_SYM: {
+				// Found a start tag.
+				TElementPtr element = parseStartTag();
+				TDOMString tagName = element->getTagName();
+				if (mSchema->hasDeclaration(tagName)) {
+//					printf("Found start tag: %s\n", tagName.c_str()); 
+					elmToken = ElementToken(START_TAG, tagName, element);
+	
+					elmTokenFound = true;
+				}
+				else {
+					printf("Found invalid start token: %s\n", tagName.c_str());
+				}
+				break;
+			}
+			case ELEMENT_CLOSE_SYM: {
+				TDOMString tagName = parseEndTag();
+				if (mSchema->hasDeclaration(tagName)) {
+//					printf("Found end tag: %s\n", tagName.c_str()); 
+					elmToken = ElementToken(END_TAG, tagName);
+	
+					elmTokenFound = true;
+				}
+				else {
+					printf("Found invalid end token: %s\n", tagName.c_str());
+				}
+				break;
+			}
+			case TEXT_SYM: {
+				TTextPtr text = mDocument->createText(mScanner->getTokenText());
+				elmToken = ElementToken(TEXT, "#PCDATA", text);
+//				printf("Found text: %s\n", mScanner->getTokenText().c_str()); 
+				mToken = mScanner->nextToken();
+				
+				elmTokenFound = true;
+				break;
+			}
+			case RAW_TEXT_SYM: {
+				TTextPtr text = mDocument->createText(mScanner->getTokenText());
+				elmToken = ElementToken(TEXT, "CDATA", text);
+//				printf("Found text: %s\n", mScanner->getTokenText().c_str()); 
+				mToken = mScanner->nextToken();
+				
+				elmTokenFound = true;
+				break;
+			}
+			case DECLARATION_SYM: {
+				mToken = mScanner->nextToken();
+				if (mToken == COMMENT_SYM) {
+					if (mCommentDeclParser == NULL)
+						mCommentDeclParser = new CommentDeclParser(mScanner, mSchema);
+					mToken = mCommentDeclParser->parse(mToken, ELEMENT_OPEN_SYM);
+					printf("Found comment\n");
+				}
+				else
+					throw ReadException(mScanner->getLineNr(),
+										mScanner->getCharNr(),
+										"Expected comment sym",
+										GENERIC,
+										true);
+				break;
+			}
+			case EOF_SYM: {
+				elmToken = ElementToken(NONE);
+				elmTokenFound = true;
+				break;
+			}
+			default: {
+//				printf("Found unknown element token\n");
+				throw ReadException(mScanner->getLineNr(),
+									mScanner->getCharNr(),
+									"Unexpected token found: " + mScanner->getTokenText(),
+									GENERIC,
+									true);
+			}
+		}
+	}
+	
+	return elmToken;
+
+}
+
+TDocumentPtr ElementParser :: getDocument() {
+
+	return mDocument;
 
 }

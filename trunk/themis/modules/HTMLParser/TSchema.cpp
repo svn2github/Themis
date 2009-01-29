@@ -85,6 +85,15 @@ TElementDeclarationPtr	TSchema	::	createElementDeclaration()	{
 
 }
 
+TSchemaRulePtr TSchema :: createSchemaRule(const TDOMString aTagName)	{
+
+	TDocumentPtr thisDocument = shared_static_cast<TDocument>( shared_from_this() );
+	TSchemaRulePtr result(new TSchemaRule(thisDocument, aTagName));
+
+	return result;
+
+}
+
 TElementPtr	TSchema	::	getElements() {
 
 	return mElements;
@@ -118,6 +127,75 @@ Position TSchema :: getEntityPosition(const TDOMString & aName) {
 
 }
 
+void TSchema	::	computeEmpty()	{
+
+	printf("Computing empty set\n");
+	
+	TNodeListPtr declarations = mElements->getChildNodes();
+
+	unsigned int length = declarations->getLength();	
+	for (unsigned int i = 0; i < length; i++)	{
+		TNodePtr declarationNode = declarations->item(i);
+		TElementDeclarationPtr declaration = shared_static_cast<TElementDeclaration>(declarationNode);
+		declaration->computeEmpty();
+	}
+	
+}
+
+void TSchema	::	computeFirst()	{
+
+	printf("Computing first set\n");
+	
+	bool changed = true;
+	
+	TNodeListPtr declarations = mElements->getChildNodes();
+	unsigned int length = declarations->getLength();
+	while (changed) {
+		printf("Doing a compute first round...\n");
+		clock_t start = clock();
+		changed = false;
+		for (unsigned int i = 0; i < length; i++)	{
+			TNodePtr declarationNode = declarations->item(i);
+			TSchemaRulePtr declaration = shared_static_cast<TSchemaRule>(declarationNode);
+			changed |= declaration->computeFirst();
+		}
+		clock_t end = clock();
+		printf("Time taken for round: %f\n", (double)(end - start)/CLOCKS_PER_SEC);
+	}
+}
+
+void TSchema	::	computeLA()	{
+
+	printf("Computing Lookahead set\n");
+	
+	computeEmpty();
+	computeFirst();
+	
+	TNodeListPtr declarations = mElements->getChildNodes();
+
+	unsigned int length = declarations->getLength();	
+	for (unsigned int i = 0; i < length; i++)	{
+		TNodePtr declarationNode = declarations->item(i);
+		TSchemaRulePtr declaration = shared_static_cast<TSchemaRule>(declarationNode);
+		declaration->computeLA();
+	}
+		
+}
+
+void TSchema :: computeSchema() {
+	
+	printf("Computing Schema\n");
+	clock_t start = clock();
+	computeEmpty();
+	clock_t end = clock();
+	printf("Time taken: %f\n", (double)(end - start)/CLOCKS_PER_SEC);
+	start = clock();
+	computeFirst();
+	end = clock();
+	printf("Time taken: %f\n", (double)(end - start)/CLOCKS_PER_SEC);
+
+}
+
 TElementDeclarationPtr TSchema	::	getDeclaration(const TDOMString & aName) {
 
 	TNodeListPtr declarations = mElements->getChildNodes();
@@ -140,5 +218,26 @@ TElementDeclarationPtr TSchema	::	getDeclaration(const TDOMString & aName) {
 	}
 	
 	return declaration;
+	
+}
+
+bool TSchema	::	hasDeclaration(const TDOMString & aName) {
+
+	TNodeListPtr declarations = mElements->getChildNodes();
+
+	unsigned int length = declarations->getLength();
+	unsigned int i = 0;
+	bool foundDeclaration = false;
+	TElementDeclarationPtr declaration;
+	while (i < length && !foundDeclaration) {
+		TNodePtr declarationNode = declarations->item(i);
+		declaration = shared_static_cast<TElementDeclaration>(declarationNode);
+		if (declaration->hasRule(aName)) {
+			foundDeclaration = true;
+		}
+		i++;
+	}
+
+	return foundDeclaration;
 	
 }

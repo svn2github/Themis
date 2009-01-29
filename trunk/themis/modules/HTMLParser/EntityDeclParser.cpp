@@ -1,3 +1,33 @@
+/*
+	Copyright (c) 2008 Mark Hellegers. All Rights Reserved.
+	
+	Permission is hereby granted, free of charge, to any person
+	obtaining a copy of this software and associated documentation
+	files (the "Software"), to deal in the Software without
+	restriction, including without limitation the rights to use,
+	copy, modify, merge, publish, distribute, sublicense, and/or
+	sell copies of the Software, and to permit persons to whom
+	the Software is furnished to do so, subject to the following
+	conditions:
+	
+	   The above copyright notice and this permission notice
+	   shall be included in all copies or substantial portions
+	   of the Software.
+	
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+	KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+	WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+	PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+	OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+	OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+	
+	Original Author: 	Mark Hellegers (mark@firedisk.net)
+	Project Start Date: October 18, 2000
+	Class Start Date: April 11, 2003
+*/
+
 /*	EntityDeclParser implementation
 	See EntityDeclParser.hpp for more information
 */
@@ -6,143 +36,157 @@
 #include <stdio.h>
 
 // SGMLParser headers
-#include "EntityDeclParser.hpp"
+#include "SGMLScanner.hpp"
 #include "ReadException.hpp"
-#include "SGMLSupport.hpp"
 #include "TSchema.hpp"
+#include "EntityDeclParser.hpp"
 
-// DOM headers
-#include "TElement.h"
-
-EntityDeclParser	::	EntityDeclParser( SGMLTextPtr aDocText,
-													  TSchemaPtr aDTD )
-								:	DeclarationParser( aDocText, aDTD )	{
+EntityDeclParser :: EntityDeclParser(SGMLScanner * aScanner, TSchemaPtr aSchema)
+				 :  DeclarationParser(aScanner, aSchema) {
 
 }
 
-EntityDeclParser	::	~EntityDeclParser()	{
+EntityDeclParser :: ~EntityDeclParser() {
 
 }
 
-bool EntityDeclParser	::	processDeclaration()	{
+TElementPtr EntityDeclParser :: parseEntityName() {
 
-	//process( mMdo );
-	if ( ! process( kENTITY, false ) )	{
-		return false;
-	}
-
-	processPsPlus();
-	TElementPtr entity = processEntityName();
-	processPsPlus();
-	processEntityText( entity );
-	processPsStar();
-	if ( ! process( mMdc, false ) )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"Entity declaration not closed correctly",
-										GENERIC, true );
-	}		
-	
-	return true;
-
-}
-
-TElementPtr EntityDeclParser	::	processEntityName()	{
-	
 	TElementPtr entity;
-	
-	string name = processGenEntityName();
-	if ( name == "" )	{
-		name = processParEntityName();
-		if ( name == "" )	{
-			throw ReadException( mDocText->getLineNr(),
-											mDocText->getCharNr(),
-											"Entity name expected",
-											GENERIC, true );
-		}
-		else	{
-			entity = mSchema->createElement( name );
-			mParEntities->appendChild( entity );
-		}
-	}
-	else	{	
-		entity = mSchema->createElement( name );
-		mCharEntities->appendChild( entity );
-	}
 
+	switch (mToken) {
+		case PERCENTAGE_SYM: {
+			mToken = mScanner->nextToken();
+			if (mToken != SPACE_SYM) {
+				throw ReadException(mScanner->getLineNr(),
+									mScanner->getCharNr(),
+									"Space expected",
+									GENERIC,
+									true);
+			}
+			
+			mToken = mScanner->nextToken();
+			if (mToken != IDENTIFIER_SYM) {
+				throw ReadException(mScanner->getLineNr(),
+									mScanner->getCharNr(),
+									"Name expected",
+									GENERIC,
+									true);
+			}
+			entity = mSchema->createElement(mScanner->getTokenText());
+			mParEntities->appendChild(entity);
+			break;
+		}
+		case IDENTIFIER_SYM: {
+			entity = mSchema->createElement(mScanner->getTokenText());
+			mCharEntities->appendChild(entity);
+			break;
+		}
+		default: {
+			throw ReadException(mScanner->getLineNr(),
+								mScanner->getCharNr(),
+								"Entity name expected",
+								GENERIC,
+								true);
+		}
+	}
+	mToken = mScanner->nextToken();
+	
 	return entity;
+}
+
+void EntityDeclParser :: parseDataText(TElementPtr aEntity) {
+
+	parsePsPlus();
+	
+	if (mToken != TEXT_SYM) {
+		throw ReadException(mScanner->getLineNr(),
+							mScanner->getCharNr(),
+							"Parameter literal expected",
+							GENERIC,
+							true);
+	}
+
+	unsigned int tokenStartIndex = mScanner->getTokenStartIndex();
+	Position pos(tokenStartIndex,
+				 mScanner->getIndex() - tokenStartIndex - 1,
+				 mScanner->getLineNr(),
+				 mScanner->getCharNr());
+	aEntity->setAttribute("text", mScanner->getTokenText());
+	mSchema->addEntity(aEntity->getNodeName(), pos);
+
+	mToken = mScanner->nextToken();
 
 }
 
-void EntityDeclParser	::	processEntityText( TElementPtr & entity )	{
+void EntityDeclParser :: parseEntityText(TElementPtr aEntity) {
 
-	if ( processParLiteral( entity ) )	{
-		return;
-	}
-	if ( processDataText( entity ) )	{
-		return;
-	}
-	if ( processExtEntitySpec( entity ) )	{
-		return;
-	}
-
-}
-
-bool EntityDeclParser	::	processDataText( TElementPtr & entity )	{
-
-	if ( process( kCDATA, false ) )	{
-		entity->setAttribute( "type", kCDATA );
-	}
-	else	{
-		// Not CDATA. Try SDATA
-		if ( process( kSDATA, false ) )	{
-			entity->setAttribute( "type", kSDATA );
+	switch (mToken) {
+		case TEXT_SYM: {
+			unsigned int tokenStartIndex = mScanner->getTokenStartIndex();
+			Position pos(tokenStartIndex,
+						 mScanner->getIndex() - tokenStartIndex - 1,
+						 mScanner->getLineNr(),
+						 mScanner->getCharNr());
+			aEntity->setAttribute("text", mScanner->getTokenText());
+			mSchema->addEntity(aEntity->getNodeName(), pos);
+			mToken = mScanner->nextToken();
+			break;
 		}
-		else	{
-			// Not SDATA. Must be PI
-			if ( process( kPI, false ) )	{
-				entity->setAttribute( "type", kPI );
+		case IDENTIFIER_SYM: {
+			string token = mScanner->getTokenText();
+			if (token == kCDATA ||
+				token == kSDATA ||
+				token == kPI) {
+				mToken = mScanner->nextToken();
+				aEntity->setAttribute("type", token);
+				parseDataText(aEntity);
 			}
-			else	{
-				return false;
+			else if (token == kSYSTEM ||
+					 token == kPUBLIC) {
+				aEntity->setAttribute("type", token);
+				mToken = mScanner->nextToken();
+				parseExtEntitySpec(token, aEntity);
 			}
+			else {
+				throw ReadException(mScanner->getLineNr(),
+									mScanner->getCharNr(),
+									"CDATA SDATA, PI or PUBLIC or SYSTEM identifier expected",
+									GENERIC,
+									true);
+			}
+			break;
+		}
+		default: {
+			throw ReadException(mScanner->getLineNr(),
+								mScanner->getCharNr(),
+								"Entity text expected",
+								GENERIC,
+								true );
 		}
 	}
 
-	processPsPlus();
-	if ( ! processParLiteral( entity ) )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"Parameter literal expected",
-										GENERIC, true );
-	}
-
-	return true;
-
 }
 
+Token EntityDeclParser :: parse(Token aToken) {
 
-string EntityDeclParser	::	processGenEntityName()	{
-
-	return processName( false );
+	mToken = aToken;
 	
-}
+	parsePsPlus();
+	TElementPtr entity = parseEntityName();
+	parsePsPlus();
+	parseEntityText(entity);
 
-string EntityDeclParser	::	processParEntityName()	{
-
-	if ( ! process( mPero, false ) )	{
-		return "";
+	// Check for optional whitespace
+	parsePsStar();
+	if (mToken != DECLARATION_END_SYM) {
+		throw ReadException(mScanner->getLineNr(),
+							mScanner->getCharNr(),
+							"Entity declaration not closed correctly",
+							GENERIC,
+							true);
 	}
-
-	processPsPlus();
-	string name = processName( false );
-	if ( name == "" )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"Parameter entity name expected",
-										GENERIC, true );
-	}
+	mToken = mScanner->nextToken();
 	
-	return name;		
-	
+	return mToken;
 }

@@ -47,10 +47,8 @@ using std::ifstream;
 
 SGMLText	::	SGMLText( const string & aText )	{
 	
-	mText = aText;
-	
-	reset();
-	
+	loadText(aText);
+
 }
 
 SGMLText	::	~SGMLText()	{
@@ -78,10 +76,10 @@ void SGMLText	::	loadText( const char * aDocument )	{
 	mText.erase();
 
 	// Load text
-	if ( aDocument != NULL )	{
-		ifstream file( aDocument );
+	if (aDocument != NULL)	{
+		ifstream file(aDocument);
 	
-		while ( file.get(buffer, bufferSize, '\0' ) )	{
+		while (file.get(buffer, bufferSize, '\0'))	{
 			int count = file.gcount();
 			if (count < bufferSize - 1) {
 				file.ignore();
@@ -90,6 +88,14 @@ void SGMLText	::	loadText( const char * aDocument )	{
 		};
 	}
 
+	reset();
+	
+}
+
+void SGMLText :: loadText(string aText) {
+
+	mText = aText;
+	
 	reset();
 	
 }
@@ -105,11 +111,8 @@ char SGMLText	::	nextChar()	{
 		mState.pop();
 		if ( mState.size() == 0 )	{
 			// End of total text reached
-			throw ReadException( current.getLineNr(),
-											current.getCharNr(),
-											"End of text reached",
-											END_OF_FILE_REACHED,
-											true );
+			// Return the special character: 0
+			return '\0';
 		}
 		return getChar();
 	}

@@ -25,57 +25,57 @@
 	
 	Original Author: 	Mark Hellegers (mark@firedisk.net)
 	Project Start Date: October 18, 2000
-	Class Start Date: April 12, 2003
+	Class Start Date: December 14, 2008
 */
 
-/// Base class for all parser classes.
-
-/**
-	This class provides the base functionality for all the parser classes
-	the SGML parser uses.
+/*	ElementToken
+	Contains a high level element token.
+	Either a start tag, end tag or text.
 
 	Mark Hellegers (mark@firedisk.net)
-	12-04-2003
+	14-12-2008
 */
 
-#ifndef BASEPARSER_HPP
-#define BASEPARSER_HPP
-
-// SGMLParser headers
-#include "SGMLSupport.hpp"
-#include "SGMLScanner.hpp"
+#ifndef ELEMENTTOKEN_HPP
+#define ELEMENTTOKEN_HPP
 
 // DOM headers
 #include "DOMSupport.h"
+#include "TNode.h"
 
-class BaseParser {
+// Namespaces used
+using std::string;
+
+enum ElementTokenType {
+	START_TAG,
+	END_TAG,
+	TEXT,
+	SPACE,
+	NONE
+};
+
+/// Class to store an element token.
+
+/**
+	This class stores an element token.
+*/
+
+class ElementToken {
 	
-	protected:
-		SGMLScanner * mScanner;
-		Token mToken;
-		/// The schema needed to parse or store information in.
-		TSchemaPtr mSchema;
-		/// The parameter entities stored in the schema.
-		TElementPtr mParEntities;
-		/// The character entities stored in the schema.
-		TElementPtr mCharEntities;
-		/// The elements stored in the schema.
-		TElementPtr mElements;
-		/// The attribute lists stored in the schema.
-		TElementPtr mAttrLists;
-		bool parseParEntityReference();
-		bool parseS(Token aEndToken = NONE_SYM, Token aEndToken2 = NONE_SYM);
-		void parseSStar(Token aEndToken = NONE_SYM, Token aEndToken2 = NONE_SYM);
-		bool parseTs();
-		void parseTsStar();
-		bool parsePs();
-		void parsePsStar();
-		void parsePsPlus();
+	private:
+		ElementTokenType mType;
+		TDOMString mName;
+		TNodePtr mNode;
 	
 	public:
-		BaseParser(SGMLScanner * aScanner, TSchemaPtr aSchema);
-		virtual ~BaseParser();
-		virtual void setSchema(TSchemaPtr aSchema);
+		ElementToken();
+		ElementToken(ElementTokenType aType,
+					 TDOMString aName = "",
+					 TNodePtr aNode = TNodePtr());
+		~ElementToken();
+		ElementTokenType getType() const;
+		TDOMString getName() const;
+		TNodePtr getNode() const;
 
 };
 

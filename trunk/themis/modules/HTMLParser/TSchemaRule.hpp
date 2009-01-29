@@ -38,6 +38,9 @@
 #ifndef TSCHEMARULE_HPP
 #define TSCHEMARULE_HPP
 
+// Standard C++ headers
+#include <set>
+
 // DOM headers
 #include "DOMSupport.h"
 #include "TElement.h"
@@ -54,19 +57,27 @@
 class TSchemaRule	:	public TElement	{
 
 	private:
-		TElementPtr mElements;
-		TElementPtr mContent;
-			
-		bool computeSubEmpty(TElementPtr subRule);
 		TNodeListPtr computeSubFirst(TElementPtr subRule);
+
+	protected:
+		bool mEmpty;
+		std::set<string> mFirst;
+		std::set<string> mFirstTags;
+		std::set<string> mFirstContent;
 
 	public:
 		TSchemaRule(const TDocumentPtr aOwnerDocument,
 					const TDOMString aTagName);
-		~TSchemaRule();
-		void setElements(TElementPtr aElements);
-		void setContent(TElementPtr aContent);
-		bool hasRule(const TDOMString & aTagName);
+		virtual ~TSchemaRule();
+		virtual bool computeEmpty();
+		virtual bool computeFirst();
+		std::set<string> getFirst();
+		void computeLA();
+		bool hasEmpty() const;
+		bool hasToken(const TDOMString & aToken) const;
+		bool hasContentToken(const TDOMString & aToken) const;
+		bool hasTagToken(const TDOMString & aToken) const;
+
 };
 
 #endif

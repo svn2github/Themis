@@ -26,6 +26,8 @@
 
 // SGMLParser headers
 #include "SGMLText.hpp"
+#include "TSchema.hpp"
+#include "SGMLScanner.hpp"
 
 HTMLParser * parser;
 BMessage ** appSettings_p;
@@ -75,7 +77,11 @@ HTMLParser	::	HTMLParser( BMessage * aInfo )
 		mUserToken = mCache->Register( Type(), "HTML Parser" );
 	}
 
-	mParser = new SGMLParser();
+	TSchemaPtr schema = TSchemaPtr(new TSchema());
+	schema->setup();
+	
+	SGMLScanner * scanner = new SGMLScanner();
+	mParser = new SGMLParser(scanner, schema);
 	
 }
 
@@ -186,9 +192,13 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * aMessage )	{
 						dtdLoad += path;
 						Debug( dtdLoad.c_str(), PlugID() );
 						if ( mParser == NULL )	{
-							mParser = new SGMLParser();
+							TSchemaPtr schema = TSchemaPtr(new TSchema());
+							schema->setup();
+							
+							SGMLScanner * scanner = new SGMLScanner();
+							mParser = new SGMLParser(scanner, schema);
 						}
-						mParser->parseDTD( path );
+						mParser->loadSchema(path);
 						Debug( "New DTD loaded", PlugID() );
 					}
 					break;
@@ -259,11 +269,10 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * aMessage )	{
 					delete[] buffer;
 
 					// Parse it
-					SGMLTextPtr	docText = SGMLTextPtr( new SGMLText( content ) );
-					if ( mParser != NULL )	{
+					if (mParser != NULL) {
 						const char * path;
 						appSettings->FindString( kPrefsActiveDTDPath, &path );
-						mDocument = mParser->parse( path, docText );
+						mDocument = mParser->parse(path, content);
 						// A bit messy. Variable url is still valid. Check back to start of case.
 						string urlString( url );
 						mDocument->setDocumentURI( urlString );

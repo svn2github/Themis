@@ -1,3 +1,33 @@
+/*
+	Copyright (c) 2008 Mark Hellegers. All Rights Reserved.
+	
+	Permission is hereby granted, free of charge, to any person
+	obtaining a copy of this software and associated documentation
+	files (the "Software"), to deal in the Software without
+	restriction, including without limitation the rights to use,
+	copy, modify, merge, publish, distribute, sublicense, and/or
+	sell copies of the Software, and to permit persons to whom
+	the Software is furnished to do so, subject to the following
+	conditions:
+	
+	   The above copyright notice and this permission notice
+	   shall be included in all copies or substantial portions
+	   of the Software.
+	
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+	KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+	WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+	PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+	OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+	OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+	
+	Original Author: 	Mark Hellegers (mark@firedisk.net)
+	Project Start Date: October 18, 2000
+	Class Start Date: April 11, 2003
+*/
+
 /*	ElementDeclParser implementation
 	See ElementDeclParser.hpp for more information
 */
@@ -6,411 +36,315 @@
 #include <stdio.h>
 
 // SGMLParser headers
-#include "ElementDeclParser.hpp"
+#include "SGMLScanner.hpp"
 #include "ReadException.hpp"
-#include "SGMLSupport.hpp"
 #include "TSchema.hpp"
 #include "TElementDeclaration.hpp"
+#include "ElementDeclParser.hpp"
 
-// DOM headers
-#include "TElement.h"
-#include "TNodeList.h"
-#include "TNamedNodeMap.h"
-
-ElementDeclParser	::	ElementDeclParser( SGMLTextPtr aDocText,
-										   TSchemaPtr aDTD )
-					:	DeclarationParser( aDocText, aDTD )	{
+ElementDeclParser :: ElementDeclParser(SGMLScanner * aScanner, TSchemaPtr aSchema)
+				  :  DeclarationParser(aScanner, aSchema) {
 
 }
 
-ElementDeclParser	::	~ElementDeclParser()	{
+ElementDeclParser :: ~ElementDeclParser() {
 
 }
 
-bool ElementDeclParser	::	processDeclaration()	{
+TSchemaRulePtr ElementDeclParser :: parseSubModelGroup() {
 
-	// Define an element to store the element declaration
-	TElementDeclarationPtr declaration = mSchema->createElementDeclaration();
-	TElementPtr content = mSchema->createElement( "content" );
-	TElementPtr element;
-
-	//process( mMdo );
-	if ( ! process( kELEMENT, false ) )	{
-		return false;
-	}
+	parseTsStar();
+	TSchemaRulePtr contentToken = parseContentToken();
+	parseTsStar();
 	
-	processPsPlus();
-	element = processElementType();
-	if ( element.get() == NULL )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"Element type expected",
-										GENERIC, true );
-	}
-	processPsPlus();
-
-	if ( ! processTagMin( declaration ) )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"Tag minimization expected",
-										GENERIC, true );
-	}		
-	processPsPlus();
-
-	if ( ! processDeclContent( content ) )	{
-		// Not declared content. Must be a content model
-		if ( ! processContentModel( content ) )	{
-			throw ReadException( mDocText->getLineNr(),
-											mDocText->getCharNr(),
-											"Declared content of content model expected",
-											GENERIC, true );
-		}
-	}
-
-	processPsStar();
-	if ( ! process( mMdc, false ) )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"Element declaration not closed correctly",
-										GENERIC, true );
-	}		
-
-	if ( element->hasChildNodes() )	{
-		// Name group.
-		declaration->setElements( element );
-	}
-	else	{
-		TElementPtr elements = mSchema->createElement( "elements" );
-		elements->appendChild( element );
-		declaration->setElements( elements );
-	}
-	// Only add the content model if it has one.
-	if ( content->hasChildNodes() ) {
-		declaration->setContent( content );
-	}
-	
-	mElements->appendChild( declaration );
-	
-	return true;
-
+	return contentToken;
 }
 
-TElementPtr ElementDeclParser	::	processElementType()	{
+TSchemaRulePtr ElementDeclParser :: parseContentToken() {
 
-	string name = processGI( false );
-	if ( name == "" )	{
-		TElementPtr group = processNameGroup();
-		if ( group.get() != NULL )	{
-			return group;
+	TSchemaRulePtr contentToken;
+
+	if (mToken == HASH_SYM) {
+		mToken = mScanner->nextToken();
+		if (mToken == IDENTIFIER_SYM) {
+			string tokenText = mScanner->getTokenText();
+			if (tokenText == kPCDATA) {
+				contentToken = mSchema->createSchemaRule('#' + kPCDATA);
+				mToken = mScanner->nextToken();
+			}
+			else {
+				throw ReadException(mScanner->getLineNr(),
+									mScanner->getCharNr(),
+									"PCDATA expected",
+									GENERIC,
+									true);
+			}
+		}
+		else {
+			throw ReadException(mScanner->getLineNr(),
+								mScanner->getCharNr(),
+								"PCDATA expected",
+								GENERIC,
+								true);
 		}
 	}
-	else	{
-		TElementPtr element = mSchema->createElement( name );
-		return element;
+	else if (mToken == IDENTIFIER_SYM) {
+		contentToken = mSchema->createSchemaRule(mScanner->getTokenText());
+		mToken = mScanner->nextToken();
+		if (mToken == QUESTION_MARK_SYM) {
+			contentToken->setAttribute("minOccurs", "0");
+			contentToken->setAttribute("maxOccurs", "1");
+			mToken = mScanner->nextToken();
+		}
+		else if (mToken == PLUS_SYM) {
+			contentToken->setAttribute("minOccurs", "1");
+			mToken = mScanner->nextToken();
+		}
+		else if (mToken == STAR_SYM) {
+			contentToken->setAttribute("minOccurs", "0");
+			mToken = mScanner->nextToken();
+		}
 	}
-
-	return TElementPtr();
-
+	else if (mToken == LEFT_BRACKET_SYM) {
+		mToken = mScanner->nextToken();
+		contentToken = parseModelGroup();
+	}
+	else {
+		throw ReadException(mScanner->getLineNr(),
+							mScanner->getCharNr(),
+							"Content token expected",
+							GENERIC,
+							true);
+	}
+	
+	return contentToken;
 }
 
-bool ElementDeclParser	::	processTagMin( TElementDeclarationPtr aDeclaration )	{
+TSchemaRulePtr ElementDeclParser :: parseModelGroup() {
 
-	bool start = false;
-	bool end = false;
+	parseTsStar();
+	TSchemaRulePtr contentToken = parseContentToken();
+	parseTsStar();
 
-	if ( process( kO, false ) )	{
-		start = false;
-	}
-	else	{
-		// Not O minimization. Try minus
-		if ( process( kMinus, false ) )	{
-			start = true;
-		}
-		else	{
-			return false;
-		}
-	}
-
-	try	{
-		processPsPlus();
-	}
-	catch( ReadException r )	{
-		r.setFatal();
-		throw r;
-	}
-	
-	if ( process( kO, false ) )	{
-		end = false;
-	}
-	else	{
-		// Not O minimization. Try minus
-		if ( process( kMinus, false ) )	{
-			end = true;
-		}
-		else	{
-			throw ReadException( mDocText->getLineNr(),
-											mDocText->getCharNr(),
-											"End minimization expected",
-											GENERIC,
-											true );
-		}
-	}
-
-	aDeclaration->setMinimization( start, end );
-
-	return true;
-	
-}
-
-bool ElementDeclParser	::	processDeclContent( TElementPtr aElement )	{
-
-	if ( process( kCDATA, false ) )	{
-		TElementPtr cdata = mSchema->createElement( kCDATA );
-		aElement->appendChild( cdata );
-		return true;
-	}
-
-	if ( process( kRCDATA, false ) )	{
-		TElementPtr rcdata = mSchema->createElement( kRCDATA );
-		aElement->appendChild( rcdata );
-		return true;
-	}
-		
-	if ( process( kEMPTY, false ) )	{
-		// This declaration doesn't have any content.
-		return true;
-	}
-
-	return false;
-
-}
-
-bool ElementDeclParser	::	processContentModel( TElementPtr aElement )	{
-
-	if ( ! process( kANY, false ) )	{
-		// Not ANY. Must be a model group
-		TElementPtr modelGroup = processModelGroup();
-		if ( modelGroup.get() == NULL )	{
-			return false;
-		}
-		else	{
-			aElement->appendChild( modelGroup );
-		}
-	}
-
-	if ( processPsPlus( false ) )	{
-		TElementPtr exceptions = processExceptions();
-		if (exceptions->hasChildNodes()) {
-			aElement->appendChild( exceptions );
-		}
-	}
-	
-	return true;
-
-}
-
-TElementPtr ElementDeclParser	::	processModelGroup()	{
-	
-	if ( ! process( mGrpo, false ) )	{
-		return TElementPtr();
-	}
-
-	processTsStar();
-
-	TElementPtr firstPart;
-	firstPart = processContentToken();
-	if ( firstPart.get() == NULL )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"Content token expected",
-										GENERIC, true );
-	}
-	
-	processTsStar();
-
-//	TElementPtr grpo = mDTD->createElement( "()" );
-	TElementPtr subModelGroup;
+	TSchemaRulePtr subModelGroup;
+	TSchemaRulePtr connector;
 	bool smgFound = true;
-	while ( smgFound )	{
-		subModelGroup = processSubModelGroup();
-		if ( subModelGroup.get() == NULL )	{
+	string contentTokenName = contentToken->getNodeName();
+	while (smgFound) {
+		if (mToken == AND_SYM ||
+			mToken == PIPE_SYM ||
+			mToken == COMMA_SYM) {
+			string tokenText = mScanner->getTokenText();
+			mToken = mScanner->nextToken();
+			subModelGroup = parseSubModelGroup();
+			if (tokenText == contentTokenName)	{
+				contentToken->appendChild(subModelGroup);
+			}
+			else	{
+				connector = mSchema->createSchemaRule(tokenText);
+				connector->appendChild(contentToken);
+				connector->appendChild(subModelGroup);
+				contentToken = connector;
+				contentTokenName = contentToken->getNodeName();
+			}
+		}
+		else {
 			smgFound = false;
-			continue;
-		}
-		if ( subModelGroup->getNodeName() == firstPart->getNodeName() )	{
-			firstPart->appendChild( subModelGroup->getFirstChild() );
-		}
-		else	{
-			TNodePtr first = subModelGroup->getFirstChild();
-			subModelGroup->insertBefore( firstPart, first );
-			firstPart = subModelGroup;
 		}
 	}
 	
-	if ( ! process( mGrpc, false ) )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"Model group not closed correctly",
-										GENERIC, true );
-	}		
-
-//	grpo->appendChild( firstPart );
-
-	processOccIndicator( firstPart );
-	
-	return firstPart;
-	
-}
-
-TElementPtr ElementDeclParser	::	processSubModelGroup()	{
-
-	TElementPtr connector = processConnector();
-	if ( connector.get() == NULL )	{
-		return TElementPtr();
+	if (mToken == RIGHT_BRACKET_SYM) {
+		mToken = mScanner->nextToken();
 	}
-	
-	processTsStar();
+	else {
+		throw ReadException(mScanner->getLineNr(),
+							mScanner->getCharNr(),
+							"Model group not closed correctly",
+							GENERIC,
+							true);
+	}
 
-	TElementPtr contentToken;
-	contentToken = processContentToken();
-	connector->appendChild( contentToken );
-	
-	processTsStar();
-	
-	return connector;
-	
-}
-
-TElementPtr ElementDeclParser	::	processContentToken()	{
-
-	TElementPtr contentToken;
-
-	contentToken = processPrimContentToken();
-	if ( contentToken.get() == NULL )	{
-		contentToken = processModelGroup();
+	if (mToken == QUESTION_MARK_SYM) {
+		contentToken->setAttribute("minOccurs", "0");
+		contentToken->setAttribute("maxOccurs", "1");
+		mToken = mScanner->nextToken();
+	}
+	else if (mToken == PLUS_SYM) {
+		contentToken->setAttribute("minOccurs", "1");
+		mToken = mScanner->nextToken();
+	}
+	else if (mToken == STAR_SYM) {
+		contentToken->setAttribute("minOccurs", "0");
+		mToken = mScanner->nextToken();
 	}
 
 	return contentToken;
-
 }
 
-TElementPtr ElementDeclParser	::	processPrimContentToken()	{
+TSchemaRulePtr ElementDeclParser :: parseContent() {
 
-	TElementPtr primContentToken;
+	TSchemaRulePtr content = mSchema->createSchemaRule("content");
 
-	if ( ! process( mRni, false ) )	{
-		// Not an rni. Must be an element token
-		primContentToken = processElementToken();
-	}
-	else	{
-		if ( process( kPCDATA, false ) )	{
-			primContentToken =
-				mSchema->createElement( mRni + kPCDATA );
-		}
-		else	{
-			throw ReadException( mDocText->getLineNr(),
-											mDocText->getCharNr(),
-											"PCDATA expected",
-											GENERIC, true );
-		}
-	}
-	
-	return primContentToken;
-		
-}
-
-TElementPtr ElementDeclParser	::	processElementToken()	{
-
-	string gi = processGI( false );
-	if ( gi == "" )	{
-		return TElementPtr();
-	}
-
-	TElementPtr elementToken = mSchema->createElement( gi );
-	processOccIndicator( elementToken );
-	
-	return elementToken;
-	
-}
-
-void ElementDeclParser	::	processOccIndicator( TElementPtr aElementToken )	{
-
-	if ( process( mOpt, false ) )	{
-		aElementToken->setAttribute("minOccurs", "0");
-		aElementToken->setAttribute("maxOccurs", "1");
-	}
-	else {
-		if ( process( mPlus, false ) )	{
-			aElementToken->setAttribute("minOccurs", "1");
+	if (mToken == IDENTIFIER_SYM) {
+		string tokenText = mScanner->getTokenText();
+		if (tokenText == kCDATA ||
+			tokenText == kRCDATA ||
+			tokenText == kEMPTY ||
+			tokenText == kANY) {
+			TSchemaRulePtr contentType = mSchema->createSchemaRule(tokenText);
+			content->appendChild(contentType);
+			mToken = mScanner->nextToken();
 		}
 		else {
-			if ( process( mRep, false ) )	{
-				aElementToken->setAttribute("minOccurs", "0");
+			throw ReadException(mScanner->getLineNr(),
+								mScanner->getCharNr(),
+								"Declared content or ANY expected",
+								GENERIC,
+								true);
+		}
+	}
+	else if (mToken == LEFT_BRACKET_SYM) {
+		mToken = mScanner->nextToken();
+		TSchemaRulePtr group = parseModelGroup();
+		content->appendChild(group);
+		if (mToken == SPACE_SYM) {
+			// There might be exceptions
+			parsePsPlus();
+			if (mToken == MINUS_SYM ||
+				mToken == PLUS_SYM) {
+				// There are exceptions
+				TSchemaRulePtr exceptions = mSchema->createSchemaRule("exceptions");
+				content->appendChild(exceptions);
+				exceptions->setAttribute("type", mScanner->getTokenText());
+				mToken = mScanner->nextToken();
+				if (mToken == LEFT_BRACKET_SYM) {
+					mToken = mScanner->nextToken();
+					TElementPtr elements = parseNameGroup();
+					exceptions->appendChild(elements);
+				}
+				else {
+					throw ReadException(mScanner->getLineNr(),
+										mScanner->getCharNr(),
+										"Name group expected",
+										GENERIC,
+										true);
+				}
 			}
 		}
 	}
+	else {
+		throw ReadException(mScanner->getLineNr(),
+							mScanner->getCharNr(),
+							"Declared content or content model expected",
+							GENERIC,
+							true);
+	}
+	
+	return content;
+}
+
+bool ElementDeclParser :: parseSingleTagMin() {
+
+	bool required = false;
+
+	if (mToken == IDENTIFIER_SYM) {
+		string tokenText = mScanner->getTokenText();
+		if (tokenText == "O") {
+			// Not required. Already set.
+			mToken = mScanner->nextToken();
+		}
+		else {
+			throw ReadException(mScanner->getLineNr(),
+								mScanner->getCharNr(),
+								"Tag minimization expected",
+								GENERIC,
+								true);
+		}
+	}
+	else if (mToken == MINUS_SYM) {
+		required = true;
+		mToken = mScanner->nextToken();
+	}
+	else {
+		throw ReadException(mScanner->getLineNr(),
+							mScanner->getCharNr(),
+							"Tag minimization expected",
+							GENERIC,
+							true);
+	}
+	
+	return required;
+}
+
+void ElementDeclParser :: parseTagMin(TElementDeclarationPtr aDeclaration) {
+
+	bool start = parseSingleTagMin();
+	parsePsPlus();
+	bool end = parseSingleTagMin();
+
+	aDeclaration->setMinimization(start, end);
 
 }
 
-TElementPtr ElementDeclParser	::	processExceptions()	{
-
-	TElementPtr exceptions = mSchema->createElement( "exceptions" );
+TElementPtr ElementDeclParser :: parseElementType() {
 	
-	if ( processExclusions( exceptions ) )	{
-		// WARNING. This looks dodgy.
-		// Probably want to have processInclusions
-		// in this if as well as outside.
-		processPsPlus( false );
+	TElementPtr elements;
+	
+	if (mToken == LEFT_BRACKET_SYM) {
+		// It's a name group
+		mToken = mScanner->nextToken();
+		elements = parseNameGroup();
+	}
+	else if (mToken == IDENTIFIER_SYM) {
+		elements = mSchema->createElement("elements");
+		TElementPtr element = mSchema->createElement(mScanner->getTokenText());
+		elements->appendChild(element);
+		mToken = mScanner->nextToken();
+	}
+	else {
+		throw ReadException(mScanner->getLineNr(),
+							mScanner->getCharNr(),
+							"Element type expected",
+							GENERIC,
+							true);
 	}
 	
-	processInclusions( exceptions );
+	return elements;
 
-	return exceptions;
-	
+
 }
 
-bool ElementDeclParser	::	processExclusions( TElementPtr aExceptions )	{
+Token ElementDeclParser :: parse(Token aToken) {
+
+	// Define an element to store the element declaration
+	TElementDeclarationPtr declaration = mSchema->createElementDeclaration();
+
+	mToken = aToken;
 	
-	if ( ! process( kMinus, false ) )	{
-		return false;
+	parsePsPlus();
+	TElementPtr element = parseElementType();
+	declaration->setElements(element);
+	parsePsPlus();
+	parseTagMin(declaration);
+	parsePsPlus();
+	TSchemaRulePtr content = parseContent();
+	// Only add the content model if it has one.
+	if (content->hasChildNodes()) {
+		declaration->setContent(content);
 	}
 
-	TElementPtr exclusions = mSchema->createElement( kMinus );
-
-	TElementPtr nameGroup = processNameGroup();
-	if ( nameGroup.get() == NULL )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"Name group expected",
-										GENERIC, true );
+	// Check for optional whitespace
+	parsePsStar();
+	if (mToken != DECLARATION_END_SYM) {
+		throw ReadException(mScanner->getLineNr(),
+							mScanner->getCharNr(),
+							"Element declaration not closed correctly",
+							GENERIC,
+							true);
 	}
-	exclusions->appendChild( nameGroup );
+	mToken = mScanner->nextToken();
 
-	aExceptions->appendChild( exclusions );
+	mElements->appendChild(declaration);
 	
-	return true;
-	
-}
-
-bool ElementDeclParser	::	processInclusions( TElementPtr aExceptions )	{
-
-	if ( ! process( mPlus, false ) )	{
-		return false;
-	}
-
-	TElementPtr inclusions = mSchema->createElement( mPlus );
-
-	TElementPtr nameGroup = processNameGroup();
-	if ( nameGroup.get() == NULL )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"Name group expected",
-										GENERIC, true );
-	}
-	inclusions->appendChild( nameGroup );
-
-	aExceptions->appendChild( inclusions );
-
-	return true;
-	
+	return mToken;
 }

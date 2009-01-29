@@ -25,58 +25,53 @@
 	
 	Original Author: 	Mark Hellegers (mark@firedisk.net)
 	Project Start Date: October 18, 2000
-	Class Start Date: April 12, 2003
+	Class Start Date: December 14, 2008
 */
 
-/// Base class for all parser classes.
-
-/**
-	This class provides the base functionality for all the parser classes
-	the SGML parser uses.
-
-	Mark Hellegers (mark@firedisk.net)
-	12-04-2003
+/*	ElementToken implementation
+	See ElementToken.hpp for more information
 */
 
-#ifndef BASEPARSER_HPP
-#define BASEPARSER_HPP
+// Standard C headers
+#include <stdio.h>
 
 // SGMLParser headers
-#include "SGMLSupport.hpp"
-#include "SGMLScanner.hpp"
+#include "ElementToken.hpp"
 
-// DOM headers
-#include "DOMSupport.h"
-
-class BaseParser {
+ElementToken :: ElementToken() {
 	
-	protected:
-		SGMLScanner * mScanner;
-		Token mToken;
-		/// The schema needed to parse or store information in.
-		TSchemaPtr mSchema;
-		/// The parameter entities stored in the schema.
-		TElementPtr mParEntities;
-		/// The character entities stored in the schema.
-		TElementPtr mCharEntities;
-		/// The elements stored in the schema.
-		TElementPtr mElements;
-		/// The attribute lists stored in the schema.
-		TElementPtr mAttrLists;
-		bool parseParEntityReference();
-		bool parseS(Token aEndToken = NONE_SYM, Token aEndToken2 = NONE_SYM);
-		void parseSStar(Token aEndToken = NONE_SYM, Token aEndToken2 = NONE_SYM);
-		bool parseTs();
-		void parseTsStar();
-		bool parsePs();
-		void parsePsStar();
-		void parsePsPlus();
+	mType = NONE;
 	
-	public:
-		BaseParser(SGMLScanner * aScanner, TSchemaPtr aSchema);
-		virtual ~BaseParser();
-		virtual void setSchema(TSchemaPtr aSchema);
+}
 
-};
+ElementToken :: ElementToken(ElementTokenType aType,
+							 TDOMString aName,
+							 TNodePtr aNode) {
 
-#endif
+	mType = aType;
+	mName = aName;
+	mNode = aNode;
+
+}
+
+ElementToken :: ~ElementToken() {
+
+}
+
+ElementTokenType ElementToken :: getType() const {
+
+	return mType;
+
+}
+
+TDOMString ElementToken :: getName() const {
+	
+	return mName;
+
+}
+
+TNodePtr ElementToken :: getNode() const {
+	
+	return mNode;
+
+}

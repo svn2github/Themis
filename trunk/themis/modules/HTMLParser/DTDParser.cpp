@@ -1,169 +1,194 @@
+/*
+	Copyright (c) 2008 Mark Hellegers. All Rights Reserved.
+	
+	Permission is hereby granted, free of charge, to any person
+	obtaining a copy of this software and associated documentation
+	files (the "Software"), to deal in the Software without
+	restriction, including without limitation the rights to use,
+	copy, modify, merge, publish, distribute, sublicense, and/or
+	sell copies of the Software, and to permit persons to whom
+	the Software is furnished to do so, subject to the following
+	conditions:
+	
+	   The above copyright notice and this permission notice
+	   shall be included in all copies or substantial portions
+	   of the Software.
+	
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+	KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+	WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+	PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+	OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+	OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+	
+	Original Author: 	Mark Hellegers (mark@firedisk.net)
+	Project Start Date: October 18, 2000
+	Class Start Date: April 14, 2003
+*/
+
 /*	DTDParser implementation
 	See DTDParser.hpp for more information
-	
-	Also includes main()
 */
 
 // Standard C headers
 #include <stdio.h>
 
-// Standard C++ headers
-#include <fstream>
-
-// DTDParser headers
+// SGMLParser headers
 #include "DTDParser.hpp"
+#include "SGMLScanner.hpp"
 #include "ReadException.hpp"
-#include "State.hpp"
-#include "SGMLSupport.hpp"
+#include "EntityDeclParser.hpp"
 #include "CommentDeclParser.hpp"
 #include "MarkedSecDeclParser.hpp"
-#include "EntityDeclParser.hpp"
 #include "ElementDeclParser.hpp"
 #include "AttrListDeclParser.hpp"
-#include "TSchema.hpp"
 
-// DOM headers
-#include "TNode.h"
-#include "TElement.h"
-#include "TNodeList.h"
+DTDParser :: DTDParser(SGMLScanner * aScanner, TSchemaPtr aSchema)
+		  :  BaseParser(aScanner, aSchema) {
 
-DTDParser	::	DTDParser( TSchemaPtr aSchema )
-			:	BaseParser( aSchema )	{
-	
-	mDocText = SGMLTextPtr( new SGMLText() );
-	
-	// Create declaration parsers
-	commentDecl =
-		new CommentDeclParser( mDocText, mSchema );
-	markedSecDecl =
-		new MarkedSecDeclParser( mDocText, mSchema );
-	entityDecl =
-		new EntityDeclParser( mDocText, mSchema );
-	elementDecl =
-		new ElementDeclParser( mDocText, mSchema );
-	attrListDecl =
-		new AttrListDeclParser( mDocText, mSchema );
+	mEntityDeclParser = new EntityDeclParser(aScanner, aSchema);
+	mCommentDeclParser = new CommentDeclParser(aScanner, aSchema);
+	mMarkedSecDeclParser = new MarkedSecDeclParser(aScanner, aSchema);
+	mElementDeclParser = new ElementDeclParser(aScanner, aSchema);
+	mAttrListDeclParser = new AttrListDeclParser(aScanner, aSchema);
 
 }
 
-DTDParser	::	~DTDParser()	{
+DTDParser :: ~DTDParser() {
 	
-	//printf( "DTDParser destroyed\n" );
-	
-	delete commentDecl;
-	delete markedSecDecl;
-	delete entityDecl;
-	delete elementDecl;
-	delete attrListDecl;
-	
-}
-
-void DTDParser	::	setSchema( TSchemaPtr aSchema )	{
-
-	mSchema = aSchema;
-
-	commentDecl->setSchema( mSchema );
-	markedSecDecl->setSchema( mSchema );
-	entityDecl->setSchema( mSchema );
-	elementDecl->setSchema( mSchema );
-	attrListDecl->setSchema( mSchema );
-
-	BaseParser::setSchema( mSchema );
+	delete mEntityDeclParser;
+	delete mCommentDeclParser;
+	delete mMarkedSecDeclParser;
+	delete mElementDeclParser;
 
 }
 
-bool DTDParser	::	processDeclaration()	{
+bool DTDParser :: parseDs() {
 
-	if ( ! process( mMdo, false ) )	{
-		return false;
+	bool result;
+
+	switch (mToken) {
+		case SPACE_SYM:
+		case COMMENT_SYM: {
+			result = true;
+			mToken = mScanner->nextToken();
+			break;
+		}
+		case PERCENTAGE_SYM: {
+			result = parseParEntityReference();
+			break;
+		}
+		case DECLARATION_SYM: {
+			Token lookAheadToken = mScanner->lookAhead();
+			if (lookAheadToken == COMMENT_SYM) {
+				// Scan the tokens.
+				mScanner->nextToken();
+				// Parse the rest of the comment declaration.
+				mToken = mScanner->nextToken();
+				mToken = mCommentDeclParser->parse(mToken);
+				result = true;
+			}
+			else if (lookAheadToken == LEFT_SQUARE_BRACKET_SYM) {
+				// Scan the tokens.
+				mScanner->nextToken();
+				// Parse the rest of the marked section declaration.
+				mToken = mScanner->nextToken();
+				mToken = mMarkedSecDeclParser->parse(mToken);
+				result = true;
+			}
+			else {
+				result = false;
+			}
+			break;
+		}
+		default: {
+			result = false;
+		}
 	}
 
-	State save = mDocText->saveState();
+	return result;
 
-	if ( entityDecl->parse() )	{
-		return true;
-	}
-	if ( elementDecl->parse() )	{
-		return true;
-	}
-	if ( attrListDecl->parse() )	{
-		return true;
-	}
-
-	return false;
-	
 }
 
-bool DTDParser	::	processDs()	{
-
-	if ( processS() )	{
-		return true;
-	}
-	if ( processEe() )	{
-		return true;
-	}
-
-	if ( processParEntityReference() )	{
-		return true;
-	}
-
-	State save = mDocText->saveState();
-
-	if ( commentDecl->parse() )	{
-		return true;
-	}
-	else	{
-		mDocText->restoreState( save );
-	}
-	if ( markedSecDecl->parse() )	{
-		//printf( "Marked Section declaration parsed\n" );
-		return true;
-	}
-	else	{
-		mDocText->restoreState( save );
-	}
-
-	return false;
-	
-}
-
-void DTDParser	::	processDsStar()	{
+void DTDParser :: parseDsStar() {
 
 	bool dsFound = true;
-	while ( dsFound )	{
-		dsFound = processDs();
+
+	while (dsFound) {
+		dsFound = parseDs();
 	}
 
 }
 
-TSchemaPtr DTDParser	::	parse( const char * aFileName )	{
+TSchemaPtr DTDParser :: parse(const char * aFilename) {
+
+	mScanner->setDocument(aFilename);
+	mToken = mScanner->nextToken();
 	
-	mDocText->loadText( aFileName );
-	
-	bool contentFound = true;
-	
-	while ( contentFound )	{
-		try	{
-			processDsStar();
-			if ( ! processDeclaration() )	{
-				throw ReadException( mDocText->getLineNr(),
-												mDocText->getCharNr(),
-												"Declaration expected",
-												GENERIC, true );
+	bool finished = false;
+	while (!finished) {
+		try {
+			// Ignoring space or comments
+			parseDsStar();
+			if (mToken == DECLARATION_SYM) {
+				mToken = mScanner->nextToken();
+				if (mToken == IDENTIFIER_SYM) {
+					string token = mScanner->getTokenText();
+					if (token == kENTITY) {
+						mToken = mScanner->nextToken();
+						mToken = mEntityDeclParser->parse(mToken);
+					}
+					if (token == kELEMENT) {
+						mToken = mScanner->nextToken();
+						mToken = mElementDeclParser->parse(mToken);
+					}
+					if (token == kATTLIST) {
+						mToken = mScanner->nextToken();
+						mToken = mAttrListDeclParser->parse(mToken);
+					}
+				}
+				continue;
 			}
+			if (mToken == EOF_SYM) {
+				// End of the text. Stop parsing.
+				finished = true;
+				continue;
+			}
+			// Found unknown token.
+			string message = "Unknown token found: " + mScanner->getTokenText();
+			throw ReadException(mScanner->getLineNr(),
+								mScanner->getCharNr(),
+								message,
+								GENERIC,
+								true);
+					
 		}
-		catch( ReadException r )	{
-			if ( r.isEof() )	{
-				printf( "End of DTD file reached. No errors encountered\n" );
-			}
-			else	{
-				printf( "Error on line %i, char %i, message: %s\n", r.getLineNr(), r.getCharNr(),
-						  r.getErrorMessage().c_str() );
-			}
-			contentFound = false;
+		catch(ReadException r) {
+			printf(
+				"Found error: line: %i char %i message: %s\n",
+				r.getLineNr(),
+				r.getCharNr(),
+				r.getErrorMessage().c_str());
+			finished = true;
 		}
 	}
 
-	return mDTD;
+	return mSchema;
+
+}
+
+void DTDParser :: setSchema(TSchemaPtr aSchema) {
+	
+	BaseParser::setSchema(aSchema);
+	
+	if (aSchema.get() != NULL) {
+		mEntityDeclParser->setSchema(aSchema);
+		mCommentDeclParser->setSchema(aSchema);
+		mMarkedSecDeclParser->setSchema(aSchema);
+		mElementDeclParser->setSchema(aSchema);
+		mAttrListDeclParser->setSchema(aSchema);
+	}
 	
 }

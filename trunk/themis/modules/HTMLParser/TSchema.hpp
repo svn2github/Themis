@@ -78,13 +78,19 @@ class TSchema	:	public TDocument	{
 		
 		void setup();
 		TElementDeclarationPtr createElementDeclaration();
+		TSchemaRulePtr createSchemaRule(const TDOMString aTagName);
 		TElementPtr getElements();
 		TElementPtr	getAttrLists();
 		TElementPtr getCharEntities();
 		TElementPtr getParEntities();
 		void addEntity(const TDOMString & aName, const Position & aPosition);
 		Position getEntityPosition(const TDOMString & aName);
+		void computeEmpty();
+		void computeFirst();
+		void computeLA();
+		void computeSchema();
 		TElementDeclarationPtr getDeclaration(const TDOMString & aName);
+		bool hasDeclaration(const TDOMString & aName);
 	
 };
 

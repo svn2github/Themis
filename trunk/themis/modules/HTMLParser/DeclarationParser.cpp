@@ -1,3 +1,33 @@
+/*
+	Copyright (c) 2008 Mark Hellegers. All Rights Reserved.
+	
+	Permission is hereby granted, free of charge, to any person
+	obtaining a copy of this software and associated documentation
+	files (the "Software"), to deal in the Software without
+	restriction, including without limitation the rights to use,
+	copy, modify, merge, publish, distribute, sublicense, and/or
+	sell copies of the Software, and to permit persons to whom
+	the Software is furnished to do so, subject to the following
+	conditions:
+	
+	   The above copyright notice and this permission notice
+	   shall be included in all copies or substantial portions
+	   of the Software.
+	
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+	KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+	WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+	PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+	OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+	OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+	
+	Original Author: 	Mark Hellegers (mark@firedisk.net)
+	Project Start Date: October 18, 2000
+	Class Start Date: April 11, 2003
+*/
+
 /*	DeclarationParser implementation
 	See DeclarationParser.hpp for more information
 */
@@ -6,197 +36,168 @@
 #include <stdio.h>
 
 // SGMLParser headers
-#include "DeclarationParser.hpp"
+#include "SGMLScanner.hpp"
 #include "ReadException.hpp"
-#include "SGMLSupport.hpp"
 #include "TSchema.hpp"
+#include "DeclarationParser.hpp"
 
-// DOM headers
-#include "TElement.h"
-#include "TNodeList.h"
-
-DeclarationParser	::	DeclarationParser(SGMLTextPtr aDocText,
-										  TSchemaPtr aSchema )
-					:	BaseParser( aSchema )	{
-
-	//printf( "Constructing DeclarationParser\n" );
-	
-	setDocText( aDocText );
+DeclarationParser :: DeclarationParser(SGMLScanner * aScanner, TSchemaPtr aSchema)
+				  :  BaseParser(aScanner, aSchema) {
 
 }
 
-DeclarationParser	::	~DeclarationParser()	{
-
-	//printf( "Destroying DeclarationParser\n" );
-	
-}
-
-void DeclarationParser	::	setDocText( SGMLTextPtr aDocText )	{
-	
-	mDocText = aDocText;
-	
-}
-
-bool DeclarationParser	::	parse()	{
-	
-	return processDeclaration();
-	
-}
-
-bool DeclarationParser	::	processDeclaration()	{
-	
-	return false;
-	
-}
-
-TElementPtr DeclarationParser	::	processConnector()	{
-
-	if ( process( mAnd, false ) )	{
-		return mSchema->createElement( mAnd );
-	}
-	if ( process( mOr, false ) )	{
-		return mSchema->createElement( mOr );
-	}
-	if ( process( mSeq, false ) )	{
-		return mSchema->createElement( mSeq );
-	}
-
-	return TElementPtr();
+DeclarationParser :: ~DeclarationParser() {
 
 }
 
-string DeclarationParser	::	processNameTokenGroup()	{
+TElementPtr DeclarationParser :: parseNameGroup() {
 
-	if ( ! process( mGrpo, false ) )	{
-		return "";
-	}
+	TElementPtr group = mSchema->createElement("elements");
+	TElementPtr element;
 	
-	processTsStar();
-	processNameToken();
-	
-	bool inGroup = true;
-	while ( inGroup )	{
-		processTsStar();
-		TElementPtr connector = processConnector();
-		if ( connector.get() == NULL )	{
-			inGroup = false;
-			continue;
-		}
-		processTsStar();
-		if ( processNameToken() == "" )	{
-			inGroup = false;
+	parseTsStar();
+	if (mToken == IDENTIFIER_SYM) {
+		element = mSchema->createElement(mScanner->getTokenText());
+		group->appendChild(element);
+		mToken = mScanner->nextToken();
+		bool inGroup = true;
+		while (inGroup) {
+			parseTsStar();
+			if (mToken == AND_SYM ||
+			    mToken == COMMA_SYM ||
+			    mToken == PIPE_SYM) {
+			    mToken = mScanner->nextToken();
+			}
+			else {
+				inGroup = false;
+				continue;
+			}
+			parseTsStar();
+			if (mToken == IDENTIFIER_SYM) {
+				element = mSchema->createElement(mScanner->getTokenText());
+				group->appendChild(element);
+				mToken = mScanner->nextToken();
+			}
+			else {
+				throw ReadException(mScanner->getLineNr(),
+									mScanner->getCharNr(),
+									"Name expected",
+									GENERIC,
+									true);
+			}
 		}
 	}
-	
-	processTsStar();
-	if ( ! process( mGrpc, false ) )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"Closing of name token group expected",
-										GENERIC, true );
+	else {
+		throw ReadException(mScanner->getLineNr(),
+							mScanner->getCharNr(),
+							"Name expected",
+							GENERIC,
+							true);
 	}
-
-	return "nameTokenGroup";
-	
-}
-
-TElementPtr DeclarationParser	::	processNameGroup()	{
-
-	if ( ! process( mGrpo, false ) )	{
-		return TElementPtr();
-	}
-
-	processTsStar();
-	
-	string name = processName( false );
-	if ( name == "" )	{
-		return TElementPtr();
+	parseTsStar();
+	if (mToken != RIGHT_BRACKET_SYM) {
+		throw ReadException(mScanner->getLineNr(),
+							mScanner->getCharNr(),
+							"Name group not closed correctly",
+							GENERIC,
+							true);
 	}
 	
-	TElementPtr group = mSchema->createElement( "elements" );
-	TElementPtr element = mSchema->createElement( name );
-	group->appendChild( element );
-
-	//TElementPtr subGroup;
-	bool inGroup = true;
-	while ( inGroup )	{
-		processTsStar();
-		TElementPtr connector = processConnector();
-		if ( connector.get() == NULL )	{
-			inGroup = false;
-			continue;
-		}
-		processTsStar();
-		name = processName( false );
-		if ( name == "" )	{
-			inGroup = false;
-		}
-		else	{
-			element = mSchema->createElement( name );
-			group->appendChild( element );
-		}
-	}
-
-	processTsStar();
-	if ( ! process( mGrpc, false ) )	{
-		throw ReadException( mDocText->getLineNr(),
-										mDocText->getCharNr(),
-										"Closing of name group expected",
-										GENERIC, true );
-	}
-
+	mToken = mScanner->nextToken();
+	
 	return group;
-	
+
 }
 
-bool DeclarationParser	::	processExtEntitySpec( TElementPtr & entity )	{
-
-	return processExternalId( entity );
+void DeclarationParser :: parseNameTokenGroup() {
 	
-}
-
-bool DeclarationParser	::	processExternalId( TElementPtr & entity )	{
-
-	if ( process( kSYSTEM, false ) )	{
-		entity->setAttribute( "type", kSYSTEM );
-	}
-	else	{
-		// Not a system identifier. Must be public.
-		if ( process( kPUBLIC, false ) )	{
-			entity->setAttribute( "type", kPUBLIC );
-			processPsPlus();
-			string text = processPublicId();
-			entity->setAttribute( "text", text );
+	parseTsStar();
+	if (mToken == IDENTIFIER_SYM ||
+		mToken == NUMBER_SYM) {
+		mToken = mScanner->nextToken();
+		bool inGroup = true;
+		while (inGroup) {
+			parseTsStar();
+			if (mToken == AND_SYM ||
+			    mToken == COMMA_SYM ||
+			    mToken == PIPE_SYM) {
+			    mToken = mScanner->nextToken();
+			}
+			else {
+				inGroup = false;
+				continue;
+			}
+			parseTsStar();
+			if (mToken == IDENTIFIER_SYM ||
+				mToken == NUMBER_SYM) {
+				mToken = mScanner->nextToken();
+			}
+			else {
+				throw ReadException(mScanner->getLineNr(),
+									mScanner->getCharNr(),
+									"Name expected",
+									GENERIC,
+									true);
+			}
 		}
-		else	{
-			throw ReadException( mDocText->getLineNr(),
-											mDocText->getCharNr(),
-											"PUBLIC or SYSTEM identifier expected",
-											GENERIC, true );
-		}
+	}
+	else {
+		throw ReadException(mScanner->getLineNr(),
+							mScanner->getCharNr(),
+							"Name expected",
+							GENERIC,
+							true);
+	}
+	parseTsStar();
+	if (mToken != RIGHT_BRACKET_SYM) {
+		throw ReadException(mScanner->getLineNr(),
+							mScanner->getCharNr(),
+							"Name group not closed correctly",
+							GENERIC,
+							true);
 	}
 	
-	processPsPlus( false );
-	processSystemId();
-	
-	return true;
-	
+	mToken = mScanner->nextToken();
+
 }
 
-string DeclarationParser	::	processPublicId()	{
-	
-	string text = "";
-	text = processMinLiteral();
+void DeclarationParser :: parseExternalId(string aToken,
+										  TElementPtr aEntity) {
 
-	return text;
-	
+	if (aToken == kPUBLIC) {
+		parsePsPlus();
+
+		if (mToken != TEXT_SYM) {
+			throw ReadException(mScanner->getLineNr(),
+								mScanner->getCharNr(),
+								"Public id expected",
+								GENERIC,
+								true);
+		}
+		aEntity->setAttribute("text", mScanner->getTokenText());
+		mToken = mScanner->nextToken();
+	}
+
+	if (mToken == SPACE_SYM) {
+		parsePsPlus();
+		if (mToken == TEXT_SYM) {
+			mToken = mScanner->nextToken();
+/*
+			throw ReadException(mScanner->getLineNr(),
+								mScanner->getCharNr(),
+								"System id expected",
+								GENERIC,
+								true);
+*/
+		}
+	}
+
+
 }
 
-string DeclarationParser	::	processSystemId()	{
-	
-	string text = "";
-	text = processMinLiteral();
-	
-	return text;
-	
+void DeclarationParser :: parseExtEntitySpec(string aToken,
+											 TElementPtr aEntity) {
+
+	parseExternalId(aToken, aEntity);
+
 }

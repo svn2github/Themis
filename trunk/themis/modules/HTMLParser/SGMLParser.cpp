@@ -7,266 +7,40 @@
 // Standard C headers
 #include <stdio.h>
 
-// SGMLParser headers
-#include "SGMLParser.hpp"
-#include "ReadException.hpp"
-#include "State.hpp"
-#include "SGMLSupport.hpp"
-#include "CommentDeclParser.hpp"
-#include "DTDParser.hpp"
-#include "DocTypeDeclParser.hpp"
-#include "ElementParser.hpp"
-#include "TSchema.hpp"
-
 // DOM headers
 #include "TNode.h"
-#include "TElement.h"
 #include "TNodeList.h"
 #include "TNamedNodeMap.h"
+#include "TElement.h"
 
-SGMLParser	::	SGMLParser(const char * aDocument )
-			:	BaseParser( TSchemaPtr() )	{
-	
-	mDocText = SGMLTextPtr( new SGMLText() );
-	mDocText->loadText( aDocument );
+// SGMLParser headers
+#include "SGMLParser.hpp"
+#include "DTDParser.hpp"
+#include "TSchema.hpp"
+#include "ReadException.hpp"
+#include "CommentDeclParser.hpp"
+#include "DocTypeDeclParser.hpp"
+#include "ElementParser.hpp"
+#include "ElementToken.hpp"
+#include "TElementDeclaration.hpp"
 
-	createDTD();
+SGMLParser :: SGMLParser(SGMLScanner * aScanner, TSchemaPtr aSchema)
+		   : BaseParser(aScanner, aSchema) {
 	
-	// Create declaration parsers
-	setupParsers();
-	
-}
-
-SGMLParser	::	SGMLParser(SGMLTextPtr aDocument )
-			:	BaseParser( TSchemaPtr() )	{
-	
-	// Load text
-	mDocText = aDocument;
-
-	createDTD();
-	
-	// Create declaration parsers
-	setupParsers();
-	
-}
-
-SGMLParser	::	~SGMLParser()	{
-	
-	//printf( "SGMLParser destroyed\n" );
-	
-	delete mCommentDecl;
-	delete mDtdParser;
-	delete mDocTypeDecl;
-	delete mElementParser;
-	
-}
-
-void SGMLParser	::	createDTD()	{
-
-	// Document to store information about the dtd
-	mSchema = TSchemaPtr( new TSchema() );
-	mSchema->setup();
-	setSchema( mSchema );
+	mCommentDeclParser = new CommentDeclParser(aScanner, aSchema);
+	mDocTypeDeclParser = new DocTypeDeclParser(aScanner, aSchema);
+	mDTDParser = new DTDParser(aScanner, aSchema);
 
 }
 
-void SGMLParser	::	setupParsers()	{
-
-	mCommentDecl =
-		new CommentDeclParser( mDocText, mSchema );
-	mDtdParser =
-		new DTDParser( mSchema );
-	mDocTypeDecl =
-		new DocTypeDeclParser( mDocText, mSchema );
-	mElementParser =
-		new ElementParser( mDocText, mSchema );
-
+SGMLParser :: ~SGMLParser() {
+	
+	delete mCommentDeclParser;
+	delete mDocTypeDeclParser;
+	delete mDTDParser;
 }
 
-void SGMLParser	::	processSGMLDocument()	{
-	
-	processSGMLDocEntity();
-	
-}
-
-void SGMLParser	::	processSGMLDocEntity()	{
-
-	processSStar();
-	// Haven't actually seen one of these anywhere. Leaving it out for now
-	//processSGMLDeclaration();
-	processProlog();
-	
-}
-
-void SGMLParser	::	processProlog()	{
-
-	// Not very complete, but works for html files
-
-	processOtherPrologStar();
-	processBaseDocTypeDecl();
-	processOtherPrologStar();
-	
-}
-
-void SGMLParser	::	processOtherProlog()	{
-
-	// Missing processing instruction
-
-	State save = mDocText->saveState();
-
-	if ( mCommentDecl->parse() )	{
-		return;
-	}
-	else	{
-		mDocText->restoreState( save );
-	}
-
-	if ( processS() )	{
-		return;
-	}
-	
-	throw ReadException( mDocText->getLineNr(), mDocText->getCharNr(),
-									"Other prolog expected" );
-	
-}
-
-void SGMLParser	::	processOtherPrologStar()	{
-
-	bool otherFound = true;
-	while ( otherFound )	{
-		try	{
-			processOtherProlog();
-		}
-		catch( ReadException r )	{
-			if ( r.isFatal() )	{
-				throw r;
-			}
-			else	{
-				otherFound = false;
-			}
-		}
-	}
-	
-}
-
-void SGMLParser	::	processBaseDocTypeDecl()	{
-
-	mDocTypeDecl->parse();
-	
-}
-
-void SGMLParser	::	processDocInstanceSet()	{
-
-	processBaseDocElement();
-	processOtherPrologStar();
-	
-}
-
-void SGMLParser	::	processBaseDocElement()	{
-	
-	processDocElement();
-	
-}
-
-void SGMLParser	::	processDocElement()	{
-	
-	string docTypeName = mDocTypeDecl->getDocTypeName();
-	if ( docTypeName == "" )	{
-		// No doctype declaration. Assuming this is html
-		docTypeName = "HTML";
-	}
-		
-	mElementParser->parse( docTypeName );
-	
-}
-
-TDocumentPtr SGMLParser	::	parse( const char * aDtd, SGMLTextPtr aDocument )	{
-
-	// Load text
-	mDocText = aDocument;
-	mCommentDecl->setDocText( mDocText );
-	mDocTypeDecl->setDocText( mDocText );
-	mElementParser->setDocText( mDocText );
-
-	parseDTD( aDtd );
-	
-//	showTree( mDTD, 0 );
-
-	mDocText->reset();
-
-	try	{
-		processSStar();
-		processProlog();
-		processDocInstanceSet();
-	}
-	catch( ReadException r )	{
-		if ( r.isEof() )	{
-			printf( "End of file reached. No errors encountered\n" );
-		}
-		else	{
-			printf( "Error on line %i, char %i, message: %s\n", r.getLineNr(), r.getCharNr(),
-					  r.getErrorMessage().c_str() );
-		}
-	}
-
-	TDocumentPtr document = mElementParser->getDocument();
-
-	showTree( document, 0 );
-	printf( "Finished with document\n" );
-	return document;
-	
-	
-}
-
-TDocumentPtr SGMLParser	::	parse( const char * aDtd, const char * aDocument )	{
-
-	mDocText->loadText( aDocument );
-	
-	TDocumentPtr result = parse( aDtd, mDocText );
-	
-	return result;
-	
-}
-
-void SGMLParser	::	parseDTD( const char * aDtd )	{
-
-	printf("Requested dtd: %s\n", aDtd);
-	printf("Default dtd: %s\n", mDefaultDtd.c_str());
-	
-	string dtd = aDtd;
-	// Find out if the requested DTD is the one currently loaded.
-	if (dtd != mDefaultDtd) {
-		if ( mDtds.count( dtd ) == 0 )	{
-			// The DTD is not in the repository yet.
-			// Figure out if this is the first DTD we create.
-			if (mDtds.size() != 0) {
-				// We already have a DTD, so we have to create a new one.
-				createDTD();
-				mCommentDecl->setSchema( mSchema );
-				mDtdParser->setSchema( mSchema );
-				mDocTypeDecl->setSchema( mSchema );
-				mElementParser->setSchema( mSchema );
-			}
-			// Parse it and add it to the repository.
-			printf( "Parsing DTD\n" );
-			mDtdParser->parse(aDtd);
-			mDtds.insert( map<string, TSchemaPtr>::value_type( mDefaultDtd, mSchema ) );
-		}
-		else	{
-			map<string, TSchemaPtr>::iterator i = mDtds.find( dtd );
-			printf("Found an existing DTD\n");
-			mSchema = (*i).second;
-			mCommentDecl->setSchema( mSchema );
-			mDtdParser->setSchema( mSchema );
-			mDocTypeDecl->setSchema( mSchema );
-			mElementParser->setSchema( mSchema );
-		}
-		mDefaultDtd = aDtd;
-	}
-	
-}
-
-void SGMLParser	::	showTree( const TNodePtr aNode, int aSpacing )	{
+void SGMLParser :: showTree(const TNodePtr aNode, int aSpacing) {
 	
 	TNodeListPtr children = aNode->getChildNodes();
 	int length = children->getLength();
@@ -294,17 +68,295 @@ void SGMLParser	::	showTree( const TNodePtr aNode, int aSpacing )	{
 	}	
 }
 
+bool SGMLParser :: parseOtherProlog() {
+	
+	bool result = false;
+	
+	if (mToken == DECLARATION_SYM) {
+		Token token = mScanner->lookAhead();
+		if (token == COMMENT_SYM) {
+			mToken = mCommentDeclParser->parse(token);
+			result = true;
+			parseS();
+		}
+		else
+			result = false;
+	}
+	
+	return result;
+	
+}
+
+void SGMLParser :: parseOtherPrologStar() {
+
+	bool otherFound = true;
+
+	while (otherFound) {
+		otherFound = parseOtherProlog();
+	}
+
+}
+
+void SGMLParser :: parseBaseDocTypeDecl() {
+
+	// If we don't find a doctype declaration, we skip it.
+	if (mToken == DECLARATION_SYM) {
+		mToken = mScanner->nextToken();
+		if (mToken == IDENTIFIER_SYM) {
+			string identifier = mScanner->getTokenText();
+			if (identifier == "DOCTYPE") {
+				mToken = mScanner->nextToken();
+				mToken = mDocTypeDeclParser->parse(mToken);
+			}
+			else {
+				// Found unknown token.
+				string message = "Unknown token found: " + mScanner->getTokenText();
+				throw ReadException(mScanner->getLineNr(),
+									mScanner->getCharNr(),
+									message,
+									GENERIC,
+									true);
+			}
+		}
+	}
+
+}
+
+void SGMLParser :: parseProlog() {
+	
+	// Not very complete, but works for html files
+	parseOtherPrologStar();
+	parseBaseDocTypeDecl();
+	parseOtherPrologStar();
+
+}
+
+void SGMLParser :: parseSchema(const char * aSchemaFile) {
+	
+	mDTDParser->parse(aSchemaFile);
+	
+}
+
+TDocumentPtr SGMLParser :: parse(const char * aSchemaFile, string aText) {
+	
+	printf("Loading schema\n");
+	clock_t start = clock();
+	loadSchema(aSchemaFile);
+	clock_t end = clock();
+	printf("Time taken for loading the schema: %f\n", (double)(end - start)/CLOCKS_PER_SEC);
+
+	start = clock();
+	printf("Starting to scan the HTML document\n");
+	mScanner->setDocument(aText);
+	printf("Loaded the document\n");
+	// Assume the doctype is HTML.
+	mDocTypeName = "HTML";
+	ElementParser elementParser(mScanner, mSchema, mDocTypeName);
+	// See if we can scan a whole HTML document.
+	TDocumentPtr document;
+	try {
+		mToken = mScanner->nextToken();
+		parseSStar();
+		printf("Got first token: %s\n", mScanner->getTokenText().c_str());
+		parseProlog();
+		while (mToken != EOF_SYM) {
+			switch (mToken) {
+				case ELEMENT_OPEN_SYM: {
+					// Kickstart the element parser.
+					TElementPtr element = elementParser.parseStartTag();
+					TDOMString name = element->getTagName();
+					ElementToken elmToken = ElementToken(START_TAG, name, element);
+					TElementDeclarationPtr declaration = mSchema->getDeclaration(mDocTypeName);
+					mToken = elementParser.parse(elmToken, declaration);
+					document = elementParser.getDocument();
+					showTree(document, 0);
+					break;
+				}
+				case DECLARATION_SYM: {
+					mToken = mScanner->nextToken();
+					if (mToken == COMMENT_SYM) {
+						if (mCommentDeclParser == NULL)
+							mCommentDeclParser = new CommentDeclParser(mScanner, TSchemaPtr());
+						mToken = mCommentDeclParser->parse(mToken, ELEMENT_OPEN_SYM);
+					}
+					else
+						throw ReadException(mScanner->getLineNr(),
+											mScanner->getCharNr(),
+											"Expected comment sym",
+											GENERIC,
+											true);
+					break;
+				}
+				case DECLARATION_END_SYM: {
+					mToken = mScanner->nextToken(ELEMENT_OPEN_SYM);
+					break;
+				}
+				case TEXT_SYM: {
+					mToken = mScanner->nextToken();
+					break;
+				}
+				case SPACE_SYM: {
+					// Not doing anything with that right now.
+					mToken = mScanner->nextToken();
+					break;
+				}
+				default: {
+					printf("Found token: %s\n", mScanner->getTokenText().c_str());
+					mToken = mScanner->nextToken();
+				}
+			}
+		}
+	}
+	catch(ReadException r) {
+		printf(
+			"Found error: line: %i char %i message: %s\n",
+			r.getLineNr(),
+			r.getCharNr(),
+			r.getErrorMessage().c_str());
+	}
+
+	end = clock();
+	printf("Time taken: %f\n", (double)(end - start)/CLOCKS_PER_SEC);
+
+	return document;
+
+}
+
+void SGMLParser :: parse(const char * aSchemaFile, const char * aDocument) {
+
+	printf("Loading schema\n");
+	clock_t start = clock();
+	loadSchema(aSchemaFile);
+	clock_t end = clock();
+	printf("Time taken for loading the schema: %f\n", (double)(end - start)/CLOCKS_PER_SEC);
+
+	start = clock();
+	printf("Starting to scan the HTML document\n");
+	mScanner->setDocument(aDocument);
+	printf("Loaded the document\n");
+	// Assume the doctype is HTML.
+	mDocTypeName = "HTML";
+	ElementParser elementParser(mScanner, mSchema, mDocTypeName);
+	// See if we can scan a whole HTML document.
+	try {
+		mToken = mScanner->nextToken();
+		parseSStar();
+		printf("Got first token: %s\n", mScanner->getTokenText().c_str());
+		parseProlog();
+		while (mToken != EOF_SYM) {
+			switch (mToken) {
+				case ELEMENT_OPEN_SYM: {
+					// Kickstart the element parser.
+					TElementPtr element = elementParser.parseStartTag();
+					TDOMString name = element->getTagName();
+					ElementToken elmToken = ElementToken(START_TAG, name, element);
+					TElementDeclarationPtr declaration = mSchema->getDeclaration(mDocTypeName);
+					mToken = elementParser.parse(elmToken, declaration);
+					TDocumentPtr document = elementParser.getDocument();
+					showTree(document, 0);
+					break;
+				}
+				case DECLARATION_SYM: {
+					mToken = mScanner->nextToken();
+					if (mToken == COMMENT_SYM) {
+						if (mCommentDeclParser == NULL)
+							mCommentDeclParser = new CommentDeclParser(mScanner, TSchemaPtr());
+						mToken = mCommentDeclParser->parse(mToken, ELEMENT_OPEN_SYM);
+					}
+					else
+						throw ReadException(mScanner->getLineNr(),
+											mScanner->getCharNr(),
+											"Expected comment sym",
+											GENERIC,
+											true);
+					break;
+				}
+				case DECLARATION_END_SYM: {
+					mToken = mScanner->nextToken(ELEMENT_OPEN_SYM);
+					break;
+				}
+				case TEXT_SYM: {
+					mToken = mScanner->nextToken();
+					break;
+				}
+				case SPACE_SYM: {
+					// Not doing anything with that right now.
+					mToken = mScanner->nextToken();
+					break;
+				}
+				default: {
+					printf("Found token: %s\n", mScanner->getTokenText().c_str());
+					mToken = mScanner->nextToken();
+				}
+			}
+		}
+	}
+	catch(ReadException r) {
+		printf(
+			"Found error: line: %i char %i message: %s\n",
+			r.getLineNr(),
+			r.getCharNr(),
+			r.getErrorMessage().c_str());
+	}
+
+	end = clock();
+	printf("Time taken: %f\n", (double)(end - start)/CLOCKS_PER_SEC);
+
+}
+
+void SGMLParser :: loadSchema(const char * aSchemaFile) {
+
+	string schemaFileName = aSchemaFile;
+
+	if (mSchemas.size() == 0) {
+		// We need to parse it first.
+		printf("Parsing first schema\n");
+		parseSchema(aSchemaFile);
+		mSchema->computeSchema();
+		mSchemas.insert(map<string, TSchemaPtr>::value_type(schemaFileName, mSchema));
+	}
+	else if (mSchemas.count(schemaFileName)) {
+		// We already parsed it once. Just reload it as current.
+		map<string, TSchemaPtr>::iterator i = mSchemas.find(schemaFileName);
+		printf("Found an existing schema\n");
+		mSchema = (*i).second;
+		mCommentDeclParser->setSchema(mSchema);
+		mDocTypeDeclParser->setSchema(mSchema);
+		mDTDParser->setSchema(mSchema);
+	}
+	else {
+		// There are already schemas parsed, but not the one requested.
+		printf("Parsing additional schema\n");
+		// Create a new schema to parse into.
+		mSchema = TSchemaPtr(new TSchema());
+		mSchema->setup();
+		printf("Setup done. Now assigning\n");
+		mCommentDeclParser->setSchema(mSchema);
+		mDocTypeDeclParser->setSchema(mSchema);
+		mDTDParser->setSchema(mSchema);
+		
+		// Parse the schema and store it.
+		printf("Parsing...\n");
+		parseSchema(aSchemaFile);
+		mSchema->computeSchema();
+		mSchemas.insert(map<string, TSchemaPtr>::value_type(schemaFileName, mSchema));
+	}
+
+}
+
 int main( int argc, char * argv[] )	{
 	
 	if ( argc < 3 )	{
 		printf("Please supply a dtd and a document to load\n");
 		return 1;
 	}
-	
-	SGMLParser * sgmlParser = new SGMLParser();
-	TDocumentPtr dtd = sgmlParser->parse( argv[ 1 ], argv[ 2 ] );
 
-	delete sgmlParser;
+	TSchemaPtr schema = TSchemaPtr(new TSchema());
+	schema->setup();
+	
+	SGMLScanner * scanner = new SGMLScanner();
+	SGMLParser parser(scanner, schema);
+	parser.parse(argv[1], argv[2]);
 	
 	return 0;
 	

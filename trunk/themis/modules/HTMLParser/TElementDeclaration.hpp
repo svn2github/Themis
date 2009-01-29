@@ -43,6 +43,7 @@
 #include "TElement.h"
 
 // SGMLParser headers
+#include "SGMLSupport.hpp"
 #include "TSchemaRule.hpp"
 
 /// Class to store an element declaration.
@@ -55,12 +56,24 @@
 
 class TElementDeclaration	:	public TSchemaRule	{
 
+	private:
+		TElementPtr mElements;
+		TSchemaRulePtr mContent;
+
 	public:
 		TElementDeclaration( const TDocumentPtr aOwnerDocument );
-		~TElementDeclaration();
-	
+		virtual ~TElementDeclaration();
+
+		virtual bool computeEmpty();
+		virtual bool computeFirst();	
 		void setMinimization( bool aStart = true, bool aEnd = true );
 		void getMinimization( bool & aStart, bool & aEnd );
+		void setElements(TElementPtr aElements);
+		void setContent(TSchemaRulePtr aContent);
+		TSchemaRulePtr getContent();
+		bool hasRule(const TDOMString & aTagName);
+		// Get the name of the first element in this declaration
+		TDOMString getElementName();
 };
 
 #endif

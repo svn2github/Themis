@@ -1,3 +1,33 @@
+/*
+	Copyright (c) 2008 Mark Hellegers. All Rights Reserved.
+	
+	Permission is hereby granted, free of charge, to any person
+	obtaining a copy of this software and associated documentation
+	files (the "Software"), to deal in the Software without
+	restriction, including without limitation the rights to use,
+	copy, modify, merge, publish, distribute, sublicense, and/or
+	sell copies of the Software, and to permit persons to whom
+	the Software is furnished to do so, subject to the following
+	conditions:
+	
+	   The above copyright notice and this permission notice
+	   shall be included in all copies or substantial portions
+	   of the Software.
+	
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+	KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+	WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+	PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+	OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+	OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+	
+	Original Author: 	Mark Hellegers (mark@firedisk.net)
+	Project Start Date: October 18, 2000
+	Class Start Date: April 11, 2003
+*/
+
 /*	DocTypeDeclParser implementation
 	See DocTypeDeclParser.hpp for more information
 */
@@ -6,88 +36,71 @@
 #include <stdio.h>
 
 // SGMLParser headers
-#include "DocTypeDeclParser.hpp"
+#include "SGMLScanner.hpp"
 #include "ReadException.hpp"
-#include "SGMLSupport.hpp"
 #include "TSchema.hpp"
+#include "DocTypeDeclParser.hpp"
 
-DocTypeDeclParser	::	DocTypeDeclParser( SGMLTextPtr aDocText,
-															 TSchemaPtr aDTD )
-							:	DeclarationParser( aDocText, aDTD )	{
+DocTypeDeclParser :: DocTypeDeclParser(SGMLScanner * aScanner, TSchemaPtr aSchema)
+				  :  DeclarationParser(aScanner, aSchema) {
 
-	//printf( "Constructing DocTypeDeclParser\n" );
-	
-	mDocTypeName = "";
-	
 }
 
-DocTypeDeclParser	::	~DocTypeDeclParser()	{
+DocTypeDeclParser :: ~DocTypeDeclParser() {
 
-	//printf( "Destroying DocTypeDeclParser\n" );
-	
 }
 
-bool DocTypeDeclParser	::	processDeclaration()	{
-	
-	bool result = process( mMdo, false );
-	if (result) {
-		result = process( kDOCTYPE, false );
-	
-		if (result) {
-			try	{
-				processPsPlus();
-			}
-			catch( ReadException r )	{
-				r.setFatal();
-				throw r;
-			}
-			
-			try	{
-				mDocTypeName = processDocTypeName();
-			}
-			catch( ReadException r )	{
-				r.setFatal();
-				throw r;
-			}
-			
-			TElementPtr extId = mSchema->createElement( "externalId" );
-			
-			try	{
-				processPsPlus();
-				processExternalId( extId );
-			}
-			catch( ReadException r )	{
-				if ( r.isFatal() )	{
-					throw r;
-				}
-				// Is optional
-			}
-		
-			// Leaving out document type declaration subset
-			
-			try	{
-				process( mMdc );
-			}
-			catch( ReadException r )	{
-				r.setFatal();
-				throw r;
-			}
-		}
+Token DocTypeDeclParser :: parse(Token aToken) {
+
+	mToken = aToken;
+	parsePsPlus();
+
+	if (mToken == IDENTIFIER_SYM) {
+		printf("Found document type name: %s\n", mScanner->getTokenText().c_str());
+		mToken = mScanner->nextToken();
 	}
-	
-	return result;
-	
-}
+	else {
+		throw ReadException(mScanner->getLineNr(),
+							mScanner->getCharNr(),
+							"Document type name expected",
+							GENERIC,
+							true);
+	}
 
-string DocTypeDeclParser	::	processDocTypeName()	{
+	TElementPtr extId = mSchema->createElement("externalId");
 	
-	// Is the same as a generic identifier
-	return processGI();
-	
-}
+	if (mToken == SPACE_SYM) {
+		parsePsPlus();
+		if (mToken == IDENTIFIER_SYM) {
+			string token = mScanner->getTokenText();
+			if (token == kSYSTEM ||
+				token == kPUBLIC) {
+				mToken = mScanner->nextToken();
+				parseExternalId(token, extId);
+			}
+			else
+				throw ReadException(mScanner->getLineNr(),
+									mScanner->getCharNr(),
+									"PUBLIC or SYSTEM identifier expected",
+									GENERIC,
+									true);
+		}
+		else
+			throw ReadException(mScanner->getLineNr(),
+								mScanner->getCharNr(),
+								"PUBLIC or SYSTEM identifier expected",
+								GENERIC,
+								true);
+	}
 
-string DocTypeDeclParser	::	getDocTypeName() const	{
-	
-	return mDocTypeName;
-	
+	if (mToken != DECLARATION_END_SYM) {
+		throw ReadException(mScanner->getLineNr(),
+							mScanner->getCharNr(),
+							"Element declaration not closed correctly",
+							GENERIC,
+							true);
+	}
+	mToken = mScanner->nextToken();
+
+	return mToken;
 }

@@ -178,11 +178,13 @@ HTMLPARSERSOURCES= \
 	HTMLParser/ElementDeclException.cpp \
 	HTMLParser/ElementDeclParser.cpp  \
 	HTMLParser/ElementParser.cpp  \
+	HTMLParser/ElementToken.cpp \
 	HTMLParser/EntityDeclParser.cpp  \
 	HTMLParser/MarkedSecDeclParser.cpp  \
 	HTMLParser/Position.cpp  \
 	HTMLParser/ReadException.cpp  \
-	HTMLParser/SGMLParser.cpp 
+	HTMLParser/SGMLParser.cpp \
+	HTMLParser/SGMLScanner.cpp
 CSSPARSERSOURCES= \
 	CSSParser/AtRuleParser.cpp \
 	CSSParser/Encoding.cpp \
