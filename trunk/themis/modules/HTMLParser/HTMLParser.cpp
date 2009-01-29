@@ -267,9 +267,9 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * aMessage )	{
 						bytesRead = mCache->Read( mUserToken, fileToken, buffer, 2000 );
 					}
 					delete[] buffer;
-
+					
 					// Parse it
-					if (mParser != NULL) {
+					if (mParser != NULL && content.size() != 0) {
 						const char * path;
 						appSettings->FindString( kPrefsActiveDTDPath, &path );
 						mDocument = mParser->parse(path, content);
