@@ -168,8 +168,6 @@ TDocumentPtr SGMLParser :: parse(const char * aSchemaFile, string aText) {
 					ElementToken elmToken = ElementToken(START_TAG, name, element);
 					TElementDeclarationPtr declaration = mSchema->getDeclaration(mDocTypeName);
 					mToken = elementParser.parse(elmToken, declaration);
-					document = elementParser.getDocument();
-					showTree(document, 0);
 					break;
 				}
 				case DECLARATION_SYM: {
@@ -218,6 +216,7 @@ TDocumentPtr SGMLParser :: parse(const char * aSchemaFile, string aText) {
 	end = clock();
 	printf("Time taken: %f\n", (double)(end - start)/CLOCKS_PER_SEC);
 
+	document = elementParser.getDocument();
 	return document;
 
 }
@@ -252,8 +251,6 @@ void SGMLParser :: parse(const char * aSchemaFile, const char * aDocument) {
 					ElementToken elmToken = ElementToken(START_TAG, name, element);
 					TElementDeclarationPtr declaration = mSchema->getDeclaration(mDocTypeName);
 					mToken = elementParser.parse(elmToken, declaration);
-					TDocumentPtr document = elementParser.getDocument();
-					showTree(document, 0);
 					break;
 				}
 				case DECLARATION_SYM: {
@@ -301,6 +298,9 @@ void SGMLParser :: parse(const char * aSchemaFile, const char * aDocument) {
 
 	end = clock();
 	printf("Time taken: %f\n", (double)(end - start)/CLOCKS_PER_SEC);
+
+	TDocumentPtr document = elementParser.getDocument();
+	showTree(document, 0);
 
 }
 
