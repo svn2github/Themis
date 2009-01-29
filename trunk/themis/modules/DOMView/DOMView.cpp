@@ -51,11 +51,12 @@
 
 // DOMView headers
 #include "DOMView.h"
+#include "DOMTextView.hpp"
 
 DOMView	::	DOMView( TDocumentPtr aDocument )
 				:	BWindow( BRect( 100, 100, 450, 400 ), "DOMWindow",
 								   B_TITLED_WINDOW,
-								   B_CURRENT_WORKSPACE )	{
+								   B_CURRENT_WORKSPACE)	{
 
 	// Set background and add it to the window.
 	BRect backRect = Bounds();
@@ -106,10 +107,9 @@ DOMView	::	DOMView( TDocumentPtr aDocument )
 
 	// Create text view.
 	BRect textDisplay( 0, 0, textRect.Width(), textRect.Height() );
-	mText = new BTextView( textRect, "TextView",
-									   textDisplay,
-									   B_FOLLOW_ALL_SIDES,
-									   B_WILL_DRAW );
+	mText = new DOMTextView(textRect, "TextView",
+							textDisplay,
+							B_FOLLOW_ALL_SIDES);
 	BScrollView * scrollText =
 		new BScrollView( "Scroll Text",
 								  mText,
@@ -198,7 +198,8 @@ void DOMView	::	MessageReceived( BMessage * aMessage )	{
 			int32 index = 0;
 			aMessage->FindInt32( "index", &index );
 			int32 current = 0;
-			TNodePtr found = findNode( mDocument, index, current );
+			TNodePtr documentRoot = mDocument->getFirstChild();
+			TNodePtr found = findNode(documentRoot, index, current);
 			mAttributes->RemoveItems( 0, mAttributes->CountItems() );
 			mValues->RemoveItems( 0, mValues->CountItems() );
 			if ( found->hasAttributes() )	{
@@ -289,15 +290,18 @@ void DOMView	::	showTree( const TNodePtr aNode, BStringItem * aParent )	{
 	
 	TNodeListPtr children = aNode->getChildNodes();
 	int length = children->getLength();
-	if ( length != 0 )	{
-		for ( int i = length - 1; i >= 0; i-- )	{
-			TNodePtr child = children->item( i );
-	
-			if ( child->getNodeType() == ELEMENT_NODE )	{
+	if (length != 0) {
+		for (int i = length - 1; i >= 0; i--) {
+			TNodePtr child = children->item(i);
+
+			if (child->getNodeType() == ELEMENT_NODE) {
 				BStringItem * childItem =
-					new BStringItem( child->getNodeName().c_str() );
-				mTree->AddUnder( childItem, aParent );
-				showTree( child, childItem );
+					new BStringItem(child->getNodeName().c_str());
+				if (aParent == NULL)
+					mTree->AddItem(childItem);
+				else
+					mTree->AddUnder(childItem, aParent);
+				showTree(child, childItem);
 			}
 		}
 	}	
@@ -306,14 +310,12 @@ void DOMView	::	showTree( const TNodePtr aNode, BStringItem * aParent )	{
 void DOMView	::	showDocument()	{
 	
 	int32 items = mTree->CountItems();
-	for ( int32 i = 0; i < items; i++ )	{
-		delete mTree->RemoveItem( (int32) 0 );
+	for (int32 i = 0; i < items; i++) {
+		delete mTree->RemoveItem((int32) 0);
 	}
 
-	BStringItem * root =
-		new BStringItem( mDocument->getNodeName().c_str() );
-	mTree->AddItem( root );
-	showTree( mDocument, root );
+	SetTitle(mDocument->getDocumentURI().c_str());
+	showTree(mDocument, NULL);
 
 }
 
@@ -324,14 +326,13 @@ void DOMView	::	setDocument( TDocumentPtr aDocument )	{
 	
 }
 
-TNodePtr DOMView	::	findNode( TNodePtr aNode,
-												   int32 aTarget,
-												   int32 & aCurrent )	{
+TNodePtr DOMView :: findNode(TNodePtr aNode,
+							 int32 aTarget,
+							 int32 & aCurrent) {
 	
-	if ( aNode.get() && ( aNode->getNodeType() == ELEMENT_NODE ||
-		 aNode->getNodeType() == DOCUMENT_NODE ) )	{
+	if (aNode.get() && (aNode->getNodeType() == ELEMENT_NODE)) {
 		
-		if ( aTarget == aCurrent )	{
+		if (aTarget == aCurrent) {
 			// This is the node we're looking for
 			return aNode;
 		}
@@ -341,27 +342,27 @@ TNodePtr DOMView	::	findNode( TNodePtr aNode,
 		// because of a weird crash with getFirstChild. Not sure who is wrong here
 		TNodeListPtr children = aNode->getChildNodes();
 		TNodePtr result = TNodePtr();
-		if ( children->getLength() )	{
+		if (children->getLength()) {
 			aCurrent++;
-			TNodePtr next = children->item( 0 );
-			result = findNode( next, aTarget, aCurrent );
+			TNodePtr next = children->item(0);
+			result = findNode(next, aTarget, aCurrent);
 		}
-		if ( result.get() )	{
+		if (result.get()) {
 			return result;
 		}
-		else	{
+		else {
 			aCurrent++;
 			TNodePtr next = aNode->getNextSibling();
-			return findNode( next, aTarget, aCurrent );
+			return findNode(next, aTarget, aCurrent);
 		}							
 	}
 	else	{
-		// Was not an element or a document node or didn't exist
-		if ( aNode.get() )	{
+		// Was not an element or didn't exist
+		if (aNode.get()) {
 			TNodePtr next = aNode->getNextSibling();
-			return findNode( next, aTarget, aCurrent );
+			return findNode(next, aTarget, aCurrent);
 		}
-		else	{
+		else {
 			// Node doesn't exist
 			aCurrent--;
 		}

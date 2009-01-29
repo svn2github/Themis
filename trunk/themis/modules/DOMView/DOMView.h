@@ -41,13 +41,15 @@
 #include <OutlineListView.h>
 #include <ListView.h>
 #include <PopUpMenu.h>
-#include <TextView.h>
 
 // DOM headers
 #include "DOMSupport.h"
 
 // Declarations of BeOS classes
 class BStringItem;
+
+// Declarations of DOMView classes
+class DOMTextView;
 
 // Namespaces used
 using namespace std;
@@ -63,7 +65,7 @@ class DOMView	:	public BWindow	{
 		BListView * mAttributes;
 		BListView * mValues;
 		BPopUpMenu * mTextMenu;
-		BTextView * mText;
+		DOMTextView * mText;
 
 		BList * mItems;
 

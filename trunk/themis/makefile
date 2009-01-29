@@ -198,7 +198,8 @@ CSSPARSERSOURCES= \
 	
 DOMVIEWSOURCES= \
 	DOMView/DOMView.cpp \
-	DOMView/DOMViewer.cpp
+	DOMView/DOMViewer.cpp \
+	DOMView/DOMTextView.cpp
 IMAGEHSOURCES= \
 	imageh/imageman.cpp \
 	imageh/image.cpp
