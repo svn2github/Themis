@@ -133,14 +133,23 @@ Token SGMLScanner :: nextToken(Token aEndToken, Token aEndToken2) {
 							mToken += '<';
 						}
 					}
+					else {
+						// We need to exit the loop, but don't do anything else.
+						found = true;
+					}
 				}
 				// Only return a token if we actually find text.
+				// If we don't find a token, but did find the close sym, return that instead.
 				// Otherwise, just start processing in the normal way.
 				if (mToken.length() > 0) {
 					if (onlySpace)
 						return SPACE_SYM;
 					else
 						return RAW_TEXT_SYM;
+				}
+				else if (mLookAheadToken == ELEMENT_CLOSE_SYM) {
+					mLookAheadToken = NONE_SYM;
+					return ELEMENT_CLOSE_SYM;
 				}
 				break;
 			}
