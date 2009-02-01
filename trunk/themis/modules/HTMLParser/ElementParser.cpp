@@ -319,7 +319,8 @@ bool ElementParser :: parseDeclaration(TElementDeclarationPtr aDeclaration,
 bool ElementParser :: parseSequence(TSchemaRulePtr aRule,
 									TNodePtr aParentNode) {
 	
-	bool found = true;
+	bool found = false;
+	bool tokenFound = true;
 	TDOMString name = mElmToken.getName();
 	
 	printf("Going into , rule\n");
@@ -327,22 +328,31 @@ bool ElementParser :: parseSequence(TSchemaRulePtr aRule,
 	TNodeListPtr children = aRule->getChildNodes();
 	unsigned int length = children->getLength();
 	unsigned int i = 0;
-	while (i < length && found) {
+	unsigned int j = 0; // Contains the number of rules that were found
+	while (i < length && tokenFound) {
 		TNodePtr child = children->item(i);
 		TSchemaRulePtr rule = shared_static_cast<TSchemaRule>(child);
 		if (rule->hasToken(name)) {
 			// Parse token with this rule.
 			printf("Parsing token with rule %u in sequence part\n", i);
-			found = parse(rule, aParentNode);
+			tokenFound = parse(rule, aParentNode);
 			name = mElmToken.getName();
+			if (tokenFound)
+				j++;
 		}
 		else if (rule->hasEmpty()) {
 			// We can skip it. It is optional.
 			printf("Skipping optional sequence rule\n");
+			j++;
 		}
 		else
-			found = false;
+			tokenFound = false;
 		i++;
+	}
+	
+	if (j == length) {
+		// Found all the rules of the sequence.
+		found = true;
 	}
 	
 	return found;
@@ -352,27 +362,46 @@ bool ElementParser :: parseSequence(TSchemaRulePtr aRule,
 bool ElementParser :: parseAll(TSchemaRulePtr aRule,
 							   TNodePtr aParentNode) {
 	
-	// Pretending all (&) is the same as a sequence (,) for now
-	bool found = true;
+	bool found = false;
 	TDOMString name = mElmToken.getName();
 	
 	printf("Going into & rule\n");
 	// We need to parse all the subrules of the rule.
 	TNodeListPtr children = aRule->getChildNodes();
 	unsigned int length = children->getLength();
-	unsigned int i = 0;
-	while (i < length && found) {
-		TNodePtr child = children->item(i);
-		TSchemaRulePtr rule = shared_static_cast<TSchemaRule>(child);
-		if (rule->hasToken(name)) {
-			// Parse token with this rule.
-			printf("Parsing token with rule %u in all part\n", i);
-			found = parse(rule, aParentNode);
-			name = mElmToken.getName();
+	bool progress = true;
+	bool tokenFound = true;
+	vector<bool> rulesDone( length, false );
+	unsigned int j = 0;
+
+	while (progress) {
+		progress = false;
+		unsigned int i = 0;
+		while (i < length && tokenFound) {
+			if (!rulesDone[i]) {
+				// Haven't found this rule yet.
+				TNodePtr child = children->item(i);
+				TSchemaRulePtr rule = shared_static_cast<TSchemaRule>(child);
+				if (rule->hasToken(name)) {
+					// Parse token with this rule.
+					printf("Parsing token with rule %u in all part\n", i);
+					tokenFound = parse(rule, aParentNode);
+					name = mElmToken.getName();
+					if (tokenFound) {
+						// We maanged to find one of the rules.
+						progress = true;
+						rulesDone[i] = true;
+						j++;
+					}
+				}
+			}
+			i++;
 		}
-		else
-			found = false;
-		i++;
+	}
+
+	if (j == length) {
+		// Found all the rules of the sequence.
+		found = true;
 	}
 	
 	return found;
@@ -490,31 +519,36 @@ Token ElementParser :: parse(ElementToken aElmToken, TSchemaRulePtr aRule) {
 	mElmToken = aElmToken;
 	parse(aRule, mDocument);
 
-	// Fallback.
-	printf("Going to fallback mode\n");
-	while (mElmToken.getType() != NONE) {
-		switch (mElmToken.getType()) {
-			case START_TAG: {
-				printf("Start tag: %s\n", mElmToken.getName().c_str());
-				break;
+	if (mElmToken.getType() != NONE) {
+		// Fallback.
+		printf("Going to fallback mode\n");
+		while (mElmToken.getType() != NONE) {
+			switch (mElmToken.getType()) {
+				case START_TAG: {
+					printf("Start tag: %s\n", mElmToken.getName().c_str());
+					break;
+				}
+				case END_TAG: {
+					printf("End tag: %s\n", mElmToken.getName().c_str());
+					break;
+				}
+				case SPACE: {
+					printf("Space\n");
+					break;
+				}
+				case TEXT: {
+					printf("Text\n");
+					break;
+				}
+				default: {
+					printf("Something else\n");
+				}
 			}
-			case END_TAG: {
-				printf("End tag: %s\n", mElmToken.getName().c_str());
-				break;
-			}
-			case SPACE: {
-				printf("Space\n");
-				break;
-			}
-			case TEXT: {
-				printf("Text\n");
-				break;
-			}
-			default: {
-				printf("Something else\n");
-			}
+			mElmToken = nextElmToken();
 		}
-		mElmToken = nextElmToken();
+	}
+	else {
+		printf("Finished document without going to fallback mode\n");
 	}
 
 	return mToken;
