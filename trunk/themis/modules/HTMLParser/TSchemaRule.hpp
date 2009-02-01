@@ -75,6 +75,7 @@ class TSchemaRule	:	public TElement	{
 		void computeLA();
 		bool hasEmpty() const;
 		bool hasToken(const TDOMString & aToken) const;
+		void printFirst() const;
 		bool hasContentToken(const TDOMString & aToken) const;
 		bool hasTagToken(const TDOMString & aToken) const;
 

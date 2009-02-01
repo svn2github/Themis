@@ -68,37 +68,39 @@ bool TElementDeclaration :: computeEmpty() {
 bool TElementDeclaration :: computeFirst() {
 
 	bool changed = false;
-	std::set<string> first;
-	std::set<string> firstTags;
 	
 	if (mFirst.empty()) {
 		// The first run.
 		changed = true;
 	}
 
-	// Just add the elements name as a first token.
-	TNodeListPtr elements = mElements->getChildNodes();
-
-	unsigned int length = elements->getLength();
-	for (unsigned int i = 0; i < length; i++) {
-		TNodePtr elementNode = elements->item(i);
-		TElementPtr element = shared_static_cast<TElement>(elementNode);
-		TDOMString tagName = element->getTagName();
-		first.insert(tagName);
-		firstTags.insert(tagName);
+	if (changed) {
+		// Just add the elements name as a first token.
+		TNodeListPtr elements = mElements->getChildNodes();
+	
+		unsigned int length = elements->getLength();
+		for (unsigned int i = 0; i < length; i++) {
+			TNodePtr elementNode = elements->item(i);
+			TElementPtr element = shared_static_cast<TElement>(elementNode);
+			TDOMString tagName = element->getTagName();
+			mFirst.insert(tagName);
+			mFirstTags.insert(tagName);
+		}
 	}
 	
 	bool start, end;
 	getMinimization(start, end);
 
 	// Always compute the first of the content.
-	changed |= mContent->computeFirst();
-	std::set<string> firstContent = mContent->getFirst();
+	bool subChanged = mContent->computeFirst();
+	changed |= subChanged;
+	if (subChanged) {
+		mFirstContent = mContent->getFirst();
+	}
 	
-	if (mContent.get() != NULL && !start) {
+	if (mContent.get() != NULL && !start && subChanged) {
 		// Add the content first tokens as well.
-		first.insert(firstContent.begin(), firstContent.end());
-		firstContent.insert(firstContent.begin(), firstContent.end());
+		mFirst.insert(mFirstContent.begin(), mFirstContent.end());
 	}
 
 /*	
@@ -110,12 +112,6 @@ bool TElementDeclaration :: computeFirst() {
 		++iterBegin;
 	}
 */
-	
-	if (changed) {
-		mFirst = first;
-		mFirstTags = firstTags;
-		mFirstContent = firstContent;
-	}
 	
 	return changed;
 	

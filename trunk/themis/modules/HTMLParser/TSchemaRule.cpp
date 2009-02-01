@@ -36,6 +36,9 @@
 // Standard C headers
 #include <stdio.h>
 
+// Standard C++ headers
+#include <algorithm>
+
 // SGMLParser headers
 #include "TSchemaRule.hpp"
 #include "SGMLSupport.hpp"
@@ -118,8 +121,6 @@ bool TSchemaRule :: computeEmpty() {
 
 bool TSchemaRule	::	computeFirst()	{
 
-	std::set<string> first;
-	std::set<string> firstContent;
 	bool changed = false;
 	
 	TDOMString name = getTagName();
@@ -130,13 +131,17 @@ bool TSchemaRule	::	computeFirst()	{
 			TNodeListPtr children = getChildNodes();
 			unsigned int length = children->getLength();
 			std::set<string> subFirst;
+			bool subChanged = false;
 			for (unsigned int i = 0; i < length; i++) {
 				TNodePtr child = children->item(i);
 				TSchemaRulePtr rule = shared_static_cast<TSchemaRule>(child);
-				changed |= rule->computeFirst();
-				subFirst = rule->getFirst();
-				first.insert(subFirst.begin(), subFirst.end());
-				firstContent.insert(subFirst.begin(), subFirst.end());
+				subChanged = rule->computeFirst();
+				changed |= subChanged;
+				if (subChanged) {
+					subFirst = rule->getFirst();
+					mFirst.insert(subFirst.begin(), subFirst.end());
+					mFirstContent.insert(subFirst.begin(), subFirst.end());
+				}
 			}
 			break;
 		}
@@ -146,14 +151,18 @@ bool TSchemaRule	::	computeFirst()	{
 			unsigned int length = children->getLength();
 			bool subEmpty = true;
 			std::set<string> subFirst;
+			bool subChanged = false;
 			for (unsigned int i = 0; i < length; i++) {
 				TNodePtr child = children->item(i);
 				TSchemaRulePtr rule = shared_static_cast<TSchemaRule>(child);
-				changed |= rule->computeFirst();
-				subFirst = rule->getFirst();
+				subChanged = rule->computeFirst();
+				changed |= subChanged;
 				if (subEmpty) {
-					first.insert(subFirst.begin(), subFirst.end());
-					firstContent.insert(subFirst.begin(), subFirst.end());
+					if (subChanged) {
+						subFirst = rule->getFirst();
+						mFirst.insert(subFirst.begin(), subFirst.end());
+						mFirstContent.insert(subFirst.begin(), subFirst.end());
+					}
 					subEmpty &= rule->hasEmpty();
 				}
 			}
@@ -164,13 +173,17 @@ bool TSchemaRule	::	computeFirst()	{
 				TNodeListPtr children = getChildNodes();
 				unsigned int length = children->getLength();
 				std::set<string> subFirst;
+				bool subChanged = false;
 				for (unsigned int i = 0; i < length; i++) {
 					TNodePtr child = children->item(i);
 					TSchemaRulePtr rule = shared_static_cast<TSchemaRule>(child);
-					changed |= rule->computeFirst();
-					subFirst = rule->getFirst();
-					first.insert(subFirst.begin(), subFirst.end());
-					firstContent.insert(subFirst.begin(), subFirst.end());
+					subChanged = rule->computeFirst();
+					changed |= subChanged;
+					if (subChanged) {
+						subFirst = rule->getFirst();
+						mFirst.insert(subFirst.begin(), subFirst.end());
+						mFirstContent.insert(subFirst.begin(), subFirst.end());
+					}
 				}
 			}
 			else if (name == "exceptions") {
@@ -185,12 +198,12 @@ bool TSchemaRule	::	computeFirst()	{
 						TNodePtr child = children->item(i);
 						TElementPtr exception = shared_static_cast<TElement>(child);
 						TDOMString exceptionName = exception->getTagName();
-						if (changed || !mFirst.count(exceptionName)) {
+						if (!mFirst.count(exceptionName)) {
 							changed = true;
 							// Add the tagname itself as a first.
 							// It's a bit more complicated, but this will do for now.
-							first.insert(exceptionName);
-							firstContent.insert(exceptionName);
+							mFirst.insert(exceptionName);
+							mFirstContent.insert(exceptionName);
 						}
 					}
 				}
@@ -198,8 +211,8 @@ bool TSchemaRule	::	computeFirst()	{
 			else if (name == "#PCDATA") {
 				if (!mFirst.count(name)) {
 					changed = true;
-					first.insert(name);
-					firstContent.insert(name);
+					mFirst.insert(name);
+					mFirstContent.insert(name);
 				}
 			}
 			else if (name == "EMPTY") {
@@ -208,31 +221,27 @@ bool TSchemaRule	::	computeFirst()	{
 			else if (name == "CDATA") {
 				if (!mFirst.count(name)) {
 					changed = true;
-					first.insert(name);
-					firstContent.insert(name);
+					mFirst.insert(name);
+					mFirstContent.insert(name);
 				}
 			}
 			else {
 				// Add the tagname itself as a first.
-				first.insert(name);
 				if (!mFirst.count(name)) {
 					changed = true;
+					mFirst.insert(name);
 				}
 				// Add the first of the tagname.
 				TSchemaPtr schema = shared_static_cast<TSchema>(getOwnerDocument());
 				TElementDeclarationPtr declaration = schema->getDeclaration(name);
 				std::set<string> subFirst = declaration->getFirst();
-				first.insert(subFirst.begin(), subFirst.end());
-				if (!changed && mFirst != first) {
+				if (!includes(mFirst.begin(), mFirst.end(),
+							  subFirst.begin(), subFirst.end())) {
+					mFirst.insert(subFirst.begin(), subFirst.end());
 					changed = true;
 				}
 			}
 		}
-	}
-	
-	if (changed) {
-		mFirst = first;
-		mFirstContent = firstContent;
 	}
 	
 	return changed;
@@ -301,6 +310,22 @@ bool TSchemaRule :: hasToken(const TDOMString & aToken) const {
 */
 	
 	return mFirst.count(aToken);
+
+}
+
+void TSchemaRule :: printFirst() const {
+
+	printf("First contains:\n");
+	std::set<string>::iterator iterBegin = mFirst.begin();	
+	std::set<string>::iterator iterEnd = mFirst.end();
+	while (iterBegin != iterEnd) {
+		printf("%s", (*iterBegin).c_str());
+		++iterBegin;
+		if (iterBegin != iterEnd) {
+			printf(" | ");
+		}
+	}
+	printf("\n");
 
 }
 
