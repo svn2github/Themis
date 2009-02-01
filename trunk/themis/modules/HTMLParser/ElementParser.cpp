@@ -546,94 +546,120 @@ Token ElementParser :: parse(ElementToken aElmToken, TSchemaRulePtr aRule) {
 bool ElementParser :: parse(TSchemaRulePtr aRule, TNodePtr aParentNode) {
 
 	bool found = false;
+	unsigned int maxOccurs = atoi(aRule->getAttribute("maxOccurs").c_str());
+	unsigned int i = 0;
+	bool tokenFound = true;
+	bool unlimited = false;
+	// Find out how often this rule may be played.
+	if (maxOccurs == 0) {
+		// We can repeat this rule as often as needed.
+		unlimited = true;
+	}
 
-	switch (mElmToken.getType()) {
-		case START_TAG: {
-			// We need to find the declaration.
-			TDOMString name = mElmToken.getName();
-			printf("Looking for start tag: %s\n", name.c_str());
-			if (aRule->hasToken(name)) {
-				printf("Rule contains %s\n", name.c_str());
-				string ruleName = aRule->getTagName();
-				printf("Rule name: %s\n", ruleName.c_str());
-				if (ruleName == "declaration") {
-					TElementDeclarationPtr declaration = shared_static_cast<TElementDeclaration>(aRule);
-					found = parseDeclaration(declaration, aParentNode);
-					if (found) {
-						printf("Declaration correct\n");
+	while (tokenFound && (unlimited || i < maxOccurs)) {
+		switch (mElmToken.getType()) {
+			case START_TAG: {
+				// We need to see if the rule contains the token we found.
+				TDOMString name = mElmToken.getName();
+				printf("Looking for start tag: %s\n", name.c_str());
+				if (aRule->hasToken(name)) {
+					printf("Rule contains %s\n", name.c_str());
+					string ruleName = aRule->getTagName();
+					printf("Rule name: %s\n", ruleName.c_str());
+					if (ruleName == "declaration") {
+						TElementDeclarationPtr declaration = shared_static_cast<TElementDeclaration>(aRule);
+						tokenFound = parseDeclaration(declaration, aParentNode);
+						if (tokenFound) {
+							printf("Declaration correct\n");
+						}
+						else {
+							printf("Declaration incorrect\n");
+						}
+					}
+					else if (ruleName == "content") {
+						tokenFound = parseContent(aRule, aParentNode);
+					}
+					else if (ruleName == ",") {
+						tokenFound = parseSequence(aRule, aParentNode);
+					}
+					else if (ruleName == "&") {
+						tokenFound = parseAll(aRule, aParentNode);
+					}
+					else if (ruleName == "|") {
+						tokenFound = parseChoice(aRule, aParentNode);
 					}
 					else {
-						printf("Declaration incorrect\n");
+						// Could be an element declaration.
+						try {
+							TElementDeclarationPtr declaration = mSchema->getDeclaration(ruleName);
+							tokenFound = parse(declaration, aParentNode);
+						}
+						catch(ElementDeclException e) {
+							// Nope. Do nothing for now.
+						}
 					}
 				}
-				else if (ruleName == "content") {
-					found = parseContent(aRule, aParentNode);
-				}
-				else if (ruleName == ",") {
-					found = parseSequence(aRule, aParentNode);
-				}
-				else if (ruleName == "&") {
-					found = parseAll(aRule, aParentNode);
-				}
-				else if (ruleName == "|") {
-					found = parseChoice(aRule, aParentNode);
+				else if (aRule->hasEmpty()) {
+					printf("Rule contains empty.\n");
+					tokenFound = false;
 				}
 				else {
-					// Could be an element declaration.
-					try {
-						TElementDeclarationPtr declaration = mSchema->getDeclaration(ruleName);
-						found = parse(declaration, aParentNode);
-					}
-					catch(ElementDeclException e) {
-						// Nope. Do nothing for now.
-					}
+					printf("Rule not found\n");
+					tokenFound = false;
 				}
+				break;
 			}
-			else if (aRule->hasEmpty()) {
-				printf("Rule contains empty.\n");
-			}
-			break;
-		}
-		case TEXT: {
-			printf("Found text\n");
-			TDOMString name = mElmToken.getName();
-			if (aRule->hasToken(name)) {
-				printf("Rule contains %s\n", name.c_str());
-				string ruleName = aRule->getTagName();
-				printf("Rule name: %s\n", ruleName.c_str());
-				if (ruleName == "declaration") {
-					printf("Parsing text in declaration ?\n");
-					TElementDeclarationPtr declaration = shared_static_cast<TElementDeclaration>(aRule);
-					found = parseDeclaration(declaration, aParentNode);
-				}
-				else if (ruleName == "content") {
-					printf("Parsing text in content\n");
-					found = parseContent(aRule, aParentNode);
-				}
-				else if (ruleName == name) {
-					printf("Text is correct here.\n");
-					// Get the next element token and return true.
-					aParentNode->appendChild(mElmToken.getNode());
-					mElmToken = nextElmToken();
-					found = true;
-				}
-				else if (ruleName == "|") {
-					printf("Parsing text in choice\n");
-					found = parseChoice(aRule, aParentNode);
+			case TEXT: {
+				printf("Found text\n");
+				TDOMString name = mElmToken.getName();
+				if (aRule->hasToken(name)) {
+					printf("Rule contains %s\n", name.c_str());
+					string ruleName = aRule->getTagName();
+					printf("Rule name: %s\n", ruleName.c_str());
+					if (ruleName == "declaration") {
+						printf("Parsing text in declaration ?\n");
+						TElementDeclarationPtr declaration = shared_static_cast<TElementDeclaration>(aRule);
+						tokenFound = parseDeclaration(declaration, aParentNode);
+					}
+					else if (ruleName == "content") {
+						printf("Parsing text in content\n");
+						tokenFound = parseContent(aRule, aParentNode);
+					}
+					else if (ruleName == name) {
+						printf("Text is correct here.\n");
+						// Get the next element token and return true.
+						aParentNode->appendChild(mElmToken.getNode());
+						mElmToken = nextElmToken();
+						tokenFound = true;
+					}
+					else if (ruleName == "|") {
+						printf("Parsing text in choice\n");
+						tokenFound = parseChoice(aRule, aParentNode);
+					}
+					else {
+						printf("Skipping element token for text\n");
+						tokenFound = false;
+					}
 				}
 				else {
-					printf("Skipping element token for text\n");
+					printf("Hmmm\n");
+					tokenFound = false;
 				}
+				break;
 			}
-			else {
-				printf("Hmmm\n");
+			default: {
+				printf("Not doing anything with this token here\n");
+				tokenFound = false;
 			}
-			break;
 		}
-		default: {
-			printf("Skipping element token\n");
-			mElmToken = nextElmToken();
+		if (tokenFound) {
+			i++;
 		}
+	}
+
+	if (i > 0) {
+		// Found at least one instance, so found the rule.
+		found = true;
 	}
 
 	return found;
