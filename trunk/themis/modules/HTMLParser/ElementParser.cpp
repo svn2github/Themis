@@ -333,13 +333,8 @@ bool ElementParser :: parseSequence(TSchemaRulePtr aRule,
 		if (rule->hasToken(name)) {
 			// Parse token with this rule.
 			printf("Parsing token with rule %u in sequence part\n", i);
-			// WARNING: Temp code
-			bool correctRule = true;
-			while (correctRule) {
-				found = parse(rule, aParentNode);
-				name = mElmToken.getName();
-				correctRule = rule->hasToken(name);
-			}
+			found = parse(rule, aParentNode);
+			name = mElmToken.getName();
 		}
 		else if (rule->hasEmpty()) {
 			// We can skip it. It is optional.
@@ -392,41 +387,25 @@ bool ElementParser :: parseChoice(TSchemaRulePtr aRule,
 	TNodeListPtr children = aRule->getChildNodes();
 	unsigned int length = children->getLength();
 	unsigned int i = 0;
-	unsigned int tokenCount = 0;
-	bool tokenFound = true;
 	TDOMString tokenName = mElmToken.getName();
-	while (tokenFound) {
-		if ((mElmToken.getType() != END_TAG) && aRule->hasToken(tokenName)) {
-			found = false;
-			i = 0;
-			while (!found && i < length) {
-				TNodePtr child = children->item(i);
-				TSchemaRulePtr rule = shared_static_cast<TSchemaRule>(child);
-				if (rule->hasToken(tokenName)) {
-					found = parse(rule, aParentNode);
-					if (found) {
-						printf("Found correct |\n");
-						tokenName = mElmToken.getName();
-						tokenCount++;
-						printf("Got next token name: %s\n", tokenName.c_str());
-					}
-					else {
-						tokenName = mElmToken.getName();
-						printf("Sub |-rule not correct. Find the next one\n");
-					}
+	if ((mElmToken.getType() != END_TAG) && aRule->hasToken(tokenName)) {
+		i = 0;
+		while (!found && i < length) {
+			TNodePtr child = children->item(i);
+			TSchemaRulePtr rule = shared_static_cast<TSchemaRule>(child);
+			if (rule->hasToken(tokenName)) {
+				found = parse(rule, aParentNode);
+				if (found) {
+					printf("Found correct |\n");
+					tokenName = mElmToken.getName();
+					printf("Got next token name: %s\n", tokenName.c_str());
 				}
-				i++;
+				else {
+					tokenName = mElmToken.getName();
+					printf("Sub |-rule not correct. Find the next one\n");
+				}
 			}
-		}
-		else {
-			printf("No token found in | anymore\n");
-			tokenFound = false;
-			if (tokenCount > 0) {
-				found = true;
-			}
-			else {
-				found = false;
-			}
+			i++;
 		}
 	}
 
@@ -550,6 +529,7 @@ bool ElementParser :: parse(TSchemaRulePtr aRule, TNodePtr aParentNode) {
 	unsigned int i = 0;
 	bool tokenFound = true;
 	bool unlimited = false;
+	string ruleName = aRule->getTagName();
 	// Find out how often this rule may be played.
 	if (maxOccurs == 0) {
 		// We can repeat this rule as often as needed.
@@ -564,7 +544,6 @@ bool ElementParser :: parse(TSchemaRulePtr aRule, TNodePtr aParentNode) {
 				printf("Looking for start tag: %s\n", name.c_str());
 				if (aRule->hasToken(name)) {
 					printf("Rule contains %s\n", name.c_str());
-					string ruleName = aRule->getTagName();
 					printf("Rule name: %s\n", ruleName.c_str());
 					if (ruleName == "declaration") {
 						TElementDeclarationPtr declaration = shared_static_cast<TElementDeclaration>(aRule);
@@ -614,7 +593,6 @@ bool ElementParser :: parse(TSchemaRulePtr aRule, TNodePtr aParentNode) {
 				TDOMString name = mElmToken.getName();
 				if (aRule->hasToken(name)) {
 					printf("Rule contains %s\n", name.c_str());
-					string ruleName = aRule->getTagName();
 					printf("Rule name: %s\n", ruleName.c_str());
 					if (ruleName == "declaration") {
 						printf("Parsing text in declaration ?\n");
@@ -656,6 +634,8 @@ bool ElementParser :: parse(TSchemaRulePtr aRule, TNodePtr aParentNode) {
 			i++;
 		}
 	}
+
+	printf("Ending parse rule %s\n", ruleName.c_str());
 
 	if (i > 0) {
 		// Found at least one instance, so found the rule.
