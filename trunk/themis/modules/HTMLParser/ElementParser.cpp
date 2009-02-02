@@ -139,7 +139,6 @@ TElementPtr ElementParser :: parseStartTag() {
 						TElementDeclarationPtr declaration = mSchema->getDeclaration(tokenName);
 						if (declaration->hasContentToken("CDATA")) {
 							// Will have to assume it is CDATA.
-							printf("Crap shit, but will have to parse it\n");
 							mToken = mScanner->nextToken(ELEMENT_CLOSE_SYM);
 						}
 						else {
@@ -167,7 +166,6 @@ TElementPtr ElementParser :: parseStartTag() {
 					TElementDeclarationPtr declaration = mSchema->getDeclaration(tokenName);
 					if (declaration->hasContentToken("CDATA")) {
 						// Will have to assume it is CDATA.
-						printf("Crap shit, but will have to parse it\n");
 						mToken = mScanner->nextToken(ELEMENT_CLOSE_SYM);
 					}
 					else {
@@ -267,16 +265,9 @@ bool ElementParser :: parseDeclaration(TElementDeclarationPtr aDeclaration,
 				}
 				// Get the content rule.
 				TSchemaRulePtr rule = aDeclaration->getContent();
-				if (rule->hasEmpty()) {
-					printf("Rule for tag %s has empty\n", name.c_str());
-				}
-				else {
-					printf("Rule for tag %s does not have empty\n", name.c_str());
-				}
 				name = mElmToken.getName();
-				printf("Trying to find: %s\n", name.c_str());
 				if (rule->hasToken(name)) {
-					printf("Rule has token\n");
+					printf("Rule %s has token %s\n", rule->getTagName().c_str(), name.c_str());
 					found = parse(rule, currentNode);
 					if (found) {
 						printf("Content found correctly\n");
@@ -286,7 +277,10 @@ bool ElementParser :: parseDeclaration(TElementDeclarationPtr aDeclaration,
 					}
 				}
 				else if (rule->hasEmpty()) {
-					printf("Skipping content in parseDeclaration\n");
+					printf("Skipping content in parseDeclaration for rule %s and token %s\n", rule->getTagName().c_str(), name.c_str());
+				}
+				else {
+					printf("Failed to find %s in rule %s\n", name.c_str(), rule->getTagName().c_str());
 				}
 				// I don't think this should be here, but we will see what happens
 				if (mElmToken.getType() == END_TAG && (elementName == mElmToken.getName())) {
@@ -323,7 +317,6 @@ bool ElementParser :: parseSequence(TSchemaRulePtr aRule,
 	bool tokenFound = true;
 	TDOMString name = mElmToken.getName();
 	
-	printf("Going into , rule\n");
 	// We need to parse all the subrules of the rule.
 	TNodeListPtr children = aRule->getChildNodes();
 	unsigned int length = children->getLength();
@@ -365,7 +358,6 @@ bool ElementParser :: parseAll(TSchemaRulePtr aRule,
 	bool found = false;
 	TDOMString name = mElmToken.getName();
 	
-	printf("Going into & rule\n");
 	// We need to parse all the subrules of the rule.
 	TNodeListPtr children = aRule->getChildNodes();
 	unsigned int length = children->getLength();
@@ -425,9 +417,8 @@ bool ElementParser :: parseChoice(TSchemaRulePtr aRule,
 			if (rule->hasToken(tokenName)) {
 				found = parse(rule, aParentNode);
 				if (found) {
-					printf("Found correct |\n");
 					tokenName = mElmToken.getName();
-					printf("Got next token name: %s\n", tokenName.c_str());
+					printf("Found correct |. Got next token name: %s\n", tokenName.c_str());
 				}
 				else {
 					tokenName = mElmToken.getName();
@@ -575,19 +566,11 @@ bool ElementParser :: parse(TSchemaRulePtr aRule, TNodePtr aParentNode) {
 			case START_TAG: {
 				// We need to see if the rule contains the token we found.
 				TDOMString name = mElmToken.getName();
-				printf("Looking for start tag: %s\n", name.c_str());
 				if (aRule->hasToken(name)) {
-					printf("Rule contains %s\n", name.c_str());
-					printf("Rule name: %s\n", ruleName.c_str());
+					printf("Rule %s contains %s\n", ruleName.c_str(), name.c_str());
 					if (ruleName == "declaration") {
 						TElementDeclarationPtr declaration = shared_static_cast<TElementDeclaration>(aRule);
 						tokenFound = parseDeclaration(declaration, aParentNode);
-						if (tokenFound) {
-							printf("Declaration correct\n");
-						}
-						else {
-							printf("Declaration incorrect\n");
-						}
 					}
 					else if (ruleName == "content") {
 						tokenFound = parseContent(aRule, aParentNode);
@@ -613,11 +596,11 @@ bool ElementParser :: parse(TSchemaRulePtr aRule, TNodePtr aParentNode) {
 					}
 				}
 				else if (aRule->hasEmpty()) {
-					printf("Rule contains empty.\n");
+					printf("Rule contains empty while looking for start tag %s\n", name.c_str());
 					tokenFound = false;
 				}
 				else {
-					printf("Rule not found\n");
+					printf("Rule not found for start tag %s\n", name.c_str());
 					tokenFound = false;
 				}
 				break;
@@ -626,8 +609,7 @@ bool ElementParser :: parse(TSchemaRulePtr aRule, TNodePtr aParentNode) {
 				printf("Found text\n");
 				TDOMString name = mElmToken.getName();
 				if (aRule->hasToken(name)) {
-					printf("Rule contains %s\n", name.c_str());
-					printf("Rule name: %s\n", ruleName.c_str());
+					printf("Rule %s contains %s\n", ruleName.c_str(), name.c_str());
 					if (ruleName == "declaration") {
 						printf("Parsing text in declaration ?\n");
 						TElementDeclarationPtr declaration = shared_static_cast<TElementDeclaration>(aRule);
@@ -752,7 +734,6 @@ ElementToken ElementParser :: nextElmToken(bool aSkipSpace) {
 					if (mCommentDeclParser == NULL)
 						mCommentDeclParser = new CommentDeclParser(mScanner, mSchema);
 					mToken = mCommentDeclParser->parse(mToken, ELEMENT_OPEN_SYM);
-					printf("Found comment\n");
 				}
 				else
 					throw ReadException(mScanner->getLineNr(),
