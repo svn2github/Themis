@@ -85,7 +85,7 @@ FRAMEWORKSOURCES= \
 	framework/SiteEntry.cpp \
 	framework/UrlEntry.cpp \
 	framework/date.cpp \
-	framework/parsedate.cpp
+	framework/haiku_parsedate.cpp
 #	framework/UrlHandler.cpp
 RENDERERSOURCES= \
 	Renderer/BitmapElement.cpp \
