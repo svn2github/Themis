@@ -344,7 +344,7 @@ ifeq "$(shell if [ -f /boot/develop/headers/be/bone/sys/socket.h ] ; then echo 1
 	NETWORKING=BONE
 	COMPILE_FLAGS+= -DUSEBONE -D_ZETA_USING_DEPRECATED_API_
 else
-ifeq "$(shell if [ -f /boot/beos/system/servers/net_server ] ; then echo NETSERVER ; else echo HAIKU ; fi)" "HAIKU"
+ifeq "$(shell uname)" "Haiku"
 	NETWORKINGLIBS=-lsocket -lbind
 	NETWORKING=HAIKU
 	COMPILE_FLAGS+= -DHAIKU
