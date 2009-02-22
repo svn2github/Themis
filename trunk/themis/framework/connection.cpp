@@ -34,7 +34,7 @@ Project Start Date: October 18, 2000
 #include <errno.h>
 #include "networkableobject.h"
 #include "tcpmanager.h"
-#ifdef HAIKU
+#ifdef __HAIKU__
 #include <posix/sys/select.h>
 #define closesocket close
 #endif
