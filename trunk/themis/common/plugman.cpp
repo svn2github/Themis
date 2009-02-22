@@ -643,9 +643,15 @@ void plugman::MessageReceived(BMessage *msg) {
 				printf("Attempting to load plugin at %s\n",path.Path());
 #endif
 				nuplug->sysid=load_add_on(path.Path());
-				if (nuplug->sysid<=B_ERROR) {
+#ifdef __HAIKU__
+				if (nuplug->sysid<=0)
+#else
+				if (nuplug->sysid <= B_ERROR )
+#endif
+				 {
 #ifdef DEBUG
 					printf("\t\tFailed.\n");
+					printf("%x: %x\n",B_ERROR,nuplug->sysid);
 #endif
 					delete nuplug;
 					continue;

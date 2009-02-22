@@ -330,7 +330,7 @@ endif
 #	#endif
 #While this doesn't have a major effect on current code, the new
 #networking support will utilize it.
-NETWORKLIBS=-lsocket -lbind  -lopenssl
+NETWORKLIBS=-lsocket -lbind  #-lopenssl
 NETWORKING=NONE
 # by default, debugging information will be included. to turn it off, remove or comment out (#) the -g
 # on the next line 
@@ -344,12 +344,18 @@ ifeq "$(shell if [ -f /boot/develop/headers/be/bone/sys/socket.h ] ; then echo 1
 	NETWORKING=BONE
 	COMPILE_FLAGS+= -DUSEBONE -D_ZETA_USING_DEPRECATED_API_
 else
+ifeq "$(shell if [ -f /boot/develop/headers/posix/sys/socket.h ] ; then echo 1 ; else echo 0 ; fi)" "1"
+	NETWORKINGLIBS=-lsocket -lbind
+	NETWORKING=HAIKU
+	COMPILE_FLAGS+= -DHAIKU
+else
 	NETWORKLIBS=-lnet 
 	NETWORKING=net_server
 ifeq "$(PLATFORM)" "i586"
 	COMPILE_FLAGS+= -DUSENETSERVER -D _Themis_
 else
 	COMPILE_FLAGS+= -d USENETSERVER -d _Themis_
+endif
 endif
 endif
 ifeq "$(PLATFORM)" "ppc"
@@ -450,7 +456,7 @@ $(BASE_INSTALL_DIR)Themis: framework/themis.rsrc $(foreach file,$(notdir $(FRAME
 #$(BASE_INSTALL_DIR)Themis: frameworkdepends commondepends frameworkobjects commonobjects
 	@echo "Linking Themis."
 	@$(CC) -o$(BASE_INSTALL_DIR)Themis $(foreach file,$(notdir $(FRAMEWORKSOURCES:.cpp=.o)),$(FRAMEWORK_OBJECT_DIR)$(file)) $(foreach file,$(notdir $(COMMONSOURCES:.cpp=.o)),$(COMMON_OBJECT_DIR)$(file)) -Xlinker $(LDFLAGS) -L ./ \
-		-L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) $(NETWORKLIBS) $(STDLIBS)  -O0 -lcl -lstdc++.r4 -ltranslation  # -ldom /boot/develop/lib/x86/i386-mcount.o
+		-L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) $(NETWORKLIBS) $(STDLIBS) -Xlinker -soname=_APP_  -O0 -lcl -lstdc++.r4 -ltranslation  # -ldom /boot/develop/lib/x86/i386-mcount.o
 	@echo "Done linking, adding resource file."
 	@xres -o $(BASE_INSTALL_DIR)Themis framework/themis.rsrc
 	@mimeset -F $(BASE_INSTALL_DIR)Themis
