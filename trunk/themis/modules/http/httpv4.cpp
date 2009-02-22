@@ -1184,7 +1184,7 @@ void HTTPv4::BuildRequest(build_request_st *bri)
 		}
 	}
 	//let them know we can handle gzipped responses...
-	new_item->request_string<<"Accept-Encoding:  gzip, compress, deflate\r\n";
+	//new_item->request_string<<"Accept-Encoding:  gzip, compress, deflate\r\n";
 
 	if (pipelining)
 	{
