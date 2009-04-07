@@ -296,7 +296,7 @@ void DOMView	::	showTree( const TNodePtr aNode, BStringItem * aParent )	{
 
 			if (child->getNodeType() == ELEMENT_NODE) {
 				BStringItem * childItem =
-					new BStringItem(child->getNodeName().c_str());
+					new BStringItem(child->getNodeName().c_str(), 0, false);
 				if (aParent == NULL)
 					mTree->AddItem(childItem);
 				else
