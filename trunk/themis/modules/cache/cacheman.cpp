@@ -1805,7 +1805,7 @@ off_t cacheman::SaveToDisk(uint32 usertoken, int32 objecttoken, const char *file
 					chunk=0;
 					
 					chunk=Read(usertoken,objecttoken,buff,65536);
-					printf("%d bytes read.\n",chunk);
+					printf("%li bytes read.\n",chunk);
 					
 					if (chunk>0) {
 						
