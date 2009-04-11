@@ -651,7 +651,7 @@ void plugman::MessageReceived(BMessage *msg) {
 				 {
 #ifdef DEBUG
 					printf("\t\tFailed.\n");
-					printf("%x: %x\n",B_ERROR,nuplug->sysid);
+					printf("%x: %lx\n",B_ERROR,nuplug->sysid);
 #endif
 					delete nuplug;
 					continue;
