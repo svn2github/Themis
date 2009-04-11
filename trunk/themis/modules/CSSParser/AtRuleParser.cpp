@@ -67,11 +67,16 @@ AtRuleParser::ParseMedia(StyleSheetParser *parser)
 			free(type);
 			comma = false;
 
-			if ((status = parser->NextToken()) >= RC_OK && *parser->fCurrentChar == ',')
+			status = parser->NextToken();
+			if (status >= RC_OK)
 			{
-				parser->fCurrentChar++;
-				comma = true;	first = false;
-				status = parser->NextToken();
+				if (*parser->fCurrentChar == ',')
+				{
+					comma = true;
+					parser->fCurrentChar++;
+					status = parser->NextToken();
+				}
+				first = false;
 			}
 		}
 	} while (status == RC_OK);
