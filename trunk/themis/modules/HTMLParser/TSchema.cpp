@@ -223,19 +223,14 @@ TElementDeclarationPtr TSchema	::	getDeclaration(const TDOMString & aName) {
 
 bool TSchema	::	hasDeclaration(const TDOMString & aName) {
 
-	TNodeListPtr declarations = mElements->getChildNodes();
-
-	unsigned int length = declarations->getLength();
-	unsigned int i = 0;
 	bool foundDeclaration = false;
-	TElementDeclarationPtr declaration;
-	while (i < length && !foundDeclaration) {
-		TNodePtr declarationNode = declarations->item(i);
-		declaration = shared_static_cast<TElementDeclaration>(declarationNode);
-		if (declaration->hasRule(aName)) {
-			foundDeclaration = true;
-		}
-		i++;
+
+	try {
+		TElementDeclarationPtr declaration = getDeclaration(aName);
+		foundDeclaration = true;
+	}
+	catch(ElementDeclException) {
+		// Don't do anything. We will return false automatically.
 	}
 
 	return foundDeclaration;
