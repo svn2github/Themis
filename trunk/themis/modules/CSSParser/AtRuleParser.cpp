@@ -42,7 +42,6 @@ AtRuleParser::ParseImport(StyleSheetParser *parser)
 	}
 	if (parser->NextToken() < RC_OK || *parser->fCurrentChar != ';')
 		return INVALID_ARGUMENT;
-	parser->fCurrentChar++;
 
 	/* do something! */
 	printf("import %s: \"%s\"\n",url ? "url" : "file",import);
