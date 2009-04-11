@@ -2202,6 +2202,7 @@ PropertyParser::ParseFontFamily(StyleSheetParser *parser)
 		if (!string && (generic = FindKeyword(name,genericFontFamilies,NUM_GENERIC_FONT_FAMILIES)) != -1)
 		{
 			ff->generic = generic;
+			ff->name = NULL;
 			free(name);
 		}
 		else
