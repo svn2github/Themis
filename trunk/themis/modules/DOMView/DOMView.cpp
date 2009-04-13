@@ -70,10 +70,11 @@ DOMView	::	DOMView( TDocumentPtr aDocument )
 	treeRect.bottom -= B_H_SCROLL_BAR_HEIGHT;
 	treeRect.right -= 200;
 	treeRect.right -= B_V_SCROLL_BAR_WIDTH;
-	mTree = new BOutlineListView( treeRect,
-												   "DOMView",
-												   B_SINGLE_SELECTION_LIST,
-												   B_FOLLOW_ALL_SIDES );
+	mTree = new BOutlineListView(treeRect,
+								 "DOMView",
+								 B_SINGLE_SELECTION_LIST,
+								 B_FOLLOW_ALL_SIDES );
+
 	mTree->SetSelectionMessage( new BMessage( SELECTION ) );
 	BScrollView * scrollTree
 		= new BScrollView( "Scroll Tree",
@@ -191,78 +192,98 @@ DOMView	::	~DOMView()	{
 	
 }
 
+void DOMView :: EmptyListView(BListView * aListView) {
+
+	for (int32 i = aListView->CountItems() - 1; i >= 0 ; i--) {
+		delete aListView->RemoveItem(i);
+	}
+}
+
 void DOMView	::	MessageReceived( BMessage * aMessage )	{
 
 	switch ( aMessage->what )	{
 		case SELECTION:	{
 			int32 index = 0;
 			aMessage->FindInt32( "index", &index );
-			int32 current = 0;
-			TNodePtr documentRoot = mDocument->getFirstChild();
-			TNodePtr found = findNode(documentRoot, index, current);
-			mAttributes->RemoveItems( 0, mAttributes->CountItems() );
-			mValues->RemoveItems( 0, mValues->CountItems() );
-			if ( found->hasAttributes() )	{
-				TNamedNodeMapPtr attrs = found->getAttributes();
-				for ( unsigned int i = 0; i < attrs->getLength(); i++ )	{
-					TNodePtr attr = attrs->item( i );
+			if (index > -1) {
+				int32 current = 0;
+				TNodePtr documentRoot = mDocument->getFirstChild();
+				TNodePtr found = findNode(documentRoot, index, current);
+				EmptyListView(mAttributes);
+				EmptyListView(mValues);
+				if ( found->hasAttributes() )	{
+					TNamedNodeMapPtr attrs = found->getAttributes();
+					for ( unsigned int i = 0; i < attrs->getLength(); i++ )	{
+						TNodePtr attr = attrs->item( i );
+						BStringItem * attrItem =
+							new BStringItem( attr->getNodeName().c_str() );
+						mAttributes->AddItem( attrItem );
+						BStringItem * valueItem =
+							new BStringItem( attr->getNodeValue().c_str() );
+						mValues->AddItem( valueItem );
+					}
+				}
+				else	{
 					BStringItem * attrItem =
-						new BStringItem( attr->getNodeName().c_str() );
+						new BStringItem( "No attributes" );
 					mAttributes->AddItem( attrItem );
 					BStringItem * valueItem =
-						new BStringItem( attr->getNodeValue().c_str() );
+						new BStringItem( "No values" );
 					mValues->AddItem( valueItem );
 				}
-			}
-			else	{
-				BStringItem * attrItem =
-					new BStringItem( "No attributes" );
-				mAttributes->AddItem( attrItem );
-				BStringItem * valueItem =
-					new BStringItem( "No values" );
-				mValues->AddItem( valueItem );
-			}
-			
-			int menuItems = mTextMenu->CountItems();
-			int32 markedIndex = 0;
-			if ( menuItems )	{
-				BMenuItem * marked = mTextMenu->FindMarked();
-				if ( marked )	{
-					markedIndex = mTextMenu->IndexOf( marked );
+				
+				int menuItems = mTextMenu->CountItems();
+				int32 markedIndex = 0;
+				if ( menuItems )	{
+					BMenuItem * marked = mTextMenu->FindMarked();
+					if ( marked )	{
+						markedIndex = mTextMenu->IndexOf( marked );
+					}
+				}
+				for ( int i = 0; i < menuItems; i++ )	{
+					delete mTextMenu->RemoveItem( (int32) 0 );
+					mTextMenu->SetEnabled( false );
+					mText->SetText( "" );
+					mTextMenu->Invalidate();
+				}
+				
+				int textNr = 1;
+				if ( found->hasChildNodes() )	{
+					TNodeListPtr children = found->getChildNodes();
+					mSelectedNode = found;
+					for ( unsigned int i = 0; i < children->getLength(); i++ )	{
+						TNodePtr child = children->item( i );
+						if ( child->getNodeType() == TEXT_NODE )	{
+							mTextMenu->SetEnabled( true );
+							BString * itemText = new BString( "Text part " );
+							*itemText << textNr;
+							BMessage * menuChange =
+								new BMessage( TEXT_MENU_CHANGED );
+							// Warning: Adding index of all children
+							// Makes it easier to find
+							menuChange->AddInt32( "index", i );
+							BMenuItem * item =
+								new BMenuItem( itemText->String(), menuChange );
+							if ( (int32) i <= markedIndex )	{
+								item->SetMarked( true );
+								mText->SetText( child->getNodeValue().c_str(),
+													   child->getNodeValue().size() );
+							}
+							mTextMenu->AddItem( item );
+							textNr++;
+						}
+					}
 				}
 			}
-			for ( int i = 0; i < menuItems; i++ )	{
-				delete mTextMenu->RemoveItem( (int32) 0 );
-				mTextMenu->SetEnabled( false );
-				mText->SetText( "" );
-				mTextMenu->Invalidate();
-			}
-			
-			int textNr = 1;
-			if ( found->hasChildNodes() )	{
-				TNodeListPtr children = found->getChildNodes();
-				mSelectedNode = found;
-				for ( unsigned int i = 0; i < children->getLength(); i++ )	{
-					TNodePtr child = children->item( i );
-					if ( child->getNodeType() == TEXT_NODE )	{
-						mTextMenu->SetEnabled( true );
-						BString * itemText = new BString( "Text part " );
-						*itemText << textNr;
-						BMessage * menuChange =
-							new BMessage( TEXT_MENU_CHANGED );
-						// Warning: Adding index of all children
-						// Makes it easier to find
-						menuChange->AddInt32( "index", i );
-						BMenuItem * item =
-							new BMenuItem( itemText->String(), menuChange );
-						if ( (int32) i <= markedIndex )	{
-							item->SetMarked( true );
-							mText->SetText( child->getNodeValue().c_str(),
-												   child->getNodeValue().size() );
-						}
-						mTextMenu->AddItem( item );
-						textNr++;
-					}
+			else {
+				mAttributes->MakeEmpty();
+				mValues->MakeEmpty();
+				int menuItems = mTextMenu->CountItems();
+				for ( int i = 0; i < menuItems; i++ )	{
+					delete mTextMenu->RemoveItem( (int32) 0 );
+					mTextMenu->SetEnabled( false );
+					mText->SetText( "" );
+					mTextMenu->Invalidate();
 				}
 			}
 			break;
@@ -309,10 +330,9 @@ void DOMView	::	showTree( const TNodePtr aNode, BStringItem * aParent )	{
 
 void DOMView	::	showDocument()	{
 	
-	int32 items = mTree->CountItems();
-	for (int32 i = 0; i < items; i++) {
-		delete mTree->RemoveItem((int32) 0);
-	}
+	BListItem * item = mTree->FirstItem();
+	delete item;
+	mTree->MakeEmpty();
 
 	SetTitle(mDocument->getDocumentURI().c_str());
 	showTree(mDocument, NULL);

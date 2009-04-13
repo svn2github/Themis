@@ -72,6 +72,9 @@ class DOMView	:	public BWindow	{
 		TDocumentPtr mDocument;
 		TNodePtr mSelectedNode;
 	
+	protected:
+		void EmptyListView(BListView * aListView);
+	
 	public:
 		DOMView( TDocumentPtr aDocument );
 		~DOMView();
