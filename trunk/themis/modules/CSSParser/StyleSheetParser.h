@@ -7,11 +7,11 @@
 
 #include "Types.h"
 #include "StyleSheet.h"
+#include "Properties.h"
 
 class InputStream;
 class PropertyParser;
 class AtRuleParser;
-class Properties;
 
 enum
 {

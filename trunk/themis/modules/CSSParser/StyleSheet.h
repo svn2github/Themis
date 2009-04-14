@@ -12,7 +12,6 @@
 #else
 #	error "no BeOS, no list"
 #endif
-#include "Properties.h"
 
 enum css_types
 {
@@ -22,6 +21,7 @@ enum css_types
 
 class InputStream;
 class Selector;
+class Properties;
 
 class StyleSheet
 {

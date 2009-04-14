@@ -7,6 +7,7 @@
 
 #include "Types.h"
 #include "StyleSheet.h"
+#include "Properties.h"
 
 class StyleSheetParser;
 class AtRuleParser;
