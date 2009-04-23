@@ -272,6 +272,15 @@ void App::MessageReceived(BMessage *msg){
 			delete chgmsg;
 			break;
 		}
+		case CSS_CHANGED :
+		{
+			printf( "APP CSS_CHANGED\n" );
+			BMessage* chgmsg = new BMessage( CSS_CHANGED_PARSER );
+			chgmsg->AddInt32( "command", COMMAND_INFO );
+			Broadcast( MS_TARGET_PARSER, chgmsg );
+			delete chgmsg;
+			break;
+		}
 		case PREFSWIN_CLOSE :
 		{
 			printf( "APP PREFSWIN_CLOSE\n" );

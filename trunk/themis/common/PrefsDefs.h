@@ -25,6 +25,7 @@ const uint32 TABSBLANK_CHECKBOX			= 'tabl';
 const uint32 HISTORY_CHANGED			= 'hich';
 const uint32 HISTORY_CLEAR				= 'ghcl';
 const uint32 DTD_SELECTED				= 'dtds';
+const uint32 CSS_SELECTED				= 'csss';
 
 
 /*
@@ -58,9 +59,13 @@ const char* const kPrefsGlobalHistoryDepthInDays	= "PrefsGlobalHistoryDepthInDay
 const char* const kPrefsGlobalHistoryFreeURLCount	= "PrefsGlobalHistoryFreeURLCount";
 const char* const kPrefsTabHistoryDepth				= "PrefsTabHistoryDepth";
 
-/* Prefs Parser */
+/* Prefs HTML Parser */
 const char* const kPrefsDTDDirectory				= "PrefsDTDDirectory";
 const char* const kPrefsActiveDTDPath				= "PrefsActiveDTDPath";
+
+/* Prefs CSS Parser */
+const char* const kPrefsCSSDirectory				= "PrefsCSSDirectory";
+const char* const kPrefsActiveCSSPath				= "PrefsActiveCSSPath";
 
 /*
  * helper struct
@@ -71,9 +76,10 @@ enum prefs_view_const
 	PREFSVIEW_WINDOW = 0,
 	PREFSVIEW_NETWORK,
 //	PREFSVIEW_CACHE,
-	PREFSVIEW_PARSER,
+	PREFSVIEW_HTMLPARSER,
 	PREFSVIEW_RENDERER,
-	PREFSVIEW_PRIVACY
+	PREFSVIEW_PRIVACY,
+	PREFSVIEW_CSSPARSER
 };
 
 struct prefs_item_info

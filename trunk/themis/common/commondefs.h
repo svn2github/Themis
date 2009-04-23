@@ -134,6 +134,8 @@ to allow interoperability in some parts of the application.
 #define CLOSE_URLPOPUP			'clpu'
 #define DTD_CHANGED				'dtdc'
 #define DTD_CHANGED_PARSER		'dtdp'
+#define CSS_CHANGED				'cssc'
+#define CSS_CHANGED_PARSER		'cssp'
 #define PREFSWIN_CLOSE			'pwcl'
 #define PREFSWIN_SHOW			'pwsh'
 #define RE_INIT_TABHISTORY		'rith'
@@ -183,6 +185,7 @@ const float kDividerSpacing = 5.0;
 const char* const kAboutBlankPage = "about:blank";
 const char* const kAboutThemisPage = "about:themis";
 const char* const kNoDTDFoundString = "none";
+const char* const kNoCSSFoundString = "none";
 // colors which can't be grepped from the system
 #include <GraphicsDefs.h>
 const rgb_color kColorInactiveTab = { 184, 184, 184, 255 };

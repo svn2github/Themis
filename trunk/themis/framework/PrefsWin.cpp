@@ -26,7 +26,8 @@ static struct prefs_item_info kPrefsItems [] =
 	{ "Window", kPrefsIconGeneral, PREFSVIEW_WINDOW },
 	{ "Network", kPrefsIconNetwork, PREFSVIEW_NETWORK },
 	{ "Privacy", kPrefsIconPrivacy, PREFSVIEW_PRIVACY },
-	{ "Parser", kPrefsIconParser, PREFSVIEW_PARSER },
+	{ "HTML Parser", kPrefsIconParser, PREFSVIEW_HTMLPARSER },
+	{ "CSS Parser", kPrefsIconParser, PREFSVIEW_CSSPARSER },
 	{ "Renderer", kPrefsIconRenderer, PREFSVIEW_RENDERER },
 	
 	{ NULL, NULL }
@@ -135,9 +136,18 @@ PrefsWin::MessageReceived(
 					
 					break;
 				}
-				case PREFSVIEW_PARSER :
+				case PREFSVIEW_HTMLPARSER :
 				{
-					fCurrentPrefsView = new ParserPrefsView(
+					fCurrentPrefsView = new HTMLParserPrefsView(
+						fViewFrame,
+						kPrefsItems[ selection ].name );
+					fBackgroundView->AddChild( fCurrentPrefsView );
+					
+					break;
+				}
+				case PREFSVIEW_CSSPARSER :
+				{
+					fCurrentPrefsView = new CSSParserPrefsView(
 						fViewFrame,
 						kPrefsItems[ selection ].name );
 					fBackgroundView->AddChild( fCurrentPrefsView );
@@ -373,9 +383,27 @@ PrefsWin::MessageReceived(
 			SaveAppSettings();
 			
 			/*
-			 * use the app to tell http parser about the DTD change.
+			 * use the app to tell html parser about the DTD change.
 			 */
 			be_app_messenger.SendMessage( DTD_CHANGED );
+			
+			break;
+		}
+		case CSS_SELECTED :
+		{
+			printf( "PREFS: CSS_SELECTED\n" );
+			
+			BString str;
+			msg->FindString( "CSSFileString", &str );
+			
+			AppSettings->ReplaceString( kPrefsActiveCSSPath, str.String() );
+			
+			SaveAppSettings();
+			
+			/*
+			 * use the app to tell css parser about the CSS change.
+			 */
+			be_app_messenger.SendMessage( CSS_CHANGED );
 			
 			break;
 		}

@@ -1,6 +1,15 @@
+// Standard C headers
+#include <stdio.h>
+
+// CSS Parser headers
 #include "cssmain.h"
 #include "commondefs.h"
-#include <stdio.h>
+
+#include "StyleSheet.h"
+#include "InputStream.h"
+
+// Themis headers
+#include "PrefsDefs.h"
 
 #define MULTIPLE_DOCUMENTS 0
 
@@ -8,12 +17,28 @@
 static CSSParserObj *CSSP;
 static BMessage *InitInfo;
 
+BMessage * appSettings;
 
-status_t Initialize(void *info) {
-	CSSP=NULL;
-	InitInfo=(BMessage *)info;
+status_t Initialize( void * aInfo )	{
+	
+	BMessage ** appSettings_p;
+	if (aInfo != NULL) {
+		BMessage * message = (BMessage *) aInfo;
+		if (message->HasPointer("settings_message_ptr"))	{
+			message->FindPointer( "settings_message_ptr", (void **) & appSettings_p );
+			appSettings = *appSettings_p;
+		}
+		InitInfo=(BMessage *) aInfo;
+		CSSP = new CSSParserObj(message);
+	}
+	else {
+		CSSP = new CSSParserObj();
+	}
+	
 	return B_OK;
+	
 }
+
 
 status_t Shutdown(bool now) {
 	delete CSSP;
@@ -23,6 +48,7 @@ status_t Shutdown(bool now) {
 	
 	return B_OK;
 }
+
 PlugClass *GetObject(void) {
 	if (CSSP==NULL)
 		CSSP=new CSSParserObj(InitInfo);
@@ -119,6 +145,25 @@ status_t CSSParserObj::ReceiveBroadcast(BMessage *msg)
 					printf("Plug-in unloaded...\n");
 					
 				}break;
+				case CSS_CHANGED_PARSER:	{
+					Debug( "Request to change base css file", PlugID() );
+					if ( appSettings != NULL )	{
+						const char * path;
+						appSettings->FindString( kPrefsActiveCSSPath, &path );
+						string cssLoad = "Loading new CSS file: ";
+						cssLoad += path;
+						Debug( cssLoad.c_str(), PlugID() );
+						FileInputStream input(path);
+						
+						if (input.InitCheck() >= RC_OK)
+						{
+							StyleSheet css(CSS_USER_TYPE,&input);
+						}
+
+						Debug( "New CSS file loaded", PlugID() );
+					}
+					break;
+				}
 				case ReturnedData: {
 					PlugClass *broadcaster=NULL;
 					msg->FindPointer("_broadcast_origin_pointer_",(void**)&broadcaster);

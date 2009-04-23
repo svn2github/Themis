@@ -80,20 +80,35 @@ class PrivacyPrefsView : public BasePrefsView
 
 
 /*
- * ParserPrefsView
+ * HTML ParserPrefsView
  */
 
 
-class ParserPrefsView : public BasePrefsView
+class HTMLParserPrefsView : public BasePrefsView
 {
 	public:
-									ParserPrefsView(
+									HTMLParserPrefsView(
 										BRect frame,
 										const char* name );
 									
 		virtual void				AttachedToWindow();
 };
 
+
+/*
+ * CSS ParserPrefsView
+ */
+
+
+class CSSParserPrefsView : public BasePrefsView
+{
+	public:
+									CSSParserPrefsView(
+										BRect frame,
+										const char* name );
+									
+		virtual void				AttachedToWindow();
+};
 
 /*
  * RendererPrefsView

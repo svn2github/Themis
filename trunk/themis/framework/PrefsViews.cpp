@@ -412,11 +412,11 @@ PrivacyPrefsView::AttachedToWindow()
 
 
 /*
- * ParserPrefsView
+ * HTMLParserPrefsView
  */
 
 
-ParserPrefsView::ParserPrefsView(
+HTMLParserPrefsView::HTMLParserPrefsView(
 	BRect frame,
 	const char* name )
 	: BasePrefsView(
@@ -427,7 +427,7 @@ ParserPrefsView::ParserPrefsView(
 
 
 void
-ParserPrefsView::AttachedToWindow()
+HTMLParserPrefsView::AttachedToWindow()
 {
 	BasePrefsView::AttachedToWindow();
 	
@@ -519,6 +519,112 @@ ParserPrefsView::AttachedToWindow()
 	BMenuField* dtdmenufield = new BMenuField( rect, "DTDFIELD", "Document Type Definition:", popmenu, true, B_FOLLOW_TOP, B_WILL_DRAW);
 	dtdmenufield->SetDivider( be_plain_font->StringWidth( "Document Type Definition:" ) + kItemSpacing );
 	fMainBox->AddChild( dtdmenufield );
+}
+
+/*
+ * CSSParserPrefsView
+ */
+
+
+CSSParserPrefsView::CSSParserPrefsView(
+	BRect frame,
+	const char* name )
+	: BasePrefsView(
+		frame,
+		name )
+{
+}
+
+
+void
+CSSParserPrefsView::AttachedToWindow()
+{
+	BasePrefsView::AttachedToWindow();
+	
+	/* CSS file selection */
+	BPopUpMenu* popmenu = new BPopUpMenu( "No CSS selected or available!", true, true, B_ITEMS_IN_COLUMN );
+					
+	/* find a CSS file */
+	BString cssdir;
+	AppSettings->FindString( kPrefsSettingsDirectory, &cssdir );
+	cssdir.Append( "/css/" );
+	printf( "CSS dir: %s\n", cssdir.String() );
+			
+	BDirectory dir( cssdir.String() );
+	if( dir.InitCheck() != B_OK )
+	{
+		printf( "CSS directory (%s) not found!\n", cssdir.String() );
+		printf( "Setting CSSToUsePath to \"none\"\n" );
+		AppSettings->AddString( kPrefsActiveCSSPath, kNoCSSFoundString );
+	}
+	else
+	{
+		BString activeCSS;
+		AppSettings->FindString( kPrefsActiveCSSPath, &activeCSS );
+		
+		BEntry entry;
+		while( dir.GetNextEntry( &entry, false ) != B_ENTRY_NOT_FOUND )
+		{
+			BPath path;
+			entry.GetPath( &path );
+			char name[B_FILE_NAME_LENGTH];
+			entry.GetName( name );
+				
+			BString nstring( name );
+			printf( "----------------\n" );
+			printf( "found CSS file: %s\n", nstring.String() );
+							
+			/* add the file to the popupmenu */
+			BMessage* msg = new BMessage( CSS_SELECTED );
+			msg->AddString( "CSSFileString", path.Path() );
+			BMenuItem* item = new BMenuItem( name, msg, 0, 0 );
+			popmenu->AddItem( item );
+							
+			// if the path of the current file equals the one of the settings,
+			// mark the item
+			if( strcmp( activeCSS.String(), path.Path() ) == 0 )
+			{
+				printf( "CSS from settings found -> SetMarked( true )\n" );
+				( popmenu->ItemAt( popmenu->CountItems() - 1 ) )->SetMarked( true );
+			}
+		} // while
+						
+		// if we found some CSS files, but still no CSS file is saved in the prefs,
+		// or no CSS file is selected: 
+		// set the last found CSS file in the prefs. we save it to the prefs,
+		// because the user might not reselect a CSS file in the list, which
+		// would save the CSS file.
+		BMessage imsg( CSS_SELECTED );
+		BMessenger msgr( NULL, Window()->Looper() );
+		if( popmenu->CountItems() > 0 )
+		{
+			if( popmenu->FindMarked() == NULL )
+			{
+				printf( "no marked item found\n" );
+				BMenuItem* item = popmenu->ItemAt( popmenu->CountItems() - 1 );
+				item->SetMarked( true );
+				// as we cannot invoke the item here, send the CSS_SELECTED message here
+				BString cssstring( cssdir.String() );
+				cssstring.Append( item->Label() );
+				imsg.AddString( "CSSFileString", cssstring.String() );
+				msgr.SendMessage( &imsg );
+			}
+		}
+		else
+		{
+			imsg.AddString( "CSSFileString", kNoCSSFoundString );
+			msgr.SendMessage( &imsg );
+		}
+	}
+	// end: find a CSS file
+		
+	BRect rect = fMainBox->Bounds();
+	rect.InsetBy( kItemSpacing, kItemSpacing );
+	rect.top += kBBoxExtraInset;
+					
+	BMenuField* cssmenufield = new BMenuField( rect, "CSSFIELD", "Cascading Style Sheet:", popmenu, true, B_FOLLOW_TOP, B_WILL_DRAW);
+	cssmenufield->SetDivider( be_plain_font->StringWidth( "Cascading Style Sheet:" ) + kItemSpacing );
+	fMainBox->AddChild( cssmenufield );
 }
 
 

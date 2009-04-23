@@ -31,7 +31,7 @@ class CSSParserObj:public PlugClass {
 			}
 		} *cssdoc_head;
 	public:
-		CSSParserObj(BMessage *Info);
+		CSSParserObj(BMessage *Info = NULL);
 		virtual ~CSSParserObj();
 		status_t ReceiveBroadcast(BMessage *msg);
 		status_t BroadcastReply(BMessage *msg);
