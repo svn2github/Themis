@@ -46,7 +46,7 @@ CSSStyleRule	::	CSSStyleRule( CSSStyleSheetPtr aParentStyleSheet,
 					:	CSSRule( aParentStyleSheet, aParentRule,
 									  STYLE_RULE, aSelectorText )	{
 
-	printf( "Creating CSSRule\n" );
+	printf( "Creating CSSStyleRule\n" );
 
 	mStyle = aStyle;
 	
