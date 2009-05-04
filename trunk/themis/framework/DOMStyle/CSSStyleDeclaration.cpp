@@ -41,7 +41,7 @@
 
 CSSStyleDeclaration	::	CSSStyleDeclaration( CSSRulePtr aParentRule )	{
 
-	printf( "Creating CSSPrimitiveValue\n" );
+	printf( "Creating CSSStyleDeclaration\n" );
 	
 	mParentRule = aParentRule;
 	
