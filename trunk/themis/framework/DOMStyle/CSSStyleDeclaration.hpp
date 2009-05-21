@@ -41,6 +41,7 @@
 // Declarations
 class CSSValue;
 class CSSRule;
+class CSSStyleRule;
 class CSSStyleDeclaration;
 
 // Typedefs
@@ -75,7 +76,7 @@ class CSSStyleDeclaration	{
 			
 			@param aParentRule	The parent rule of the declaration.
 		*/
-		CSSStyleDeclaration( CSSRulePtr aParentRule );
+		CSSStyleDeclaration( CSSRulePtr aParentRule = CSSRulePtr() );
 		
 		/// Destructor of the CSSStyleDeclaration class.
 		/**

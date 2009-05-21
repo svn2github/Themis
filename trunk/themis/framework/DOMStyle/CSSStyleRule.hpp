@@ -73,8 +73,10 @@ class CSSStyleRule	:	public CSSRule	{
 			@param	aSelectorText		The textual represention of the selector.
 			@param	aStyle					The declaration block of this rule set.
 		*/
-		CSSStyleRule( CSSStyleSheetPtr aParentStyleSheet, CSSRulePtr aParentRule,
-							 const TDOMString aSelectorText, CSSStyleDeclarationPtr aStyle );
+		CSSStyleRule( CSSStyleSheetPtr aParentStyleSheet = CSSStyleSheetPtr(),
+							 CSSRulePtr aParentRule = CSSRulePtr(),
+							 const TDOMString aSelectorText = "",
+							 CSSStyleDeclarationPtr aStyle = CSSStyleDeclarationPtr() );
 		
 		/// Destructor of the CSSStyleRule class.
 		/**
