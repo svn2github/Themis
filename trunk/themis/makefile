@@ -35,6 +35,7 @@ FRAMEWORK_DEPENDS_DIR=$(BASE_DEPENDS_DIR)framework/
 BASE_ADDONS_DEPENDS_DIR=$(BASE_DEPENDS_DIR)add-ons/
 COMMON_DEPENDS_DIR=$(BASE_DEPENDS_DIR)common/
 DOMLIBRARY_DEPENDS_DIR=$(BASE_LIBRARY_DEPENDS_DIR)DOM/
+DOMSTYLELIBRARY_DEPENDS_DIR=$(BASE_LIBRARY_DEPENDS_DIR)DOMStyle/
 TESTPLUG_DEPENDS_DIR=$(BASE_DEPENDS_DIR)testplug/
 HTMLPARSER_DEPENDS_DIR=$(BASE_DEPENDS_DIR)HTMLParser/
 IMAGEH_DEPENDS_DIR=$(BASE_ADDONS_DEPENDS_DIR)imageh/
@@ -48,6 +49,7 @@ FRAMEWORK_OBJECT_DIR=$(BASE_OBJECT_DIR)framework/
 COMMON_OBJECT_DIR=$(BASE_OBJECT_DIR)common/
 BASE_ADDONS_OBJECT_DIR=$(BASE_OBJECT_DIR)add-ons/
 DOMLIBRARY_OBJECT_DIR=$(BASE_LIBRARY_OBJECT_DIR)DOM/
+DOMSTYLELIBRARY_OBJECT_DIR=$(BASE_LIBRARY_OBJECT_DIR)DOMStyle/
 TESTPLUG_OBJECT_DIR=$(BASE_OBJECT_DIR)testplug/
 HTMLPARSER_OBJECT_DIR=$(BASE_OBJECT_DIR)HTMLParser/
 IMAGEH_OBJECT_DIR=$(BASE_ADDONS_OBJECT_DIR)imageh/
@@ -150,6 +152,28 @@ DOMTESTSOURCES= \
 	framework/DOM/DOMTest.cpp
 DOMLOADTESTSOURCES= \
 	framework/DOM/LoadTest.cpp
+DOMSTYLELIBRARYSOURCES= \
+	framework/DOMStyle/Counter.cpp \
+	framework/DOMStyle/CSSCharsetRule.cpp \
+	framework/DOMStyle/CSSFontFaceRule.cpp \
+	framework/DOMStyle/CSSImportRule.cpp \
+	framework/DOMStyle/CSSMediaRule.cpp \
+	framework/DOMStyle/CSSPageRule.cpp \
+	framework/DOMStyle/CSSPrimitiveValue.cpp \
+	framework/DOMStyle/CSSRule.cpp \
+	framework/DOMStyle/CSSRuleList.cpp \
+	framework/DOMStyle/CSSStyleDeclaration.cpp \
+	framework/DOMStyle/CSSStyleRule.cpp \
+	framework/DOMStyle/CSSStyleSheet.cpp \
+	framework/DOMStyle/CSSUnknownRule.cpp \
+	framework/DOMStyle/CSSValue.cpp \
+	framework/DOMStyle/CSSValueList.cpp \
+	framework/DOMStyle/MediaList.cpp \
+	framework/DOMStyle/Property.cpp \
+	framework/DOMStyle/Rect.cpp \
+	framework/DOMStyle/RGBColor.cpp \
+	framework/DOMStyle/StyleSheet.cpp \
+	framework/DOMStyle/StyleSheetList.cpp
 JAVASCRIPT_LIBRARY= \
 	js
 JAVASCRIPT_SUPPORT_LIBRARIES= \
@@ -250,6 +274,9 @@ endif
 #DOM Library object directory
 ifeq "$(shell if [ -d $(DOMLIBRARY_OBJECT_DIR) ] ; then echo 1 ; else mkdir -p $(DOMLIBRARY_OBJECT_DIR) ; echo 0 ; fi)" "0"
 endif
+#DOMStyle Library object directory
+ifeq "$(shell if [ -d $(DOMSTYLELIBRARY_OBJECT_DIR) ] ; then echo 1 ; else mkdir -p $(DOMSTYLELIBRARY_OBJECT_DIR) ; echo 0 ; fi)" "0"
+endif
 #HTML Parser object directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)HTMLParser/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)HTMLParser/ ; echo 0 ; fi)" "0"
 endif
@@ -300,6 +327,9 @@ ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)js/ ] ; then echo 1 ; else mkdir
 endif
 #DOM Library depends directory
 ifeq "$(shell if [ -d $(DOMLIBRARY_DEPENDS_DIR) ] ; then echo 1 ; else mkdir -p $(DOMLIBRARY_DEPENDS_DIR) ; echo 0 ; fi)" "0"
+endif
+#DOMStyle Library depends directory
+ifeq "$(shell if [ -d $(DOMSTYLELIBRARY_DEPENDS_DIR) ] ; then echo 1 ; else mkdir -p $(DOMSTYLELIBRARY_DEPENDS_DIR) ; echo 0 ; fi)" "0"
 endif
 #HTML Parser depends directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)HTMLParser/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)HTMLParser/ ; echo 0 ; fi)" "0"
@@ -441,7 +471,7 @@ help:
 	@echo "	zip		zips up the files in the Themis directory to Themis.zip"
 	@echo "*** NOTE ***"
 	@echo "You will get errors if you use any of the \"clean\" targets in combination with any of the build targets."
-libs: domlib
+libs: domlib domstylelib
 dist: all zip
 	@echo "Done."
 zip:
@@ -852,3 +882,23 @@ endif
 domltestobjects: $(foreach file,$(DOMLOADTESTSOURCES),$(DOMLIBRARY_OBJECT_DIR)$(notdir $(file:.cpp=.o)))
 	@echo "DOM Test application objects are done."
 
+#DOMStyle Library
+domstylelib: $(BASE_APP_LIB_INSTALL_DIR)libdomstyle.so
+$(BASE_APP_LIB_INSTALL_DIR)libdomstyle.so: domlib $(foreach file,$(notdir $(DOMSTYLELIBRARYSOURCES:.cpp=.o)),$(DOMSTYLELIBRARY_OBJECT_DIR)$(file))
+	@echo "Linking DOMStyle Library"
+	@$(CC) -o $(BASE_APP_LIB_INSTALL_DIR)libdomstyle.so $(foreach file,$(notdir $(DOMSTYLELIBRARYSOURCES:.cpp=.o)),$(DOMSTYLELIBRARY_OBJECT_DIR)$(file)) -nostart -Xlinker $(LDFLAGS) -shared -Xlinker -soname=libdomstyle.so -L ./ -L $(BELIBRARIES) -L$(BASE_APP_LIB_INSTALL_DIR) -L $(DOMSTYLELIBRARY_OBJECT_DIR) -lstdc++.r4 -ldom
+	@echo "DOMStyle Library is now linked. Doing mimeset."
+	@mimeset -F $(BASE_APP_LIB_INSTALL_DIR)libdomstyle.so
+	@echo "DOMStyle Library compiled and linked successfully."
+
+$(DOMSTYLELIBRARY_DEPENDS_DIR)%.d: framework/DOMStyle/$(notdir %).cpp
+	@echo "DOMStyle: Updating dependency file $(notdir $@)"
+	@set -e;VAR1=$(shell echo "$(DOMSTYLELIBRARY_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(DOMSTYLELIBRARY_OBJECT_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -Iframework/DOM -I./ -M $(CPPFLAGS) $(COMPILE_FLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/lib\/DOMStyle\/\1.o depends\/lib\/DOMStyle\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
+	
+$(DOMSTYLELIBRARY_OBJECT_DIR)%.o: framework/DOMStyle/%.cpp $(DOMSTYLELIBRARY_DEPENDS_DIR)%.d
+	@echo "DOMStyle: Updating object file $(notdir $@)"
+	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -Iframework/DOM -I./ -c $< -o $@ -Wall -Wno-multichar -Wno-ctor-dtor-privacy -Woverloaded-virtual -O3
+
+ifneq ($(MAKECMDGOALS),clean)
+-include $(foreach file,$(DOMSTYLELIBRARYSOURCES:.cpp=.d),$(DOMSTYLELIBRARY_DEPENDS_DIR)$(notdir $(file)))
+endif
