@@ -131,6 +131,75 @@ void SGMLParser :: parseProlog() {
 
 }
 
+TDocumentPtr SGMLParser :: parseDocument() {
+	
+	// Assume the doctype is HTML.
+	mDocTypeName = "HTML";
+	ElementParser elementParser(mScanner, mSchema, mDocTypeName);
+	// See if we can scan a whole HTML document.
+	try {
+		mToken = mScanner->nextToken();
+		parseSStar();
+		printf("Got first token: %s\n", mScanner->getTokenText().c_str());
+		parseProlog();
+		while (mToken != EOF_SYM) {
+			switch (mToken) {
+				case ELEMENT_OPEN_SYM: {
+					// Kickstart the element parser.
+					TElementPtr element = elementParser.parseStartTag();
+					TDOMString name = element->getTagName();
+					ElementToken elmToken = ElementToken(START_TAG, name, element);
+					TElementDeclarationPtr declaration = mSchema->getDeclaration(mDocTypeName);
+					mToken = elementParser.parse(elmToken, declaration);
+					break;
+				}
+				case DECLARATION_SYM: {
+					mToken = mScanner->nextToken();
+					if (mToken == COMMENT_SYM) {
+						if (mCommentDeclParser == NULL)
+							mCommentDeclParser = new CommentDeclParser(mScanner, TSchemaPtr());
+						mToken = mCommentDeclParser->parse(mToken, ELEMENT_OPEN_SYM);
+					}
+					else
+						throw ReadException(mScanner->getLineNr(),
+											mScanner->getCharNr(),
+											"Expected comment sym",
+											GENERIC,
+											true);
+					break;
+				}
+				case DECLARATION_END_SYM: {
+					mToken = mScanner->nextToken(ELEMENT_OPEN_SYM);
+					break;
+				}
+				case TEXT_SYM: {
+					mToken = mScanner->nextToken();
+					break;
+				}
+				case SPACE_SYM: {
+					// Not doing anything with that right now.
+					mToken = mScanner->nextToken();
+					break;
+				}
+				default: {
+					printf("Found token: %s\n", mScanner->getTokenText().c_str());
+					mToken = mScanner->nextToken();
+				}
+			}
+		}
+	}
+	catch(ReadException r) {
+		printf(
+			"Found error: line: %i char %i message: %s\n",
+			r.getLineNr(),
+			r.getCharNr(),
+			r.getErrorMessage().c_str());
+	}
+
+	return elementParser.getDocument();
+
+}
+
 void SGMLParser :: parseSchema(const char * aSchemaFile) {
 	
 	mDTDParser->parse(aSchemaFile);
@@ -149,74 +218,12 @@ TDocumentPtr SGMLParser :: parse(const char * aSchemaFile, string aText) {
 	printf("Starting to scan the HTML document\n");
 	mScanner->setDocument(aText);
 	printf("Loaded the document\n");
-	// Assume the doctype is HTML.
-	mDocTypeName = "HTML";
-	ElementParser elementParser(mScanner, mSchema, mDocTypeName);
-	// See if we can scan a whole HTML document.
-	TDocumentPtr document;
-	try {
-		mToken = mScanner->nextToken();
-		parseSStar();
-		printf("Got first token: %s\n", mScanner->getTokenText().c_str());
-		parseProlog();
-		while (mToken != EOF_SYM) {
-			switch (mToken) {
-				case ELEMENT_OPEN_SYM: {
-					// Kickstart the element parser.
-					TElementPtr element = elementParser.parseStartTag();
-					TDOMString name = element->getTagName();
-					ElementToken elmToken = ElementToken(START_TAG, name, element);
-					TElementDeclarationPtr declaration = mSchema->getDeclaration(mDocTypeName);
-					mToken = elementParser.parse(elmToken, declaration);
-					break;
-				}
-				case DECLARATION_SYM: {
-					mToken = mScanner->nextToken();
-					if (mToken == COMMENT_SYM) {
-						if (mCommentDeclParser == NULL)
-							mCommentDeclParser = new CommentDeclParser(mScanner, TSchemaPtr());
-						mToken = mCommentDeclParser->parse(mToken, ELEMENT_OPEN_SYM);
-					}
-					else
-						throw ReadException(mScanner->getLineNr(),
-											mScanner->getCharNr(),
-											"Expected comment sym",
-											GENERIC,
-											true);
-					break;
-				}
-				case DECLARATION_END_SYM: {
-					mToken = mScanner->nextToken(ELEMENT_OPEN_SYM);
-					break;
-				}
-				case TEXT_SYM: {
-					mToken = mScanner->nextToken();
-					break;
-				}
-				case SPACE_SYM: {
-					// Not doing anything with that right now.
-					mToken = mScanner->nextToken();
-					break;
-				}
-				default: {
-					printf("Found token: %s\n", mScanner->getTokenText().c_str());
-					mToken = mScanner->nextToken();
-				}
-			}
-		}
-	}
-	catch(ReadException r) {
-		printf(
-			"Found error: line: %i char %i message: %s\n",
-			r.getLineNr(),
-			r.getCharNr(),
-			r.getErrorMessage().c_str());
-	}
+	
+	TDocumentPtr document = parseDocument();
 
 	end = clock();
 	printf("Time taken: %f\n", (double)(end - start)/CLOCKS_PER_SEC);
-
-	document = elementParser.getDocument();
+	
 	return document;
 
 }
@@ -233,73 +240,12 @@ void SGMLParser :: parse(const char * aSchemaFile, const char * aDocument) {
 	printf("Starting to scan the HTML document\n");
 	mScanner->setDocument(aDocument);
 	printf("Loaded the document\n");
-	// Assume the doctype is HTML.
-	mDocTypeName = "HTML";
-	ElementParser elementParser(mScanner, mSchema, mDocTypeName);
-	// See if we can scan a whole HTML document.
-	try {
-		mToken = mScanner->nextToken();
-		parseSStar();
-		printf("Got first token: %s\n", mScanner->getTokenText().c_str());
-		parseProlog();
-		while (mToken != EOF_SYM) {
-			switch (mToken) {
-				case ELEMENT_OPEN_SYM: {
-					// Kickstart the element parser.
-					TElementPtr element = elementParser.parseStartTag();
-					TDOMString name = element->getTagName();
-					ElementToken elmToken = ElementToken(START_TAG, name, element);
-					TElementDeclarationPtr declaration = mSchema->getDeclaration(mDocTypeName);
-					mToken = elementParser.parse(elmToken, declaration);
-					break;
-				}
-				case DECLARATION_SYM: {
-					mToken = mScanner->nextToken();
-					if (mToken == COMMENT_SYM) {
-						if (mCommentDeclParser == NULL)
-							mCommentDeclParser = new CommentDeclParser(mScanner, TSchemaPtr());
-						mToken = mCommentDeclParser->parse(mToken, ELEMENT_OPEN_SYM);
-					}
-					else
-						throw ReadException(mScanner->getLineNr(),
-											mScanner->getCharNr(),
-											"Expected comment sym",
-											GENERIC,
-											true);
-					break;
-				}
-				case DECLARATION_END_SYM: {
-					mToken = mScanner->nextToken(ELEMENT_OPEN_SYM);
-					break;
-				}
-				case TEXT_SYM: {
-					mToken = mScanner->nextToken();
-					break;
-				}
-				case SPACE_SYM: {
-					// Not doing anything with that right now.
-					mToken = mScanner->nextToken();
-					break;
-				}
-				default: {
-					printf("Found token: %s\n", mScanner->getTokenText().c_str());
-					mToken = mScanner->nextToken();
-				}
-			}
-		}
-	}
-	catch(ReadException r) {
-		printf(
-			"Found error: line: %i char %i message: %s\n",
-			r.getLineNr(),
-			r.getCharNr(),
-			r.getErrorMessage().c_str());
-	}
+
+	TDocumentPtr document = parseDocument();
 
 	end = clock();
 	printf("Time taken: %f\n", (double)(end - start)/CLOCKS_PER_SEC);
 
-	TDocumentPtr document = elementParser.getDocument();
 	showTree(document, 0);
 
 }

@@ -82,6 +82,7 @@ class SGMLParser : BaseParser {
 		void parseOtherPrologStar();
 		void parseProlog();
 		void parseBaseDocTypeDecl();
+		TDocumentPtr parseDocument();
 
 	public:
 		// Constructor
