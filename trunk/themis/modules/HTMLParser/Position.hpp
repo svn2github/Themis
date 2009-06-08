@@ -23,7 +23,7 @@
 	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	
-	Original Author: 	Mark Hellegers (M.H.Hellegers@stud.tue.nl)
+	Original Author: 	Mark Hellegers (mark@firedisk.net)
 	Project Start Date: October 18, 2000
 	Class Start Date: March 25, 2003
 */
@@ -66,12 +66,12 @@ class Position	{
 			range, size and start values.
 			
 			@param	aStart	The start of the piece of text to keep track of.
-			@param	aSize		The size of the piece of text to keep track of.
+			@param	aSize	The size of the piece of text to keep track of.
 			@param	aLineNr	The line number the piece of text starts at.
 			@param	aCharNr	The character number the piece of text starts at.
 		*/
-		Position( unsigned int aStart = 0, unsigned int aSize = 0,
-					 unsigned aLineNr = 1, unsigned int aCharNr = 1 );
+		Position(unsigned int aStart = 0, unsigned int aSize = 0,
+				 unsigned aLineNr = 1, unsigned int aCharNr = 1);
 		/// Destructor of the Position class.
 		/**
 			The destructor of the Position class does nothing.
@@ -79,7 +79,7 @@ class Position	{
 		*/
 		~Position();
 		/// A function to get the index of the current position.
-		inline unsigned int getIndex() const	{
+		inline unsigned int getIndex() const {
 			return mIndex;
 		}
 		/// A function to get the line number of the current position.
@@ -92,20 +92,16 @@ class Position	{
 		/**
 			This function goes to the next position in the document.
 			If this would take it past the end of the piece of text it keeps
-			track of, it throws an exception. It keeps the line number and
+			track of, it returns false. It keeps the line number and
 			character number up to date.
 			
 			@param	aChar	The character by which to determine
-										what the next position is.
+							what the next position is.
 			
-			@exception	PositionException	Thrown if going to the next index
-															will cause it to go past the end
-															of the piece of text to keep
-															track of.
 			@todo	@li	The tab size is hard set to 4. Dunno if that is good.
-						@li	Have a look at the body of the function. Hmm...
+					@li	Have a look at the body of the function. Hmm...
 		*/
-		bool nextPosition( const char aChar );
+		bool nextPosition(const char aChar);
 
 };
 

@@ -23,7 +23,7 @@
 	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	
-	Original Author: 	Mark Hellegers (M.H.Hellegers@stud.tue.nl)
+	Original Author: 	Mark Hellegers (mark@firedisk.net)
 	Project Start Date: October 18, 2000
 	Class Start Date: March 25, 2003
 */
@@ -35,56 +35,48 @@
 // SGMLParser headers
 #include "Position.hpp"
 
-Position	::	Position( unsigned int aStart, unsigned int aSize,
-							 unsigned int aLineNr, unsigned int aCharNr )	{
+Position :: Position(unsigned int aStart, unsigned int aSize,
+					 unsigned int aLineNr, unsigned int aCharNr ) {
 	
 	mStart = aStart;
 	mEnd = aStart + aSize;
 	mIndex = aStart;
 	mLineNr = aLineNr;
 	mCharNr = aCharNr;
-	
+
 }
 
-Position	::	~Position()	{
-	
+Position :: ~Position() {
+
 }
 
-/*
-unsigned int Position	::	getIndex() const	{
-	
-	return mIndex;
-	
-}
-*/
+unsigned int Position :: getLineNr() const {
 
-unsigned int Position	::	getLineNr()	const	{
-	
 	return mLineNr;
-	
+
 }
 
-unsigned int Position	::	getCharNr() const	{
-	
+unsigned int Position :: getCharNr() const {
+
 	return mCharNr;
-	
+
 }
 
-unsigned int Position	::	getSize() const	{
-	
+unsigned int Position :: getSize() const {
+
 	return mEnd - mStart;
-	
+
 }
 
-bool Position	::	nextPosition( const char aChar )	{
+bool Position :: nextPosition(const char aChar) {
 
-	if ( mIndex + 1 >= mEnd )	{
+	if (mIndex + 1 >= mEnd) {
 		mIndex--;
 		return false;
 	}
 
-	if ( aChar != '\n' )	{
-		if ( aChar != '\t' )	{
+	if (aChar != '\n') {
+		if (aChar != '\t') {
 			mCharNr++;
 		}
 		else	{
@@ -97,7 +89,7 @@ bool Position	::	nextPosition( const char aChar )	{
 		mCharNr = 1;
 	}
 	mIndex++;
-	
+
 	return true;
 
 }
