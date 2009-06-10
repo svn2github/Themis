@@ -63,8 +63,7 @@ Token DocTypeDeclParser :: parse(Token aToken) {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							"Document type name expected",
-							GENERIC,
-							true);
+							GENERIC);
 	}
 
 	TElementPtr extId = mSchema->createElement("externalId");
@@ -82,23 +81,20 @@ Token DocTypeDeclParser :: parse(Token aToken) {
 				throw ReadException(mScanner->getLineNr(),
 									mScanner->getCharNr(),
 									"PUBLIC or SYSTEM identifier expected",
-									GENERIC,
-									true);
+									GENERIC);
 		}
 		else
 			throw ReadException(mScanner->getLineNr(),
 								mScanner->getCharNr(),
 								"PUBLIC or SYSTEM identifier expected",
-								GENERIC,
-								true);
+								GENERIC);
 	}
 
 	if (mToken != DECLARATION_END_SYM) {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							"Element declaration not closed correctly",
-							GENERIC,
-							true);
+							GENERIC);
 	}
 	mToken = mScanner->nextToken();
 

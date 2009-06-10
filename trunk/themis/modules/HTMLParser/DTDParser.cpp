@@ -161,8 +161,7 @@ TSchemaPtr DTDParser :: parse(const char * aFilename) {
 			throw ReadException(mScanner->getLineNr(),
 								mScanner->getCharNr(),
 								message,
-								GENERIC,
-								true);
+								GENERIC);
 					
 		}
 		catch(ReadException r) {

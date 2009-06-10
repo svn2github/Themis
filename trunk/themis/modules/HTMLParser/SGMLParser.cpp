@@ -114,8 +114,7 @@ void SGMLParser :: parseBaseDocTypeDecl() {
 				throw ReadException(mScanner->getLineNr(),
 									mScanner->getCharNr(),
 									message,
-									GENERIC,
-									true);
+									GENERIC);
 			}
 		}
 	}
@@ -164,8 +163,7 @@ TDocumentPtr SGMLParser :: parseDocument() {
 						throw ReadException(mScanner->getLineNr(),
 											mScanner->getCharNr(),
 											"Expected comment sym",
-											GENERIC,
-											true);
+											GENERIC);
 					break;
 				}
 				case DECLARATION_END_SYM: {

@@ -72,8 +72,7 @@ TElementPtr AttrListDeclParser :: parseAssElementType() {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							"Element type expected",
-							GENERIC,
-							true);
+							GENERIC);
 	}
 	
 	return elements;
@@ -111,16 +110,14 @@ string AttrListDeclParser :: parseDeclValue() {
 			throw ReadException(mScanner->getLineNr(),
 								mScanner->getCharNr(),
 								"Declared value expected",
-								GENERIC,
-								true);
+								GENERIC);
 		}
 	}
 	else {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							"Declared value expected",
-							GENERIC,
-							true);
+							GENERIC);
 	}
 	
 	return tokenText;
@@ -158,24 +155,21 @@ string AttrListDeclParser :: parseDefValue() {
 				throw ReadException(mScanner->getLineNr(),
 									mScanner->getCharNr(),
 									"Text expected",
-									GENERIC,
-									true);
+									GENERIC);
 			}
 		}
 		else {
 			throw ReadException(mScanner->getLineNr(),
 								mScanner->getCharNr(),
 								"Default value expected",
-								GENERIC,
-								true);
+								GENERIC);
 		}
 	}
 	else {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							"Default value expected",
-							GENERIC,
-							true);
+							GENERIC);
 	}
 	
 	return tokenText;
@@ -208,8 +202,7 @@ TElementPtr AttrListDeclParser :: parseAttrDefList() {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							"Attribute definition expected",
-							GENERIC,
-							true);
+							GENERIC);
 	}
 
 	bool adFound = true;
@@ -253,8 +246,7 @@ Token AttrListDeclParser :: parse(Token aToken) {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							"Attribute list declaration not closed correctly",
-							GENERIC,
-							true);
+							GENERIC);
 	}
 	mToken = mScanner->nextToken();
 	

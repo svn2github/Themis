@@ -70,8 +70,7 @@ Token CommentDeclParser :: parse(Token aToken, Token aEndToken) {
 				throw ReadException(mScanner->getLineNr(),
 									mScanner->getCharNr(),
 									"Comment declaration not closed correctly",
-									GENERIC,
-									true);
+									GENERIC);
 			}
 		}
 	}

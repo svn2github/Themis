@@ -82,8 +82,7 @@ TElementPtr DeclarationParser :: parseNameGroup() {
 				throw ReadException(mScanner->getLineNr(),
 									mScanner->getCharNr(),
 									"Name expected",
-									GENERIC,
-									true);
+									GENERIC);
 			}
 		}
 	}
@@ -91,16 +90,14 @@ TElementPtr DeclarationParser :: parseNameGroup() {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							"Name expected",
-							GENERIC,
-							true);
+							GENERIC);
 	}
 	parseTsStar();
 	if (mToken != RIGHT_BRACKET_SYM) {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							"Name group not closed correctly",
-							GENERIC,
-							true);
+							GENERIC);
 	}
 	
 	mToken = mScanner->nextToken();
@@ -136,8 +133,7 @@ void DeclarationParser :: parseNameTokenGroup() {
 				throw ReadException(mScanner->getLineNr(),
 									mScanner->getCharNr(),
 									"Name expected",
-									GENERIC,
-									true);
+									GENERIC);
 			}
 		}
 	}
@@ -145,16 +141,14 @@ void DeclarationParser :: parseNameTokenGroup() {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							"Name expected",
-							GENERIC,
-							true);
+							GENERIC);
 	}
 	parseTsStar();
 	if (mToken != RIGHT_BRACKET_SYM) {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							"Name group not closed correctly",
-							GENERIC,
-							true);
+							GENERIC);
 	}
 	
 	mToken = mScanner->nextToken();
@@ -171,8 +165,7 @@ void DeclarationParser :: parseExternalId(string aToken,
 			throw ReadException(mScanner->getLineNr(),
 								mScanner->getCharNr(),
 								"Public id expected",
-								GENERIC,
-								true);
+								GENERIC);
 		}
 		aEntity->setAttribute("text", mScanner->getTokenText());
 		mToken = mScanner->nextToken();
@@ -182,13 +175,6 @@ void DeclarationParser :: parseExternalId(string aToken,
 		parsePsPlus();
 		if (mToken == TEXT_SYM) {
 			mToken = mScanner->nextToken();
-/*
-			throw ReadException(mScanner->getLineNr(),
-								mScanner->getCharNr(),
-								"System id expected",
-								GENERIC,
-								true);
-*/
 		}
 	}
 

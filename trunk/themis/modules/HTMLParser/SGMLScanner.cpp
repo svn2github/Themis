@@ -193,8 +193,7 @@ Token SGMLScanner :: nextToken(Token aEndToken, Token aEndToken2) {
 				throw ReadException(mText.getLineNr(),
 									mText.getCharNr(),
 									"Unsupported end token",
-									GENERIC,
-									true );
+									GENERIC);
 			}
 		}
 	}
@@ -233,8 +232,7 @@ Token SGMLScanner :: nextToken(Token aEndToken, Token aEndToken2) {
 			throw ReadException(mText.getLineNr(),
 								mText.getCharNr(),
 								"Character unexpected",
-								GENERIC,
-								true );
+								GENERIC);
 		}
 	}
 	if (mChar == '-') {
@@ -399,8 +397,7 @@ Token SGMLScanner :: nextToken(Token aEndToken, Token aEndToken2) {
 	throw ReadException(mText.getLineNr(),
 						mText.getCharNr(),
 						"Character unexpected",
-						GENERIC,
-						true );
+						GENERIC);
 
 }
 

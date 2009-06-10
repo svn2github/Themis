@@ -175,8 +175,7 @@ void BaseParser :: parsePsPlus() {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							"Space expected",
-							GENERIC,
-							true);
+							GENERIC);
 	}
 
 	mToken = mScanner->nextToken();

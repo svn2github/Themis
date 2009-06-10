@@ -76,16 +76,14 @@ TSchemaRulePtr ElementDeclParser :: parseContentToken() {
 				throw ReadException(mScanner->getLineNr(),
 									mScanner->getCharNr(),
 									"PCDATA expected",
-									GENERIC,
-									true);
+									GENERIC);
 			}
 		}
 		else {
 			throw ReadException(mScanner->getLineNr(),
 								mScanner->getCharNr(),
 								"PCDATA expected",
-								GENERIC,
-								true);
+								GENERIC);
 		}
 	}
 	else if (mToken == IDENTIFIER_SYM) {
@@ -113,8 +111,7 @@ TSchemaRulePtr ElementDeclParser :: parseContentToken() {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							"Content token expected",
-							GENERIC,
-							true);
+							GENERIC);
 	}
 	
 	return contentToken;
@@ -160,8 +157,7 @@ TSchemaRulePtr ElementDeclParser :: parseModelGroup() {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							"Model group not closed correctly",
-							GENERIC,
-							true);
+							GENERIC);
 	}
 
 	if (mToken == QUESTION_MARK_SYM) {
@@ -199,8 +195,7 @@ TSchemaRulePtr ElementDeclParser :: parseContent() {
 			throw ReadException(mScanner->getLineNr(),
 								mScanner->getCharNr(),
 								"Declared content or ANY expected",
-								GENERIC,
-								true);
+								GENERIC);
 		}
 	}
 	else if (mToken == LEFT_BRACKET_SYM) {
@@ -226,8 +221,7 @@ TSchemaRulePtr ElementDeclParser :: parseContent() {
 					throw ReadException(mScanner->getLineNr(),
 										mScanner->getCharNr(),
 										"Name group expected",
-										GENERIC,
-										true);
+										GENERIC);
 				}
 			}
 		}
@@ -236,8 +230,7 @@ TSchemaRulePtr ElementDeclParser :: parseContent() {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							"Declared content or content model expected",
-							GENERIC,
-							true);
+							GENERIC);
 	}
 	
 	return content;
@@ -257,8 +250,7 @@ bool ElementDeclParser :: parseSingleTagMin() {
 			throw ReadException(mScanner->getLineNr(),
 								mScanner->getCharNr(),
 								"Tag minimization expected",
-								GENERIC,
-								true);
+								GENERIC);
 		}
 	}
 	else if (mToken == MINUS_SYM) {
@@ -269,8 +261,7 @@ bool ElementDeclParser :: parseSingleTagMin() {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							"Tag minimization expected",
-							GENERIC,
-							true);
+							GENERIC);
 	}
 	
 	return required;
@@ -305,8 +296,7 @@ TElementPtr ElementDeclParser :: parseElementType() {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							"Element type expected",
-							GENERIC,
-							true);
+							GENERIC);
 	}
 	
 	return elements;
@@ -339,8 +329,7 @@ Token ElementDeclParser :: parse(Token aToken) {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							"Element declaration not closed correctly",
-							GENERIC,
-							true);
+							GENERIC);
 	}
 	mToken = mScanner->nextToken();
 

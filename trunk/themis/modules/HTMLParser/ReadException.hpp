@@ -23,7 +23,7 @@
 	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	
-	Original Author: 	Mark Hellegers (M.H.Hellegers@stud.tue.nl)
+	Original Author: 	Mark Hellegers (mark@firedisk.net)
 	Project Start Date: October 18, 2000
 	Class Start Date: March 25, 2003
 */
@@ -46,18 +46,6 @@ using std::string;
 enum ExceptionReason	{
 	/// A generic error occured.
 	GENERIC,
-	/// The end of the file was reached.
-	END_OF_FILE_REACHED,
-	/// This tag wasn't the one we wanted.
-	WRONG_TAG_FOUND,
-	/// An end tag was found, but not wanted.
-	END_TAG_FOUND,
-	/// A tag was wanted, but not found.
-	NO_TAG_FOUND,
-	/// PCDATA was wanted, but not found,
-	NO_PCDATA_FOUND,
-	/// Content had to be skipped, but was not possible.
-	NO_SKIP_CONTENT
 };
 
 /// Indicates a read error.
@@ -76,10 +64,6 @@ class ReadException	{
 		unsigned int mLineNr;
 		/// The error message.
 		string mErrorMessage;
-		/// Indicates if the error was fatal or not.
-		bool mFatal;
-		/// The name of the tag, if it was the wrong one.
-		string mWrongTag;
 		/// The reason the exception occured.
 		ExceptionReason mReason;
 	
@@ -93,12 +77,12 @@ class ReadException	{
 			@param aCharNr	Indicates the character number the error occured on.
 			@param aErrorMessage	The error message.
 			@param aReason	The reason for the exception.
-			@param aFatal		Indicates if the error is fatal or not.
 
 		*/
-		ReadException( unsigned int aLineNr, unsigned int aCharNr,
-							   string aErrorMessage, ExceptionReason aReason = GENERIC,
-							   bool aFatal = false );
+		ReadException(unsigned int aLineNr,
+					  unsigned int aCharNr,
+					  string aErrorMessage,
+					  ExceptionReason aReason = GENERIC);
 		/// Destructor of the ReadException class.
 		/**
 			The destructor of the ReadException class does nothing.
@@ -113,54 +97,6 @@ class ReadException	{
 		string getErrorMessage() const;
 		/// A function to get the reason for the exception.
 		ExceptionReason getReason() const;
-		/// A function to set the reason for the exception.
-		/**
-			This function allows you to set the reason for the exception.
-			This can be handy when you want to rethrow an exception
-			with a different reason.
-			
-			@param	aReason	The reason for the exception.
-		*/
-		void setReason( ExceptionReason aReason );
-		/// A function to see if the error was fatal.
-		bool isFatal() const;
-		/// A function to see if the end of the file was reached.
-		/**
-			@todo	Might be unneeded as you can already
-						get that from the exception reason.
-		*/
-		bool isEof() const;
-		/// A function to see if the wrong tag was parsed.
-		/**
-			@todo	Might be unneeded as you can already
-						get that from the exception reason.
-		*/
-		bool isWrongTag() const;
-		/// A function to see if an end tag was parsed.
-		/**
-			@todo	Might be unneeded as you can already
-						get that from the exception reason.
-		*/
-		bool isEndTag() const;
-		/// A function to set the wrong tag that was found.
-		/**
-			This function allows you to set the wrong tag that
-			was found while parsing.
-			
-			@param	aWrongTag	The wrong tag name.
-		*/
-		void setWrongTag( string aWrongTag );
-		/// A function to get the wrong tag that was found.
-		string getWrongTag() const;
-		/// A function to set how fatal the error was.
-		/**
-			This function allows you to set if the error
-			that was found was fatal or not.
-			
-			@param	aFatal	The fatal value of the error.
-		*/
-		void setFatal( bool aFatal = true );
-		
 };
 
 #endif

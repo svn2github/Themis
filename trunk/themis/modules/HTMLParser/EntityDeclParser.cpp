@@ -61,8 +61,7 @@ TElementPtr EntityDeclParser :: parseEntityName() {
 				throw ReadException(mScanner->getLineNr(),
 									mScanner->getCharNr(),
 									"Space expected",
-									GENERIC,
-									true);
+									GENERIC);
 			}
 			
 			mToken = mScanner->nextToken();
@@ -70,8 +69,7 @@ TElementPtr EntityDeclParser :: parseEntityName() {
 				throw ReadException(mScanner->getLineNr(),
 									mScanner->getCharNr(),
 									"Name expected",
-									GENERIC,
-									true);
+									GENERIC);
 			}
 			entity = mSchema->createElement(mScanner->getTokenText());
 			mParEntities->appendChild(entity);
@@ -86,8 +84,7 @@ TElementPtr EntityDeclParser :: parseEntityName() {
 			throw ReadException(mScanner->getLineNr(),
 								mScanner->getCharNr(),
 								"Entity name expected",
-								GENERIC,
-								true);
+								GENERIC);
 		}
 	}
 	mToken = mScanner->nextToken();
@@ -103,8 +100,7 @@ void EntityDeclParser :: parseDataText(TElementPtr aEntity) {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							"Parameter literal expected",
-							GENERIC,
-							true);
+							GENERIC);
 	}
 
 	unsigned int tokenStartIndex = mScanner->getTokenStartIndex();
@@ -152,8 +148,7 @@ void EntityDeclParser :: parseEntityText(TElementPtr aEntity) {
 				throw ReadException(mScanner->getLineNr(),
 									mScanner->getCharNr(),
 									"CDATA SDATA, PI or PUBLIC or SYSTEM identifier expected",
-									GENERIC,
-									true);
+									GENERIC);
 			}
 			break;
 		}
@@ -161,8 +156,7 @@ void EntityDeclParser :: parseEntityText(TElementPtr aEntity) {
 			throw ReadException(mScanner->getLineNr(),
 								mScanner->getCharNr(),
 								"Entity text expected",
-								GENERIC,
-								true );
+								GENERIC);
 		}
 	}
 
@@ -183,8 +177,7 @@ Token EntityDeclParser :: parse(Token aToken) {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							"Entity declaration not closed correctly",
-							GENERIC,
-							true);
+							GENERIC);
 	}
 	mToken = mScanner->nextToken();
 	

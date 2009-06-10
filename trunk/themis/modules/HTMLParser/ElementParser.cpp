@@ -85,8 +85,7 @@ bool ElementParser :: parseAttrSpec(TElementPtr aElement) {
 				throw ReadException(mScanner->getLineNr(),
 									mScanner->getCharNr(),
 									message,
-									GENERIC,
-									true);
+									GENERIC);
 			}
 		}
 		else {
@@ -102,8 +101,7 @@ bool ElementParser :: parseAttrSpec(TElementPtr aElement) {
 				throw ReadException(mScanner->getLineNr(),
 									mScanner->getCharNr(),
 									message,
-									GENERIC,
-									true);
+									GENERIC);
 			}
 		}
 	}
@@ -155,8 +153,7 @@ TElementPtr ElementParser :: parseStartTag() {
 					throw ReadException(mScanner->getLineNr(),
 										mScanner->getCharNr(),
 										message,
-										GENERIC,
-										true);
+										GENERIC);
 				}
 				break;
 			}
@@ -183,8 +180,7 @@ TElementPtr ElementParser :: parseStartTag() {
 				throw ReadException(mScanner->getLineNr(),
 									mScanner->getCharNr(),
 									message,
-									GENERIC,
-									true);
+									GENERIC);
 			}
 		}
 	}
@@ -193,8 +189,7 @@ TElementPtr ElementParser :: parseStartTag() {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							message,
-							GENERIC,
-							true);
+							GENERIC);
 	}
 	
 	return element;
@@ -218,8 +213,7 @@ TDOMString ElementParser :: parseEndTag() {
 			throw ReadException(mScanner->getLineNr(),
 								mScanner->getCharNr(),
 								message,
-								GENERIC,
-								true);
+								GENERIC);
 		}
 	}
 	else {
@@ -227,8 +221,7 @@ TDOMString ElementParser :: parseEndTag() {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							message,
-							GENERIC,
-							true);
+							GENERIC);
 	}
 
 	return tagName;
@@ -739,8 +732,7 @@ ElementToken ElementParser :: nextElmToken(bool aSkipSpace) {
 					throw ReadException(mScanner->getLineNr(),
 										mScanner->getCharNr(),
 										"Expected comment sym",
-										GENERIC,
-										true);
+										GENERIC);
 				break;
 			}
 			case EOF_SYM: {
@@ -753,8 +745,7 @@ ElementToken ElementParser :: nextElmToken(bool aSkipSpace) {
 				throw ReadException(mScanner->getLineNr(),
 									mScanner->getCharNr(),
 									"Unexpected token found: " + mScanner->getTokenText(),
-									GENERIC,
-									true);
+									GENERIC);
 			}
 		}
 	}

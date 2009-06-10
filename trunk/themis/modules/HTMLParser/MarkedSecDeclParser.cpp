@@ -55,8 +55,7 @@ void MarkedSecDeclParser :: parseStatusKeyWord() {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							"Status keyword expected",
-							GENERIC,
-							true);
+							GENERIC);
 	}
 
 	string tokenText = mScanner->getTokenText();
@@ -70,8 +69,7 @@ void MarkedSecDeclParser :: parseStatusKeyWord() {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							error,
-							GENERIC,
-							true);
+							GENERIC);
 	}
 	mToken = mScanner->nextToken();
 	
@@ -89,8 +87,7 @@ Token MarkedSecDeclParser :: parse(Token aToken) {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							"[ Expected",
-							GENERIC,
-							true);
+							GENERIC);
 	}
 	mToken = mScanner->nextToken();
 	
@@ -110,8 +107,7 @@ Token MarkedSecDeclParser :: parse(Token aToken) {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
 							"Marked section declaration not closed correctly",
-							GENERIC,
-							true);
+							GENERIC);
 	}
 	mToken = mScanner->nextToken();
 	
