@@ -70,7 +70,7 @@ class MediaList	{
 			
 			@param	aMediaText	The parsable textual representation.
 		*/
-		MediaList(const TDOMString aMediaText);
+		MediaList(const TDOMString aMediaText = "");
 		
 		/// Destructor of the MediaList class.
 		/**

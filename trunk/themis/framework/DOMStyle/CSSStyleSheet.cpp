@@ -44,65 +44,69 @@
 // DOM Core headers
 #include "TDOMException.h"
 
-CSSStyleSheet	::	CSSStyleSheet( CSSRulePtr aOwnerRule )
-						:	StyleSheet( "text/css", TNodePtr(), StyleSheetPtr(), "", "",
-											 MediaListPtr() )	{
+CSSStyleSheet :: CSSStyleSheet(CSSRulePtr aOwnerRule)
+			  : StyleSheet("text/css",
+			  			   TNodePtr(),
+			  			   StyleSheetPtr(),
+			  			   "",
+			  			   "",
+						   MediaListPtr()) {
 
 	printf( "Creating CSSStyleSheet\n" );
-	
+
 	mOwnerRule = aOwnerRule;
-	
+
 	mCssRuleList = vector<CSSRulePtr>();
-	mCssRules = CSSRuleListPtr( new CSSRuleList( &mCssRuleList ) );
-	
+	mCssRules = CSSRuleListPtr(new CSSRuleList(&mCssRuleList));
+
 }
 
-CSSStyleSheet	::	~CSSStyleSheet()	{
-	
+CSSStyleSheet :: ~CSSStyleSheet() {
+
 }
 
-CSSRulePtr CSSStyleSheet	::	getOwnerRule() const	{
+CSSRulePtr CSSStyleSheet :: getOwnerRule() const {
 
-	return make_shared( mOwnerRule );
-	
+	return make_shared(mOwnerRule);
+
 }
 
-CSSRuleListPtr CSSStyleSheet	::	getCssRules()	const	{
-	
+CSSRuleListPtr CSSStyleSheet :: getCSSRules() const {
+
 	return mCssRules;
-	
+
 }
 
-unsigned long CSSStyleSheet	::	insertRule( const CSSRulePtr aRule,
-																unsigned long aIndex )	{
+unsigned long CSSStyleSheet :: insertRule(const CSSRulePtr aRule,
+										  unsigned long aIndex) {
 
-	if ( aIndex > mCssRuleList.size() )	{
-		throw TDOMException( INDEX_SIZE_ERR );
+	if (aIndex > mCssRuleList.size()) {
+		throw TDOMException(INDEX_SIZE_ERR);
 	}
-	
-	if ( aIndex == mCssRuleList.size() )	{
-		mCssRuleList.push_back( aRule );
+
+	if (aIndex == mCssRuleList.size()) {
+		mCssRuleList.push_back(aRule);
 	}
-	else	{
+	else {
 		// Please check this.
-		mCssRuleList.insert( &mCssRuleList[ aIndex ] ,aRule );
+		mCssRuleList.insert(&mCssRuleList[aIndex], aRule);
 	}
 
 }
 
-unsigned long CSSStyleSheet	::	insertRule( const TDOMString aRule,
-																unsigned long aIndex )	{
+unsigned long CSSStyleSheet :: insertRule(const TDOMString aRule,
+										  unsigned long aIndex) {
 	// Don't like this function. Leaving it alone.
 	return 0;
 
 }
 
-void CSSStyleSheet	::	deleteRule( unsigned long aIndex )	{
-	
-	if ( aIndex > mCssRuleList.size() )	{
-		throw TDOMException( INDEX_SIZE_ERR );
+void CSSStyleSheet :: deleteRule(unsigned long aIndex) {
+
+	if (aIndex > mCssRuleList.size()) {
+		throw TDOMException(INDEX_SIZE_ERR);
 	}
 
-	mCssRuleList.erase( &mCssRuleList[ aIndex ] );
-	
+	mCssRuleList.erase(&mCssRuleList[aIndex]);
+
 }

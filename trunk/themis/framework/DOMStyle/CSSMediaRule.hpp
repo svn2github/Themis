@@ -42,12 +42,14 @@
 class CSSStyleSheet;
 class CSSRule;
 class CSSRuleList;
+class CSSMediaRule;
 class MediaList;
 
 // Typedefs used
 typedef boost::shared_ptr<CSSRule> CSSRulePtr;
 typedef boost::shared_ptr<CSSRuleList> CSSRuleListPtr;
 typedef boost::shared_ptr<CSSStyleSheet> CSSStyleSheetPtr;
+typedef boost::shared_ptr<CSSMediaRule> CSSMediaRulePtr;
 typedef boost::shared_ptr<MediaList> MediaListPtr;
 
 // Namespaces used;
@@ -62,7 +64,7 @@ using namespace std;
 */
 
 
-class CSSMediaRule	:	public CSSRule	{
+class CSSMediaRule : public CSSRule {
 
 	private:
 		vector<CSSRulePtr> mCssRuleList;
@@ -78,11 +80,11 @@ class CSSMediaRule	:	public CSSRule	{
 			
 			@param	aParentStyleSheet	The parent style sheet.
 			@param	aParentRule			The parent rule.
-			@param	aMedia					The list of media types.
-			@param	aCssRules				The list of css rules.
+			@param	aMedia				The list of media types.
 		*/
-		CSSMediaRule( CSSStyleSheetPtr aParentStyleSheet, CSSRulePtr aParentRule,
-							   MediaListPtr aMedia, CSSRuleListPtr aCssRules );
+		CSSMediaRule(CSSStyleSheetPtr aParentStyleSheet,
+					 CSSRulePtr aParentRule,
+					 MediaListPtr aMedia);
 		
 		/// Destructor of the CSSMediaRule class.
 		/**
@@ -102,7 +104,7 @@ class CSSMediaRule	:	public CSSRule	{
 			This function inserts a the rule specified by the first parameter at the
 			index specified by the second parameter.
 			
-			@param	aRule		The parsable rule text to insert.
+			@param	aRule	The parsable rule text to insert.
 			@param	aIndex	The index in the media rule set to insert the rule at.
 
 			@exception	HIERARCHY_REQUEST_ERR
@@ -113,14 +115,14 @@ class CSSMediaRule	:	public CSSRule	{
 			@exception	INDEX_SIZE_ERR
 								Thrown if the specified index is not a valid insertion point.
 		*/
-		unsigned long insertRule( const CSSRulePtr aRule, unsigned long aIndex );
+		unsigned long insertRule(const CSSRulePtr aRule, unsigned long aIndex);
 		
 		/// A function to add a new rule.
 		/**
 			This function inserts a the rule specified by the first parameter at the
 			index specified by the second parameter.
 			
-			@param	aRule		The parsable rule text to insert.
+			@param	aRule	The parsable rule text to insert.
 			@param	aIndex	The index in the media rule set to insert the rule at.
 
 			@exception	SYNTAX_ERR
@@ -133,7 +135,7 @@ class CSSMediaRule	:	public CSSRule	{
 			@exception	INDEX_SIZE_ERR
 								Thrown if the specified index is not a valid insertion point.
 		*/
-		unsigned long insertRule( const TDOMString aRule, unsigned long aIndex );
+		unsigned long insertRule(const TDOMString aRule, unsigned long aIndex);
 		
 		/// A function to delete a rule.
 		/**
@@ -146,7 +148,7 @@ class CSSMediaRule	:	public CSSRule	{
 			@exception	INDEX_SIZE_ERR
 								Thrown if the rule at the specified index does not exist.
 		*/
-		void deleteRule( unsigned long aIndex );
+		void deleteRule(unsigned long aIndex);
 };
 
 #endif

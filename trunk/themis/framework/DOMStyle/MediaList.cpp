@@ -75,29 +75,32 @@ void MediaList :: setMediaText(const TDOMString aMediaText) {
 
 	// Clear the existing values first.
 	mMediaList.clear();
-	
-	// Parse the string and add the items to the list.
+
 	unsigned int length = aMediaText.length();
-	TDOMString medium = "";
-	char c = '\0';
-	for (unsigned int i = 0; i < length; i++) {
-		c = aMediaText[i];
-		if (!(isspace(c) || iscntrl(c))) {
-			if (c == ',' && medium.length() > 0) {
-				// End of a medium and it contains text.
-				mMediaList.push_back(medium);
-				medium = "";
-			}
-			else {
-				// Not at the end of the medium text yet.
-				medium += c;
+	if (length > 0) {
+		TDOMString medium = "";
+		char c = '\0';
+	
+		// Parse the string and add the items to the list.
+		for (unsigned int i = 0; i < length; i++) {
+			c = aMediaText[i];
+			if (!(isspace(c) || iscntrl(c))) {
+				if (c == ',' && medium.length() > 0) {
+					// End of a medium and it contains text.
+					mMediaList.push_back(medium);
+					medium = "";
+				}
+				else {
+					// Not at the end of the medium text yet.
+					medium += c;
+				}
 			}
 		}
-	}
-	
-	// See if there is still a medium in the buffer and if so add it.
-	if (medium.length() > 0) {
-		mMediaList.push_back(medium);
+		
+		// See if there is still a medium in the buffer and if so add it.
+		if (medium.length() > 0) {
+			mMediaList.push_back(medium);
+		}
 	}
 
 }

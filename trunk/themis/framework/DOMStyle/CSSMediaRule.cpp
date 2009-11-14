@@ -44,67 +44,65 @@
 // DOM Core headers
 #include "TDOMException.h"
 
-CSSMediaRule	::	CSSMediaRule( CSSStyleSheetPtr aParentStyleSheet,
-												   CSSRulePtr aParentRule,
-												   MediaListPtr aMedia,
-												   CSSRuleListPtr aCssRules )
-						:	CSSRule( aParentStyleSheet, aParentRule,
-									  	  MEDIA_RULE, "" )	{
+CSSMediaRule :: CSSMediaRule(CSSStyleSheetPtr aParentStyleSheet,
+							 CSSRulePtr aParentRule,
+							 MediaListPtr aMedia)
+			 : CSSRule(aParentStyleSheet, aParentRule, MEDIA_RULE, "") {
 
-	printf( "Creating CSSMediaRule\n" );
+	printf("Creating CSSMediaRule\n");
 
 	mCssRuleList = vector<CSSRulePtr>();
-	mCssRules = CSSRuleListPtr( new CSSRuleList( &mCssRuleList ) );
+	mCssRules = CSSRuleListPtr(new CSSRuleList(&mCssRuleList));
 
 	mMedia = aMedia;
 }
 
-CSSMediaRule	::	~CSSMediaRule()	{
-	
+CSSMediaRule :: ~CSSMediaRule() {
+
 }
 
-MediaListPtr CSSMediaRule	::	getMedia()	const	{
-	
+MediaListPtr CSSMediaRule :: getMedia() const {
+
 	return mMedia;
-	
+
 }
 
-CSSRuleListPtr CSSMediaRule	::	getCssRules()	const	{
-	
+CSSRuleListPtr CSSMediaRule :: getCssRules() const {
+
 	return mCssRules;
-	
+
 }
 
-unsigned long CSSMediaRule	::	insertRule( const CSSRulePtr aRule,
-																unsigned long aIndex )	{
+unsigned long CSSMediaRule :: insertRule(const CSSRulePtr aRule,
+										 unsigned long aIndex) {
 
-	if ( aIndex > mCssRuleList.size() )	{
-		throw TDOMException( INDEX_SIZE_ERR );
+	if (aIndex > mCssRuleList.size()) {
+		throw TDOMException(INDEX_SIZE_ERR);
 	}
 	
-	if ( aIndex == mCssRuleList.size() )	{
-		mCssRuleList.push_back( aRule );
+	if (aIndex == mCssRuleList.size()) {
+		mCssRuleList.push_back(aRule);
 	}
-	else	{
+	else {
 		// Please check this.
-		mCssRuleList.insert( &mCssRuleList[ aIndex ] ,aRule );
+		mCssRuleList.insert(&mCssRuleList[aIndex], aRule);
 	}
 
 }
 
-unsigned long CSSMediaRule	::	insertRule( const TDOMString aRule,
-																unsigned long aIndex )	{
+unsigned long CSSMediaRule :: insertRule(const TDOMString aRule,
+										 unsigned long aIndex) {
 	// Don't like this function. Leaving it alone.
 	return 0;
 
 }
 
-void CSSMediaRule	::	deleteRule( unsigned long aIndex )	{
-	
-	if ( aIndex > mCssRuleList.size() )	{
-		throw TDOMException( INDEX_SIZE_ERR );
+void CSSMediaRule :: deleteRule(unsigned long aIndex) {
+
+	if (aIndex > mCssRuleList.size()) {
+		throw TDOMException(INDEX_SIZE_ERR);
 	}
 
-	mCssRuleList.erase( &mCssRuleList[ aIndex ] );
-	
+	mCssRuleList.erase(&mCssRuleList[aIndex]);
+
 }

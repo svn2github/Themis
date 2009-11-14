@@ -57,7 +57,7 @@ typedef boost::shared_ptr<CSSStyleSheet> CSSStyleSheetPtr;
 	http://www.w3.org/TR/2000/REC-DOM-Level-2-Style-20001113/css.html
 */
 
-class CSSStyleSheet	:	public StyleSheet	{
+class CSSStyleSheet : public StyleSheet {
 
 	private:
 		/// The owner rule.
@@ -74,7 +74,7 @@ class CSSStyleSheet	:	public StyleSheet	{
 			
 			@param aOwnerRule	The owner rule of the style sheet.
 		*/
-		CSSStyleSheet( CSSRulePtr aOwnerRule = CSSRulePtr() );
+		CSSStyleSheet(CSSRulePtr aOwnerRule = CSSRulePtr());
 		
 		/// Destructor of the CSSStyleSheet class.
 		/**
@@ -95,7 +95,7 @@ class CSSStyleSheet	:	public StyleSheet	{
 		CSSRulePtr getOwnerRule() const;
 		
 		/// A function to get all the rules in the stylesheet.
-		CSSRuleListPtr getCssRules() const;
+		CSSRuleListPtr getCSSRules() const;
 		
 		/// A function to insert a rule.
 		/**
@@ -104,18 +104,18 @@ class CSSStyleSheet	:	public StyleSheet	{
 			
 			@param aRule	The new rule to insert.
 			@param aIndex	The index to insert the new rule at.
-									If the index is equal to the number of rules in the stylesheet,
-									the rule is appended to the list of rules.
+							If the index is equal to the number of rules in the stylesheet,
+							the rule is appended to the list of rules.
 			
 			@exception	HIERARCHY_REQUEST_ERR	Thrown if the rule can not be inserted
-																		at the specified index.
+												at the specified index.
 			@exception	INDEX_SIZE_ERR	Thrown if the specified index is not a valid
-														insertion point.
+										insertion point.
 			@exception	NO_MODIFICATION_ALLOWED_ERR
-								Thrown if the style sheet is readonly.
+							Thrown if the style sheet is readonly.
 
 		*/
-		unsigned long insertRule( const CSSRulePtr aRule, unsigned long aIndex );
+		unsigned long insertRule(const CSSRulePtr aRule, unsigned long aIndex);
 
 		/// A function to insert a rule.
 		/**
@@ -128,15 +128,15 @@ class CSSStyleSheet	:	public StyleSheet	{
 									the rule is appended to the list of rules.
 			
 			@exception	HIERARCHY_REQUEST_ERR	Thrown if the rule can not be inserted
-																		at the specified index.
+												at the specified index.
 			@exception	INDEX_SIZE_ERR	Thrown if the specified index is not a valid
-														insertion point.
+										insertion point.
 			@exception	NO_MODIFICATION_ALLOWED_ERR
-								Thrown if the style sheet is readonly.
+							Thrown if the style sheet is readonly.
 			@exception	SYNTAX_ERR	Thrown if the rule is unparseble.
 
 		*/
-		unsigned long insertRule( const TDOMString aRule, unsigned long aIndex );
+		unsigned long insertRule(const TDOMString aRule, unsigned long aIndex);
 		
 		/// A function to delete a rule.
 		/**
@@ -145,12 +145,12 @@ class CSSStyleSheet	:	public StyleSheet	{
 			@param aIndex	The index of the rule to remove.
 
 			@exception	INDEX_SIZE_ERR	Thrown if the specified index
-														does not correspond to a rule
-														in the style sheet.
+										does not correspond to a rule
+										in the style sheet.
 			@exception	NO_MODIFICATION_ALLOWED_ERR
-								Thrown if the style sheet is readonly.
+							Thrown if the style sheet is readonly.
 		*/
-		void deleteRule( unsigned long aIndex );
+		void deleteRule(unsigned long aIndex);
 
 };
 
