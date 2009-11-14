@@ -39,37 +39,42 @@
 // DOM Style headers
 #include "CSSStyleRule.hpp"
 
-CSSStyleRule	::	CSSStyleRule( CSSStyleSheetPtr aParentStyleSheet,
-											 CSSRulePtr aParentRule,
-							  				 const TDOMString aSelectorText,
-							  				 CSSStyleDeclarationPtr aStyle )
-					:	CSSRule( aParentStyleSheet, aParentRule,
-									  STYLE_RULE, aSelectorText )	{
-
-	printf( "Creating CSSStyleRule\n" );
+CSSStyleRule :: CSSStyleRule(CSSStyleSheetPtr aParentStyleSheet,
+							 CSSRulePtr aParentRule,
+							 const TDOMString aSelectorText,
+							 CSSStyleDeclarationPtr aStyle)
+			 : CSSRule(aParentStyleSheet,
+			 		   aParentRule,
+					   STYLE_RULE,
+					   aSelectorText) {
 
 	mStyle = aStyle;
-	
+
 }
 
-CSSStyleRule	::	~CSSStyleRule()	{
-	
+CSSStyleRule :: ~CSSStyleRule() {
+
 }
 
-TDOMString CSSStyleRule	::	getSelectorText() const	{
+TDOMString CSSStyleRule :: getSelectorText() const {
 
-	return getCssText();
-	
+	return getCSSText();
+
 }
 
-void CSSStyleRule	::	setSelectorText( const TDOMString aSelectorText )	{
-	
-	setCssText( aSelectorText );
-	
+void CSSStyleRule :: setSelectorText(const TDOMString aSelectorText) {
+
+	setCSSText(aSelectorText);
+
 }
 
-CSSStyleDeclarationPtr CSSStyleRule	::	getStyle()	 const	{
-	
+CSSStyleDeclarationPtr CSSStyleRule :: getStyle() const {
+
 	return mStyle;
-	
+
+}
+
+void CSSStyleRule :: setStyle(CSSStyleDeclarationPtr aStyle) {
+
+	mStyle = aStyle;
 }

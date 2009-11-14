@@ -39,12 +39,13 @@
 // DOM Style headers
 #include "StyleSheet.hpp"
 
-StyleSheet	::	StyleSheet( const TDOMString aType, TNodePtr aOwnerNode,
-									  StyleSheetPtr aParentStyleSheet, const TDOMString aHref,
-									  const TDOMString aTitle, MediaListPtr aMedia )	{
+StyleSheet :: StyleSheet(const TDOMString aType,
+						 TNodePtr aOwnerNode,
+						 StyleSheetPtr aParentStyleSheet,
+						 const TDOMString aHref,
+						 const TDOMString aTitle,
+						 MediaListPtr aMedia) {
 
-	printf( "Creating StyleSheet\n" );
-	
 	mType = aType;
 	mOwnerNode = aOwnerNode;
 	mParentStyleSheet = aParentStyleSheet;
@@ -57,53 +58,54 @@ StyleSheet	::	StyleSheet( const TDOMString aType, TNodePtr aOwnerNode,
 
 }
 
-StyleSheet	::	~StyleSheet()	{
-	
+StyleSheet :: ~StyleSheet() {
+
 }
 
-TDOMString StyleSheet	::	getType() const	{
+TDOMString StyleSheet :: getType() const {
 
 	return mType;
+
 }
 
-bool StyleSheet	::	isDisabled() const	{
+bool StyleSheet :: isDisabled() const {
 
 	return mDisabled;
-	
+
 }
 
-void StyleSheet	::	setDisabled( bool aDisabled )	{
+void StyleSheet :: setDisabled(bool aDisabled) {
 
 	mDisabled = aDisabled;
 
 }
 
-TNodePtr StyleSheet	::	getOwnerNode() const	{
+TNodePtr StyleSheet :: getOwnerNode() const {
 
-	return make_shared( mOwnerNode );
-
-}
-
-StyleSheetPtr StyleSheet	::	getParentStyleSheet() const	{
-
-	return make_shared( mParentStyleSheet );
+	return make_shared(mOwnerNode);
 
 }
 
-TDOMString StyleSheet	::	getHref() const	{
-	
+StyleSheetPtr StyleSheet :: getParentStyleSheet() const {
+
+	return make_shared(mParentStyleSheet);
+
+}
+
+TDOMString StyleSheet :: getHref() const {
+
 	return mHref;
-	
+
 }
 
-TDOMString StyleSheet	::	getTitle() const	{
-	
+TDOMString StyleSheet :: getTitle() const {
+
 	return mTitle;
-	
+
 }
 
-MediaListPtr StyleSheet	::	getMedia() const	{
-	
+MediaListPtr StyleSheet :: getMedia() const {
+
 	return mMedia;
-	
+
 }

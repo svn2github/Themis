@@ -49,8 +49,6 @@ CSSMediaRule :: CSSMediaRule(CSSStyleSheetPtr aParentStyleSheet,
 							 MediaListPtr aMedia)
 			 : CSSRule(aParentStyleSheet, aParentRule, MEDIA_RULE, "") {
 
-	printf("Creating CSSMediaRule\n");
-
 	mCssRuleList = vector<CSSRulePtr>();
 	mCssRules = CSSRuleListPtr(new CSSRuleList(&mCssRuleList));
 

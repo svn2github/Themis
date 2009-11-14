@@ -39,113 +39,111 @@
 // DOM Style headers
 #include "CSSStyleDeclaration.hpp"
 
-CSSStyleDeclaration	::	CSSStyleDeclaration( CSSRulePtr aParentRule )	{
+CSSStyleDeclaration :: CSSStyleDeclaration(CSSRulePtr aParentRule) {
 
-	printf( "Creating CSSStyleDeclaration\n" );
-	
 	mParentRule = aParentRule;
-	
+
 }
 
-CSSStyleDeclaration	::	~CSSStyleDeclaration()	{
-	
+CSSStyleDeclaration :: ~CSSStyleDeclaration() {
+
 }
 
-TDOMString CSSStyleDeclaration	::	getCssText()	{
-	
-	return mCssText;
-	
+TDOMString CSSStyleDeclaration :: getCSSText() {
+
+	return mCSSText;
+
 }
 
-void CSSStyleDeclaration	::	setCssText( const TDOMString aText )	{
+void CSSStyleDeclaration :: setCSSText(const TDOMString aText) {
 
-	mCssText = aText;
-	
+	mCSSText = aText;
+
 }
 
-TDOMString CSSStyleDeclaration	::	getPropertyValue( const TDOMString aName )	{
-	
+TDOMString CSSStyleDeclaration :: getPropertyValue(const TDOMString aName) {
+
 	vector<Property>::iterator iter;
-	for ( iter = mProperties.begin(); iter != mProperties.end(); iter++ )	{
-		if ( iter->getName() == aName )	{
-				return iter->getValue();
+	for (iter = mProperties.begin(); iter != mProperties.end(); iter++) {
+		if (iter->getName() == aName) {
+			return iter->getValue();
 		}
 	}
 	
 	return "";
-	
+
 }
 
-CSSValuePtr CSSStyleDeclaration	::	getPropertyCSSValue( const TDOMString aName )	{
-	
+CSSValuePtr CSSStyleDeclaration :: getPropertyCSSValue(const TDOMString aName) {
+
 	return CSSValuePtr();
-	
+
 }
 
-TDOMString CSSStyleDeclaration	::	removeProperty( const TDOMString aName )	{
-	
+TDOMString CSSStyleDeclaration :: removeProperty(const TDOMString aName) {
+
 	vector<Property>::iterator iter;
-	for ( iter = mProperties.begin(); iter != mProperties.end(); iter++ )	{
-		if ( iter->getName() == aName )	{
-				TDOMString value = iter->getValue();
-				mProperties.erase( iter );
-				return value;
+	for (iter = mProperties.begin(); iter != mProperties.end(); iter++) {
+		if (iter->getName() == aName) {
+			TDOMString value = iter->getValue();
+			mProperties.erase(iter);
+			return value;
 		}
 	}
 	
 	return "";
-	
+
 }
 
-TDOMString CSSStyleDeclaration	::	getPropertyPriority( const TDOMString aName )	{
+TDOMString CSSStyleDeclaration :: getPropertyPriority(const TDOMString aName) {
 
 	vector<Property>::iterator iter;
-	for ( iter = mProperties.begin(); iter != mProperties.end(); iter++ )	{
-		if ( iter->getName() == aName )	{
-				return iter->getPriority();
+	for (iter = mProperties.begin(); iter != mProperties.end(); iter++) {
+		if (iter->getName() == aName) {
+			return iter->getPriority();
 		}
 	}
-	
+
 	return "";
-	
+
 }
 
-void CSSStyleDeclaration	::	setProperty( const TDOMString aName,
-															   const TDOMString aValue,
-															   const TDOMString aPriority )	{
+void CSSStyleDeclaration :: setProperty(const TDOMString aName,
+										const TDOMString aValue,
+										const TDOMString aPriority) {
 
 	vector<Property>::iterator iter;
-	for ( iter = mProperties.begin(); iter != mProperties.end(); iter++ )	{
-		if ( iter->getName() == aName )	{
-				iter->setValue( aValue );
-				iter->setPriority( aPriority );
-				return;
+	for (iter = mProperties.begin(); iter != mProperties.end(); iter++) {
+		if (iter->getName() == aName) {
+			iter->setValue(aValue);
+			iter->setPriority(aPriority);
+			return;
 		}
 	}
-	
-	Property prop( aName, aValue, aPriority );
-	mProperties.push_back( prop );
+
+	Property prop(aName, aValue, aPriority);
+	mProperties.push_back(prop);
 
 }
 															   
-unsigned long CSSStyleDeclaration	::	getLength()	{
-	
+unsigned long CSSStyleDeclaration :: getLength() {
+
 	return mProperties.size();
-	
+
 }
 
-TDOMString CSSStyleDeclaration	::	item( unsigned long aIndex )	{
-	
-	if ( mProperties.size() <= aIndex )	{
+TDOMString CSSStyleDeclaration :: item(unsigned long aIndex) {
+
+	if (mProperties.size() <= aIndex) {
 		return "";
 	}
-	
-	return mProperties[ aIndex ].getName();
-	
+
+	return mProperties[aIndex].getName();
+
 }
 
-CSSRulePtr CSSStyleDeclaration	::	getParentRule()	{
-	
+CSSRulePtr CSSStyleDeclaration :: getParentRule() {
+
 	return mParentRule;
-	
+
 }

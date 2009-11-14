@@ -52,8 +52,6 @@ CSSStyleSheet :: CSSStyleSheet(CSSRulePtr aOwnerRule)
 			  			   "",
 						   MediaListPtr()) {
 
-	printf( "Creating CSSStyleSheet\n" );
-
 	mOwnerRule = aOwnerRule;
 
 	mCssRuleList = vector<CSSRulePtr>();

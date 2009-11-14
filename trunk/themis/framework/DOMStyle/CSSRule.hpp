@@ -62,7 +62,7 @@ class CSSRule	{
 		/// The parent type.
 		unsigned short mType;
 		/// The parsable text of the rule.
-		TDOMString mCssText;
+		TDOMString mCSSText;
 
 	public:
 		enum	{
@@ -89,11 +89,13 @@ class CSSRule	{
 			
 			@param	aParentStyleSheet	The parent style sheet.
 			@param	aParentRule			The parent rule.
-			@param	aType					The type of the rule.
-			@param	aCssText				The parsable text of the rule.
+			@param	aType				The type of the rule.
+			@param	aCssText			The parsable text of the rule.
 		*/
-		CSSRule( CSSStyleSheetPtr aParentStyleSheet, CSSRulePtr aParentRule,
-					  unsigned short aType, const TDOMString aCssText );
+		CSSRule(CSSStyleSheetPtr aParentStyleSheet,
+				CSSRulePtr aParentRule,
+				unsigned short aType,
+				const TDOMString aCSSText);
 		
 		/// Destructor of the CSSRule class.
 		/**
@@ -107,7 +109,7 @@ class CSSRule	{
 			This function gets the current text of the rule.
 			This does not have to be the initial value of the rule.
 		*/
-		TDOMString getCssText() const;
+		TDOMString getCSSText() const;
 		
 		/// A function to set the text of the rule.
 		/**
@@ -117,17 +119,17 @@ class CSSRule	{
 			@param aCssText	The new text of the rule.
 			
 			@exception	SYNTAX_ERR
-								Thrown if the rule is unparsable.
+							Thrown if the rule is unparsable.
 			@exception	INVALID_MODIFICATION_ERR
-								Thrown if the parameter represents a different type of rule
-								than the current one.
+							Thrown if the parameter represents a different type of rule
+							than the current one.
 			@exception	HIERARCHY_REQUEST_ERR
-								Thrown if the rule can not be inserted
-								at this point in the style sheet.
+							Thrown if the rule can not be inserted
+							at this point in the style sheet.
 			@exception	NO_MODIFICATION_ALLOWED_ERR
-								Thrown if the rule is readonly.
+							Thrown if the rule is readonly.
 		*/
-		void setCssText( const TDOMString aCssText );
+		void setCSSText(const TDOMString aCSSText);
 		
 		/// A function to get the parent style sheet.
 		CSSStyleSheetPtr getParentStyleSheet() const;

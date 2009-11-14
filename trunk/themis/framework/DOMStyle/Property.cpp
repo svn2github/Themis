@@ -39,47 +39,44 @@
 // DOM Style headers
 #include "Property.hpp"
 
-Property	::	Property( TDOMString aName, TDOMString aValue,
-								   TDOMString aPriority )	{
+Property :: Property(TDOMString aName,TDOMString aValue, TDOMString aPriority) {
 
-	printf( "Creating Property\n" );
-	
 	mName = aName;
 	mValue = aValue;
 	mPriority = aPriority;
-	
+
 }
 
-Property	::	~Property()	{
-	
+Property :: ~Property() {
+
 }
 
-TDOMString Property	::	getName() const	{
-	
+TDOMString Property :: getName() const {
+
 	return mName;
-	
+
 }
 
-TDOMString Property	::	getValue() const	{
+TDOMString Property :: getValue() const {
 
 	return mValue;
-	
+
 }
 
-TDOMString Property	::	getPriority() const	{
-	
+TDOMString Property :: getPriority() const {
+
 	return mPriority;
-	
+
 }
 
-void Property	::	setValue( TDOMString aValue )	{
-	
+void Property :: setValue(TDOMString aValue) {
+
 	mValue = aValue;
-	
+
 }
 
-void Property	::	setPriority( TDOMString aPriority )	{
-	
+void Property :: setPriority(TDOMString aPriority) {
+
 	mPriority = aPriority;
-	
+
 }

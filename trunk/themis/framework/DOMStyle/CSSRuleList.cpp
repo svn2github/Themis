@@ -39,30 +39,28 @@
 // DOM Style headers
 #include "CSSRuleList.hpp"
 
-CSSRuleList	::	CSSRuleList( const vector<CSSRulePtr> * aCSSRuleList )	{
-
-	printf( "Creating CSSRuleList\n" );
+CSSRuleList :: CSSRuleList(const vector<CSSRulePtr> * aCSSRuleList) {
 
 	mCSSRuleList = aCSSRuleList;
 
 }
 
-CSSRuleList	::	~CSSRuleList()	{
-	
+CSSRuleList :: ~CSSRuleList() {
+
 }
 
-unsigned long CSSRuleList	::	getLength() const	{
+unsigned long CSSRuleList :: getLength() const {
 
 	return mCSSRuleList->size();
-	
+
 }
 
-CSSRulePtr CSSRuleList	::	item( unsigned long aIndex )	{
+CSSRulePtr CSSRuleList :: item(unsigned long aIndex) {
 
-	if ( mCSSRuleList && aIndex < mCSSRuleList->size() )	{
-		return (*mCSSRuleList)[ aIndex ];
+	if (mCSSRuleList && aIndex < mCSSRuleList->size()) {
+		return (*mCSSRuleList)[aIndex];
 	}
-	
+
 	return CSSRulePtr();
-	
+
 }

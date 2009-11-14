@@ -56,7 +56,7 @@ typedef boost::shared_ptr<StyleSheet> StyleSheetPtr;
 	http://www.w3.org/TR/2000/REC-DOM-Level-2-Style-20001113/stylesheets.html
 */
 
-class StyleSheet	{
+class StyleSheet {
 
 	private:
 		/// The type of the stylesheet.
@@ -80,16 +80,19 @@ class StyleSheet	{
 			The constructor of the StyleSheet class.
 			It initialized the read-only values.
 			
-			@param aType	The type of the stylesheet.
-			@param aOwnerNode	The owner node of the stylesheet.
+			@param aType				The type of the stylesheet.
+			@param aOwnerNode			The owner node of the stylesheet.
 			@param aParentStyleSheet	The parent style sheet.
-			@param aHref	The href (location) of the style sheet.
-			@param aTitle	The title of the style sheet.
-			@param aMedia	The media list of the style sheet.
+			@param aHref				The href (location) of the style sheet.
+			@param aTitle				The title of the style sheet.
+			@param aMedia				The media list of the style sheet.
 		*/
-		StyleSheet( const TDOMString aType, TNodePtr aOwnerNode,
-						 StyleSheetPtr aParentStyleSheet, const TDOMString aHref,
-						 const TDOMString aTitle, MediaListPtr aMedia );
+		StyleSheet(const TDOMString aType,
+				   TNodePtr aOwnerNode,
+				   StyleSheetPtr aParentStyleSheet,
+				   const TDOMString aHref,
+				   const TDOMString aTitle,
+				   MediaListPtr aMedia);
 		
 		/// Destructor of the StyleSheet class.
 		/**
@@ -112,7 +115,7 @@ class StyleSheet	{
 
 			@param	aDisabled	The new disabled state of the stylesheet.
 		*/
-		void setDisabled( bool aDisabled );
+		void setDisabled(bool aDisabled);
 
 		/// A function to get the owner of the stylesheet.
 		/**

@@ -49,32 +49,32 @@
 	http://www.w3.org/TR/2000/REC-DOM-Level-2-Style-20001113/css.html
 */
 
-class CSSRuleList	{
-	
+class CSSRuleList {
+
 	private:
 		/// List of the css rules.
 		const vector<CSSRulePtr> * mCSSRuleList;
-	
+
 	public:
 		/// Constructor of the CSSRuleList class.
 		/**
 			The constructor of the CSSRuleList class. It stores the pointer to
 			the stylesheet list.
-			
+
 			@param	aCSSRuleList	The list of css rules to store.
 		*/
-		CSSRuleList( const vector<CSSRulePtr> * aCSSRuleList );
-		
+		CSSRuleList(const vector<CSSRulePtr> * aCSSRuleList);
+
 		/// Destructor of the CSSRuleList class.
 		/**
 			The destructor of the CSSRuleList class does nothing. Everything is cleaned up
 			automatically.
 		*/
 		~CSSRuleList();
-		
+
 		/// A function to get the number of css rules in the list.
 		unsigned long getLength() const;
-		
+
 		/// A function to get an item.
 		/**
 			This function gets the item that is indexed at the value of the supplied argument.
@@ -82,8 +82,8 @@ class CSSRuleList	{
 
 			@param	aIndex	The index at which to get the item.
 		*/
-		CSSRulePtr item( unsigned long aIndex );
-		
+		CSSRulePtr item(unsigned long aIndex);
+
 };
 
 #endif

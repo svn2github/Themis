@@ -54,8 +54,9 @@ class Property	{
 			@param aValue		The value of the property.
 			@param aPriority	The priority of the property.
 		*/
-		Property( TDOMString aName, TDOMString aValue,
-					   TDOMString aPriority );
+		Property(TDOMString aName,
+				 TDOMString aValue,
+				 TDOMString aPriority);
 
 		/// Destructor of the Property class.
 		/**
@@ -79,7 +80,7 @@ class Property	{
 			
 			@param	aValue	The value to set.
 		*/
-		void setValue( TDOMString aValue );
+		void setValue(TDOMString aValue);
 
 		/// A function to set the priority of the property.
 		/**
@@ -87,7 +88,7 @@ class Property	{
 			
 			@param	aPriority	The priority to set.
 		*/
-		void setPriority( TDOMString aPriority );
+		void setPriority(TDOMString aPriority);
 		
 };
 

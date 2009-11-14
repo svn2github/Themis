@@ -40,42 +40,42 @@
 #include "CSSRule.hpp"
 #include "CSSStyleSheet.hpp"
 
-CSSRule	::	CSSRule( CSSStyleSheetPtr aParentStyleSheet, CSSRulePtr aParentRule,
-							  unsigned short aType, const TDOMString aCssText )	{
+CSSRule :: CSSRule(CSSStyleSheetPtr aParentStyleSheet,
+				   CSSRulePtr aParentRule,
+				   unsigned short aType,
+				   const TDOMString aCSSText) {
 
-	printf( "Creating CSSRule\n" );
-	
 	mParentStyleSheet = aParentStyleSheet;
 	mParentRule = aParentRule;
 	mType = aType;
-	setCssText( aCssText );
+	setCSSText(aCSSText);
 
 }
 
-CSSRule	::	~CSSRule()	{
-	
+CSSRule :: ~CSSRule() {
+
 }
 
-TDOMString CSSRule	::	getCssText() const	{
+TDOMString CSSRule :: getCSSText() const {
 
-	return mCssText;
-	
+	return mCSSText;
+
 }
 
-void CSSRule	::	setCssText( const TDOMString aCssText )	{
-	
-	mCssText = aCssText;
-	
+void CSSRule :: setCSSText(const TDOMString aCSSText) {
+
+	mCSSText = aCSSText;
+
 }
 
-CSSStyleSheetPtr CSSRule	::	getParentStyleSheet()	 const	{
-	
-	return make_shared( mParentStyleSheet );
-	
+CSSStyleSheetPtr CSSRule :: getParentStyleSheet() const {
+
+	return make_shared(mParentStyleSheet);
+
 }
 
-CSSRulePtr CSSRule	::	getParentRule() const	{
-	
-	return make_shared( mParentRule );
-	
+CSSRulePtr CSSRule :: getParentRule() const {
+
+	return make_shared(mParentRule);
+
 }

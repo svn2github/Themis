@@ -62,10 +62,10 @@ using namespace std;
 	
 */
 
-class CSSStyleDeclaration	{
+class CSSStyleDeclaration {
 
 	private:
-		TDOMString mCssText;
+		TDOMString mCSSText;
 		CSSRulePtr mParentRule;
 		vector<Property> mProperties;
 
@@ -76,7 +76,7 @@ class CSSStyleDeclaration	{
 			
 			@param aParentRule	The parent rule of the declaration.
 		*/
-		CSSStyleDeclaration( CSSRulePtr aParentRule = CSSRulePtr() );
+		CSSStyleDeclaration(CSSRulePtr aParentRule = CSSRulePtr());
 		
 		/// Destructor of the CSSStyleDeclaration class.
 		/**
@@ -90,7 +90,7 @@ class CSSStyleDeclaration	{
 			This function gets the raw text of the declaration.
 			This is all the text, without the surrounding curly braces.
 		*/
-		TDOMString getCssText();
+		TDOMString getCSSText();
 		
 		/// A function to set the raw text of the declaration.
 		/**
@@ -106,7 +106,7 @@ class CSSStyleDeclaration	{
 								Thrown if the declaration or a property is readonly.
 
 		*/
-		void setCssText( const TDOMString aText );
+		void setCSSText(const TDOMString aText);
 		
 		/// A function to get a property value.
 		/**
@@ -116,7 +116,7 @@ class CSSStyleDeclaration	{
 			
 			@param aName		The name of the property to get the value of.
 		*/
-		TDOMString getPropertyValue( const TDOMString aName );
+		TDOMString getPropertyValue(const TDOMString aName);
 		
 		/// A function to get a CSS property value.
 		/**
@@ -127,7 +127,7 @@ class CSSStyleDeclaration	{
 
 			@param aName		The name of the property to get the value of.
 		*/
-		CSSValuePtr getPropertyCSSValue( const TDOMString aName );
+		CSSValuePtr getPropertyCSSValue(const TDOMString aName);
 		
 		/// A function to remove a property.
 		/**
@@ -140,7 +140,7 @@ class CSSStyleDeclaration	{
 			@exception	NO_MODIFICATION_ALLOWED_ERR
 								Thrown if the declaration or a property is readonly.
 		*/
-		TDOMString removeProperty( const TDOMString aName );
+		TDOMString removeProperty(const TDOMString aName);
 		
 		/// A function to get the priority of the property.
 		/**
@@ -149,7 +149,7 @@ class CSSStyleDeclaration	{
 			
 			@param aName		The name of the property to get the priority of.
 		*/
-		TDOMString getPropertyPriority( const TDOMString aName );
+		TDOMString getPropertyPriority(const TDOMString aName);
 		
 		/// A function to set a property.
 		/**
@@ -163,9 +163,9 @@ class CSSStyleDeclaration	{
 			@exception	NO_MODIFICATION_ALLOWED_ERR
 								Thrown if the declaration or a property is readonly.
 		*/
-		void setProperty( const TDOMString aName,
-								  const TDOMString aValue,
-								  const TDOMString aPriority );
+		void setProperty(const TDOMString aName,
+						 const TDOMString aValue,
+						 const TDOMString aPriority);
 								  
 		/// A function to get the number of properties in the declaration block.
 		unsigned long getLength();
@@ -178,7 +178,7 @@ class CSSStyleDeclaration	{
 
 			@param	aIndex	The index at which to get the item.
 		*/
-		TDOMString item( unsigned long aIndex );
+		TDOMString item(unsigned long aIndex);
 		
 		/// A function to get the parent rule.
 		/**

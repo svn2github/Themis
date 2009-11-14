@@ -44,8 +44,6 @@
 
 MediaList :: MediaList(const TDOMString aMediaText) {
 
-	printf("Creating MediaList\n");
-
 	setMediaText(aMediaText);
 
 }

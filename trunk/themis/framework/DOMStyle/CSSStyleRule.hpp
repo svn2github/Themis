@@ -55,7 +55,7 @@ typedef boost::shared_ptr<CSSStyleRule> CSSStyleRulePtr;
 	http://www.w3.org/TR/2000/REC-DOM-Level-2-Style-20001113/css.html
 */
 
-class CSSStyleRule	:	public CSSRule	{
+class CSSStyleRule : public CSSRule {
 
 	private:
 		/// The declaration block of this style.
@@ -71,12 +71,12 @@ class CSSStyleRule	:	public CSSRule	{
 			@param	aParentStyleSheet	The parent style sheet.
 			@param	aParentRule			The parent rule.
 			@param	aSelectorText		The textual represention of the selector.
-			@param	aStyle					The declaration block of this rule set.
+			@param	aStyle				The declaration block of this rule set.
 		*/
-		CSSStyleRule( CSSStyleSheetPtr aParentStyleSheet = CSSStyleSheetPtr(),
-							 CSSRulePtr aParentRule = CSSRulePtr(),
-							 const TDOMString aSelectorText = "",
-							 CSSStyleDeclarationPtr aStyle = CSSStyleDeclarationPtr() );
+		CSSStyleRule(CSSStyleSheetPtr aParentStyleSheet = CSSStyleSheetPtr(),
+					 CSSRulePtr aParentRule = CSSRulePtr(),
+					 const TDOMString aSelectorText = "",
+					 CSSStyleDeclarationPtr aStyle = CSSStyleDeclarationPtr());
 		
 		/// Destructor of the CSSStyleRule class.
 		/**
@@ -103,10 +103,20 @@ class CSSStyleRule	:	public CSSRule	{
 			@exception	NO_MODIFICATION_ALLOWED_ERR
 								Thrown if the rule is readonly.
 		*/
-		void setSelectorText( const TDOMString aSelectorText );
+		void setSelectorText(const TDOMString aSelectorText);
 		
 		/// A function to get the declaration block of the rule.
 		CSSStyleDeclarationPtr getStyle() const;
+		
+		/// A function to set the declaration of a rule.
+		/**
+			This function sets the declaration of a rule.
+			This is a support function and is not in the DOM style specification.
+			Without it, there is a chicken and egg situation.
+			
+			@param aStyle		The new style declaration of the rule.
+		*/
+		void setStyle(CSSStyleDeclarationPtr aStyle);
 
 };
 
