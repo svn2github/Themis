@@ -49,8 +49,8 @@ CSSMediaRule :: CSSMediaRule(CSSStyleSheetPtr aParentStyleSheet,
 							 MediaListPtr aMedia)
 			 : CSSRule(aParentStyleSheet, aParentRule, MEDIA_RULE, "") {
 
-	mCssRuleList = vector<CSSRulePtr>();
-	mCssRules = CSSRuleListPtr(new CSSRuleList(&mCssRuleList));
+	mCSSRuleList = vector<CSSRulePtr>();
+	mCSSRules = CSSRuleListPtr(new CSSRuleList(&mCSSRuleList));
 
 	mMedia = aMedia;
 }
@@ -65,25 +65,25 @@ MediaListPtr CSSMediaRule :: getMedia() const {
 
 }
 
-CSSRuleListPtr CSSMediaRule :: getCssRules() const {
+CSSRuleListPtr CSSMediaRule :: getCSSRules() const {
 
-	return mCssRules;
+	return mCSSRules;
 
 }
 
 unsigned long CSSMediaRule :: insertRule(const CSSRulePtr aRule,
 										 unsigned long aIndex) {
 
-	if (aIndex > mCssRuleList.size()) {
+	if (aIndex > mCSSRuleList.size()) {
 		throw TDOMException(INDEX_SIZE_ERR);
 	}
 	
-	if (aIndex == mCssRuleList.size()) {
-		mCssRuleList.push_back(aRule);
+	if (aIndex == mCSSRuleList.size()) {
+		mCSSRuleList.push_back(aRule);
 	}
 	else {
 		// Please check this.
-		mCssRuleList.insert(&mCssRuleList[aIndex], aRule);
+		mCSSRuleList.insert(&mCSSRuleList[aIndex], aRule);
 	}
 
 }
@@ -97,10 +97,10 @@ unsigned long CSSMediaRule :: insertRule(const TDOMString aRule,
 
 void CSSMediaRule :: deleteRule(unsigned long aIndex) {
 
-	if (aIndex > mCssRuleList.size()) {
+	if (aIndex > mCSSRuleList.size()) {
 		throw TDOMException(INDEX_SIZE_ERR);
 	}
 
-	mCssRuleList.erase(&mCssRuleList[aIndex]);
+	mCSSRuleList.erase(&mCSSRuleList[aIndex]);
 
 }

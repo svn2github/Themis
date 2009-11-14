@@ -56,6 +56,12 @@ CSSRule :: ~CSSRule() {
 
 }
 
+unsigned short CSSRule :: getType() const {
+	
+	return mType;
+
+}
+
 TDOMString CSSRule :: getCSSText() const {
 
 	return mCSSText;

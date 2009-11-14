@@ -104,6 +104,9 @@ class CSSRule	{
 		*/
 		~CSSRule();
 
+		/// A function to get the type of the rule.
+		unsigned short getType() const;
+
 		/// A function to get the text of the rule.
 		/**
 			This function gets the current text of the rule.

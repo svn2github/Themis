@@ -67,8 +67,8 @@ using namespace std;
 class CSSMediaRule : public CSSRule {
 
 	private:
-		vector<CSSRulePtr> mCssRuleList;
-		CSSRuleListPtr mCssRules;
+		vector<CSSRulePtr> mCSSRuleList;
+		CSSRuleListPtr mCSSRules;
 		MediaListPtr mMedia;
 
 	public:
@@ -97,7 +97,7 @@ class CSSMediaRule : public CSSRule {
 		MediaListPtr getMedia() const;
 
 		/// A function to get the css rule list of the media rule.
-		CSSRuleListPtr getCssRules() const;
+		CSSRuleListPtr getCSSRules() const;
 
 		/// A function to add a new rule.
 		/**
