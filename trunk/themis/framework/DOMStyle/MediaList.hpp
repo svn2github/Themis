@@ -70,7 +70,7 @@ class MediaList	{
 			
 			@param	aMediaText	The parsable textual representation.
 		*/
-		MediaList( const TDOMString aMediaText );
+		MediaList(const TDOMString aMediaText);
 		
 		/// Destructor of the MediaList class.
 		/**
@@ -91,9 +91,9 @@ class MediaList	{
 			
 			@exception	SYNTAX_ERR	Thrown if the new value is unparsable.
 			@exception	NO_MODIFICATION_ALLOWED_ERR
-								Thrown if the media list is readonly.
+									Thrown if the media list is readonly.
 		*/
-		void setMediaText( const TDOMString aMediaText );
+		void setMediaText(const TDOMString aMediaText);
 		
 		/// A function to get the number of media in the list.
 		unsigned long getLength() const;
@@ -107,21 +107,21 @@ class MediaList	{
 
 			@param	aIndex	The index at which to get the item.
 		*/
-		TDOMString item( unsigned long aIndex );
+		TDOMString item(unsigned long aIndex);
 
 		/// A function to delete a medium from the list.
 		/**
 			This function deletes the medium indicated in the parameter
 			from the list.
 			
-			@param	aOldMedium	The medium to remove from the list.
+			@param	aMedium	The medium to remove from the list.
 			
 			@exception	NOT_FOUND_ERR	Thrown if the medium can't be found
-															in the list.
+										in the list.
 			@exception	NO_MODIFICATION_ALLOWED_ERR
 								Thrown if the media list is readonly.
 		*/
-		void deleteMedium( const TDOMString aOldMedium );
+		void deleteMedium(const TDOMString aMedium);
 
 		/// A function to append a medium from the list.
 		/**
@@ -129,15 +129,15 @@ class MediaList	{
 			to the end of the list.
 			If the medium is already used, it is first removed.
 			
-			@param	aNewMedium	The medium to append to the list.
+			@param	aMedium	The medium to append to the list.
 			
 			@exception	INVALID_CHARACTER_ERR	Thrown if the medium contains
-																		characters that are not allowed
-																		in the underlying style language.
+												characters that are not allowed
+												in the underlying style language.
 			@exception	NO_MODIFICATION_ALLOWED_ERR
 								Thrown if the media list is readonly.
 		*/
-		void appendMedium( const TDOMString aNewMedium );
+		void appendMedium(const TDOMString aMedium);
 
 };
 

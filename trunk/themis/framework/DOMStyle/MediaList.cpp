@@ -36,38 +36,78 @@
 // Standard C headers
 #include <stdio.h>
 
+// DOM headers
+#include "TDOMException.h"
+
 // DOM Style headers
 #include "MediaList.hpp"
 
-MediaList	::	MediaList( const TDOMString aMediaText )	{
+MediaList :: MediaList(const TDOMString aMediaText) {
 
-	printf( "Creating MediaList\n" );
+	printf("Creating MediaList\n");
 
-	setMediaText( aMediaText );
+	setMediaText(aMediaText);
 
 }
 
-MediaList	::	~MediaList()	{
+MediaList :: ~MediaList() {
 	
 }
 
-TDOMString MediaList	::	getMediaText() const	{
+TDOMString MediaList :: getMediaText() const {
 
-	return "";
+	TDOMString result = "";
+	unsigned int length = mMediaList.size();
+	for (unsigned int i = 0; i < length; i++) {
+		result += mMediaList[i] + '+';
+	}
+
+	if (result.length() > 0) {
+		// There is at least one medium and the last character is a ','
+		// and needs to be removed.
+		result.erase(result.length() - 1);
+	}
+
+	return result;
 }
 
-void MediaList	::	setMediaText( const TDOMString aMediaText )	{
+void MediaList :: setMediaText(const TDOMString aMediaText) {
 
-	// Put it in mMediaList.
+	// Clear the existing values first.
+	mMediaList.clear();
+	
+	// Parse the string and add the items to the list.
+	unsigned int length = aMediaText.length();
+	TDOMString medium = "";
+	char c = '\0';
+	for (unsigned int i = 0; i < length; i++) {
+		c = aMediaText[i];
+		if (!(isspace(c) || iscntrl(c))) {
+			if (c == ',' && medium.length() > 0) {
+				// End of a medium and it contains text.
+				mMediaList.push_back(medium);
+				medium = "";
+			}
+			else {
+				// Not at the end of the medium text yet.
+				medium += c;
+			}
+		}
+	}
+	
+	// See if there is still a medium in the buffer and if so add it.
+	if (medium.length() > 0) {
+		mMediaList.push_back(medium);
+	}
 
 }
 
-unsigned long MediaList	::	getLength() const	{
+unsigned long MediaList :: getLength() const {
 
 	return mMediaList.size();
 }
 
-TDOMString MediaList	::	item( unsigned long aIndex )	{
+TDOMString MediaList :: item(unsigned long aIndex) {
 
 	if ( aIndex < mMediaList.size() )	{
 		return mMediaList[ aIndex ];
@@ -77,10 +117,29 @@ TDOMString MediaList	::	item( unsigned long aIndex )	{
 	
 }
 
-void MediaList	::	deleteMedium( const TDOMString aOldMedium )	{
+void MediaList :: deleteMedium(const TDOMString aMedium) {
+
+	vector<TDOMString>::iterator iter = find(mMediaList.begin(), mMediaList.end(), aMedium);
+	if (iter != mMediaList.end()) {
+		// Remove node
+		mMediaList.erase(iter);
+	}
+	else {
+		// Not found. Notify the user.
+		throw TDOMException(NOT_FOUND_ERR);
+	}
 
 }
 
-void MediaList	::	appendMedium( const TDOMString aNewMedium )	{
+void MediaList :: appendMedium(const TDOMString aMedium) {
+
+	// Need to remove it first, but don't want to incur an exception if it
+	// wasn't in the list before, which is most likely.
+	vector<TDOMString>::iterator iter = find(mMediaList.begin(), mMediaList.end(), aMedium);
+	if (iter != mMediaList.end()) {
+		deleteMedium(aMedium);
+	}
+	
+	mMediaList.push_back(aMedium);
 	
 }
