@@ -1,7 +1,7 @@
 /*	LoadTest header file
 	Define a class HTMLParser here
 	
-	Mark Hellegers (M.H.Hellegers@stud.tue.nl)
+	Mark Hellegers (mark@firedisk.net)
 	03-07-2002
 
 */

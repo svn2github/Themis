@@ -2,7 +2,7 @@
 	Testing of how to load an HTML document
 	Will end up in the trash can (probably)
 
-	Mark Hellegers (M.H.Hellegers@stud.tue.nl)
+	Mark Hellegers (mark@firedisk.net)
 	01-07-2002
 
 */

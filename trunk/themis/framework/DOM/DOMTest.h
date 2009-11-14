@@ -1,7 +1,7 @@
 /*	DOMTest. Developed for ThemisDOM.
 	Tests the DOM to see if it works correctly.
 	
-	Mark Hellegers (M.H.Hellegers@stud.tue.nl)
+	Mark Hellegers (mark@firedisk.net)
 	26-12-2001
 */
 
