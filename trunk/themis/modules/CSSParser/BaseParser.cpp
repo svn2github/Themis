@@ -25,11 +25,11 @@
 	
 	Original Author: 	Mark Hellegers (mark@firedisk.net)
 	Project Start Date: October 18, 2000
-	Class Start Date: November 5, 2009
+	Class Start Date: November 9, 2009
 */
 
-/*	AtRuleParser implementation
-	See AtRuleParser.hpp for more information
+/*	BaseParser implementation
+	See BaseParser.hpp for more information
 	
 */
 
@@ -37,59 +37,32 @@
 #include <stdio.h>
 
 // CSSParser headers
-#include "AtRuleParser.hpp"
+#include "BaseParser.hpp"
 #include "ReadException.hpp"
 
-AtRuleParser :: AtRuleParser(CSSScanner * aScanner,
-							 CSSStyleSheetPtr aStyleSheet)
-			 : BaseParser(aScanner, aStyleSheet) {
+BaseParser :: BaseParser(CSSScanner * aScanner, CSSStyleSheetPtr aStyleSheet) {
+	
+	mScanner = aScanner;
+	mStyleSheet = aStyleSheet;
 	
 }
 
-AtRuleParser :: ~AtRuleParser() {
+BaseParser :: ~BaseParser() {
 
 }
 
-MediaListPtr AtRuleParser :: parseMediaList() {
+void BaseParser :: parseSStar() {
 	
-	MediaListPtr result;
+	bool sFound = true;
 	
-	if (mToken == IDENTIFIER_SYM) {
-		// Found a medium. Create the list and add it.
-		result = MediaListPtr(new MediaList());
-		result->appendMedium(mScanner->getTokenText());
-		mToken = mScanner->nextToken();
-		parseSStar();
-		bool mediumFound = true;
-		while (mediumFound) {
-			if (mToken == COMMA_SYM) {
-				mToken = mScanner->nextToken();
-				parseSStar();
-				if (mToken == IDENTIFIER_SYM) {
-					// Found another medium. Add it to the list.
-					result->appendMedium(mScanner->getTokenText());
-					mToken = mScanner->nextToken();
-					parseSStar();
-				}
-				else {
-					throw ReadException(mScanner->getLineNr(),
-										mScanner->getCharNr(),
-										"Expected identifier",
-										GENERIC);
-				}
-			}
-			else {
-				mediumFound = false;
-			}
+	while (sFound) {
+		if (mToken == SPACE_SYM ||
+			mToken == COMMENT_SYM) {
+			mToken = mScanner->nextToken();
+		}
+		else {
+			sFound = false;
 		}
 	}
-	else {
-		throw ReadException(mScanner->getLineNr(),
-							mScanner->getCharNr(),
-							"Expected identifier",
-							GENERIC);
-	}
-	
-	return result;
 	
 }

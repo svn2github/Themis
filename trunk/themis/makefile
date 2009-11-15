@@ -211,14 +211,15 @@ HTMLPARSERSOURCES= \
 	HTMLParser/SGMLScanner.cpp
 CSSPARSERSOURCES= \
 	CSSParser/AtRuleParser.cpp \
-	CSSParser/Encoding.cpp \
-	CSSParser/Hashtable.cpp \
-	CSSParser/InputStream.cpp \
-	CSSParser/Properties.cpp \
-	CSSParser/PropertyParser.cpp \
-	CSSParser/StyleSheet.cpp \
-	CSSParser/StyleSheetParser.cpp \
-	CSSParser/cssmain.cpp
+	CSSParser/BaseParser.cpp \
+	CSSParser/CSSParser.cpp \
+	CSSParser/CSSParserPlugin.cpp \
+	CSSParser/CSSScanner.cpp \
+	CSSParser/ImportAtRuleParser.cpp \
+	CSSParser/MediaAtRuleParser.cpp \
+	CSSParser/Position.cpp \
+	CSSParser/ReadException.cpp \
+	CSSParser/RuleSetParser.cpp
 	
 DOMVIEWSOURCES= \
 	DOMView/DOMView.cpp \
@@ -565,12 +566,15 @@ ifneq ($(MAKECMDGOALS),clean)
 -include $(foreach file,$(BASE_ADDON_SOURCE_DIR)$(FILEPROTOCOLSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)FileProtocol/$(notdir $(file)))
 endif
 #css parser addon
-csspaddon: $(BASE_ADDON_INSTALL_DIR)css_parser.so
-$(BASE_ADDON_INSTALL_DIR)css_parser.so: $(BASE_INSTALL_DIR)Themis domlib domstylelib $(foreach file,$(CSSPARSERSOURCES),$(BASE_ADDONS_OBJECT_DIR)CSSParser/$(notdir $(file:.cpp=.o)))
+csspaddon: $(BASE_ADDON_INSTALL_DIR)css_parser.so domlib domstylelib
+$(BASE_ADDON_INSTALL_DIR)css_parser.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(CSSPARSERSOURCES),$(BASE_ADDONS_OBJECT_DIR)CSSParser/$(notdir $(file:.cpp=.o)))
 	@echo "Linking css parser..."
 	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)css_parser.so $(foreach file,$(notdir $(CSSPARSERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)CSSParser/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=css_parser.so -L ./ -L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR)  $(STDLIBS) -lstdc++.r4 -ldomstyle -ldom _APP_
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)css_parser.so
 	@echo "CSS Parser plug-in compiled and linked successfully."
+	@mkdir -p /boot/home/config/settings/Themis/css
+	@cp modules/CSSParser/html4.css /boot/home/config/settings/Themis/css/
+	@echo "CSS files installed."
 $(BASE_ADDONS_DEPENDS_DIR)CSSParser/%.d: $(BASE_ADDON_SOURCE_DIR)CSSParser/%.cpp 
 	@echo "CSS Parser: Updating dependency file $(notdir $@)"
 	@set -e;$(CC) -Icommon -Iframework/DOM -Iframework/DOMStyle -I./ -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/add-ons\/CSSParser\/\1.o depends\/add-ons\/CSSParser\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
@@ -883,8 +887,8 @@ domltestobjects: $(foreach file,$(DOMLOADTESTSOURCES),$(DOMLIBRARY_OBJECT_DIR)$(
 	@echo "DOM Test application objects are done."
 
 #DOMStyle Library
-domstylelib: $(BASE_APP_LIB_INSTALL_DIR)libdomstyle.so
-$(BASE_APP_LIB_INSTALL_DIR)libdomstyle.so: domlib $(foreach file,$(notdir $(DOMSTYLELIBRARYSOURCES:.cpp=.o)),$(DOMSTYLELIBRARY_OBJECT_DIR)$(file))
+domstylelib: $(BASE_APP_LIB_INSTALL_DIR)libdomstyle.so domlib
+$(BASE_APP_LIB_INSTALL_DIR)libdomstyle.so: $(foreach file,$(notdir $(DOMSTYLELIBRARYSOURCES:.cpp=.o)),$(DOMSTYLELIBRARY_OBJECT_DIR)$(file))
 	@echo "Linking DOMStyle Library"
 	@$(CC) -o $(BASE_APP_LIB_INSTALL_DIR)libdomstyle.so $(foreach file,$(notdir $(DOMSTYLELIBRARYSOURCES:.cpp=.o)),$(DOMSTYLELIBRARY_OBJECT_DIR)$(file)) -nostart -Xlinker $(LDFLAGS) -shared -Xlinker -soname=libdomstyle.so -L ./ -L $(BELIBRARIES) -L$(BASE_APP_LIB_INSTALL_DIR) -L $(DOMSTYLELIBRARY_OBJECT_DIR) -lstdc++.r4 -ldom
 	@echo "DOMStyle Library is now linked. Doing mimeset."

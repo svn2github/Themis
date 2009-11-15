@@ -25,11 +25,11 @@
 	
 	Original Author: 	Mark Hellegers (mark@firedisk.net)
 	Project Start Date: October 18, 2000
-	Class Start Date: November 5, 2009
+	Class Start Date: November 4, 2009
 */
 
-/*	AtRuleParser implementation
-	See AtRuleParser.hpp for more information
+/*	ImportAtRuleParser implementation
+	See ImportAtRuleParser.hpp for more information
 	
 */
 
@@ -37,59 +37,57 @@
 #include <stdio.h>
 
 // CSSParser headers
-#include "AtRuleParser.hpp"
+#include "ImportAtRuleParser.hpp"
 #include "ReadException.hpp"
 
-AtRuleParser :: AtRuleParser(CSSScanner * aScanner,
-							 CSSStyleSheetPtr aStyleSheet)
-			 : BaseParser(aScanner, aStyleSheet) {
+ImportAtRuleParser :: ImportAtRuleParser(CSSScanner * aScanner,
+										 CSSStyleSheetPtr aStyleSheet)
+				   : AtRuleParser(aScanner, aStyleSheet) {
 	
 }
 
-AtRuleParser :: ~AtRuleParser() {
+ImportAtRuleParser :: ~ImportAtRuleParser() {
 
 }
 
-MediaListPtr AtRuleParser :: parseMediaList() {
+Token ImportAtRuleParser :: parse(Token aToken) {
 	
-	MediaListPtr result;
+	mToken = mScanner->nextToken();
 	
-	if (mToken == IDENTIFIER_SYM) {
-		// Found a medium. Create the list and add it.
-		result = MediaListPtr(new MediaList());
-		result->appendMedium(mScanner->getTokenText());
+	if (mToken == SPACE_SYM) {
 		mToken = mScanner->nextToken();
-		parseSStar();
-		bool mediumFound = true;
-		while (mediumFound) {
-			if (mToken == COMMA_SYM) {
+		if (mToken == TEXT_SYM) {
+			mToken = mScanner->nextToken();
+			parseSStar();
+			if (mToken == IDENTIFIER_SYM) {
+				parseMediaList();
+			}
+			if (mToken == SEMICOLON_SYM) {
 				mToken = mScanner->nextToken();
 				parseSStar();
-				if (mToken == IDENTIFIER_SYM) {
-					// Found another medium. Add it to the list.
-					result->appendMedium(mScanner->getTokenText());
-					mToken = mScanner->nextToken();
-					parseSStar();
-				}
-				else {
-					throw ReadException(mScanner->getLineNr(),
-										mScanner->getCharNr(),
-										"Expected identifier",
-										GENERIC);
-				}
 			}
 			else {
-				mediumFound = false;
+				throw ReadException(mScanner->getLineNr(),
+									mScanner->getCharNr(),
+									"Expected semicolon",
+									GENERIC);
 			}
+		}
+		else {
+			throw ReadException(mScanner->getLineNr(),
+								mScanner->getCharNr(),
+								"Symbol not currently supported",
+								GENERIC);
 		}
 	}
 	else {
 		throw ReadException(mScanner->getLineNr(),
 							mScanner->getCharNr(),
-							"Expected identifier",
+							"Expected space",
 							GENERIC);
 	}
 	
-	return result;
+	printf("Succesfully parsed import at-rule\n");
 	
+	return mToken;
 }
