@@ -83,11 +83,184 @@ HTMLParser	::	HTMLParser( BMessage * aInfo )
 	SGMLScanner * scanner = new SGMLScanner();
 	mParser = new SGMLParser(scanner, schema);
 	
+	// We only support one mimetype at the momemt.
+	mMimeTypes.push_back("text/html");
+	
 }
 
 HTMLParser	::	~HTMLParser()	{
 
 	delete mParser;
+	
+}
+
+bool HTMLParser :: MessageSentByCache(BMessage * aMessage) {
+
+	PlugClass * plug = NULL;
+	aMessage->FindPointer("plugin", (void **) &plug);
+	if (plug != NULL && plug->PlugID() == 'cash') {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+void HTMLParser :: RegisterCache(BMessage * aMessage) {
+
+	PlugClass * plug = NULL;
+	aMessage->FindPointer("plugin", (void **) &plug);
+	if (plug != NULL) {
+		mCache = (CachePlug *) plug;
+		mUserToken = mCache->Register(Type(), PlugName());
+	}
+}
+
+void HTMLParser :: UnregisterCache(BMessage * aMessage) {
+
+	mCache = NULL;
+}
+
+bool HTMLParser :: CacheRegistered() const {
+	
+	return (mCache ? true : false);
+
+}
+
+void HTMLParser :: ReplySupportedMimeTypes(BMessage * aMessage) {
+
+	if (aMessage->HasBool( "supportedmimetypes" )) {
+		BMessage types(SupportedMIMEType);
+		unsigned int length = mMimeTypes.size();
+		for (unsigned int i = 0; i < length; i++) {
+			types.AddString("mimetype", mMimeTypes[i].c_str());
+		}
+		types.AddInt32("command", COMMAND_INFO);
+		PlugClass * plug = NULL;
+		if (aMessage->HasPointer("ReplyToPointer")) {
+			aMessage->FindPointer("ReplyToPointer", (void**) &plug);
+			if (plug != NULL) {
+				plug->BroadcastReply(&types);
+			}
+		}
+	}
+}
+
+string HTMLParser :: GetDTDPathFromSettings() const {
+
+	const char * path = NULL;
+	
+	if (appSettings != NULL) {
+		appSettings->FindString(kPrefsActiveDTDPath, &path);
+	}
+
+	return path;
+
+}
+
+bool HTMLParser :: IsDocumentSupported(BMessage * aMessage) {
+	
+	bool result = false;
+
+	const char * mimeType = NULL;
+	aMessage->FindString("mimetype", &mimeType);
+	if (mimeType != NULL) {
+		bool mimeTypeFound = true;
+		string mimeTypeString = "";
+		unsigned int i = 0;
+		while (mimeTypeFound && mimeType[i] != '\0') {
+			if (mimeType[i] == ';') {
+				mimeTypeFound = false;
+			}
+			else {
+				mimeTypeString += mimeType[i];
+			}
+			i++;
+		}
+		vector<string>::iterator iter = find(mMimeTypes.begin(), mMimeTypes.end(), mimeTypeString);
+		result = (iter != mMimeTypes.end());
+	}
+	
+	return result;
+
+}
+
+void HTMLParser :: NotifyParseFinished(void * aDocument,
+									   string aType,
+									   BMessage * aOriginalMessage) {
+
+	int32 siteID = 0;
+	int32 urlID = 0;
+	aOriginalMessage->FindInt32("site_id", &siteID);
+	aOriginalMessage->FindInt32("url_id", &urlID);
+
+	BMessage * done = new BMessage(SH_PARSE_DOC_FINISHED);
+	done->AddInt32("command", COMMAND_INFO);
+	done->AddString("type", aType.c_str());
+	done->AddPointer("dom_tree_pointer", aDocument);
+	done->AddInt32("site_id", siteID);
+	done->AddInt32("url_id", urlID);
+	
+	// Message created. Broadcast it.
+	Broadcast(MS_TARGET_ALL, done);
+	
+	Debug("File parsed", PlugID());
+	delete done;
+
+}
+
+void HTMLParser :: ParseDocument(string aURL,
+								 BMessage * aOriginalMessage) {
+	
+	if (CacheRegistered()) {
+		int32 fileToken = mCache->FindObject(mUserToken, aURL.c_str());
+		ssize_t fileSize = mCache->GetObjectSize(mUserToken, fileToken);
+		
+		if (fileSize == 0) {
+			Debug("Requested file is 0 bytes long. Aborting parse", PlugID());
+		}
+		else {
+			// Read the file and parse it.
+			const unsigned int BUFFER_SIZE = 2000;
+			string content = "";
+			char * buffer = new char[BUFFER_SIZE];
+			ssize_t bytesRead = 0;
+			int totalBytes = 0;
+			bool foundData = true;
+			while (foundData) {
+				if (totalBytes > fileSize) {
+					foundData = false;
+					printf("Reading more bytes than possible. Skipping last buffer\n");
+				}
+				else {
+					bytesRead = mCache->Read(mUserToken, fileToken, buffer, BUFFER_SIZE);
+					if (bytesRead > 0) {
+						content += buffer;
+						memset(buffer, 0, BUFFER_SIZE);
+						totalBytes += bytesRead;
+					}
+					else {
+						foundData = false;
+					}
+				}
+			}
+			delete[] buffer;
+			
+			// Parse it
+			if (content.size() != 0) {
+				if (mActiveDTDPath == "") {
+					mActiveDTDPath = GetDTDPathFromSettings();
+				}
+				mDocument = mParser->parse(mActiveDTDPath.c_str(), content);
+				mDocument->setDocumentURI(aURL);
+				
+				NotifyParseFinished(&mDocument, "dom", aOriginalMessage);
+			}
+		}
+	}
+	else {
+		printf("Not registered with the cache. Nothing to do\n");
+	}
 	
 }
 
@@ -129,7 +302,7 @@ char * HTMLParser	::	PlugName()	{
 
 float HTMLParser	::	PlugVersion()	{
 	
-	return 0.6;
+	return 0.7;
 	
 }
 
@@ -142,158 +315,63 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * aMessage )	{
 	int32 command = 0;
 	aMessage->FindInt32( "command", &command );
 	
-	switch ( command )	{
-		case COMMAND_INFO_REQUEST:	{
-			switch( aMessage->what )	{
-				case GetSupportedMIMEType:	{
-					if ( aMessage->HasBool( "supportedmimetypes" ) )	{
-						BMessage types( SupportedMIMEType );
-						types.AddString( "mimetype", "text/html" );
-						types.AddInt32( "command", COMMAND_INFO );
-						PlugClass * plug = NULL;
-						if ( aMessage->HasPointer( "ReplyToPointer" ) )	{
-							aMessage->FindPointer( "ReplyToPointer", (void**) &plug );
-							if ( plug != NULL )	{
-								plug->BroadcastReply( &types );
-							}
-						}
-					}
+	switch (command) {
+		case COMMAND_INFO_REQUEST: {
+			switch (aMessage->what) {
+				case GetSupportedMIMEType: {
+					ReplySupportedMimeTypes(aMessage);
 					break;
 				}
 			}
 		}	
-		case COMMAND_INFO:	{
-			switch ( aMessage->what )	{
-				case PlugInLoaded:	{
-					PlugClass * plug = NULL;
-					aMessage->FindPointer(  "plugin", (void **) &plug );
-					if ( plug != NULL )	{
-							if (  plug->PlugID() == 'cash' )	{
-								mCache = (CachePlug *) plug;
-								mUserToken = mCache->Register( Type(), "HTML Parser" );
-							}
+		case COMMAND_INFO: {
+			switch (aMessage->what) {
+				case PlugInLoaded: {
+					if (MessageSentByCache(aMessage)) {
+						RegisterCache(aMessage);
 					}
 					break;
 				}
-				case PlugInUnLoaded:	{
-					uint32 type = 0;
-					type = aMessage->FindInt32( "type" );
-					if ( ( type & TARGET_CACHE ) != 0 )	{
-						mCache = NULL;
+				case PlugInUnLoaded: {
+					if (MessageSentByCache(aMessage)) {
+						UnregisterCache(aMessage);
 					}
 					break;
 				}
-				case DTD_CHANGED_PARSER:	{
-					Debug( "Request to change parser", PlugID() );
-					if ( appSettings != NULL )	{
-						const char * path;
-						appSettings->FindString( kPrefsActiveDTDPath, &path );
+				case DTD_CHANGED_PARSER: {
+					Debug("Request to change parser", PlugID());
+					mActiveDTDPath = GetDTDPathFromSettings();
+					if (mActiveDTDPath != "") {
 						string dtdLoad = "Loading new DTD: ";
-						dtdLoad += path;
-						Debug( dtdLoad.c_str(), PlugID() );
-						if ( mParser == NULL )	{
-							TSchemaPtr schema = TSchemaPtr(new TSchema());
-							schema->setup();
-							
-							SGMLScanner * scanner = new SGMLScanner();
-							mParser = new SGMLParser(scanner, schema);
-						}
-						mParser->loadSchema(path);
-						Debug( "New DTD loaded", PlugID() );
+						dtdLoad += mActiveDTDPath;
+						Debug(dtdLoad.c_str(), PlugID());
+						TSchemaPtr schema = TSchemaPtr(new TSchema());
+						schema->setup();
+						
+						SGMLScanner * scanner = new SGMLScanner();
+						mParser = new SGMLParser(scanner, schema);
+						mParser->loadSchema(mActiveDTDPath.c_str());
+						Debug("New DTD loaded", PlugID());
 					}
 					break;
 				}
-				//case ProtocolConnectionClosed:	{
-				case SH_PARSE_DOC_START :	{
-					
-					printf( "HTMLPARSER: SH_PARSE_DOC_START.\n" );
-					
-					//bool requestDone = false;
-					//aMessage->FindBool( "request_done", &requestDone );
-					
-//					if ( !requestDone )	{
-//						// I'll wait
-//						printf( "HTMLPARSER: request_done false!\n" );
-//						break;
+				case SH_PARSE_DOC_START: {
+					// Not used as the message is sent directly to this parser without a mime-type.
+//					if (IsDocumentSupported(aMessage)) {
+						const char * url = NULL;
+						aMessage->FindString("url", &url);
+						if (url == NULL) {
+							// What the heck
+							printf("HTMLPARSER: Aborting. No url specified.\n");
+						}
+						else {
+							printf("HTMLPARSER: url: %s\n", url);
+							ParseDocument(url, aMessage);
+						}
 //					}
-					
-					/* temporarily added by emwe */
-					int32 site_id = 0;
-					int32 url_id = 0;
-					aMessage->FindInt32( "site_id", &site_id );
-					aMessage->FindInt32( "url_id", &url_id );
-					
-					const char * mimetype = NULL;
-					aMessage->FindString( "mimetype", &mimetype );
-					
-					if ( mimetype != NULL ) {
-						if ( strncasecmp( mimetype, "image", 5 ) == 0 ) {
-							break;
-						}
-					}
-
-					const char * url = NULL;
-					aMessage->FindString( "url", &url );
-					if ( url == NULL )	{
-						// What the heck
-						printf( "HTMLPARSER: Aborting. No url specified.\n" );
-						break;
-					}
-					
-					printf( "HTMLPARSER: url: %s\n", url );
-			
-					int32 fileToken = mCache->FindObject( mUserToken, url );
-					ssize_t fileSize = mCache->GetObjectSize( mUserToken, fileToken );
-					
-					if ( fileSize == 0 )	{
-						printf( "HTMLPARSER: Requested file is 0 bytes long. Something is wrong here\n" );
-						
-						Debug( "Requested file is 0 bytes long. Something is wrong here",
-								   PlugID() );
-						break;
-					}
-					string content;
-					char * buffer = new char[ 2000 ];
-					ssize_t bytesRead = 0;
-					int totalBytes = 0;
-					bytesRead = mCache->Read( mUserToken, fileToken, buffer, 2000 );
-					while (  bytesRead > 0 )	{
-						totalBytes += bytesRead;
-						if ( totalBytes > fileSize )	{
-							break;
-						}
-						content += buffer;
-						memset( buffer, 0, 1000 );
-						bytesRead = mCache->Read( mUserToken, fileToken, buffer, 2000 );
-					}
-					delete[] buffer;
-					
-					// Parse it
-					if (mParser != NULL && content.size() != 0) {
-						const char * path;
-						appSettings->FindString( kPrefsActiveDTDPath, &path );
-						mDocument = mParser->parse(path, content);
-						// A bit messy. Variable url is still valid. Check back to start of case.
-						string urlString( url );
-						mDocument->setDocumentURI( urlString );
-						
-						printf( "HTMLPARSER: broadcasting SH_PARSE_DOC_FINISHED\n" );
-						
-						BMessage * done = new BMessage( SH_PARSE_DOC_FINISHED );
-						done->AddInt32( "command", COMMAND_INFO );
-						done->AddString( "type", "dom" );
-						done->AddPointer( "dom_tree_pointer", &mDocument );
-						/* added by emwe */
-						done->AddInt32( "site_id", site_id );
-						done->AddInt32( "url_id", url_id );
-						/**/
-						Broadcast( MS_TARGET_ALL, done );
-						
-						Debug( "File parsed", PlugID() );
-
-						delete done;
-						done = NULL;
-					}
+//					else {
+//						printf("HTML Parser: Document not supported\n");
+//					}
 					break;
 				}
 			}

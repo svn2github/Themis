@@ -42,6 +42,32 @@ class HTMLParser	:	public BHandler, public PlugClass	{
 
 		TDocumentPtr mDocument; // Stores the document to be build
 		SGMLParser * mParser;
+		// Storing the path of the active DTD.
+		string mActiveDTDPath;
+		// List of mimetypes supported.
+		vector<string> mMimeTypes;
+		
+		// Function to find out if a message was sent by the cache.
+		bool MessageSentByCache(BMessage * aMessage);
+		// Function to register the cache.
+		void RegisterCache(BMessage * aMessage);
+		// Function to unregister the cache.
+		void UnregisterCache(BMessage * aMessage);
+		// Function to check if we have registered with the cache.
+		bool CacheRegistered() const;
+		// Function to reply with the supported mimetypes.
+		void ReplySupportedMimeTypes(BMessage * aMessage);
+		// Function to get the DTD path from the settings.
+		string GetDTDPathFromSettings() const;
+		// Function to check if the document is a supported one.
+		bool IsDocumentSupported(BMessage * aMessage);
+		// Function to notify plugins that parsing is finished.
+		void NotifyParseFinished(void * aDocument,
+								 string aType,
+								 BMessage * aOriginalMessage);
+		// Function to parse a document.
+		void ParseDocument(string aURL,
+						   BMessage * aOriginalMessage);
 	
 	public:
 		HTMLParser( BMessage * aInfo = NULL );
