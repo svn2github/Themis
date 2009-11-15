@@ -29,24 +29,26 @@
 // Namespaces used
 using namespace std;
 
-extern "C" __declspec( dllexport ) status_t Initialize( void * aInfo = NULL );
-extern "C" __declspec( dllexport ) status_t Shutdown( bool aNow = false );
-extern "C" __declspec( dllexport ) PlugClass * GetObject();
+extern "C" __declspec(dllexport) status_t Initialize(void * aInfo = NULL);
+extern "C" __declspec(dllexport) status_t Shutdown(bool aNow = false);
+extern "C" __declspec(dllexport) PlugClass * GetObject();
 
-class HTMLParser	:	public BHandler, public PlugClass	{
-	
+class HTMLParser : public BHandler, public PlugClass {
+
 	private:
 		// Plugin variables
 		CachePlug * mCache;
 		uint32 mUserToken;
 
-		TDocumentPtr mDocument; // Stores the document to be build
+		// Storage for the parsed document trees.
+		vector<TDocumentPtr> mDocuments;
+
 		SGMLParser * mParser;
 		// Storing the path of the active DTD.
 		string mActiveDTDPath;
 		// List of mimetypes supported.
 		vector<string> mMimeTypes;
-		
+
 		// Function to find out if a message was sent by the cache.
 		bool MessageSentByCache(BMessage * aMessage);
 		// Function to register the cache.
@@ -68,11 +70,11 @@ class HTMLParser	:	public BHandler, public PlugClass	{
 		// Function to parse a document.
 		void ParseDocument(string aURL,
 						   BMessage * aOriginalMessage);
-	
+
 	public:
-		HTMLParser( BMessage * aInfo = NULL );
+		HTMLParser(BMessage * aInfo = NULL);
 		~HTMLParser();
-		void MessageReceived( BMessage * aMessage );
+		void MessageReceived(BMessage * aMessage);
 		bool IsHandler();
 		BHandler * Handler();
 		bool IsPersistent();
@@ -80,8 +82,8 @@ class HTMLParser	:	public BHandler, public PlugClass	{
 		char * PlugName();
 		float PlugVersion();
 		void Heartbeat();
-		status_t ReceiveBroadcast( BMessage * aMessage );
-		status_t BroadcastReply( BMessage * aMessage );
+		status_t ReceiveBroadcast(BMessage * aMessage);
+		status_t BroadcastReply(BMessage * aMessage);
 		uint32 BroadcastTarget();
 		int32 Type();
 

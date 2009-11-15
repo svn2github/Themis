@@ -33,48 +33,48 @@ HTMLParser * parser;
 BMessage ** appSettings_p;
 BMessage * appSettings;
 
-status_t Initialize( void * aInfo )	{
+status_t Initialize(void * aInfo) {
 	
 	parser = NULL;
-	if ( aInfo != NULL )	{
+	if (aInfo != NULL) {
 		BMessage * message = (BMessage *) aInfo;
-		if ( message->HasPointer( "settings_message_ptr" ) )	{
-			message->FindPointer( "settings_message_ptr", (void **) & appSettings_p );
+		if (message->HasPointer("settings_message_ptr")) {
+			message->FindPointer("settings_message_ptr", (void **) & appSettings_p);
 			appSettings = *appSettings_p;
 		}
-		parser = new HTMLParser( message );
+		parser = new HTMLParser(message);
 	}
-	else	{
+	else {
 		parser = new HTMLParser();
 	}
-	
+
 	return B_OK;
-	
+
 }
 
-status_t Shutdown( bool aNow )	{
-	
+status_t Shutdown(bool aNow) {
+
 	delete parser;
-	
+
 	return B_OK;
-	
+
 }
 
 PlugClass * GetObject()	{
-	
+
 	return parser;
-	
+
 }
 
-HTMLParser	::	HTMLParser( BMessage * aInfo )
-					:	BHandler( "HTMLParser" ),
-						PlugClass( aInfo , "HTMLParser" )	{
+HTMLParser :: HTMLParser(BMessage * aInfo)
+		   : BHandler("HTMLParser"),
+			 PlugClass(aInfo , "HTMLParser") {
 	
-	mCache = (CachePlug *) PlugMan->FindPlugin( CachePlugin );
+	mCache = (CachePlug *) PlugMan->FindPlugin(CachePlugin);
 	mUserToken = 0;
 	
-	if ( mCache != NULL )	{
-		mUserToken = mCache->Register( Type(), "HTML Parser" );
+	if (mCache != NULL) {
+		mUserToken = mCache->Register(Type(), "HTML Parser");
 	}
 
 	TSchemaPtr schema = TSchemaPtr(new TSchema());
@@ -88,10 +88,10 @@ HTMLParser	::	HTMLParser( BMessage * aInfo )
 	
 }
 
-HTMLParser	::	~HTMLParser()	{
+HTMLParser :: ~HTMLParser() {
 
 	delete mParser;
-	
+
 }
 
 bool HTMLParser :: MessageSentByCache(BMessage * aMessage) {
@@ -251,10 +251,11 @@ void HTMLParser :: ParseDocument(string aURL,
 				if (mActiveDTDPath == "") {
 					mActiveDTDPath = GetDTDPathFromSettings();
 				}
-				mDocument = mParser->parse(mActiveDTDPath.c_str(), content);
-				mDocument->setDocumentURI(aURL);
+				TDocumentPtr document = mParser->parse(mActiveDTDPath.c_str(), content);
+				document->setDocumentURI(aURL);
+				mDocuments.push_back(document);
 				
-				NotifyParseFinished(&mDocument, "dom", aOriginalMessage);
+				NotifyParseFinished(mDocuments.end() - 1, "dom", aOriginalMessage);
 			}
 		}
 	}
@@ -264,57 +265,57 @@ void HTMLParser :: ParseDocument(string aURL,
 	
 }
 
-void HTMLParser	::	MessageReceived( BMessage * aMessage )	{
-	
-	BHandler::MessageReceived( aMessage );
-	
+void HTMLParser :: MessageReceived(BMessage * aMessage) {
+
+	BHandler::MessageReceived(aMessage);
+
 }
 
-bool HTMLParser	::	IsHandler()	{
-	
+bool HTMLParser :: IsHandler() {
+
 	return true;
-	
+
 }
 
-BHandler * HTMLParser	::	Handler()	{
-	
+BHandler * HTMLParser :: Handler() {
+
 	return this;
-	
+
 }
 
-bool HTMLParser	::	IsPersistent()	{
-	
+bool HTMLParser :: IsPersistent() {
+
 	return true;
-	
+
 }
 
-uint32 HTMLParser	::	PlugID()	{
-	
+uint32 HTMLParser :: PlugID() {
+
 	return 'html';
-	
+
 }
 
-char * HTMLParser	::	PlugName()	{
-	
+char * HTMLParser :: PlugName() {
+
 	return "HTML Parser";
-	
+
 }
 
-float HTMLParser	::	PlugVersion()	{
-	
+float HTMLParser :: PlugVersion() {
+
 	return 0.7;
-	
+
 }
 
-void HTMLParser	::	Heartbeat()	{
-	
+void HTMLParser :: Heartbeat() {
+
 }
 
-status_t HTMLParser	::	ReceiveBroadcast( BMessage * aMessage )	{
-	
+status_t HTMLParser :: ReceiveBroadcast(BMessage * aMessage) {
+
 	int32 command = 0;
-	aMessage->FindInt32( "command", &command );
-	
+	aMessage->FindInt32("command", &command);
+
 	switch (command) {
 		case COMMAND_INFO_REQUEST: {
 			switch (aMessage->what) {
@@ -381,25 +382,25 @@ status_t HTMLParser	::	ReceiveBroadcast( BMessage * aMessage )	{
 			return PLUG_DOESNT_HANDLE;
 		}
 	}
-	
+
 	return PLUG_HANDLE_GOOD;
-	
+
 }
 
-status_t HTMLParser		::	BroadcastReply( BMessage * aMessage )	{
+status_t HTMLParser :: BroadcastReply(BMessage * aMessage) {
 
 	return B_OK;
 
 }
 
-uint32 HTMLParser	::	BroadcastTarget()	{
+uint32 HTMLParser :: BroadcastTarget() {
 
 	return MS_TARGET_HTML_PARSER;
-	
+
 }
 
-int32 HTMLParser	::	Type()	{
-	
+int32 HTMLParser :: Type() {
+
 	return TARGET_PARSER;
-	
+
 }
