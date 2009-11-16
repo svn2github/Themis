@@ -232,7 +232,8 @@ FILEPROTOCOLSOURCES= \
 	FileProtocol/FileProtocol.cpp
 MESSAGEVIEWERSOURCES= \
 	MsgViewer/MsgView.cpp \
-	MsgViewer/MsgViewer.cpp
+	MsgViewer/MsgViewer.cpp \
+	MsgViewer/MsgTextView.cpp
 #make install directories as necessary
 ifeq "$(shell if [ -d $(BASE_ADDON_INSTALL_DIR) ] ; then echo 1 ; else mkdir -p $(BASE_ADDON_INSTALL_DIR) ; echo 0 ; fi)" "0"
 endif
