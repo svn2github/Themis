@@ -48,6 +48,7 @@
 #include "TNode.h"
 #include "TNodeList.h"
 #include "TNamedNodeMap.h"
+#include "TElement.h"
 
 // DOMView headers
 #include "DOMView.h"
@@ -354,37 +355,36 @@ TNodePtr DOMView :: findNode(TNodePtr aNode,
 
 	TNodePtr result;
 	
-	// Only valid nodes and nodes of type element can be found.
-	if (aNode.get() && (aNode->getNodeType() == ELEMENT_NODE)) {
-		
-		if (aTarget == aCurrent) {
-			// This is the node we're looking for
-			result = aNode;
-		}
-		else {
-			// Only look at the children if the current item is expanded.
-			// Collapsed items are not included in the index.
-			if (aItem->IsExpanded()) {
-				TNodeListPtr children = aNode->getChildNodes();
-				unsigned int i = 0;
-				unsigned int length = children->getLength();
-				bool foundNode = false;
-				while (i < length && !foundNode) {
+	if (aTarget == aCurrent) {
+		// This is the node we're looking for
+		result = aNode;
+	}
+	else {
+		// Only look at the children if the current item is expanded.
+		// Collapsed items are not included in the index.
+		if (aItem->IsExpanded()) {
+			TNodeListPtr children = aNode->getChildNodes();
+			unsigned int i = 0;
+			unsigned int length = children->getLength();
+			bool foundNode = false;
+			while (i < length && !foundNode) {
+				TNodePtr child = children->item(i);
+				// Only look at the child if it is an element.
+				// Others will throw of the current count of the outline listview.
+				if (child->getNodeType() == ELEMENT_NODE) {
 					aCurrent++;
-					TNodePtr child = children->item(i);
 					BListItem * childItem = mTree->ItemUnderAt(aItem, true, i);
 					result = findNode(child, childItem, aTarget, aCurrent);
 					if (result.get()) {
 						// Found it. Stop the loop and return it.
 						foundNode = true;
 					}
-					i++;
 				}
+				i++;
 			}
 		}
-		
 	}
-	
+
 	return result;
 	
 }
