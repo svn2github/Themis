@@ -208,7 +208,8 @@ void DOMView	::	MessageReceived( BMessage * aMessage )	{
 			if (index > -1) {
 				int32 current = 0;
 				TNodePtr documentRoot = mDocument->getFirstChild();
-				TNodePtr found = findNode(documentRoot, index, current);
+				BListItem * firstItem = mTree->FirstItem();
+				TNodePtr found = findNode(documentRoot, firstItem, index, current);
 				EmptyListView(mAttributes);
 				EmptyListView(mValues);
 				if ( found->hasAttributes() )	{
@@ -347,47 +348,43 @@ void DOMView	::	setDocument( TDocumentPtr aDocument )	{
 }
 
 TNodePtr DOMView :: findNode(TNodePtr aNode,
+							 BListItem * aItem,
 							 int32 aTarget,
 							 int32 & aCurrent) {
+
+	TNodePtr result;
 	
+	// Only valid nodes and nodes of type element can be found.
 	if (aNode.get() && (aNode->getNodeType() == ELEMENT_NODE)) {
 		
 		if (aTarget == aCurrent) {
 			// This is the node we're looking for
-			return aNode;
+			result = aNode;
+		}
+		else {
+			// Only look at the children if the current item is expanded.
+			// Collapsed items are not included in the index.
+			if (aItem->IsExpanded()) {
+				TNodeListPtr children = aNode->getChildNodes();
+				unsigned int i = 0;
+				unsigned int length = children->getLength();
+				bool foundNode = false;
+				while (i < length && !foundNode) {
+					aCurrent++;
+					TNodePtr child = children->item(i);
+					BListItem * childItem = mTree->ItemUnderAt(aItem, true, i);
+					result = findNode(child, childItem, aTarget, aCurrent);
+					if (result.get()) {
+						// Found it. Stop the loop and return it.
+						foundNode = true;
+					}
+					i++;
+				}
+			}
 		}
 		
-		// Get the next node
-		// I'm using getChildNodes instead of getFirstChild,
-		// because of a weird crash with getFirstChild. Not sure who is wrong here
-		TNodeListPtr children = aNode->getChildNodes();
-		TNodePtr result = TNodePtr();
-		if (children->getLength()) {
-			aCurrent++;
-			TNodePtr next = children->item(0);
-			result = findNode(next, aTarget, aCurrent);
-		}
-		if (result.get()) {
-			return result;
-		}
-		else {
-			aCurrent++;
-			TNodePtr next = aNode->getNextSibling();
-			return findNode(next, aTarget, aCurrent);
-		}							
-	}
-	else	{
-		// Was not an element or didn't exist
-		if (aNode.get()) {
-			TNodePtr next = aNode->getNextSibling();
-			return findNode(next, aTarget, aCurrent);
-		}
-		else {
-			// Node doesn't exist
-			aCurrent--;
-		}
 	}
 	
-	return TNodePtr();
+	return result;
 	
 }

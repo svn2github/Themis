@@ -58,7 +58,7 @@ using namespace std;
 const int32 SELECTION = 'slct';
 const int32 TEXT_MENU_CHANGED = 'tmcd';
 
-class DOMView	:	public BWindow	{
+class DOMView : public BWindow {
 
 	private:
 		BOutlineListView * mTree;
@@ -76,14 +76,17 @@ class DOMView	:	public BWindow	{
 		void EmptyListView(BListView * aListView);
 	
 	public:
-		DOMView( TDocumentPtr aDocument );
+		DOMView(TDocumentPtr aDocument);
 		~DOMView();
-		void MessageReceived( BMessage * aMessage );
+		void MessageReceived(BMessage * aMessage);
 		bool QuitRequested();
-		void showTree( const TNodePtr aNode, BStringItem * aParent );
+		void showTree(const TNodePtr aNode, BStringItem * aParent);
 		void showDocument();
-		void setDocument( TDocumentPtr aDocument );
-		TNodePtr findNode( TNodePtr aNode, int32 aTarget, int32 & aCurrent );
+		void setDocument(TDocumentPtr aDocument);
+		TNodePtr findNode(TNodePtr aNode,
+						  BListItem * aItem,
+						  int32 aTarget,
+						  int32 & aCurrent);
 		
 	
 };

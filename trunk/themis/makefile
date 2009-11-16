@@ -719,8 +719,8 @@ $(BASE_ADDONS_OBJECT_DIR)HTMLParser/%.o: $(BASE_ADDON_SOURCE_DIR)HTMLParser/%.cp
 	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -Iframework/DOM -I./ -c $< -o $@
 
 #domview add-on
-domvaddon: $(BASE_ADDON_INSTALL_DIR)DOMView.so
-$(BASE_ADDON_INSTALL_DIR)DOMView.so: $(BASE_INSTALL_DIR)Themis domlib $(COMMONOBJ) $(foreach file,$(notdir $(DOMVIEWSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)DOMView/$(file)) #commondepends domvdepends commonobjects domvobjects
+domvaddon: $(BASE_ADDON_INSTALL_DIR)DOMView.so domlib
+$(BASE_ADDON_INSTALL_DIR)DOMView.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(DOMVIEWSOURCES),$(BASE_ADDONS_OBJECT_DIR)DOMView/$(notdir $(file:.cpp=.o))) #commondepends domvdepends commonobjects domvobjects
 	@echo "Linking DOM View add-on" 
 	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)DOMView.so $(foreach file,$(notdir $(DOMVIEWSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)DOMView/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=DOMView.so -L ./ -L $(BELIBRARIES) -L$(BASE_APP_LIB_INSTALL_DIR)  -lbe -lroot -ldom -lstdc++.r4 _APP_
 	@echo "DOM View add-on is now linked. Doing mimeset."
@@ -728,7 +728,7 @@ $(BASE_ADDON_INSTALL_DIR)DOMView.so: $(BASE_INSTALL_DIR)Themis domlib $(COMMONOB
 	@echo "DOM View plug-in compiled and linked successfully."
 	
 domvdepends: $(foreach file,$(DOMVIEWSOURCES),$(BASE_ADDON_SOURCE_DIR)$(file)) common/plugman.cpp common/plugclass.cpp $(COMMON_DEPENDS_DIR)plugman.d $(COMMON_DEPENDS_DIR)plugclass.d\
-					$(foreach file,$(BASE_ADDON_SOURCE_DIR)$(DOMVIEWSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)DOMView/$(notdir $(file)))
+				$(foreach file,$(BASE_ADDON_SOURCE_DIR)$(DOMVIEWSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)DOMView/$(notdir $(file)))
 	@echo "DOMView depends are done."
 ifneq ($(MAKECMDGOALS),clean)
 -include $(foreach file,$(BASE_ADDON_SOURCE_DIR)$(DOMVIEWSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)DOMView/$(notdir $(file)))
