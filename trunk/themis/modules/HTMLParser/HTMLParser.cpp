@@ -163,7 +163,7 @@ bool HTMLParser :: IsDocumentSupported(BMessage * aMessage) {
 	bool result = false;
 
 	const char * mimeType = NULL;
-	aMessage->FindString("mimetype", &mimeType);
+	aMessage->FindString("mime-type", &mimeType);
 	if (mimeType != NULL) {
 		bool mimeTypeFound = true;
 		string mimeTypeString = "";
@@ -206,6 +206,28 @@ void HTMLParser :: NotifyParseFinished(void * aDocument,
 	
 	Debug("File parsed", PlugID());
 	delete done;
+
+}
+
+void HTMLParser :: parseRawData(string aURL,
+								BMessage * aMessage) {
+
+	const void * data = NULL;
+	ssize_t dataSize = 0;
+	aMessage->FindData("raw_data", B_RAW_TYPE, &data, &dataSize);
+	string content = (const char *) data;
+
+	// Parse it
+	if (content.size() != 0) {
+		if (mActiveDTDPath == "") {
+			mActiveDTDPath = GetDTDPathFromSettings();
+		}
+		TDocumentPtr document = mParser->parse(mActiveDTDPath.c_str(), content);
+		document->setDocumentURI(aURL);
+		mDocuments.push_back(document);
+		
+		NotifyParseFinished(mDocuments.end() - 1, "dom", aMessage);
+	}
 
 }
 
@@ -355,6 +377,21 @@ status_t HTMLParser :: ReceiveBroadcast(BMessage * aMessage) {
 						Debug("New DTD loaded", PlugID());
 					}
 					break;
+				}
+				case SH_LOADING_PROGRESS: {
+					if (IsDocumentSupported(aMessage)) {
+						// Look if there is raw data in the message.
+						// If so, the data won't be found in the cache, so we read it now.
+						type_code code;
+						int32 countFound = 0;
+						status_t status = aMessage->GetInfo("raw_data", &code, &countFound);
+						if (status == B_OK) {
+							const char * url = NULL;
+							aMessage->FindString("url", &url);
+							parseRawData(url, aMessage);
+						}
+						
+					}
 				}
 				case SH_PARSE_DOC_START: {
 					// Not used as the message is sent directly to this parser without a mime-type.
