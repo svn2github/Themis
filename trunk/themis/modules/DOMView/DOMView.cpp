@@ -365,6 +365,7 @@ TNodePtr DOMView :: findNode(TNodePtr aNode,
 		if (aItem->IsExpanded()) {
 			TNodeListPtr children = aNode->getChildNodes();
 			unsigned int i = 0;
+			unsigned int j = 0;
 			unsigned int length = children->getLength();
 			bool foundNode = false;
 			while (i < length && !foundNode) {
@@ -373,12 +374,13 @@ TNodePtr DOMView :: findNode(TNodePtr aNode,
 				// Others will throw of the current count of the outline listview.
 				if (child->getNodeType() == ELEMENT_NODE) {
 					aCurrent++;
-					BListItem * childItem = mTree->ItemUnderAt(aItem, true, i);
+					BListItem * childItem = mTree->ItemUnderAt(aItem, true, j);
 					result = findNode(child, childItem, aTarget, aCurrent);
 					if (result.get()) {
 						// Found it. Stop the loop and return it.
 						foundNode = true;
 					}
+					j++;
 				}
 				i++;
 			}
