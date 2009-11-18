@@ -30,7 +30,7 @@
 
 #include "PElement.h"
 
-PElement::PElement(TNodePtr node) : UIElement(frame,node)
+PElement::PElement(TNodePtr node) : UIElement(UIBox(0, 0),node)
 {
 	font_height fh;
 	be_plain_font->GetHeight(&fh);

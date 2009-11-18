@@ -57,7 +57,7 @@
 */
 
 //the font and high MUST be allocated on the heap
-TextElement::TextElement(TNodePtr node, const char *text, BFont *font, rgb_color *high, rgb_color *low, t_alignment alignement) : UIElement(frame,node)
+TextElement::TextElement(TNodePtr node, const char *text, BFont *font, rgb_color *high, rgb_color *low, t_alignment alignement) : UIElement(UIBox(0, 0),node)
 {	
 	//Member datas
 	TextElement::text = text;
