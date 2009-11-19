@@ -28,7 +28,7 @@
 */
 #include "FormElement.h"
 
-FormElement::FormElement(TNodePtr node) : UIElement(frame,node)
+FormElement::FormElement(TNodePtr node) : UIElement(UIBox(0, 0),node)
 {}
 
 FormElement::~FormElement()
