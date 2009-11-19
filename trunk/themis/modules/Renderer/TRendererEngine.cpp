@@ -101,7 +101,7 @@ int32 Renderer::PreProcess(void *data)
 	processing_context context;
 	bigtime_t time = real_time_clock_usecs();
 	cdata->renderer->Process(cdata->document,view,context); 
-	printf("RENDERER: DONE PROCESSING in %g microseconds.\n",real_time_clock_usecs() - time);
+	printf("RENDERER: DONE PROCESSING in %lld microseconds.\n",real_time_clock_usecs() - time);
 	
 	//Do the Broadcasting to say we are done rendering
 	message->what = SH_RENDER_FINISHED;
@@ -333,6 +333,8 @@ void Renderer::Process(TNodePtr node, UIElement *element, processing_context con
 /*****BODY******/	else if(strcmp(tagName,"BODY") == 0){
 						if (child->hasAttributes()) {	
 							TNamedNodeMapPtr attributes = child->getAttributes();
+							// Code is not used. Disabled to avoid the warmings.
+							/*
 							TNodePtr attribute = attributes->getNamedItem("TEXT"); // !! DEPRECATED !! Here for compatibility
 							const char *text = GET_ATTRIBUTE_VALUE(attribute,NULL);
 							attribute = attributes->getNamedItem("LINK"); 		   // !! DEPRECATED !! Here for compatibility
@@ -344,6 +346,7 @@ void Renderer::Process(TNodePtr node, UIElement *element, processing_context con
 							attribute = attributes->getNamedItem("VLINK"); 		   // !! DEPRECATED !! Here for compatibility
 							const char *vlink = GET_ATTRIBUTE_VALUE(attribute,NULL);
 							//Use this given color as active text Link														
+							*/
 						}					
 						break;						
 					}
@@ -364,13 +367,13 @@ void Renderer::Process(TNodePtr node, UIElement *element, processing_context con
 					//TODO: Do all the cooking of font: size, direction, features, etc.
 					if (textElement){
 						textElement->AppendText(textChild->getWholeText().c_str(),font,high);
-						printf("RENDERER DEBUG: Text Element %s appened to test %d\n",textChild->getWholeText().c_str(),textElement);
+						printf("RENDERER DEBUG: Text Element %s appened to test %p\n",textChild->getWholeText().c_str(),textElement);
 						Process(child,textElement,context);	//uiChild = textElement;					
 					}
 					else {
 						uiChild = new TextElement(child,textChild->getWholeText().c_str(),font,high);
 						element->EAddChild(uiChild);			
-						printf("RENDERER DEBUG: Text Element %s Added to tree %d\n",textChild->getWholeText().c_str(),element->nextLayer);
+						printf("RENDERER DEBUG: Text Element %s Added to tree %p\n",textChild->getWholeText().c_str(),element->nextLayer);
 						Process(child,uiChild,context);								    
 					}
 					}break;				

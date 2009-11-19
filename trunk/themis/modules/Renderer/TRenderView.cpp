@@ -164,7 +164,7 @@ void TRenderView::Draw(BRect updateRect)
 	//Sync();
  	Window()->EndViewTransaction(); 
 	Window()->EnableUpdates();		
-	printf("RENDERER INFO: DONE redrawing in %g microseconds.\n",real_time_clock_usecs() - time);	
+	printf("RENDERER INFO: DONE redrawing in %lld microseconds.\n",real_time_clock_usecs() - time);	
 }
 
 void TRenderView::FrameResized(float width, float height)
@@ -186,7 +186,7 @@ void TRenderView::FrameResized(float width, float height)
 	printf("RENDERER DEBUG: Calling TRenderView::EFrameResized()\n");
 	bigtime_t time = real_time_clock_usecs();	
 	EFrameResized(width,height);
-	printf("RENDERER INFO: DONE resizing in %g microseconds.\n",real_time_clock_usecs() - time);
+	printf("RENDERER INFO: DONE resizing in %lld microseconds.\n",real_time_clock_usecs() - time);
 	
 	//Complete redraw after frame resized
 	Invalidate();

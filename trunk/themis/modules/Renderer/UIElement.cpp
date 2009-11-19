@@ -150,7 +150,8 @@ void UIElement::EFrameResized(float width, float height)
 	/*The normal scheme of implementation is:
 		1) To find whether a min/max value has been hit
 		2) Update the value of the frame of the object
-		
+	*/
+	
 	//Do the calculus of the new frame for the element (for derivated classes)
 	
 	//Applies the min/max-height/width rules
