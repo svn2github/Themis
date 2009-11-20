@@ -45,10 +45,6 @@ Project Start Date: October 18, 2000
 #include "../common/commondefs.h"
 #include "../common/PrefsDefs.h"
 
-// renderer stuff..
-#include "../modules/Renderer/TRenderView.h"
-#include "../modules/Renderer/Globals.h"
-
 extern plugman *PluginManager;
 extern BMessage *AppSettings;
 
@@ -1176,7 +1172,7 @@ status_t Win::ReceiveBroadcast(BMessage *message)
 					if( tab == NULL )
 						break;
 					
-					TRenderView* renderview = NULL;
+					BView* renderview = NULL;
 					message->FindPointer( "renderview_pointer", ( void** )&renderview );
 					if( renderview == NULL )
 						break;

@@ -59,7 +59,6 @@
 
 //Communication with the UI
 #define	R_WELCOME					'rwoe'
-#define RENDERVIEW_POINTER 			'rwpr'
 #define SITE_TITLE		   			'sete'
 
 //TextElement Specific

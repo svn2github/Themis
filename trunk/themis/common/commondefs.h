@@ -207,6 +207,10 @@ const rgb_color kColorTheme = { 255, 200, 0, 255 };
 #define HTTP_DELETE_REQUEST		'dele'
 #define HTTP_HEAD_REQUEST		'head'
 
+// Renderer message constants
+// Only renderer plugins should send these.
+#define RENDERVIEW_POINTER 			'rwpr'
+
 //union int32torgb
 //{
 //	int32 value;

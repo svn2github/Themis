@@ -9,7 +9,6 @@
 #include "ThemisIcons.h"
 #include "SiteHandler.h"
 #include "../common/commondefs.h"
-#include "../modules/Renderer/TRenderView.h"
 
 extern plugman* PluginManager;
 

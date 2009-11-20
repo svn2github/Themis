@@ -450,7 +450,7 @@ ThemisTabView::Select( int32 tabindex )
 	
 	if( tab->View() )
 	{
-		TRenderView* rview = ( TRenderView* )tab->View();
+		BView* rview = tab->View();
 		if( rview )
 		{
 			BRect cviewrect = ContainerView()->Bounds();

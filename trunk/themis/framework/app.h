@@ -41,7 +41,6 @@ Project Start Date: October 18, 2000
 #include "tcpmanager.h"
 #include "SiteHandler.h"
 #include "win.h"
-#include "../modules/Renderer/TRenderView.h"
 
 //! The application framework version number. 
 #define THEMIS_FRAMEWORK_APP_VERSION 0.40
