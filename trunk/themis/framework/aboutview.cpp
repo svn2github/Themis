@@ -150,7 +150,7 @@ void aboutview::MessageReceived(BMessage *msg)
 			BStringItem *item=(BStringItem *)listv->ItemAt(index);
 			if (item)
 			{
-				about_items_st *which;
+				about_items_st *which = NULL;
 				for (int32 i=0;i<items->CountItems();i++)
 				{
 					which=(about_items_st *)items->ItemAt(i);
