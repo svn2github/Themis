@@ -234,6 +234,10 @@ MESSAGEVIEWERSOURCES= \
 	MsgViewer/MsgView.cpp \
 	MsgViewer/MsgViewer.cpp \
 	MsgViewer/MsgTextView.cpp
+CSSVIEWERSOURCES= \
+	CSSViewer/CSSTextView.cpp \
+	CSSViewer/CSSView.cpp \
+	CSSViewer/CSSViewer.cpp
 #make install directories as necessary
 ifeq "$(shell if [ -d $(BASE_ADDON_INSTALL_DIR) ] ; then echo 1 ; else mkdir -p $(BASE_ADDON_INSTALL_DIR) ; echo 0 ; fi)" "0"
 endif
@@ -285,11 +289,12 @@ endif
 #DOM View object directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)DOMView/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)DOMView/ ; echo 0 ; fi)" "0"
 endif
-
+#CSS Viewer object directory
+ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)CSSViewer/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)CSSViewer/ ; echo 0 ; fi)" "0"
+endif
 #testplug add-on object directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)testplug/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)testplug/ ; echo 0 ; fi)" "0"
 endif
-
 #imageh add-on object directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)imageh/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)imageh/ ; echo 0 ; fi)" "0"
 endif
@@ -338,6 +343,9 @@ ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)HTMLParser/ ] ; then echo 1 ; el
 endif
 #DOM View depends directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)DOMView/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)DOMView/ ; echo 0 ; fi)" "0"
+endif
+#CSS Viewer depends directory
+ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)CSSViewer/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)CSSViewer/ ; echo 0 ; fi)" "0"
 endif
 #testplug add-on depends directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)testplug/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)testplug/ ; echo 0 ; fi)" "0"
@@ -443,7 +451,7 @@ cleanaddon:
 	@echo Done.
 core: framework cacheaddon httpaddon htmlpaddon csspaddon
 	@echo Done building the core application files.
-core2: core testplug domvaddon
+core2: core testplug domvaddon cssvaddon
 	@echo Done building the core and special selection files.
 help:
 	@echo "To compile, type \"make <target>\", where \"<target>\" is one or more of the following:"
@@ -465,8 +473,9 @@ help:
 	@echo "	libs		Just the ibraries"
 	@echo "	domtest		DOM test application"
 	@echo "	domvaddon	DOMView add-on"
+	@echo " cssvaddon   CSSViewer add-on"
 	@echo "	core		Framework, HTTP, HTMLParser and cache add-ons"
-	@echo "	core2		Framework, HTTP, cache, testplug, HTMLParser and DOMView add-ons"
+	@echo "	core2		Framework, HTTP, cache, testplug, HTMLParser, DOMView and CSSViewer add-ons"
 	@echo "	domloadtest	DOM LoadTest application"
 	@echo "	testplug	A sample/test plug-in"
 	@echo "	imagehaddon	The official image handling add-on"
@@ -746,6 +755,34 @@ $(BASE_ADDONS_DEPENDS_DIR)DOMView/%.d:  $(BASE_ADDON_SOURCE_DIR)DOMView/%.cpp
 $(BASE_ADDONS_OBJECT_DIR)DOMView/%.o: $(BASE_ADDON_SOURCE_DIR)DOMView/%.cpp $(BASE_ADDONS_DEPENDS_DIR)DOMView/%.d
 	@echo "DOM View: Updating object file $(notdir $@)"
 	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -Iframework/DOM -I./ -c $< -o $@
+
+#cssviewer add-on
+cssvaddon: $(BASE_ADDON_INSTALL_DIR)css_viewer.so domlib
+$(BASE_ADDON_INSTALL_DIR)css_viewer.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(CSSVIEWERSOURCES),$(BASE_ADDONS_OBJECT_DIR)CSSViewer/$(notdir $(file:.cpp=.o)))
+	@echo "Linking CSS Viewer add-on" 
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)css_viewer.so $(foreach file,$(notdir $(CSSVIEWERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)CSSViewer/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=css_viewer.so -L ./ -L $(BELIBRARIES) -L$(BASE_APP_LIB_INSTALL_DIR)  -lbe -lroot -ldomstyle -ldom -lstdc++.r4 _APP_
+	@echo "CSS Viewer add-on is now linked. Doing mimeset."
+	@mimeset -F $(BASE_ADDON_INSTALL_DIR)css_viewer.so
+	@echo "CSS Viewer plug-in compiled and linked successfully."
+	
+cssvdepends: $(foreach file,$(CSSVIEWERSOURCES),$(BASE_ADDON_SOURCE_DIR)$(file)) common/plugman.cpp common/plugclass.cpp $(COMMON_DEPENDS_DIR)plugman.d $(COMMON_DEPENDS_DIR)plugclass.d\
+				$(foreach file,$(BASE_ADDON_SOURCE_DIR)$(CSSVIEWERSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)CSSViewer/$(notdir $(file)))
+	@echo "CSSViewer depends are done."
+ifneq ($(MAKECMDGOALS),clean)
+-include $(foreach file,$(BASE_ADDON_SOURCE_DIR)$(CSSVIEWERSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)CSSViewer/$(notdir $(file)))
+endif
+	
+cssvobjects: $(COMMON_OBJECT_DIR)plugman.o $(COMMON_OBJECT_DIR)plugclass.o\
+					$(foreach file,$(BASE_ADDON_SOURCE_DIR)$(CSSVIEWERSOURCES),$(BASE_ADDONS_OBJECT_DIR)CSSViewer/$(notdir $(file:.cpp=.o)))
+	@echo "CSS Viewer objects are done."
+	
+$(BASE_ADDONS_DEPENDS_DIR)CSSViewer/%.d:  $(BASE_ADDON_SOURCE_DIR)CSSViewer/%.cpp 
+	@echo "CSS Viewer: Updating dependency file $(notdir $@)"
+	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)CSSViewer/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)CSSViewer/"|sed 's/\//\\\//g'); $(CC) -Icommon -Iframework/DOM -Iframework/DOMStyle -I./ -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/add-ons\/CSSViewer\/\1.o depends\/add-ons\/CSSViewer\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
+
+$(BASE_ADDONS_OBJECT_DIR)CSSViewer/%.o: $(BASE_ADDON_SOURCE_DIR)CSSViewer/%.cpp $(BASE_ADDONS_DEPENDS_DIR)CSSViewer/%.d
+	@echo "CSS Viewer: Updating object file $(notdir $@)"
+	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -Iframework/DOM -Iframework/DOMStyle -I./ -c $< -o $@
 
 #http add-on
 httpaddon: $(BASE_ADDON_INSTALL_DIR)http_plugin.so
