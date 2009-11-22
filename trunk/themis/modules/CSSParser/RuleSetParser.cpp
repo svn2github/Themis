@@ -90,6 +90,9 @@ TDOMString RuleSetParser :: parseClass() {
 							"Expected class",
 							GENERIC);
 	}
+	
+	return classString;
+
 }
 
 TDOMString RuleSetParser :: parseAttrib() {
