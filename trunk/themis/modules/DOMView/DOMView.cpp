@@ -186,11 +186,20 @@ DOMView	::	DOMView( TDocumentPtr aDocument )
 
 DOMView	::	~DOMView()	{
 
-	int32 items = mTree->CountItems();
-	for ( int32 i = 0; i < items; i++ )	{
-		delete mTree->RemoveItem( (int32) 0 );
-	}
+	EmptyTree();
+	EmptyListView(mAttributes);
+	EmptyListView(mValues);
 	
+}
+
+void DOMView :: EmptyTree() {
+
+	int32 items = mTree->CountItems();
+	for (int32 i = 0; i < items; i++) {
+		delete mTree->RemoveItem((int32) 0);
+	}
+	mTree->MakeEmpty();
+
 }
 
 void DOMView :: EmptyListView(BListView * aListView) {
@@ -332,17 +341,15 @@ void DOMView	::	showTree( const TNodePtr aNode, BStringItem * aParent )	{
 
 void DOMView	::	showDocument()	{
 	
-	BListItem * item = mTree->FirstItem();
-	delete item;
-	mTree->MakeEmpty();
-
+	EmptyTree();
+	
 	SetTitle(mDocument->getDocumentURI().c_str());
 	showTree(mDocument, NULL);
-
 }
 
 void DOMView	::	setDocument( TDocumentPtr aDocument )	{
 
+	printf("Setting document\n");
 	mDocument = aDocument;
 	showDocument();
 	

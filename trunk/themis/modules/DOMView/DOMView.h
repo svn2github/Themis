@@ -74,6 +74,7 @@ class DOMView : public BWindow {
 	
 	protected:
 		void EmptyListView(BListView * aListView);
+		void EmptyTree();
 	
 	public:
 		DOMView(TDocumentPtr aDocument);
