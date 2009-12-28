@@ -52,19 +52,24 @@
 
 // DOMView headers
 #include "DOMView.h"
-#include "DOMTextView.hpp"
 
-DOMView	::	DOMView( TDocumentPtr aDocument )
-				:	BWindow( BRect( 100, 100, 450, 400 ), "DOMWindow",
-								   B_TITLED_WINDOW,
-								   B_CURRENT_WORKSPACE)	{
+// Themis headers
+#include "TTextView.hpp"
+
+DOMView :: DOMView(TDocumentPtr aDocument)
+		: BWindow(BRect(100, 100, 450, 400),
+				  "DOMWindow",
+				  B_TITLED_WINDOW,
+				  B_CURRENT_WORKSPACE) {
 
 	// Set background and add it to the window.
 	BRect backRect = Bounds();
-	BView * backGround = new BView( backRect, "Background", B_FOLLOW_ALL_SIDES,
-					B_WILL_DRAW );
-	backGround->SetViewColor( ui_color( B_PANEL_BACKGROUND_COLOR ) );
-	AddChild( backGround );
+	BView * backGround = new BView(backRect,
+								   "Background",
+								   B_FOLLOW_ALL_SIDES,
+								   B_WILL_DRAW);
+	backGround->SetViewColor(ui_color(B_PANEL_BACKGROUND_COLOR));
+	AddChild(backGround);
 
 	// Create tree view. 
 	BRect treeRect = backRect;
@@ -74,63 +79,67 @@ DOMView	::	DOMView( TDocumentPtr aDocument )
 	mTree = new BOutlineListView(treeRect,
 								 "DOMView",
 								 B_SINGLE_SELECTION_LIST,
-								 B_FOLLOW_ALL_SIDES );
+								 B_FOLLOW_ALL_SIDES);
 
-	mTree->SetSelectionMessage( new BMessage( SELECTION ) );
-	BScrollView * scrollTree
-		= new BScrollView( "Scroll Tree",
-									 mTree,
-									 B_FOLLOW_TOP_BOTTOM | B_FOLLOW_LEFT,
-									  0, true, true );
-	scrollTree->SetViewColor( ui_color( B_PANEL_BACKGROUND_COLOR ) );
+	mTree->SetSelectionMessage(new BMessage(SELECTION));
+	BScrollView * scrollTree =
+		new BScrollView("Scroll Tree",
+						mTree,
+						B_FOLLOW_TOP_BOTTOM | B_FOLLOW_LEFT,
+						0,
+						true,
+						true);
+	scrollTree->SetViewColor(ui_color(B_PANEL_BACKGROUND_COLOR));
 
 	// Create text box.
 	BRect textRect = backRect;
 	textRect.left += 155;
 	textRect.bottom -= 160;
-	textRect.InsetBy( 5, 5 );
-	BBox * textBox = new BBox( textRect, "TextBox", B_FOLLOW_LEFT_RIGHT | B_FOLLOW_TOP );
+	textRect.InsetBy(5, 5);
+	BBox * textBox = new BBox(textRect, "TextBox", B_FOLLOW_LEFT_RIGHT | B_FOLLOW_TOP);
 
 	// Create text popup menu.
-	mTextMenu = new BPopUpMenu( "No text" );
-	mTextMenu->SetEnabled( false );
-	BRect menuRect( 0, 0, 100, 50 );
+	mTextMenu = new BPopUpMenu("No text");
+	mTextMenu->SetEnabled(false);
+	BRect menuRect(0, 0, 100, 50);
 	BMenuField * textSelect =
-		new BMenuField( menuRect, "TextPopUp", NULL, mTextMenu );
+		new BMenuField(menuRect, "TextPopUp", NULL, mTextMenu);
 
-	textBox->SetLabel( textSelect );
+	textBox->SetLabel(textSelect);
 	
 	textRect = textBox->Bounds();
-	textRect.InsetBy( 10, 20 );
+	textRect.InsetBy(10, 20);
 	textRect.top += 5;
 	textRect.bottom += 10;
 	textRect.bottom -= B_H_SCROLL_BAR_HEIGHT;
 	textRect.right -= B_V_SCROLL_BAR_WIDTH;
 
 	// Create text view.
-	BRect textDisplay( 0, 0, textRect.Width(), textRect.Height() );
-	mText = new DOMTextView(textRect, "TextView",
-							textDisplay,
-							B_FOLLOW_ALL_SIDES);
+	BRect textDisplay(0, 0, textRect.Width(), textRect.Height());
+	mText = new TTextView(textRect,
+						  "TextView",
+						  textDisplay,
+						  B_FOLLOW_ALL_SIDES);
 	BScrollView * scrollText =
-		new BScrollView( "Scroll Text",
-								  mText,
-								  B_FOLLOW_TOP | B_FOLLOW_LEFT_RIGHT,
-								  B_FRAME_EVENTS,
-								  true, true );
-	scrollText->SetViewColor( ui_color( B_PANEL_BACKGROUND_COLOR ) );
+		new BScrollView("Scroll Text",
+						mText,
+						B_FOLLOW_TOP | B_FOLLOW_LEFT_RIGHT,
+						B_FRAME_EVENTS,
+						true,
+						true);
+	scrollText->SetViewColor(ui_color(B_PANEL_BACKGROUND_COLOR));
 
 	BRect listRect = backRect;
 	listRect.left += 155;
 	listRect.top += 135;
-	listRect.InsetBy( 5, 5 );
+	listRect.InsetBy(5, 5);
 
 	// Create attribute box.
-	BBox * attrBox = new BBox( listRect, "AttributeBox", B_FOLLOW_ALL_SIDES );
-	attrBox->SetLabel( "Attributes" );
+	BBox * attrBox = new BBox(listRect, "AttributeBox", B_FOLLOW_ALL_SIDES);
+	attrBox->SetLabel("Attributes");
 
 	listRect = attrBox->Bounds();
-	listRect.InsetBy( 10, 20 );
+	listRect.InsetBy(10, 20);
 	listRect.bottom += 10;
 	listRect.right -= 80;
 	listRect.bottom -= B_H_SCROLL_BAR_HEIGHT;
@@ -138,46 +147,51 @@ DOMView	::	DOMView( TDocumentPtr aDocument )
 	
 	// Create attribute list view.
 	mAttributes =
-		new BListView( listRect,
-							   "AttrView",
-							   B_SINGLE_SELECTION_LIST,
-							   B_FOLLOW_ALL_SIDES );
+		new BListView(listRect,
+					  "AttrView",
+					  B_SINGLE_SELECTION_LIST,
+					  B_FOLLOW_ALL_SIDES);
 	BScrollView * scrollAttr =
-		new BScrollView( "Scroll Attr", mAttributes,
-			B_FOLLOW_TOP_BOTTOM | B_FOLLOW_LEFT,  B_FRAME_EVENTS, true, true );
-	scrollAttr->SetViewColor( ui_color( B_PANEL_BACKGROUND_COLOR ) );
-	BStringItem * attrItem = new BStringItem( "No attributes" );
-	mAttributes->AddItem( attrItem );
+		new BScrollView("Scroll Attr",
+						mAttributes,
+						B_FOLLOW_TOP_BOTTOM | B_FOLLOW_LEFT,
+						B_FRAME_EVENTS,
+						true,
+						true);
+	scrollAttr->SetViewColor(ui_color(B_PANEL_BACKGROUND_COLOR));
+	BStringItem * attrItem = new BStringItem("No attributes");
+	mAttributes->AddItem(attrItem);
 
 	listRect.left += 100;
 	listRect.right += 80;
 
 	// Create value view.
 	mValues =
-		new BListView( listRect,
-							   "ValueView",
-							   B_SINGLE_SELECTION_LIST,
-							   B_FOLLOW_ALL_SIDES );
+		new BListView(listRect,
+					  "ValueView",
+					  B_SINGLE_SELECTION_LIST,
+					  B_FOLLOW_ALL_SIDES);
 	BScrollView * scrollValue =
-		new BScrollView( "Scroll Value",
-								  mValues,
-								  B_FOLLOW_ALL_SIDES,
-								  B_FRAME_EVENTS,
-								  true, true );
-	scrollValue->SetViewColor( ui_color( B_PANEL_BACKGROUND_COLOR ) );
-	BStringItem * valueItem = new BStringItem( "No value" );
-	mValues->AddItem( valueItem );
+		new BScrollView("Scroll Value",
+						mValues,
+						B_FOLLOW_ALL_SIDES,
+						B_FRAME_EVENTS,
+						true,
+						true);
+	scrollValue->SetViewColor(ui_color(B_PANEL_BACKGROUND_COLOR));
+	BStringItem * valueItem = new BStringItem("No value");
+	mValues->AddItem(valueItem);
 	
 	// Add children to background view.
-	backGround->AddChild( scrollTree );
-	backGround->AddChild( textBox );
-	backGround->AddChild( attrBox );
-	textBox->AddChild( scrollText );
-	attrBox->AddChild( scrollAttr );
-	attrBox->AddChild( scrollValue );
+	backGround->AddChild(scrollTree);
+	backGround->AddChild(textBox);
+	backGround->AddChild(attrBox);
+	textBox->AddChild(scrollText);
+	attrBox->AddChild(scrollAttr);
+	attrBox->AddChild(scrollValue);
 
 	// Setup the document.
-	setDocument( aDocument );
+	setDocument(aDocument);
 
 	// Show the window.
 	Show();

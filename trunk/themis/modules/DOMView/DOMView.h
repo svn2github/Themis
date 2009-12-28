@@ -48,8 +48,8 @@
 // Declarations of BeOS classes
 class BStringItem;
 
-// Declarations of DOMView classes
-class DOMTextView;
+// Declarations of Themis classes
+class TTextView;
 
 // Namespaces used
 using namespace std;
@@ -65,7 +65,7 @@ class DOMView : public BWindow {
 		BListView * mAttributes;
 		BListView * mValues;
 		BPopUpMenu * mTextMenu;
-		DOMTextView * mText;
+		TTextView * mText;
 
 		BList * mItems;
 
