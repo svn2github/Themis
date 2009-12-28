@@ -149,11 +149,11 @@ void CSSParser :: showStyleSheet() {
 	}
 }
 
-void CSSParser :: parseDocument() {
+void CSSParser :: parseDocument(const char * aHref) {
 
 
 	// Create a stylesheet to store the information.
-	mStyleSheet = CSSStyleSheetPtr(new CSSStyleSheet());
+	mStyleSheet = CSSStyleSheetPtr(new CSSStyleSheet(aHref));
 
 	// Setup the parsers
 	mImportAtRuleParser = new ImportAtRuleParser(mScanner, mStyleSheet);
@@ -216,7 +216,7 @@ void CSSParser :: parseDocument() {
 CSSStyleSheetPtr CSSParser :: parse(const char * aDocument) {
 	
 	mScanner = new CSSScanner(aDocument);
-	parseDocument();
+	parseDocument(aDocument);
 
 	return mStyleSheet;
 }

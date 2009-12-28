@@ -172,6 +172,15 @@ CSSView :: ~CSSView() {
 
 void CSSView :: ShowStyleSheet() {
 	
+	// Set the title of the window.
+	TDOMString title = mStyleSheet->getHref();
+	if (title != "") {
+		SetTitle(title.c_str());
+	}
+	else {
+		SetTitle("Unknown CSS document");
+	}
+	
 	// Loop through the stylesheet and add the rules to the tree.
 	CSSRuleListPtr rules = mStyleSheet->getCSSRules();
 	unsigned long length = rules->getLength();

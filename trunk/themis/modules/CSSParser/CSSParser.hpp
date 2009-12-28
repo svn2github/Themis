@@ -74,7 +74,7 @@ class CSSParser {
 		void showMediaRule(CSSMediaRulePtr aRule);
 		// Function to show the style sheet.
 		void showStyleSheet();
-		void parseDocument();
+		void parseDocument(const char * aHref = NULL);
 
 	public:
 		// Constructor

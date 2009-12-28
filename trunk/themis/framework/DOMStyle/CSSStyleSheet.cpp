@@ -44,11 +44,12 @@
 // DOM Core headers
 #include "TDOMException.h"
 
-CSSStyleSheet :: CSSStyleSheet(CSSRulePtr aOwnerRule)
+CSSStyleSheet :: CSSStyleSheet(const TDOMString aHref,
+							   CSSRulePtr aOwnerRule)
 			  : StyleSheet("text/css",
 			  			   TNodePtr(),
 			  			   StyleSheetPtr(),
-			  			   "",
+			  			   aHref,
 			  			   "",
 						   MediaListPtr()) {
 

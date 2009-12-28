@@ -72,9 +72,11 @@ class CSSStyleSheet : public StyleSheet {
 			It initialized the read-only values that can not be changed after
 			construction.
 			
+			@param aHref		The href (location) of the style sheet.
 			@param aOwnerRule	The owner rule of the style sheet.
 		*/
-		CSSStyleSheet(CSSRulePtr aOwnerRule = CSSRulePtr());
+		CSSStyleSheet(const TDOMString aHref = "",
+					  CSSRulePtr aOwnerRule = CSSRulePtr());
 		
 		/// Destructor of the CSSStyleSheet class.
 		/**

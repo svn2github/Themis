@@ -15,8 +15,6 @@ extern plugman* PluginManager;
 SiteHandler::SiteHandler()
 	: MessageSystem("URL Handler")
 {
-	printf( "SiteHandler::SiteHandler()\n" );
-
 	// register myself with the message system
 	MsgSysRegister( this );
 	
@@ -27,8 +25,6 @@ SiteHandler::SiteHandler()
 
 SiteHandler::~SiteHandler()
 {
-	printf( "SiteHandler::~SiteHandler()\n" );
-	
 	if( fCacheUserToken != 0 )
 		fCachePlug->Unregister( fCacheUserToken );
 	
@@ -215,8 +211,6 @@ status_t
 SiteHandler::ReceiveBroadcast(
 	BMessage* msg )
 {
-	printf( "SiteHandler::ReceiveBroadCast()\n" );
-
 	int32 command = 0;
 	msg->FindInt32( "command", &command );
 	
