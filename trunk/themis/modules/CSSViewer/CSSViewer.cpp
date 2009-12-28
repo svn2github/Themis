@@ -89,7 +89,7 @@ PlugClass * GetObject() {
 CSSViewer :: CSSViewer(BMessage * aInfo)
 		  : BHandler("CSSViewer"), PlugClass(aInfo) {
 
-//	mView = NULL;
+	mView = NULL;
 
 }
 
@@ -156,13 +156,16 @@ status_t CSSViewer :: ReceiveBroadcast(BMessage * aMessage) {
 			BString type;
 			aMessage->FindString("type", &type);
 			if ( type == "cssdom" )	{
+				printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Showing css viewer window test!!!!!!!!!!!!!!!!!!!!!!!\n");
 				// Get the pointer out
 				void * document = NULL;
 				aMessage->FindPointer("pointer", &document);
 				if (document) {
+					printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Showing css viewer window testing 2!!!!!!!!!!!!!!!!!!!!!!!\n");
 					CSSStyleSheetPtr * temp = (CSSStyleSheetPtr *) document;
 					CSSStyleSheetPtr copy = *temp;
 					if (!mView) {
+						printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Showing css viewer window!!!!!!!!!!!!!!!!!!!!!!!\n");
 						mView = new CSSView(copy);
 					}
 					else {

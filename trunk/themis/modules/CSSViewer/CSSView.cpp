@@ -52,7 +52,11 @@
 #include "CSSRule.hpp"
 #include "CSSMediaRule.hpp"
 #include "CSSStyleRule.hpp"
+#include "CSSStyleDeclaration.hpp"
 #include "MediaList.hpp"
+
+// Themis headers
+#include "ColumnTypes.h"
 
 // Constants used
 const int32 SELECTION = 'slct';
@@ -60,7 +64,7 @@ const char * cMediaSpecific = "Media-specific rules";
 const char * cGeneral = "General rules";
 
 CSSView :: CSSView(CSSStyleSheetPtr aStyleSheet)
-		: BWindow(BRect(100, 100, 450, 400), "CSSWindow",
+		: BWindow(BRect(100, 100, 600, 400), "CSSWindow",
 				  B_TITLED_WINDOW,
 				  B_CURRENT_WORKSPACE) {
 
@@ -79,7 +83,7 @@ CSSView :: CSSView(CSSStyleSheetPtr aStyleSheet)
 	// Create tree view. 
 	BRect treeRect = backRect;
 	treeRect.bottom -= B_H_SCROLL_BAR_HEIGHT;
-	treeRect.right -= 200;
+	treeRect.right -= 350;
 	treeRect.right -= B_V_SCROLL_BAR_WIDTH;
 	mTree = new BOutlineListView(treeRect,
 								 "CSSView",
@@ -135,11 +139,19 @@ CSSView :: CSSView(CSSStyleSheetPtr aStyleSheet)
 						B_FRAME_EVENTS,
 						true,
 						true);
-	scrollText->SetViewColor( ui_color( B_PANEL_BACKGROUND_COLOR ) );
+	scrollText->SetViewColor(ui_color(B_PANEL_BACKGROUND_COLOR));
 	textBox->AddChild(scrollText);
 
 	// Add the text to the background view.
 	backGround->AddChild(textBox);
+
+	BRect propRect = backRect;
+	propRect.left += 155;
+	propRect.top += 160;
+	propRect.InsetBy(3.0, 3.0);
+	CreatePropertiesListView(propRect);
+
+	backGround->AddChild(mPropertiesView);
 
 	// Add the stylesheet to the tree.
 	ShowStyleSheet();
@@ -156,24 +168,6 @@ CSSView :: ~CSSView() {
 		delete mTree->RemoveItem((int32) 0);
 	}
 
-}
-
-void CSSView :: AddRules(CSSRuleListPtr aList, BStringItem * aParent) {
-
-	unsigned long length = aList->getLength();
-	for (unsigned long i = 0; i < length; i++) {
-		CSSRulePtr rule = aList->item(i);
-		if (rule->getType() == CSSRule::STYLE_RULE) {
-			CSSStyleRulePtr styleRule = shared_static_cast<CSSStyleRule>(rule);
-			TDOMString selectorText = styleRule->getSelectorText();
-			BStringItem * text =
-				new BStringItem(selectorText.c_str(), 0, false);
-			mTree->AddUnder(text, aParent);
-		}
-		else {
-			printf("Unsupported rule at this level\n");
-		}
-	}
 }
 
 void CSSView :: ShowStyleSheet() {
@@ -231,6 +225,97 @@ void CSSView :: ShowStyleSheet() {
 	
 }
 
+void CSSView :: AddRules(CSSRuleListPtr aList, BStringItem * aParent) {
+
+	unsigned long length = aList->getLength();
+	for (unsigned long i = 0; i < length; i++) {
+		CSSRulePtr rule = aList->item(i);
+		if (rule->getType() == CSSRule::STYLE_RULE) {
+			CSSStyleRulePtr styleRule = shared_static_cast<CSSStyleRule>(rule);
+			TDOMString selectorText = styleRule->getSelectorText();
+			BStringItem * text =
+				new BStringItem(selectorText.c_str(), 0, false);
+			mTree->AddUnder(text, aParent);
+		}
+		else {
+			printf("Unsupported rule at this level\n");
+		}
+	}
+}
+
+void CSSView :: CreatePropertiesListView(BRect aRect) {
+
+	mPropertiesView = new BColumnListView(aRect,
+										  "PropertiesView",
+										  B_FOLLOW_ALL_SIDES,
+										  0);
+
+	BStringColumn * propName =
+		new BStringColumn("Property Name",
+						  100,
+						  10,
+						  500,
+						  0);
+	mPropertiesView->AddColumn(propName, 0);
+	
+	BStringColumn * propValue =
+		new BStringColumn("Property Value",
+						  100,
+						  10,
+						  500,
+						  0);
+	mPropertiesView->AddColumn(propValue, 1);
+}
+
+void CSSView :: SetPropertiesOfSelection(TDOMString aSelectorText,
+										 unsigned short aRuleType) {
+
+	// Variable to store the style.
+	CSSStyleDeclarationPtr style;
+
+	// Loop through the stylesheet to find the right rule.
+	CSSRuleListPtr rules = mStyleSheet->getCSSRules();
+	unsigned long length = rules->getLength();
+	bool found = false;
+	unsigned long i = 0;
+	while (i < length && !found) {
+		CSSRulePtr rule = rules->item(i);
+		if (rule->getType() == CSSRule::STYLE_RULE) {
+			CSSStyleRulePtr styleRule = shared_static_cast<CSSStyleRule>(rule);
+			TDOMString selectorText = styleRule->getSelectorText();
+			if (selectorText == aSelectorText) {
+				// Found the right one.
+				// Get the style and exit the loop.
+				style = styleRule->getStyle();
+				found = true;
+			}
+			else {
+				i++;
+			}
+				
+		}
+		else {
+			i++;
+		}
+	}
+	
+	if (found) {
+		mPropertiesView->Clear();
+		unsigned long propLength = style->getLength();
+		for (unsigned long j = 0; j < propLength; j++) {
+			TDOMString propName = style->item(j);
+			BStringField * nameField = new BStringField(propName.c_str());
+			TDOMString propValue = style->getPropertyValue(propName);
+			BStringField * valueField = new BStringField(propValue.c_str());
+			BRow * row = new BRow();
+			row->SetField(nameField, 0);
+			row->SetField(valueField, 1);
+			mPropertiesView->AddRow(row);
+		}
+	}
+
+}
+
 void CSSView :: MessageReceived(BMessage * aMessage) {
 
 	switch (aMessage->what) {
@@ -246,6 +331,7 @@ void CSSView :: MessageReceived(BMessage * aMessage) {
 						// An item under the general item.
 						// This is a style rule.
 						mSelectorText->SetText(item->Text());
+						SetPropertiesOfSelection(item->Text(), CSSRule::STYLE_RULE);
 					}
 					else {
 						BStringItem * superParent =

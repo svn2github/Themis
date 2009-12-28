@@ -237,7 +237,10 @@ MESSAGEVIEWERSOURCES= \
 CSSVIEWERSOURCES= \
 	CSSViewer/CSSTextView.cpp \
 	CSSViewer/CSSView.cpp \
-	CSSViewer/CSSViewer.cpp
+	CSSViewer/CSSViewer.cpp \
+	CSSViewer/ColumnListView.cpp \
+	CSSViewer/ColumnTypes.cpp \
+	CSSViewer/ColorTools.cpp
 #make install directories as necessary
 ifeq "$(shell if [ -d $(BASE_ADDON_INSTALL_DIR) ] ; then echo 1 ; else mkdir -p $(BASE_ADDON_INSTALL_DIR) ; echo 0 ; fi)" "0"
 endif

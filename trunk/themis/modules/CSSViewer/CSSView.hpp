@@ -43,6 +43,9 @@
 // DOM Style headers
 #include "CSSStyleSheet.hpp"
 
+// Themis headers
+#include "ColumnListView.h"
+
 // Declarations of CSSViewer classes
 class CSSTextView;
 
@@ -54,9 +57,12 @@ class CSSView : public BWindow {
 		BStringItem * mMediaItem;
 		BStringItem * mGeneralItem;
 		CSSTextView * mSelectorText;
+		BColumnListView * mPropertiesView;
 		
 		void ShowStyleSheet();
 		void AddRules(CSSRuleListPtr aList, BStringItem * aParent);
+		void CreatePropertiesListView(BRect aRect);
+		void SetPropertiesOfSelection(TDOMString aSelectorText, unsigned short aRuleType);
 	
 	public:
 		CSSView(CSSStyleSheetPtr aDocument);
