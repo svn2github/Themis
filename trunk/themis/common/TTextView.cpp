@@ -28,30 +28,30 @@
 	Class Start Date: November 22, 2009
 */
 
-/*	CSSTextView implementation
-	See CSSTextView.h for some more information
+/*	TTextView implementation
+	See TTextView.h for some more information
 */
 
 // Standard C headers
 #include <stdio.h>
 
-// CSSViewer headers
-#include "CSSTextView.hpp"
+// Themis headers
+#include "TTextView.hpp"
 
-CSSTextView :: CSSTextView(BRect aFrame,
-						   const char * aName,
-						   BRect aTextRect,
-				  		   uint32 aResizeMask,
-				  		   uint32 aFlags)
-			: BTextView(aFrame, aName, aTextRect, aResizeMask, aFlags) {
+TTextView :: TTextView(BRect aFrame,
+					   const char * aName,
+					   BRect aTextRect,
+					   uint32 aResizeMask,
+					   uint32 aFlags)
+		  : BTextView(aFrame, aName, aTextRect, aResizeMask, aFlags) {
 
 }
 				
-CSSTextView :: ~CSSTextView() {
+TTextView :: ~TTextView() {
 
 }
 
-void CSSTextView :: FrameResized(float aWidth, float aHeight) {
+void TTextView :: FrameResized(float aWidth, float aHeight) {
 	
 	// See Be Newsletters: Issue 3-17, April 28, 1998
 	BTextView::FrameResized(aWidth, aHeight);

@@ -114,7 +114,8 @@ COMMONSOURCES= \
 	common/cacheplug.cpp \
 	common/cacheuser.cpp \
 	common/cacheobject.cpp \
-	common/stripwhite.cpp
+	common/stripwhite.cpp \
+	common/TTextView.cpp
 #add similar lines for new plugins, libraries, etc.
 HTTPADDONSOURCES= \
 	http/optionshandler.cpp \
@@ -235,7 +236,6 @@ MESSAGEVIEWERSOURCES= \
 	MsgViewer/MsgViewer.cpp \
 	MsgViewer/MsgTextView.cpp
 CSSVIEWERSOURCES= \
-	CSSViewer/CSSTextView.cpp \
 	CSSViewer/CSSView.cpp \
 	CSSViewer/CSSViewer.cpp \
 	CSSViewer/ColumnListView.cpp \

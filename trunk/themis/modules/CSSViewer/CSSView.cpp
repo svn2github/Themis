@@ -45,7 +45,6 @@
 
 // CSSView headers
 #include "CSSView.hpp"
-#include "CSSTextView.hpp"
 
 // DOM Style headers
 #include "CSSRuleList.hpp"
@@ -57,6 +56,7 @@
 
 // Themis headers
 #include "ColumnTypes.h"
+#include "TTextView.hpp"
 
 // Constants used
 const int32 SELECTION = 'slct';
@@ -128,10 +128,10 @@ CSSView :: CSSView(CSSStyleSheetPtr aStyleSheet)
 
 	// Create text view.
 	BRect textDisplay(0, 0, textRect.Width(), textRect.Height());
-	mSelectorText = new CSSTextView(textRect,
-									"TextView",
-									textDisplay,
-									B_FOLLOW_ALL_SIDES);
+	mSelectorText = new TTextView(textRect,
+								  "TextView",
+								  textDisplay,
+								  B_FOLLOW_ALL_SIDES);
 	BScrollView * scrollText =
 		new BScrollView("Scroll Text",
 						mSelectorText,

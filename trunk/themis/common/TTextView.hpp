@@ -28,28 +28,28 @@
 	Class Start Date: November 22, 2009
 */
 
-/*	CSSTextView
-	Derived from BTextView in order to reflow text.
+/*	TTextView
+	Derived from TTextView in order to reflow text.
 
 	Mark Hellegers (mark@firedisk.net)
 	22-11-2009
 */
 
-#ifndef CSSTEXTVIEW_HPP
-#define CSSTEXTVIEW_HPP
+#ifndef TTEXTVIEW_HPP
+#define TTEXTVIEW_HPP
 
 // BeOS headers
 #include <TextView.h>
 
-class CSSTextView : public BTextView {
+class TTextView : public BTextView {
 	
 	public:
-		CSSTextView(BRect aFrame,
+		TTextView(BRect aFrame,
 				    const char * aName,
 				  	BRect aTextRect,
 				  	uint32 aResizeMask,
 				  	uint32 aFlags = B_WILL_DRAW | B_FRAME_EVENTS);
-		~CSSTextView();
+		~TTextView();
 		void FrameResized(float aWidth, float aHeight);
 };
 

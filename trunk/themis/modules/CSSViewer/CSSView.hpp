@@ -46,8 +46,8 @@
 // Themis headers
 #include "ColumnListView.h"
 
-// Declarations of CSSViewer classes
-class CSSTextView;
+// Declarations of Themis classes
+class TTextView;
 
 class CSSView : public BWindow {
 
@@ -56,7 +56,7 @@ class CSSView : public BWindow {
 		CSSStyleSheetPtr mStyleSheet;
 		BStringItem * mMediaItem;
 		BStringItem * mGeneralItem;
-		CSSTextView * mSelectorText;
+		TTextView * mSelectorText;
 		BColumnListView * mPropertiesView;
 		
 		void ShowStyleSheet();
