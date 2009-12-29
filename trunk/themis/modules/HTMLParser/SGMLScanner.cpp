@@ -265,7 +265,7 @@ Token SGMLScanner :: nextToken(Token aEndToken, Token aEndToken2) {
 		mToken = toupper(mChar);
 		while (!identifierEnd) {
 			mChar = mText.nextChar();
-			if (!isalpha(mChar) && mChar != '/' && mChar != '.' && mChar != '-' && !isdigit(mChar)) {
+			if (!isalpha(mChar) && mChar != '/' && mChar != '.' && mChar != '-' && !isdigit(mChar) && mChar != ':') {
 				identifierEnd = true;
 			}
 			else	{
