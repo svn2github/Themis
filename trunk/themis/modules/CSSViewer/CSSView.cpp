@@ -277,7 +277,8 @@ void CSSView :: CreatePropertiesListView(BRect aRect) {
 }
 
 void CSSView :: SetPropertiesOfSelection(TDOMString aSelectorText,
-										 unsigned short aRuleType) {
+										 unsigned short aRuleType,
+										 TDOMString aMedium) {
 
 	// Variable to store the style.
 	CSSStyleDeclarationPtr style;
@@ -289,19 +290,65 @@ void CSSView :: SetPropertiesOfSelection(TDOMString aSelectorText,
 	unsigned long i = 0;
 	while (i < length && !found) {
 		CSSRulePtr rule = rules->item(i);
-		if (rule->getType() == CSSRule::STYLE_RULE) {
-			CSSStyleRulePtr styleRule = shared_static_cast<CSSStyleRule>(rule);
-			TDOMString selectorText = styleRule->getSelectorText();
-			if (selectorText == aSelectorText) {
-				// Found the right one.
-				// Get the style and exit the loop.
-				style = styleRule->getStyle();
-				found = true;
+		if (rule->getType() == aRuleType) {
+			switch (aRuleType) {
+				case CSSRule::STYLE_RULE: {
+					CSSStyleRulePtr styleRule = shared_static_cast<CSSStyleRule>(rule);
+					TDOMString selectorText = styleRule->getSelectorText();
+					if (selectorText == aSelectorText) {
+						// Found the right one.
+						// Get the style and exit the loop.
+						style = styleRule->getStyle();
+						found = true;
+					}
+					else {
+						i++;
+					}
+					break;
+				}
+				case CSSRule::MEDIA_RULE: {
+					CSSMediaRulePtr mediaRule = shared_static_cast<CSSMediaRule>(rule);
+					MediaListPtr media = mediaRule->getMedia();
+					unsigned long mediaLength = media->getLength();
+					bool mediumFound = false;
+					unsigned long j = 0;
+					while (j < mediaLength && !mediumFound) {
+						TDOMString medium = media->item(j);
+						if (medium == aMedium) {
+							mediumFound = true;
+						}
+						else {
+							j++;
+						}
+					}
+					if (mediumFound) {
+						CSSRuleListPtr mediaRules = mediaRule->getCSSRules();
+						unsigned long mediaRulesLength = mediaRules->getLength();
+						unsigned long k = 0;
+						bool mediaRuleFound = false;
+						while (k < mediaRulesLength && !mediaRuleFound) {
+							CSSRulePtr mediaRule = mediaRules->item(k);
+							CSSStyleRulePtr styleRule = shared_static_cast<CSSStyleRule>(mediaRule);
+							TDOMString selectorText = styleRule->getSelectorText();
+							if (selectorText == aSelectorText) {
+								// Found the right one.
+								// Get the style and exit the loop.
+								style = styleRule->getStyle();
+								mediaRuleFound = true;
+							}
+							else {
+								k++;
+							}
+							
+						}
+						found = mediaRuleFound;
+					}
+					if (!found) {
+						i++;
+					}
+					break;
+				}
 			}
-			else {
-				i++;
-			}
-				
 		}
 		else {
 			i++;
@@ -351,6 +398,9 @@ void CSSView :: MessageReceived(BMessage * aMessage) {
 								// We found an item under a medium
 								// This is a style rule.
 								mSelectorText->SetText(item->Text());
+								SetPropertiesOfSelection(item->Text(),
+														 CSSRule::MEDIA_RULE,
+														 super->Text());
 							}
 							else {
 								// Shouldn't happen as is now.

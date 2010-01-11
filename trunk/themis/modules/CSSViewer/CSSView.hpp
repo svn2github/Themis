@@ -62,7 +62,9 @@ class CSSView : public BWindow {
 		void ShowStyleSheet();
 		void AddRules(CSSRuleListPtr aList, BStringItem * aParent);
 		void CreatePropertiesListView(BRect aRect);
-		void SetPropertiesOfSelection(TDOMString aSelectorText, unsigned short aRuleType);
+		void SetPropertiesOfSelection(TDOMString aSelectorText,
+									  unsigned short aRuleType,
+									  TDOMString aMedium = "");
 	
 	public:
 		CSSView(CSSStyleSheetPtr aDocument);
