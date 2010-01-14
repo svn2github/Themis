@@ -49,7 +49,7 @@ ThemisStatusView::~ThemisStatusView( void )
 void
 ThemisStatusView::AttachedToWindow( void )
 {
-	SetViewColor( ui_color( B_PANEL_BACKGROUND_COLOR ) );
+	SetViewColor(B_TRANSPARENT_COLOR);
 	
 	BRect rect = Bounds();
 	
@@ -328,4 +328,10 @@ ThemisProgressBar::SetValue( int value, const char* bartext )
 	fBarText.SetTo( bartext );
 	
 	Draw( Bounds() );
+}
+
+void
+ThemisProgressBar :: AttachedToWindow() {
+	
+	SetViewColor(B_TRANSPARENT_COLOR);
 }

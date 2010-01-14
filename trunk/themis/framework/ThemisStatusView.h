@@ -70,6 +70,7 @@ class ThemisProgressBar : public BView
 		virtual void				Draw( BRect updaterect );
 		void						Reset();
 		void						SetValue( int value, const char* bartext );
+		void						AttachedToWindow();
 
 	private:
 		int							fProgress;
