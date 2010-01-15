@@ -59,6 +59,8 @@ ThemisUrlView::AttachedToWindow()
 {
 	BView::AttachedToWindow();
 	
+	SetViewColor(B_TRANSPARENT_COLOR);
+	
 	SetFavIcon( NULL );
 }
 
@@ -72,6 +74,8 @@ ThemisUrlView::Draw( BRect updaterect )
 	updaterect = Bounds();
 	
 	rgb_color hi = HighColor();	
+	
+	FillRect(updaterect, B_SOLID_LOW);
 	
 	// the outer margin
 	SetHighColor( kColorLightBorder );
