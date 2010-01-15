@@ -38,7 +38,7 @@ ThemisUrlView::ThemisUrlView(
 	txtrect.left = 0;
 		
 	textview = new ThemisUrlTextView( tvrect, "URLTEXTVIEW", txtrect, resizingmode,
-		B_WILL_DRAW | B_NAVIGABLE|B_FULL_UPDATE_ON_RESIZE );
+		B_WILL_DRAW | B_NAVIGABLE );
 	// set some textview flags
 	textview->MakeResizable( true );
 	textview->SetStylable( false );
