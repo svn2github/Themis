@@ -167,7 +167,7 @@ void TextElement::EDraw()
 		}
 		else //first line
 			where.y += lineRect->height.ascent;
-		
+
 		parentView->MovePenTo(where);	
 		while ((lineCursor + *(int32 *)textLengths.ItemAtFast(j) - textCursor) <= *(int32 *)lengthsOfLines.ItemAtFast(i)){
 			parentView->SetHighColor(*(rgb_color *)highColors.ItemAtFast(j));
@@ -493,15 +493,15 @@ void TextElement::EFrameResized(float width, float height)
 	char *lastLine = text.LockBuffer((int32)0);
 	lastLine += *(int32 *)startsOfLines.LastItem();
 		
-	endPoint.x = prevFrame.mainFrame.ContentRect().LeftBottom().x;
+	endPoint.x = frame.ContentRect().left;
 	endPoint.x += ((BFont *)fonts.LastItem())->StringWidth(lastLine) + TEXT_GENERAL_INDENT;
-	text.UnlockBuffer();		
+	text.UnlockBuffer();
 		
-	endPoint.y = prevFrame.mainFrame.ContentRect().LeftBottom().y; 
+	endPoint.y = frame.ContentRect().top; 
 	LineRect *lineRectCursor = NULL;
 	for (int32 i=0; i < linesRects.CountItems(); i++){
 		lineRectCursor = (LineRect *)linesRects.ItemAtFast(i);
-		endPoint.y += lineRectCursor->height.ascent + lineRectCursor->height.descent + lineRectCursor->height.leading;					 
+		endPoint.y += lineRectCursor->height.ascent + lineRectCursor->height.descent + lineRectCursor->height.leading;
 	}
 	
 	//Set the RightBottom of frame
