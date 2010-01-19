@@ -172,9 +172,14 @@ void UIElement::EFrameResized(float width, float height)
 		frame.SetContent(width,height);	
 	*/	
 	//Then forward to next layer
-	if (nextLayer) 
+	if (nextLayer) {
 		for (int32 i=0; i<nextLayer->CountItems(); i++)
-			((UIElement *)nextLayer->ItemAt(i))->EFrameResized(width,height);	
+			((UIElement *)nextLayer->ItemAt(i))->EFrameResized(width,height);
+		UIElement * last = (UIElement *)nextLayer->LastItem();
+		frame.bottom = last->frame.bottom;
+	}
+
+	
 }
 
 //This version is used by all drawing elements but textelement ones that overrides it
