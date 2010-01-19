@@ -326,13 +326,13 @@ void Renderer::Process(TNodePtr node, UIElement *element, processing_context con
 							printf("RENDERER WARNING: TYPE IS %s\n",loc_child->getNodeName().c_str());
 						}
 						
-						//We should jump that whole part I think by now
-						Process(node->getNextSibling(),element,context);	
 						break;				
 					}
-/*****BODY******/	else if(strcmp(tagName,"BODY") == 0){
+					// Disabling body for now as it does nothing.
+/*****BODY******/	/*else if(strcmp(tagName,"BODY") == 0){
 						if (child->hasAttributes()) {	
 							TNamedNodeMapPtr attributes = child->getAttributes();
+					*/
 							// Code is not used. Disabled to avoid the warmings.
 							/*
 							TNodePtr attribute = attributes->getNamedItem("TEXT"); // !! DEPRECATED !! Here for compatibility
@@ -347,9 +347,11 @@ void Renderer::Process(TNodePtr node, UIElement *element, processing_context con
 							const char *vlink = GET_ATTRIBUTE_VALUE(attribute,NULL);
 							//Use this given color as active text Link														
 							*/
+					/*
 						}					
 						break;						
 					}
+					*/
 					else {
 						Process(child,element,context); //if nobody understands the tag, let's go down the tree anyway
 					}
