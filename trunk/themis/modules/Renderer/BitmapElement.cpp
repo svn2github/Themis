@@ -32,7 +32,7 @@
 #include "BitmapElement.h"
 #include "TRenderer.h"
 
-BitmapElement::BitmapElement(UIBox frame, TNodePtr node, const char *url) : UIElement(frame,node)
+BitmapElement::BitmapElement(TNodePtr node, const char *url) : UIElement(UIBox(0, 0),node)
 {
 	bitmap = NULL;
 	

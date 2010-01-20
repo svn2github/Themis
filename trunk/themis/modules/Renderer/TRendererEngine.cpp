@@ -135,7 +135,7 @@ void Renderer::Process(TNodePtr node, UIElement *element, processing_context con
 	if ((length = children->getLength()) != 0){
 		for ( int i = 0; i < length; i++){
 			TNodePtr child = children->item(i);
-
+			
 			//a switch of around a trillion line. That's all. ;-]
 			switch(child->getNodeType()){
 				case ELEMENT_NODE:{
@@ -189,7 +189,7 @@ void Renderer::Process(TNodePtr node, UIElement *element, processing_context con
 						break;
 					}
 /******IMG******/	else if (strcmp(tagName,"IMG") == 0){
-						uiChild = new BitmapElement(frame,child,"paste_url_here");
+						uiChild = new BitmapElement(child,"paste_url_here");
 						element->EAddChild(uiChild);
 						Process(child,uiChild,context);
 						break;
@@ -326,6 +326,8 @@ void Renderer::Process(TNodePtr node, UIElement *element, processing_context con
 							printf("RENDERER WARNING: TYPE IS %s\n",loc_child->getNodeName().c_str());
 						}
 						
+						//We should jump that whole part I think by now
+						//Process(node->getNextSibling(),element,context);	
 						break;				
 					}
 					// Disabling body for now as it does nothing.
@@ -352,10 +354,17 @@ void Renderer::Process(TNodePtr node, UIElement *element, processing_context con
 						break;						
 					}
 					*/
+					else if (strcmp(tagName, "SCRIPT") == 0) {
+						// Don't draw it.
+					}
+					else if (strcmp(tagName, "STYLE") == 0) {
+						// Don't draw it.
+					}
 					else {
 						Process(child,element,context); //if nobody understands the tag, let's go down the tree anyway
 					}
-					}break;
+					break;
+				}
 				case TEXT_NODE:{
 					TTextPtr		textChild 		= shared_static_cast <TText> (child);
 					UIElement		*uiChild 	 	= NULL ;
@@ -370,18 +379,19 @@ void Renderer::Process(TNodePtr node, UIElement *element, processing_context con
 					if (textElement){
 						textElement->AppendText(textChild->getWholeText().c_str(),font,high);
 						printf("RENDERER DEBUG: Text Element %s appened to test %p\n",textChild->getWholeText().c_str(),textElement);
-						Process(child,textElement,context);	//uiChild = textElement;					
+						Process(child,textElement,context);	//uiChild = textElement;
 					}
 					else {
 						uiChild = new TextElement(child,textChild->getWholeText().c_str(),font,high);
-						element->EAddChild(uiChild);			
+						element->EAddChild(uiChild);
 						printf("RENDERER DEBUG: Text Element %s Added to tree %p\n",textChild->getWholeText().c_str(),element->nextLayer);
-						Process(child,uiChild,context);								    
+						Process(child,uiChild,context);
 					}
-					}break;				
+					break;
+				}
 				default:{
 					printf("RENDERER WARNING: NODE unsupported yet\n");
-					}break;
+				}
 			}
 		}
 	}

@@ -40,7 +40,7 @@
 class BitmapElement : public UIElement
 {
 	public:
-						BitmapElement(UIBox frame, TNodePtr node, const char *url);
+						BitmapElement(TNodePtr node, const char *url);
 		virtual 		~BitmapElement();
 		
 		virtual void	EFrameResized(float width, float height);
