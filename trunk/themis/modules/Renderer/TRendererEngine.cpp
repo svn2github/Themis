@@ -37,6 +37,7 @@
 #include "TRenderWindow.h"
 #include "UIBox.h"
 #include "Utils.h"
+#include "BlockElement.h"
 
 #define GET_ATTRIBUTE_VALUE(attribute,default_value) (attribute.get() != NULL) ? attribute->getNodeValue().c_str() : default_value; 
 
@@ -326,8 +327,6 @@ void Renderer::Process(TNodePtr node, UIElement *element, processing_context con
 							printf("RENDERER WARNING: TYPE IS %s\n",loc_child->getNodeName().c_str());
 						}
 						
-						//We should jump that whole part I think by now
-						//Process(node->getNextSibling(),element,context);	
 						break;				
 					}
 					// Disabling body for now as it does nothing.
@@ -361,7 +360,11 @@ void Renderer::Process(TNodePtr node, UIElement *element, processing_context con
 						// Don't draw it.
 					}
 					else {
-						Process(child,element,context); //if nobody understands the tag, let's go down the tree anyway
+						// Assume the unknown elements are block elements.
+						BlockElement * current = new BlockElement(child);
+						current->parentView = element->parentView;
+						element->EAddChild(current);
+						Process(child, current, context); //if nobody understands the tag, let's go down the tree anyway
 					}
 					break;
 				}

@@ -89,6 +89,7 @@ FRAMEWORKSOURCES= \
 	framework/date.cpp
 #	framework/UrlHandler.cpp
 RENDERERSOURCES= \
+	Renderer/BlockElement.cpp \
 	Renderer/BitmapElement.cpp \
 	Renderer/CheckBoxElement.cpp \
 	Renderer/ButtonElement.cpp \
