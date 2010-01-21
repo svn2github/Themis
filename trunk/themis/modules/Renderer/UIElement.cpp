@@ -176,7 +176,12 @@ void UIElement::EFrameResized(float width, float height)
 		for (int32 i=0; i<nextLayer->CountItems(); i++)
 			((UIElement *)nextLayer->ItemAt(i))->EFrameResized(width,height);
 		UIElement * last = (UIElement *)nextLayer->LastItem();
-		frame.bottom = last->frame.bottom;
+		if (last->frame.bottom < frame.top) {
+			frame.bottom = frame.top;
+		}
+		else {
+			frame.bottom = last->frame.bottom;
+		}
 	}
 
 	
