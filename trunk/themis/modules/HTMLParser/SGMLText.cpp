@@ -104,20 +104,37 @@ char SGMLText	::	nextChar()	{
 
 	Position & current = mState.top();
 	
-	char c = mText[ current.getIndex() ];
+	char c = mText[current.getIndex()];
 	
-	if ( ! current.nextPosition( c ) )	{
+	bool nextFound = current.nextPosition(c);
+	
+	if (!nextFound) {
 		// End of piece of text reached
 		mState.pop();
-		if ( mState.size() == 0 )	{
+		if (mState.size() == 0) {
 			// End of total text reached
 			// Return the special character: 0
-			return '\0';
+			c = '\0';
 		}
-		return getChar();
+		else {
+			c = getChar();
+		}
+	}
+	else {
+		c = mText[current.getIndex()];
 	}
 
-	return mText[ current.getIndex() ];
+	// Filter out CR/LF sequences.
+	if (c == '\r') {
+		State backup = saveState();
+		c = nextChar();
+		if (c != '\n') {
+			restoreState(backup);
+			c = '\r';
+		}
+	}
+
+	return c;
 
 }
 
