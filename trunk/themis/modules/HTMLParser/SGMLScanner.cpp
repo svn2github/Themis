@@ -160,7 +160,7 @@ Token SGMLScanner :: nextToken(Token aEndToken, Token aEndToken2) {
 					char literal = mChar;
 					bool textEnd = false;
 					mToken = "";
-					while (!textEnd) {
+					while (!textEnd && mChar != '\0') {
 						mChar = mText.nextChar();
 						if (mChar == literal) {
 							textEnd = true;
