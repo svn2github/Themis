@@ -366,7 +366,7 @@ void TextElement::EFrameResized(float width, float height)
 		*jump = 0;
 		
 		//Avoid space at beginning of line:
-		while (string[cursor] == ' '){
+		while (isspace(string[cursor])){
  			(*jump)++;
 			cursor++;
 		}
