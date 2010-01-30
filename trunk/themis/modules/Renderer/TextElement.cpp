@@ -134,14 +134,14 @@ void TextElement::EDraw()
 	BPoint where = frame.ContentRect().LeftTop(); 	
 	float  startOfLineRef = where.x;
 		
-#if (RSPEED == 1)	
-	bigtime_t now = real_time_clock_usecs();
-#endif 
-
-#if (RDEBUG == 1)	
-	printf("EDraw: Start Point = ");
-	where.PrintToStream();
-#endif
+	#if (RSPEED == 1)	
+		bigtime_t now = real_time_clock_usecs();
+	#endif 
+	
+	#if (RDEBUG == 1)	
+		printf("EDraw: Start Point = ");
+		where.PrintToStream();
+	#endif
 	
 	int32 j = 0;
 	int32 k = 0;
@@ -151,8 +151,8 @@ void TextElement::EDraw()
 				  	
 	const char *string = text.String();
 	for (int32 i=0; i < startsOfLines.CountItems(); i++){
-		lineCursor = 0;
-		textCursor += *(int32 *)spacesJumped.ItemAtFast(i);
+		lineCursor = *(int32 *)spacesJumped.ItemAtFast(i);
+		textCursor += lineCursor;
 		LineRect *lineRect = (LineRect *)linesRects.ItemAtFast(i);
 		where.x = startOfLineRef;
 		switch (alignement){ 
@@ -183,21 +183,21 @@ void TextElement::EDraw()
 		parentView->SetHighColor(*(rgb_color *)highColors.ItemAtFast(j));
 		FillTextLowColor(&k,parentView->PenLocation()); //Also set lowColor
 		parentView->SetFont((BFont *)fonts.ItemAtFast(j));		
-		parentView->DrawString(string + nlineCursor + lineCursor,*(int32 *)lengthsOfLines.ItemAtFast(i) - lineCursor);
-		textCursor  += *(int32 *)lengthsOfLines.ItemAtFast(i) - lineCursor; 				
+		parentView->DrawString(string + nlineCursor + lineCursor,*(int32 *)lengthsOfLines.ItemAtFast(i));
+		textCursor  += *(int32 *)lengthsOfLines.ItemAtFast(i) + lineCursor; 				
 		if (i < (startsOfLines.CountItems() - 1))
 			nlineCursor = *(int32 *)startsOfLines.ItemAtFast(i+1);		
 	}
-#if (RDEBUG == 1)		
-	//2 drawing for debugs
-	parentView->SetHighColor(RGB_RED);
-	parentView->StrokeRect(frame);
-	parentView->StrokeLine(frame.MarginRect().LeftTop(),endPoint);
-#endif
-	
-#if (RSPEED == 1)		
-	printf("drawing time: %d microsecs\n",real_time_clock_usecs() - now);
-#endif
+	#if (RDEBUG == 1)		
+		//2 drawing for debugs
+		parentView->SetHighColor(RGB_RED);
+		parentView->StrokeRect(frame);
+		parentView->StrokeLine(frame.MarginRect().LeftTop(),endPoint);
+	#endif
+		
+	#if (RSPEED == 1)		
+		printf("drawing time: %d microsecs\n",real_time_clock_usecs() - now);
+	#endif
 	
 	UIElement::EDraw();
 }
@@ -240,28 +240,28 @@ int32 TextElement::TextForFrame(char *string, int32 refCounter, LineRect *lineRe
 		lowColorRect->verticalOffset = fh.ascent + fh.leading;
 		lowColorRect->height = lowColorRect->verticalOffset + fh.descent;
 		 
-#if (RDEBUG3 == 1)
-	BString str4;
-	text.CopyInto(str4,refCounter + globalCursor,localLength);
-	printf("TEXT RENDERERING:TextForFrame(): localString is now: %s\n",str4.String());		
-#endif
+		#if (RDEBUG3 == 1)
+			BString str4;
+			text.CopyInto(str4,refCounter + globalCursor,localLength);
+			printf("TEXT RENDERERING:TextForFrame(): localString is now: %s\n",str4.String());		
+		#endif
 		//now that we are here we have the localLength, localString
 		//We so start the algorithm on this line
 		for (localCursor = 1; localCursor < (localLength + 1); localCursor++){			
 			temp		 = localString[localCursor];
 			localString[localCursor] = '\0';	
-#if (RDEBUG3 == 1)	
-	printf("TEXT RENDERERING:TextForFrame(): Considering localString as %s\n",localString);
-	printf("TEXT RENDERERING:TextForFrame(): The Comparison is then: (%f + %f) > %f\n",globalStringWidth,font->StringWidth(localString),parentElement->frame.ContentRect().Width());	
-#endif	
+			#if (RDEBUG3 == 1)	
+				printf("TEXT RENDERERING:TextForFrame(): Considering localString as %s\n",localString);
+				printf("TEXT RENDERERING:TextForFrame(): The Comparison is then: (%f + %f) > %f\n",globalStringWidth,font->StringWidth(localString),parentElement->frame.ContentRect().Width());	
+			#endif	
 			if ((globalStringWidth + font->StringWidth(localString)) > parentElement->frame.ContentRect().Width()){
 				localString[localCursor] = temp;
 				localCursor--;	
-#if (RDEBUG3 == 1)
-	BString str;
-	text.CopyInto(str,refCounter,globalCursor + localCursor);
-	printf("TEXT RENDERERING:TextForFrame(): text cut INIT: %s\n",str.String());		
-#endif
+				#if (RDEBUG3 == 1)
+					BString str;
+					text.CopyInto(str,refCounter,globalCursor + localCursor);
+					printf("TEXT RENDERERING:TextForFrame(): text cut INIT: %s\n",str.String());		
+				#endif
 				//Word-wrapping for ends of lines
 				cursorMem = localCursor;
 				while (localString[localCursor] != ' ' && localString[localCursor] != '-'){
@@ -269,11 +269,11 @@ int32 TextElement::TextForFrame(char *string, int32 refCounter, LineRect *lineRe
 						localCursor --;
 					}	
 					else { //if the frame is reduced less than the size of 1 word we print all we can
-#if (RDEBUG3 == 1)
-	BString str2;
-	text.CopyInto(str2,refCounter,globalCursor + cursorMem);
-	printf("TEXT RENDERERING:TextForFrame(): 0 encounter, returning %s\n",str2.String());
-#endif
+						#if (RDEBUG3 == 1)
+							BString str2;
+							text.CopyInto(str2,refCounter,globalCursor + cursorMem);
+							printf("TEXT RENDERERING:TextForFrame(): 0 encounter, returning %s\n",str2.String());
+						#endif
 						if (globalCursor > 0){
 							lowColorRect->width = globalStringWidth;
 							lowColorsRects.AddItem(lowColorRect);
@@ -293,11 +293,11 @@ int32 TextElement::TextForFrame(char *string, int32 refCounter, LineRect *lineRe
 						}
 					}
 				}
-#if (RDEBUG3 == 1)
-	BString str3;
-	text.CopyInto(str3,refCounter,globalCursor + localCursor);
-	printf("TEXT RENDERERING:TextForFrame(): space/- encountered, returning %s\n",str3.String());
-#endif		
+				#if (RDEBUG3 == 1)
+					BString str3;
+					text.CopyInto(str3,refCounter,globalCursor + localCursor);
+					printf("TEXT RENDERERING:TextForFrame(): space/- encountered, returning %s\n",str3.String());
+				#endif		
 				temp = localString[localCursor];
 				localString[localCursor] = '\0';						
 				lowColorRect->width = globalStringWidth + font->StringWidth(localString);
@@ -373,13 +373,13 @@ void TextElement::EFrameResized(float width, float height)
 		
 		spacesJumped.AddItem(jump);
 		
-#if (RDEBUG == 1)	
-		printf("start of line = %d\n",cursor);
-#endif 		
-
-#if (RDEBUG3 == 1)	
-	printf("----------- Line %d ---------\n",startsOfLines.CountItems());
-#endif	
+		#if (RDEBUG == 1)	
+				printf("start of line = %d\n",cursor);
+		#endif 		
+		
+		#if (RDEBUG3 == 1)	
+			printf("----------- Line %d ---------\n",startsOfLines.CountItems());
+		#endif	
  		//Here are local start and length (of the shortened string!)	
  		*start = cursor;
  		startMem = *start;
@@ -404,74 +404,73 @@ void TextElement::EFrameResized(float width, float height)
 		//Add it to the BList
 		linesRects.AddItem(lineRect);	
 
-#if (RDEBUG4 == 1)
-	if ((dynamic_cast <TextElement *> (parentElement)) != NULL)
-		printf("ParentElement is text.");
-	else
-		printf("ParentElement has unknown type.\n");
+		#if (RDEBUG4 == 1)
+			if ((dynamic_cast <TextElement *> (parentElement)) != NULL)
+				printf("ParentElement is text.");
+			else
+				printf("ParentElement has unknown type.\n");
+				
+			parentElement->frame.PrintUIBoxToStream();
+		#endif
 		
-	parentElement->frame.PrintUIBoxToStream();
-#endif
-
-#if (RDEBUG == 1)	
-		printf("length of line = %d\n",*length);
-		if (*length == 0){
-			printf("RENDERER (BIG BAD UGLY) ERROR in TEXTELEMENT: length of line = 0 (Themis will now commit suicide!! bye...)\n");
-			thread_id id = find_thread(NULL);
-			thread_info info;
-			get_thread_info(id,&info);
-			kill_team(info.team);
-			return; //Quit the infinite loop
-		}
-#endif 	
+		#if (RDEBUG == 1)	
+				if (*length == 0){
+					printf("RENDERER (BIG BAD UGLY) ERROR in TEXTELEMENT: length of line = 0 (Themis will now commit suicide!! bye...)\n");
+					thread_id id = find_thread(NULL);
+					thread_info info;
+					get_thread_info(id,&info);
+					kill_team(info.team);
+					return; //Quit the infinite loop
+				}
+		#endif 	
 
 		string += *length + *start;	
-#if (RDEBUG ==1)
-		printf("string is reduced to\"%s\" after turn %d.\n",string,startsOfLines.CountItems()+1);
-#endif		
+		#if (RDEBUG ==1)
+				printf("string is reduced to\"%s\" after turn %d.\n",string,startsOfLines.CountItems()+1);
+		#endif		
 
 		//Local start is converted back to global value
 		*start  += cursorMem;
 		
-#if (RDEBUG ==1)
-		printf("Saving start = %d (= %d + %d) and length = %d.\n",*start,*start - cursorMem,cursorMem,*length);
-#endif	
+		#if (RDEBUG ==1)
+				printf("Saving start = %d (= %d + %d) and length = %d.\n",*start,*start - cursorMem,cursorMem,*length);
+		#endif	
 		//Values are saved
  		startsOfLines.AddItem(start);
 		lengthsOfLines.AddItem(length);
 
-#if (RDEBUG ==1)
-		int32 cprint = cursorMem;
-#endif	 				
+		#if (RDEBUG ==1)
+				int32 cprint = cursorMem;
+		#endif	 				
 		//We have to keep the count from the beginning of the complete string		
 		cursorMem += *length + startMem; 
 		
 		cursor = 0;
 	}
 
-#if (RSPEED == 1)	
-	printf("line cutting time: %d microseconds\n",real_time_clock_usecs() - now);
-#endif 
+	#if (RSPEED == 1)	
+		printf("line cutting time: %d microseconds\n",real_time_clock_usecs() - now);
+	#endif 
 	
 	text.UnlockBuffer();
 
-#if (RDEBUG2 ==1)
-	BString report;
-	report << "---------------------------\n" << "The initial strings are:\n";
-	for (int32 k=0; k < textStarts.CountItems(); k++){
-		report.Append("\t");
-		report.Append(text.String() + *(int32 *)textStarts.ItemAt(k),*(int32 *)textLengths.ItemAt(k));
+	#if (RDEBUG2 ==1)
+		BString report;
+		report << "---------------------------\n" << "The initial strings are:\n";
+		for (int32 k=0; k < textStarts.CountItems(); k++){
+			report.Append("\t");
+			report.Append(text.String() + *(int32 *)textStarts.ItemAt(k),*(int32 *)textLengths.ItemAt(k));
+			report.Append("\n");
+		}
 		report.Append("\n");
-	}
-	report.Append("\n");
-	report.Append("The lines are cut:\n");
-	for(int32 k=0; k < startsOfLines.CountItems(); k++){
-		report.Append("\t");
-		report.Append(text.String() + *(int32 *)startsOfLines.ItemAt(k),*(int32 *)lengthsOfLines.ItemAt(k));
-		report.Append("\n");
-	}
-	printf("%s",report.String());		 
-#endif
+		report.Append("The lines are cut:\n");
+		for(int32 k=0; k < startsOfLines.CountItems(); k++){
+			report.Append("\t");
+			report.Append(text.String() + *(int32 *)startsOfLines.ItemAt(k),*(int32 *)lengthsOfLines.ItemAt(k));
+			report.Append("\n");
+		}
+		printf("%s",report.String());		 
+	#endif
 
 	//Now we have to update the frame of the TextElement 
 	//We have to guess now the frame that will be produced when actually drawing with EDraw()		
@@ -507,11 +506,11 @@ void TextElement::EFrameResized(float width, float height)
 	//Set the RightBottom of frame
 	frame.SetRightBottom(BPoint(prevFrame.mainFrame.ContentRect().RightBottom().x,endPoint.y));		
 
-#if (RDEBUG == 1)				
-	//2 debugs line		
-	printf("Text Frame n°%d now equals:\n",this);
-	frame.PrintToStream();
-#endif
+	#if (RDEBUG == 1)				
+		//2 debugs line		
+		printf("Text Frame n°%d now equals:\n",this);
+		frame.PrintToStream();
+	#endif
 		
 	UIElement::EFrameResized(frame.Width(),frame.Height());
 }
