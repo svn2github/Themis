@@ -1882,7 +1882,38 @@ void HTTPv4::StoreData(http_request_info_st *request,unsigned char *buffer, int3
 			|| ((request->cache_state&CACHE_STATE_DONT_CACHE)!=0))
 		{
 			if (((request->transfer_state&TRANSFER_STATE_CHUNKED)!=0 && request->chunk_size>0) || ((request->transfer_state&TRANSFER_STATE_CHUNKED)==0 && dlength>0))
-				broadcast->AddData("raw_data",B_RAW_TYPE,dbuffer,dlength);
+			{
+				//broadcast->AddData("raw_data",B_RAW_TYPE,dbuffer,dlength);
+				if( ! request->cached)
+				{
+					request->cached = true;
+					request->cache_object_token = CacheSystem->CreateObject(cache_user_token,request->url,TYPE_RAM);
+				}
+				else
+					CacheSystem->AcquireWriteLock(cache_user_token,request->cache_object_token);
+				broadcast->AddInt32("cache_object_token",request->cache_object_token);
+				header_info_st *current=request->header_list;
+				if ((request->cache_state&CACHE_STATE_ATTRIBUTES_UPDATED)==0)
+				{
+					BMessage *headers=new BMessage();
+					headers->AddString("url",request->url);
+					headers->AddString("host",request->host);
+					headers->AddString("path",request->uri);
+					while(current!=NULL)
+					{
+						if ((current->attribute!=NULL) && (current->value!=NULL))
+							headers->AddString(current->attribute,current->value);
+						current=current->next;
+					}
+					CacheSystem->SetObjectAttr(cache_user_token,request->cache_object_token,headers);
+					delete headers;
+					request->cache_state|=CACHE_STATE_ATTRIBUTES_UPDATED;
+				}
+				printf("HTTPv4::StoreData() about to write.\n");
+				CacheSystem->Write(cache_user_token,request->cache_object_token,dbuffer,dlength);
+				printf("HTTPv4::StoreData() done writing.\n");
+	
+			}
 		} else
 		{
 			if (!request->cached)
