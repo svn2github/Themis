@@ -67,9 +67,6 @@ class HTMLParser : public BHandler, public PlugClass {
 		void NotifyParseFinished(void * aDocument,
 								 string aType,
 								 BMessage * aOriginalMessage);
-		// Function to parse an uncached raw document.
-		void parseRawData(string aURL,
-						  BMessage * aMessage);
 		// Function to parse a document.
 		void ParseDocument(string aURL,
 						   BMessage * aOriginalMessage);
