@@ -151,9 +151,9 @@ void TextElement::EDraw()
 				  	
 	const char *string = text.String();
 	for (int32 i=0; i < startsOfLines.CountItems(); i++){
-		lineCursor = *(int32 *)spacesJumped.ItemAtFast(i);
+		lineCursor = *(int32 *)spacesJumped.ItemAt(i);
 		textCursor += lineCursor;
-		LineRect *lineRect = (LineRect *)linesRects.ItemAtFast(i);
+		LineRect *lineRect = (LineRect *)linesRects.ItemAt(i);
 		where.x = startOfLineRef;
 		switch (alignement){ 
 			case T_ALIGN_CENTER:	where.x += (parentElement->frame.ContentRect().Width() - lineRect->width )/2; break;
@@ -161,7 +161,7 @@ void TextElement::EDraw()
 			default:	    		break; //case T_ALIGN_LEFT
 		}				
 		if (i > 0){ 
-			where.y += ((LineRect *)linesRects.ItemAtFast(i-1))->height.descent;
+			where.y += ((LineRect *)linesRects.ItemAt(i-1))->height.descent;
 			where.y += lineRect->height.ascent;
 			where.y += lineRect->height.leading;		
 		}
@@ -169,24 +169,24 @@ void TextElement::EDraw()
 			where.y += lineRect->height.ascent;
 
 		parentView->MovePenTo(where);	
-		while ((lineCursor + *(int32 *)textLengths.ItemAtFast(j) - textCursor) <= *(int32 *)lengthsOfLines.ItemAtFast(i)){
-			parentView->SetHighColor(*(rgb_color *)highColors.ItemAtFast(j));
+		while ((lineCursor + *(int32 *)textLengths.ItemAt(j) - textCursor) <= *(int32 *)lengthsOfLines.ItemAt(i)){
+			parentView->SetHighColor(*(rgb_color *)highColors.ItemAt(j));
 			FillTextLowColor(&k,parentView->PenLocation()); //Also set lowColor
-			parentView->SetFont((BFont *)fonts.ItemAtFast(j));
-			parentView->DrawString(string + nlineCursor + lineCursor,*(int32 *)textLengths.ItemAtFast(j) - textCursor);			
-			lineCursor += *(int32 *)textLengths.ItemAtFast(j) - textCursor;
+			parentView->SetFont((BFont *)fonts.ItemAt(j));
+			parentView->DrawString(string + nlineCursor + lineCursor,*(int32 *)textLengths.ItemAt(j) - textCursor);			
+			lineCursor += *(int32 *)textLengths.ItemAt(j) - textCursor;
 			textCursor = 0;		
 			j++;
 			if (j == textLengths.CountItems()) //We are done drawing
 				return;
 		}
-		parentView->SetHighColor(*(rgb_color *)highColors.ItemAtFast(j));
+		parentView->SetHighColor(*(rgb_color *)highColors.ItemAt(j));
 		FillTextLowColor(&k,parentView->PenLocation()); //Also set lowColor
-		parentView->SetFont((BFont *)fonts.ItemAtFast(j));		
-		parentView->DrawString(string + nlineCursor + lineCursor,*(int32 *)lengthsOfLines.ItemAtFast(i));
-		textCursor  += *(int32 *)lengthsOfLines.ItemAtFast(i) + lineCursor; 				
+		parentView->SetFont((BFont *)fonts.ItemAt(j));		
+		parentView->DrawString(string + nlineCursor + lineCursor,*(int32 *)lengthsOfLines.ItemAt(i));
+		textCursor  += *(int32 *)lengthsOfLines.ItemAt(i) + lineCursor; 				
 		if (i < (startsOfLines.CountItems() - 1))
-			nlineCursor = *(int32 *)startsOfLines.ItemAtFast(i+1);		
+			nlineCursor = *(int32 *)startsOfLines.ItemAt(i+1);		
 	}
 	#if (RDEBUG == 1)		
 		//2 drawing for debugs
@@ -221,10 +221,10 @@ int32 TextElement::TextForFrame(char *string, int32 refCounter, LineRect *lineRe
 	char *localString = NULL;
 
 	for (textListCursor = ListIndexForTextCursor(refCounter); textListCursor < textStarts.CountItems(); textListCursor++){
-		font = (BFont *)fonts.ItemAtFast(textListCursor);
+		font = (BFont *)fonts.ItemAt(textListCursor);
 		if ((textListCursor + 1) < textStarts.CountItems()){
-			localLength = *(int32 *)textStarts.ItemAtFast(textListCursor + 1) - localStringRefCounter;
-			localStringRefCounter = *(int32 *)textStarts.ItemAtFast(textListCursor + 1); //Update for next turns. permits for the first turn to take into account beginning of line in the mddle of a type of text
+			localLength = *(int32 *)textStarts.ItemAt(textListCursor + 1) - localStringRefCounter;
+			localStringRefCounter = *(int32 *)textStarts.ItemAt(textListCursor + 1); //Update for next turns. permits for the first turn to take into account beginning of line in the mddle of a type of text
 		}
 		else
 			localLength = strlen(string);
@@ -234,7 +234,7 @@ int32 TextElement::TextForFrame(char *string, int32 refCounter, LineRect *lineRe
 		localString[localLength] = '\0';
 
 		LowColorRect *lowColorRect = new LowColorRect();
-		lowColorRect->color = (rgb_color *)lowColors.ItemAtFast(textListCursor);
+		lowColorRect->color = (rgb_color *)lowColors.ItemAt(textListCursor);
 		font_height fh;
 		font->GetHeight(&fh);
 		lowColorRect->verticalOffset = fh.ascent + fh.leading;
@@ -320,7 +320,7 @@ int32 TextElement::TextForFrame(char *string, int32 refCounter, LineRect *lineRe
 	return globalCursor;
 }
 
-//Is there real advantage of using ItemAtFast() instead of ItemAt() ?
+//Is there real advantage of using ItemAt() instead of ItemAt() ?
 //TODO: Test if copy needed when code goes back into Themis.
 void TextElement::EFrameResized(float width, float height)
 {
@@ -392,7 +392,7 @@ void TextElement::EFrameResized(float width, float height)
 		int32 maxIndex = ListIndexForTextCursor(*length + cursorMem + cursor) + 1;
 		
 		for (int32 i=ListIndexForTextCursor(cursorMem + cursor); i <  maxIndex; i++){
-			((BFont *)fonts.ItemAtFast(i))->GetHeight(&fh);
+			((BFont *)fonts.ItemAt(i))->GetHeight(&fh);
 				
 			if (fh.ascent > lineRect->height.ascent)
 				lineRect->height.ascent = fh.ascent;
@@ -499,7 +499,7 @@ void TextElement::EFrameResized(float width, float height)
 	endPoint.y = frame.ContentRect().top; 
 	LineRect *lineRectCursor = NULL;
 	for (int32 i=0; i < linesRects.CountItems(); i++){
-		lineRectCursor = (LineRect *)linesRects.ItemAtFast(i);
+		lineRectCursor = (LineRect *)linesRects.ItemAt(i);
 		endPoint.y += lineRectCursor->height.ascent + lineRectCursor->height.descent + lineRectCursor->height.leading;
 	}
 	
@@ -544,7 +544,7 @@ int32 TextElement::ListIndexForTextCursor(int32 textCursor)
 
 void TextElement::FillTextLowColor(int32 *k, BPoint currentPenPosition)
 {
-	LowColorRect *lowColorRect = (LowColorRect *)lowColorsRects.ItemAtFast(*k);
+	LowColorRect *lowColorRect = (LowColorRect *)lowColorsRects.ItemAt(*k);
 
 	if (SameColor(*lowColorRect->color,0,1,0))
 		parentView->SetLowColor(lowColor); 	
