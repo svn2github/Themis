@@ -77,6 +77,10 @@ bool TSchemaRule :: computeEmpty() {
 		// Considering CDATA to be the same as EMPTY for now.
 		mEmpty = true;
 	}
+	else if (name == "#PCDATA") {
+		// Considering #PCDATA to be the same as EMPTY for now.
+		mEmpty = true;
+	}
 	else if (name == "content") {
 		TNodePtr child = getFirstChild();
 		TSchemaRulePtr rule = shared_static_cast<TSchemaRule>(child);
