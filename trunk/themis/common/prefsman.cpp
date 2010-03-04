@@ -44,15 +44,23 @@ void PrefsManager::init(void)
 }
 bool PrefsManager::createPrefsFile(const char *PREF_FILENAME, int32 FLAGS)
 {
+	bool file_created = false;
+	return file_created;
 }
 bool PrefsManager::deletePrefsFile()
 {
+	bool file_deleted = false;
+	return file_deleted;
 }
 BMessage *PrefsManager::loadPrefs()
 {
+	BMessage *prefs = NULL;
+	return prefs;
 }
 int32 PrefsManager::savePrefs(BMessage *PREFS)
 {
+	int32 bytes_saved = 0;
+	return bytes_saved;
 }
 const char *PrefsManager::filename(void)
 {
