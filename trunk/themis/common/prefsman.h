@@ -30,13 +30,16 @@ Project Start Date: October 18, 2000
 #define _prefsman_
 #include <Message.h>
 #include <File.h>
+#include <Entry.h>
 
 class PrefsManager
 {
 	private:
+		BEntry *base_dir_entry;
 		entry_ref ref;
-		const char *filename;
+		const char *pref_filename;
 		BMessage *current_prefs;
+		void init(void);
 	public:
 		PrefsManager(const char * PREF_FILENAME = NULL, int32 FLAGS = 0);
 		PrefsManager(entry_ref *ref);
@@ -45,6 +48,7 @@ class PrefsManager
 		bool deletePrefsFile();
 		BMessage *loadPrefs();
 		int32 savePrefs(BMessage *PREFS);
+		const char *filename(void);
 };
 
 #endif
