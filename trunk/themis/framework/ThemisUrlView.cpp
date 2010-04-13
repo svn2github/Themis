@@ -217,7 +217,7 @@ ThemisUrlTextView::Paste( BClipboard* clipboard )
 		
 		be_clipboard->Unlock(); 
 	}
-	ptext.SetTo( text );
+	ptext.SetTo(text, textlen);
 	ptext.RemoveSet( "\a" );	// bell. will likely never be in, but you can never be sure :)
 	ptext.RemoveSet( "\b" );	// backspace
 	ptext.RemoveSet( "\f" );	// formfeed
