@@ -672,6 +672,53 @@ App::CheckSettings(
 		}
 		/* end: find a DTD */
 	}
+	if(	!AppSettings->HasString( kPrefsActiveCSSPath ) ||
+			strcmp( AppSettings->FindString( kPrefsActiveCSSPath ), kNoCSSFoundString ) == 0 )
+	{
+		/* set our default */
+		if( !AppSettings->HasString( kPrefsActiveCSSPath ) )
+			AppSettings->AddString( kPrefsActiveCSSPath, kNoCSSFoundString );
+		
+		/* find a CSS file */
+		BString cssdir;
+		AppSettings->FindString( kPrefsSettingsDirectory, &cssdir );
+		cssdir.Append( "/css/" );
+		printf( "CSS dir: %s\n", cssdir.String() );
+		
+		BDirectory dir( cssdir.String() );		
+		if( dir.InitCheck() != B_OK )
+		{
+			printf( "CSS directory (%s) not found!\n", cssdir.String() );
+			printf( "Setting kPrefsActiveCSSPath to \"none\"\n" );
+			AppSettings->AddString( kPrefsActiveCSSPath, kNoCSSFoundString );
+		}
+		else
+		{
+			BEntry entry;
+			while( dir.GetNextEntry( &entry, false ) != B_ENTRY_NOT_FOUND )
+			{
+				BPath path;
+				entry.GetPath( &path );
+				char name[B_FILE_NAME_LENGTH];
+				entry.GetName( name );
+						
+				BString nstring( name );
+				printf( "----------------\n" );
+				printf( "found CSS file: %s\n", nstring.String() );
+				if( AppSettings->HasString( kPrefsActiveCSSPath ) )
+				{
+					printf( "replacing kPrefsActiveCSSPath with: %s\n", path.Path() );
+					AppSettings->ReplaceString( kPrefsActiveCSSPath, path.Path() );
+				}
+				else
+				{
+					printf( "adding kPrefsActiveCSSPath: %s\n", path.Path() );
+					AppSettings->AddString( kPrefsActiveCSSPath, path.Path() );
+				}
+			}
+		}
+		/* end: find a DTD */
+	}
 	
 	AppSettings->PrintToStream();
 }
