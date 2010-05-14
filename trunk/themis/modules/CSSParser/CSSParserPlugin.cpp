@@ -341,7 +341,7 @@ status_t CSSParserPlugin :: ReceiveBroadcast(BMessage * aMessage) {
 					}
 					break;
 				}
-				case CSS_CHANGED_PARSER:	{
+				case CSS_CHANGED_PARSER: {
 					Debug("Request to change base css file", PlugID());
 					if (appSettings != NULL) {
 						const char * path;
@@ -355,6 +355,28 @@ status_t CSSParserPlugin :: ReceiveBroadcast(BMessage * aMessage) {
 						NotifyParseFinished(mDocuments.end() - 1, "cssdom", aMessage);
 					}
 					break;
+				}
+				case SH_PARSE_DOC_FINISHED: {
+					BString type;
+					aMessage->FindString("type", &type);
+					if (type == "dom") {
+						// Someone has loaded a HTML file.
+						// Check if we already have the base css file loaded.
+						if (mDocuments.size() == 0) {
+							// Not loaded yet. Load it now.
+							if (appSettings != NULL) {
+								const char * path;
+								appSettings->FindString(kPrefsActiveCSSPath, &path);
+								string cssLoad = "Loading new CSS file: ";
+								cssLoad += path;
+								printf("%s\n", cssLoad.c_str());
+								Debug(cssLoad.c_str(), PlugID());
+								CSSStyleSheetPtr document = mParser->parse(path);
+								mDocuments.push_back(document);
+								NotifyParseFinished(mDocuments.end() - 1, "cssdom", aMessage);
+							}
+						}
+					}
 				}
 			}
 			break;
