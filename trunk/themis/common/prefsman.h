@@ -44,11 +44,17 @@ class PrefsManager
 		PrefsManager(const char * PREF_FILENAME = NULL, int32 FLAGS = 0);
 		PrefsManager(entry_ref *ref);
 		virtual ~PrefsManager();
-		bool createPrefsFile(const char *PREF_FILENAME = NULL, int32 FLAGS = 0);
-		bool deletePrefsFile();
-		BMessage *loadPrefs();
-		int32 savePrefs(BMessage *PREFS);
+		status_t createPrefsFile(const char *PREF_FILENAME = NULL, int32 FLAGS = 0);
+		status_t deletePrefsFile();
+		BMessage *loadPrefs(status_t *RESULT = NULL);
+		ssize_t savePrefs(BMessage *PREFS,status_t *RESULT = NULL);
 		const char *filename(void);
+		const char *fullPath(void);
+		void setFilename(const char *FILENAME);
+		status_t renameTo(const char *NEW_FILENAME);
+		static const int32 FLAG_CREATE_FILE = 1;
+		static const int32 FLAG_REPLACE_FILE = 2;
+		
 };
 
 #endif
