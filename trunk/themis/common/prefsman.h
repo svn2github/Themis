@@ -51,7 +51,7 @@ class PrefsManager
 		const char *filename(void);
 		const char *fullPath(void);
 		void setFilename(const char *FILENAME);
-		status_t renameTo(const char *NEW_FILENAME);
+		status_t renameTo(const char *NEW_FILENAME,bool CLOBBER = false);
 		static const int32 FLAG_CREATE_FILE = 1;
 		static const int32 FLAG_REPLACE_FILE = 2;
 		
