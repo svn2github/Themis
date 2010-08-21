@@ -90,10 +90,6 @@ class App : public BApplication, public MessageSystem
 		//! Returns a newly generated unique ID.
 		int32						GetNewID();
 		
-//		//! Returns a pointer to the TRenderView with the given ID.
-//		TRenderView*				GetRenderViewFor(
-//										int32 id );
-		
 		//! Returns a pointer to the UrlHandler object.
 		SiteHandler*				GetSiteHandler();
 		
