@@ -33,6 +33,7 @@ Project Start Date: October 18, 2000
 #include <String.h>
 #include "app.h"
 #include "PrefsDefs.h"
+#include "PrefsWin.h"
 #include "ThemisTab.h"
 #include <Path.h>
 using namespace _Themis_Networking_;

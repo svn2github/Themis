@@ -37,10 +37,12 @@ Project Start Date: October 18, 2000
 #include "msgsystem.h"
 #include "msgdaemon.h"
 #include "plugman.h"
-#include "PrefsWin.h"
 #include "tcpmanager.h"
 #include "SiteHandler.h"
 #include "win.h"
+
+// Declarations used
+class PrefsWin;
 
 //! The application framework version number. 
 #define THEMIS_FRAMEWORK_APP_VERSION 0.40
