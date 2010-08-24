@@ -10,6 +10,13 @@
 #include <View.h>
 #include <Window.h>
 
+// C++ headers
+#include <vector>
+
+// Namespaces used
+using std::vector;
+
+// Declarations
 class PrefsListView;
 
 class PrefsWin : public BWindow  {
@@ -20,11 +27,14 @@ class PrefsWin : public BWindow  {
 		BView * fCurrentPrefsView;
 		int32 fLastSelection;
 		BRect fViewFrame;
-
+		vector<BView *> mPrefViews;
+		
+		void CreatePrefViews();
 		void SaveAppSettings();
 
 	public:
 		PrefsWin(BRect frame);
+		virtual ~PrefsWin();
 		virtual void MessageReceived(BMessage* msg);
 		virtual bool QuitRequested();	
 		
@@ -67,6 +77,7 @@ class PrefsListView : public BView {
 #ifndef PREFSLISTITEM
 #define PREFSLISTITEM
 
+// BeOS headers
 #include <Bitmap.h>
 #include <ListItem.h>
 
@@ -75,7 +86,7 @@ class PrefsListItem : public BListItem {
 	private:
 		const char * fName;
 		BBitmap * fBitmap;
-		float fFontHeight;		
+		float fFontHeight;
 
 	public:
 		PrefsListItem(const char* name,

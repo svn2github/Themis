@@ -7,8 +7,13 @@
 #ifndef _PREFSVIEWS_H_
 #define _PREFSVIEWS_H_
 
-#include <Box.h>
+// BeOS headers
 #include <View.h>
+#include <String.h>
+
+// Declarations used
+class BBox;
+class BPopUpMenu;
 
 /*
  * BasePrefsView
@@ -17,17 +22,15 @@
 class WindowPrefsView;
 
 
-class BasePrefsView : public BView
-{
-	public:
-									BasePrefsView(
-										BRect frame,
-										const char* name );
-		
-		virtual void				AttachedToWindow();
-		
+class BasePrefsView : public BView {
+
 	protected:
-		BBox*						fMainBox;		
+		BBox * fMainBox;		
+
+	public:
+		BasePrefsView(BRect frame,
+					  const char* name);
+		
 };
 
 
@@ -36,14 +39,12 @@ class BasePrefsView : public BView
  */
 
 
-class WindowPrefsView : public BasePrefsView
-{
+class WindowPrefsView : public BasePrefsView {
+
 	public:
-									WindowPrefsView(
-										BRect frame,
-										const char* name );
-									
-		virtual void				AttachedToWindow();
+		WindowPrefsView(BRect frame,
+						const char* name);
+
 };
 
 
@@ -52,14 +53,12 @@ class WindowPrefsView : public BasePrefsView
  */
 
 
-class NetworkPrefsView : public BasePrefsView
-{
+class NetworkPrefsView : public BasePrefsView {
+
 	public:
-									NetworkPrefsView(
-										BRect frame,
-										const char* name );
-									
-		virtual void				AttachedToWindow();
+		NetworkPrefsView(BRect frame,
+						 const char* name);
+
 };
 
 
@@ -68,14 +67,12 @@ class NetworkPrefsView : public BasePrefsView
  */
 
 
-class PrivacyPrefsView : public BasePrefsView
-{
+class PrivacyPrefsView : public BasePrefsView {
+
 	public:
-									PrivacyPrefsView(
-										BRect frame,
-										const char* name );
-									
-		virtual void				AttachedToWindow();
+		PrivacyPrefsView(BRect frame,
+						 const char* name);
+
 };
 
 
@@ -84,14 +81,17 @@ class PrivacyPrefsView : public BasePrefsView
  */
 
 
-class HTMLParserPrefsView : public BasePrefsView
-{
+class HTMLParserPrefsView : public BasePrefsView {
+
+	private:
+		BPopUpMenu * mPopUpMenu;
+		BString mDTDDir;
+
 	public:
-									HTMLParserPrefsView(
-										BRect frame,
-										const char* name );
-									
-		virtual void				AttachedToWindow();
+		HTMLParserPrefsView(BRect frame,
+							const char* name);
+		virtual void AttachedToWindow();
+
 };
 
 
@@ -100,14 +100,17 @@ class HTMLParserPrefsView : public BasePrefsView
  */
 
 
-class CSSParserPrefsView : public BasePrefsView
-{
+class CSSParserPrefsView : public BasePrefsView {
+
+	private:
+		BPopUpMenu * mPopUpMenu;
+		BString mCSSDir;
+
 	public:
-									CSSParserPrefsView(
-										BRect frame,
-										const char* name );
-									
-		virtual void				AttachedToWindow();
+		CSSParserPrefsView(BRect frame,
+						   const char* name);
+		virtual void AttachedToWindow();
+
 };
 
 /*
@@ -115,14 +118,12 @@ class CSSParserPrefsView : public BasePrefsView
  */
 
 
-class RendererPrefsView : public BasePrefsView
-{
+class RendererPrefsView : public BasePrefsView {
+
 	public:
-									RendererPrefsView(
-										BRect frame,
-										const char* name );
+		RendererPrefsView(BRect frame,
+						  const char* name);
 									
-		virtual void				AttachedToWindow();
 };
 
 #endif

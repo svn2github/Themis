@@ -49,7 +49,7 @@ PrefsWin :: PrefsWin(BRect frame)
 		Bounds(),
 		"BackgroundView",
 		B_FOLLOW_ALL,
-		0 );
+		0);
 	AddChild(fBackgroundView);
 	fBackgroundView->SetViewColor(ui_color(B_PANEL_BACKGROUND_COLOR));
 	
@@ -66,10 +66,51 @@ PrefsWin :: PrefsWin(BRect frame)
 	rect.InsetBy(kItemSpacing, kItemSpacing);
 	rect.left = fPrefsListView->Frame().right + kItemSpacing;
 	fViewFrame = rect;
+
+	CreatePrefViews();
 		
 	Show();
 }
 
+PrefsWin :: ~PrefsWin() {
+	
+	if (fCurrentPrefsView) {
+		fCurrentPrefsView->RemoveSelf();
+		fCurrentPrefsView = NULL;
+	}
+
+	printf("Deleting preferences views\n");
+	for (unsigned int i = 0; i < mPrefViews.size(); i++) {
+		delete mPrefViews[i];
+	}	
+	
+}
+
+void PrefsWin :: CreatePrefViews() {
+
+	printf("Creating preferences views\n");
+	
+	mPrefViews.push_back(
+		new WindowPrefsView(fViewFrame,
+							kPrefsItems[0].name));
+	mPrefViews.push_back(
+		new NetworkPrefsView(fViewFrame,
+							 kPrefsItems[1].name));
+	mPrefViews.push_back(
+		new PrivacyPrefsView(fViewFrame,
+							 kPrefsItems[2].name));
+	mPrefViews.push_back(
+		new HTMLParserPrefsView(fViewFrame,
+								kPrefsItems[3].name));
+	mPrefViews.push_back(
+		new CSSParserPrefsView(fViewFrame,
+							   kPrefsItems[4].name));
+	mPrefViews.push_back(
+		new RendererPrefsView(fViewFrame,
+							  kPrefsItems[5].name));
+	
+	
+}
 
 void PrefsWin :: MessageReceived(BMessage* msg) {
 
@@ -82,71 +123,20 @@ void PrefsWin :: MessageReceived(BMessage* msg) {
 			 * but the BListView does take away the focus from the curent
 			 * selected item. So reselect it again. :/
 			 */
-			if(selection < 0)
+			if(selection < 0) {
 				fPrefsListView->Select(fLastSelection);
-			
-			if(selection == fLastSelection)
-				break;
-			else
-				fLastSelection = selection;
-			
-			if(fCurrentPrefsView) {
-				fCurrentPrefsView->RemoveSelf();
-				delete fCurrentPrefsView;
-				fCurrentPrefsView = NULL;
 			}
-			
-			/* find the prefs_view_const */
-			enum prefs_view_const pvconst = kPrefsItems[selection].pvconst;
-			
-			switch(pvconst) {
-				case PREFSVIEW_WINDOW: {
-					fCurrentPrefsView = new WindowPrefsView(
-						fViewFrame,
-						kPrefsItems[selection].name);
-					fBackgroundView->AddChild(fCurrentPrefsView);
+			else {
+				if(selection != fLastSelection) {
+					fLastSelection = selection;
+				
+					if (fCurrentPrefsView) {
+						fCurrentPrefsView->RemoveSelf();
+						fCurrentPrefsView = NULL;
+					}
 					
-					break;
-				}
-				case PREFSVIEW_NETWORK: {
-					fCurrentPrefsView = new NetworkPrefsView(
-						fViewFrame,
-						kPrefsItems[selection].name);
+					fCurrentPrefsView = mPrefViews[selection];
 					fBackgroundView->AddChild(fCurrentPrefsView);
-					
-					break;
-				}
-				case PREFSVIEW_PRIVACY: {
-					fCurrentPrefsView = new PrivacyPrefsView(
-						fViewFrame,
-						kPrefsItems[selection].name);
-					fBackgroundView->AddChild(fCurrentPrefsView);
-					
-					break;
-				}
-				case PREFSVIEW_HTMLPARSER: {
-					fCurrentPrefsView = new HTMLParserPrefsView(
-						fViewFrame,
-						kPrefsItems[selection].name);
-					fBackgroundView->AddChild(fCurrentPrefsView);
-					
-					break;
-				}
-				case PREFSVIEW_CSSPARSER: {
-					fCurrentPrefsView = new CSSParserPrefsView(
-						fViewFrame,
-						kPrefsItems[selection].name);
-					fBackgroundView->AddChild(fCurrentPrefsView);
-					
-					break;
-				}
-				case PREFSVIEW_RENDERER: {
-					fCurrentPrefsView = new RendererPrefsView(
-						fViewFrame,
-						kPrefsItems[selection].name);
-					fBackgroundView->AddChild(fCurrentPrefsView);
-					
-					break;
 				}
 			}
 			
