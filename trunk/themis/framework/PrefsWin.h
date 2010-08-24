@@ -12,30 +12,22 @@
 
 class PrefsListView;
 
+class PrefsWin : public BWindow  {
 
-class PrefsWin : public BWindow
-{
-	public:
-									PrefsWin(
-										BRect frame );
-		
-		virtual void				MessageReceived(
-										BMessage* msg );
-		
-		virtual bool				QuitRequested();	
-		
 	private:
-		void						SaveAppSettings();
+		BView * fBackgroundView;
+		PrefsListView * fPrefsListView;
+		BView * fCurrentPrefsView;
+		int32 fLastSelection;
+		BRect fViewFrame;
+
+		void SaveAppSettings();
+
+	public:
+		PrefsWin(BRect frame);
+		virtual void MessageReceived(BMessage* msg);
+		virtual bool QuitRequested();	
 		
-		BView*						fBackgroundView;
-		
-		PrefsListView*				fPrefsListView;
-		
-		BView*						fCurrentPrefsView;
-		
-		int32						fLastSelection;
-		
-		BRect						fViewFrame;
 };
 
 #endif
@@ -51,22 +43,18 @@ class PrefsWin : public BWindow
 #include <ListView.h>
 
 
-class PrefsListView : public BView
-{
-	public:
-									PrefsListView(
-										BRect frame );
-		
-		virtual void				AttachedToWindow();
-		
-		int32						CurrentSelection();
-		
-		void						Select(
-										int32 which );
-										
+class PrefsListView : public BView {
+
 	private:
-		BListView*					fListView;
-		BBox*						fBox;
+		BListView * fListView;
+		BBox * fBox;
+
+	public:
+		PrefsListView(BRect frame);
+		virtual void AttachedToWindow();
+		int32 CurrentSelection();
+		void Select(int32 which);
+										
 };
 
 #endif
@@ -82,29 +70,23 @@ class PrefsListView : public BView
 #include <Bitmap.h>
 #include <ListItem.h>
 
-class PrefsListItem : public BListItem
-{
-	public:
-									PrefsListItem(
-										const char* name,
-										const uint8* bitmapdata );
-		
-									~PrefsListItem();
-		
-		virtual void				DrawItem(
-										BView* owner,
-										BRect itemRect,
-										bool drawEverything = false );
-		
-		virtual void				Update(
-										BView* owner,
-										const BFont* font );
-										
+class PrefsListItem : public BListItem {
+
 	private:
-		const char*					fName;
-		BBitmap*					fBitmap;
-		
-		float						fFontHeight;		
+		const char * fName;
+		BBitmap * fBitmap;
+		float fFontHeight;		
+
+	public:
+		PrefsListItem(const char* name,
+					  const uint8* bitmapdata);
+		~PrefsListItem();
+		virtual void DrawItem(BView * owner,
+							  BRect itemRect,
+							  bool drawEverything = false);
+		virtual void Update(BView* owner,
+							const BFont* font);
+										
 };
 
 #endif
