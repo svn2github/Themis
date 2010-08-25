@@ -61,6 +61,7 @@ class PrefsListView : public BView {
 
 	public:
 		PrefsListView(BRect frame);
+		virtual ~PrefsListView();
 		virtual void AttachedToWindow();
 		int32 CurrentSelection();
 		void Select(int32 which);

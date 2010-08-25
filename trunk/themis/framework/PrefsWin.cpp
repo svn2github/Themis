@@ -398,6 +398,14 @@ PrefsListView :: PrefsListView(BRect frame)
 					  0) {
 }
 
+PrefsListView :: ~PrefsListView() {
+	
+	int32 items = fListView->CountItems();
+	for (int32 i = 0; i < items; i++) {
+		delete fListView->RemoveItem((int32) 0);
+	}
+	fListView->MakeEmpty();
+}
 
 void PrefsListView :: AttachedToWindow() {
 
