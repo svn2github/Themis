@@ -210,43 +210,45 @@ ThemisUrlTextView::Paste( BClipboard* clipboard )
 	int32 textlen; 
 	BMessage *clip = ( BMessage * )NULL; 
 
-	if( be_clipboard->Lock() )
+	if( clipboard->Lock() )
 	{
-		if( ( clip = be_clipboard->Data() ) != NULL )
-			clip->FindData( "text/plain", B_MIME_TYPE, ( const void ** )&text, &textlen );
-		
-		be_clipboard->Unlock(); 
+		if((clip = clipboard->Data()) != NULL) {
+			status_t status = clip->FindData("text/plain", B_MIME_TYPE, (const void **)&text, &textlen);
+			if (status == B_OK && textlen > 0) {
+				ptext.SetTo(text, textlen);
+				ptext.RemoveSet( "\a" );	// bell. will likely never be in, but you can never be sure :)
+				ptext.RemoveSet( "\b" );	// backspace
+				ptext.RemoveSet( "\f" );	// formfeed
+				ptext.RemoveSet( "\n" );	// newline
+				ptext.RemoveSet( "\r" );	// carriage return
+				ptext.RemoveSet( "\t" );	// horizontal tab
+				ptext.RemoveSet( "\v" );	// vertical tab
+				ptext.RemoveSet( "\'" );	// apostroph sign
+				ptext.RemoveSet( "\"" );	// quote
+				cout << "ptext: " << ptext.String() << endl;
+				
+				/*
+				 * If there is some partial selection, or the cursor is at an offset
+				 * greater 0, then either remove the currently selected text, or insert
+				 * the text at the given offset.
+				 */
+				
+				int32 off1 = 0, off2 = 0;
+				GetSelection( &off1, &off2 );
+				
+				if( off1 != off2 )
+				{
+					Delete( off1, off2 );
+				}
+				
+				// remove the selection
+				Select( off1, off1 );
+				// and add the text
+				Insert( ptext.String(), ptext.Length() );
+			}
+		}
+		clipboard->Unlock();
 	}
-	ptext.SetTo(text, textlen);
-	ptext.RemoveSet( "\a" );	// bell. will likely never be in, but you can never be sure :)
-	ptext.RemoveSet( "\b" );	// backspace
-	ptext.RemoveSet( "\f" );	// formfeed
-	ptext.RemoveSet( "\n" );	// newline
-	ptext.RemoveSet( "\r" );	// carriage return
-	ptext.RemoveSet( "\t" );	// horizontal tab
-	ptext.RemoveSet( "\v" );	// vertical tab
-	ptext.RemoveSet( "\'" );	// apostroph sign
-	ptext.RemoveSet( "\"" );	// quote
-	cout << "ptext: " << ptext.String() << endl;
-	
-	/*
-	 * If there is some partial selection, or the cursor is at an offset
-	 * greater 0, then either remove the currently selected text, or insert
-	 * the text at the given offset.
-	 */
-	
-	int32 off1 = 0, off2 = 0;
-	GetSelection( &off1, &off2 );
-	
-	if( off1 != off2 )
-	{
-		Delete( off1, off2 );
-	}
-	
-	// remove the selection
-	Select( off1, off1 );
-	// and add the text
-	Insert( ptext.String(), ptext.Length() );	
 }
 
 
