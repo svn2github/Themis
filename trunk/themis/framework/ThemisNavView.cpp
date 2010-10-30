@@ -12,6 +12,7 @@
 // myheaders
 #include "ThemisNavView.h"
 #include "ThemisIcons.h"
+#include "ThemisUrlView.h"
 #include "win.h"
 #include "app.h"
 #include "../common/commondefs.h"

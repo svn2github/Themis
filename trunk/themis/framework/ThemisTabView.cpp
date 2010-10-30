@@ -18,6 +18,8 @@
 #include "ThemisNavView.h"	// ThemisPictureButton
 #include "app.h"
 #include "win.h"
+#include "SiteHandler.h"
+#include "ThemisUrlView.h"
 #include "../common/PrefsDefs.h"
 
 ThemisTabView::ThemisTabView(

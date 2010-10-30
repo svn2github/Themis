@@ -42,6 +42,8 @@ Project Start Date: October 18, 2000
 #include "ThemisIcons.h"
 #include "ThemisTab.h"
 #include "win.h"
+#include "SiteHandler.h"
+#include "ThemisUrlView.h"
 #include "../common/commondefs.h"
 #include "../common/PrefsDefs.h"
 

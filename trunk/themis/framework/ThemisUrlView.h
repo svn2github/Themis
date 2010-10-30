@@ -14,6 +14,7 @@
 
 // myheaders
 
+// Declarations used
 class ThemisUrlTextView;
 
 class ThemisUrlView : public BView
