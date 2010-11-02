@@ -116,7 +116,8 @@ COMMONSOURCES= \
 	common/cacheuser.cpp \
 	common/cacheobject.cpp \
 	common/stripwhite.cpp \
-	common/TTextView.cpp
+	common/TTextView.cpp \
+	common/BasePrefsView.cpp
 #add similar lines for new plugins, libraries, etc.
 HTTPADDONSOURCES= \
 	http/optionshandler.cpp \
@@ -210,7 +211,8 @@ HTMLPARSERSOURCES= \
 	HTMLParser/Position.cpp  \
 	HTMLParser/ReadException.cpp  \
 	HTMLParser/SGMLParser.cpp \
-	HTMLParser/SGMLScanner.cpp
+	HTMLParser/SGMLScanner.cpp \
+	HTMLParser/HTMLParserPrefsView.cpp
 CSSPARSERSOURCES= \
 	CSSParser/AtRuleParser.cpp \
 	CSSParser/BaseParser.cpp \
