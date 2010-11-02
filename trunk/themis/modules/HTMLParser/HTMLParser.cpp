@@ -14,6 +14,7 @@
 // Be headers
 #include <Message.h>
 #include <DataIO.h>
+#include <storage/Directory.h>
 
 // HTMLParser headers
 #include "HTMLParser.h"
@@ -28,6 +29,7 @@
 #include "SGMLText.hpp"
 #include "TSchema.hpp"
 #include "SGMLScanner.hpp"
+#include "HTMLParserPrefsView.hpp"
 
 HTMLParser * parser;
 BMessage ** appSettings_p;
@@ -85,6 +87,18 @@ HTMLParser :: HTMLParser(BMessage * aInfo)
 	
 	// We only support one mimetype at the momemt.
 	mMimeTypes.push_back("text/html");
+	
+	// Check the settings...
+	if(!appSettings->HasString(kPrefsDTDDirectory)) {
+		BString dir;
+		AppSettings->FindString(kPrefsSettingsDirectory, &dir);
+		dir.Append("/dtd");
+		AppSettings->AddString(kPrefsDTDDirectory, dir.String());
+		BEntry ent(dir.String(), true);
+		if (!ent.Exists()) {
+			create_directory(dir.String(), 0555);
+		}
+	}
 	
 }
 
@@ -267,7 +281,32 @@ void HTMLParser :: ParseDocument(string aURL,
 
 void HTMLParser :: MessageReceived(BMessage * aMessage) {
 
-	BHandler::MessageReceived(aMessage);
+	switch (aMessage->what) {
+		case DTD_CHANGED_PARSER: {
+			Debug("Request to change parser", PlugID());
+			BString dtdString;
+			aMessage->FindString("DTDFileString", &dtdString);
+			appSettings->ReplaceString(kPrefsActiveDTDPath, dtdString.String());
+			mActiveDTDPath = dtdString.String();
+			if (mActiveDTDPath != "") {
+				string dtdLoad = "Loading new DTD: ";
+				dtdLoad += mActiveDTDPath;
+				Debug(dtdLoad.c_str(), PlugID());
+				TSchemaPtr schema = TSchemaPtr(new TSchema());
+				schema->setup();
+				
+				SGMLScanner * scanner = new SGMLScanner();
+				mParser = new SGMLParser(scanner, schema);
+				mParser->loadSchema(mActiveDTDPath.c_str());
+				Debug("New DTD loaded", PlugID());
+			}
+			break;
+		}
+		default: {
+			BHandler::MessageReceived(aMessage);
+		}
+	}
+	
 
 }
 
@@ -339,23 +378,6 @@ status_t HTMLParser :: ReceiveBroadcast(BMessage * aMessage) {
 					}
 					break;
 				}
-				case DTD_CHANGED_PARSER: {
-					Debug("Request to change parser", PlugID());
-					mActiveDTDPath = GetDTDPathFromSettings();
-					if (mActiveDTDPath != "") {
-						string dtdLoad = "Loading new DTD: ";
-						dtdLoad += mActiveDTDPath;
-						Debug(dtdLoad.c_str(), PlugID());
-						TSchemaPtr schema = TSchemaPtr(new TSchema());
-						schema->setup();
-						
-						SGMLScanner * scanner = new SGMLScanner();
-						mParser = new SGMLParser(scanner, schema);
-						mParser->loadSchema(mActiveDTDPath.c_str());
-						Debug("New DTD loaded", PlugID());
-					}
-					break;
-				}
 				case SH_PARSE_DOC_START: {
 					// Not used as the message is sent directly to this parser without a mime-type.
 //					if (IsDocumentSupported(aMessage)) {
@@ -403,4 +425,20 @@ int32 HTMLParser :: Type() {
 
 	return TARGET_PARSER;
 
+}
+
+char * HTMLParser :: SettingsViewLabel() {
+	
+	return "HTML Parser";
+}
+
+BView * HTMLParser :: SettingsView(BRect aFrame) {
+	
+	HTMLParserPrefsView * view = new HTMLParserPrefsView(
+		aFrame,
+		"HTML Parser",
+		this);
+	
+	return view;
+	
 }
