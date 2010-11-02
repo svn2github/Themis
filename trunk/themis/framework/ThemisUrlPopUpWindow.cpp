@@ -8,6 +8,7 @@
 
 // myheaders
 #include "ThemisUrlPopUpWindow.h"
+#include "ThemisUrlView.h"
 #include "win.h"
 #include "../common/commondefs.h"
 
