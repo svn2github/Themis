@@ -104,8 +104,6 @@ void PrefsWin :: CreatePrefViews(BMessage * aPluginList) {
 		&typeFound,
 		&countFound);
 	if (status == B_OK) {
-	
-		const char * name;
 		PlugClass * plugin;
 		BView * view = NULL;
 		for (int32 i = 0; i < countFound; i++) {
@@ -428,7 +426,6 @@ void PrefsListView :: AttachedToWindow() {
 	fListView->SetFontSize( 12.0 );
 
 	/* add the list items */
-	int32 i = 0;
 	fListView->AddItem(
 		new PrefsListItem(
 			"Window", 
