@@ -713,22 +713,6 @@ App::GetNewID()
 	return fIDCounter;
 }
 
-//TRenderView*
-//App::GetRenderViewFor(
-//	int32 id )
-//{
-//	/*
-//	 * Cycle through every window, searching every tabview/tab for the given
-//	 * ID, and return a pointer to this view. Otherwise, return NULL.
-//	 */
-//	
-//	fLocker->Lock();
-//	
-//	
-//	fLocker->Unlock();
-//	return NULL;
-//}
-
 SiteHandler*
 App::GetSiteHandler()
 {
