@@ -266,15 +266,6 @@ void App::MessageReceived(BMessage *msg){
 			
 			break;
 		}
-		case DTD_CHANGED :
-		{
-			printf( "APP DTD_CHANGED\n" );
-			BMessage* chgmsg = new BMessage( DTD_CHANGED_PARSER );
-			chgmsg->AddInt32( "command", COMMAND_INFO );
-			Broadcast( MS_TARGET_PARSER, chgmsg );
-			delete chgmsg;
-			break;
-		}
 		case CSS_CHANGED :
 		{
 			printf( "APP CSS_CHANGED\n" );
@@ -310,7 +301,8 @@ void App::MessageReceived(BMessage *msg){
 					rect.OffsetTo(	200, 200 );
 				}
 				fPrefsWin = new PrefsWin(
-					rect );
+					rect,
+					PluginManager->GetPluginList());
 			}
 			else
 				fPrefsWin->Activate(true);
@@ -617,64 +609,6 @@ App::CheckSettings(
 		AppSettings->AddInt8( kPrefsTabHistoryDepth, 10 );
 	
 	/* Prefs Parser */
-	if( !AppSettings->HasString( kPrefsDTDDirectory ) )
-	{
-		BString dir;
-		AppSettings->FindString( kPrefsSettingsDirectory, &dir );
-		dir.Append( "/dtd" );
-		AppSettings->AddString( kPrefsDTDDirectory, dir.String() );
-	}
-	if(	!AppSettings->HasString( kPrefsActiveDTDPath ) ||
-			strcmp( AppSettings->FindString( kPrefsActiveDTDPath ), kNoDTDFoundString ) == 0 )
-	{
-		/* set our default */
-		if( !AppSettings->HasString( kPrefsActiveDTDPath ) )
-			AppSettings->AddString( kPrefsActiveDTDPath, kNoDTDFoundString );
-		
-		/* find a DTD */
-		BString dtddir;
-		AppSettings->FindString( kPrefsSettingsDirectory, &dtddir );
-		dtddir.Append( "/dtd/" );
-		printf( "DTD dir: %s\n", dtddir.String() );
-		
-		BDirectory dir( dtddir.String() );		
-		if( dir.InitCheck() != B_OK )
-		{
-			printf( "DTD directory (%s) not found!\n", dtddir.String() );
-			printf( "Setting kPrefsActiveDTDPath to \"none\"\n" );
-			AppSettings->AddString( kPrefsActiveDTDPath, kNoDTDFoundString );
-		}
-		else
-		{
-			BEntry entry;
-			while( dir.GetNextEntry( &entry, false ) != B_ENTRY_NOT_FOUND )
-			{
-				BPath path;
-				entry.GetPath( &path );
-				char name[B_FILE_NAME_LENGTH];
-				entry.GetName( name );
-						
-				BString nstring( name );
-				printf( "----------------\n" );
-				printf( "found file: %s\n", nstring.String() );
-				if( nstring.IFindFirst( "DTD", nstring.Length() - 3 ) != B_ERROR )
-				{
-					printf( "found DTD file: %s\n", nstring.String() );
-					if( AppSettings->HasString( kPrefsActiveDTDPath ) )
-					{
-						printf( "replacing kPrefsActiveDTDPath with: %s\n", path.Path() );
-						AppSettings->ReplaceString( kPrefsActiveDTDPath, path.Path() );
-					}
-					else
-					{
-						printf( "adding kPrefsActiveDTDPath: %s\n", path.Path() );
-						AppSettings->AddString( kPrefsActiveDTDPath, path.Path() );
-					}
-				}
-			}
-		}
-		/* end: find a DTD */
-	}
 	if(	!AppSettings->HasString( kPrefsActiveCSSPath ) ||
 			strcmp( AppSettings->FindString( kPrefsActiveCSSPath ), kNoCSSFoundString ) == 0 )
 	{
@@ -720,7 +654,7 @@ App::CheckSettings(
 				}
 			}
 		}
-		/* end: find a DTD */
+		/* end: find a CSS file */
 	}
 	
 	AppSettings->PrintToStream();
@@ -816,13 +750,6 @@ App::LoadSettings()
 	printf( "App::LoadSettings()\n" );
 	if( AppSettings != NULL )
 	{
-		/* check if dtd dir exists, if not, create it */
-		{
-			BEntry ent("/boot/home/config/settings/Themis/dtd/",true);
-			if (!ent.Exists())
-				create_directory("/boot/home/config/settings/Themis/dtd/",0555);
-		}
-		
 		status_t ret=B_OK;
 		BPath path;
 		if (find_directory(B_USER_SETTINGS_DIRECTORY,&path)==B_OK)

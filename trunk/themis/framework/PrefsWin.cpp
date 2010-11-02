@@ -34,8 +34,8 @@ static struct prefs_item_info kPrefsItems [] =
 };
 
 
-PrefsWin :: PrefsWin(BRect frame)
-		 : BWindow(frame,
+PrefsWin :: PrefsWin(BRect aFrame, BMessage * aPluginList)
+		 : BWindow(aFrame,
 				   "Preferences",
 				   B_TITLED_WINDOW_LOOK,
 				   B_NORMAL_WINDOW_FEEL,
@@ -58,7 +58,7 @@ PrefsWin :: PrefsWin(BRect frame)
 	rect.InsetBy(kItemSpacing, kItemSpacing);
 	rect.right = rect.left + 100;
 	
-	fPrefsListView = new PrefsListView(rect);
+	fPrefsListView = new PrefsListView(rect, aPluginList);
 	fBackgroundView->AddChild(fPrefsListView);
 	
 	/* calculate the view frame */
@@ -67,8 +67,8 @@ PrefsWin :: PrefsWin(BRect frame)
 	rect.left = fPrefsListView->Frame().right + kItemSpacing;
 	fViewFrame = rect;
 
-	CreatePrefViews();
-		
+	CreatePrefViews(aPluginList);
+
 	Show();
 }
 
@@ -82,11 +82,11 @@ PrefsWin :: ~PrefsWin() {
 	printf("Deleting preferences views\n");
 	for (unsigned int i = 0; i < mPrefViews.size(); i++) {
 		delete mPrefViews[i];
-	}	
+	}
 	
 }
 
-void PrefsWin :: CreatePrefViews() {
+void PrefsWin :: CreatePrefViews(BMessage * aPluginList) {
 
 	printf("Creating preferences views\n");
 	
@@ -94,22 +94,30 @@ void PrefsWin :: CreatePrefViews() {
 		new WindowPrefsView(fViewFrame,
 							kPrefsItems[0].name));
 	mPrefViews.push_back(
-		new NetworkPrefsView(fViewFrame,
-							 kPrefsItems[1].name));
-	mPrefViews.push_back(
 		new PrivacyPrefsView(fViewFrame,
 							 kPrefsItems[2].name));
-	mPrefViews.push_back(
-		new HTMLParserPrefsView(fViewFrame,
-								kPrefsItems[3].name));
-	mPrefViews.push_back(
-		new CSSParserPrefsView(fViewFrame,
-							   kPrefsItems[4].name));
-	mPrefViews.push_back(
-		new RendererPrefsView(fViewFrame,
-							  kPrefsItems[5].name));
+
+	int32 countFound;
+	type_code typeFound;
+	status_t status = aPluginList->GetInfo(
+		"plug_name",
+		&typeFound,
+		&countFound);
+	if (status == B_OK) {
 	
-	
+		const char * name;
+		PlugClass * plugin;
+		BView * view = NULL;
+		for (int32 i = 0; i < countFound; i++) {
+			aPluginList->FindPointer("plug_object", i, (void **)&plugin);
+			view = plugin->SettingsView(fViewFrame);
+			if (view != NULL) {
+				mPrefViews.push_back(view);
+				  
+			}
+		}
+	}
+
 }
 
 void PrefsWin :: MessageReceived(BMessage* msg) {
@@ -117,7 +125,6 @@ void PrefsWin :: MessageReceived(BMessage* msg) {
 	switch(msg->what) {
 		case LIST_SELECTION_CHANGED: {
 			int32 selection = fPrefsListView->CurrentSelection();
-			
 			/*
 			 * if the user presses in the empty area, we ignore this,
 			 * but the BListView does take away the focus from the curent
@@ -135,8 +142,10 @@ void PrefsWin :: MessageReceived(BMessage* msg) {
 						fCurrentPrefsView = NULL;
 					}
 					
-					fCurrentPrefsView = mPrefViews[selection];
-					fBackgroundView->AddChild(fCurrentPrefsView);
+					if ((unsigned int)selection < mPrefViews.size()) {
+						fCurrentPrefsView = mPrefViews[selection];
+						fBackgroundView->AddChild(fCurrentPrefsView);
+					}
 				}
 			}
 			
@@ -327,23 +336,6 @@ void PrefsWin :: MessageReceived(BMessage* msg) {
 			
 			break;
 		}
-		case DTD_SELECTED: {
-			printf("PREFS: DTD_SELECTED\n");
-			
-			BString str;
-			msg->FindString("DTDFileString", &str);
-			
-			AppSettings->ReplaceString(kPrefsActiveDTDPath, str.String());
-			
-			SaveAppSettings();
-			
-			/*
-			 * use the app to tell html parser about the DTD change.
-			 */
-			be_app_messenger.SendMessage(DTD_CHANGED);
-			
-			break;
-		}
 		case CSS_SELECTED: {
 			printf("PREFS: CSS_SELECTED\n");
 			
@@ -391,11 +383,14 @@ bool PrefsWin :: QuitRequested() {
  */
 
 
-PrefsListView :: PrefsListView(BRect frame)
-			  : BView(frame,
+PrefsListView :: PrefsListView(BRect aFrame, BMessage * aPluginList)
+			  : BView(aFrame,
 					  "PrefsListView",
 					  0,
 					  0) {
+
+	mPluginList = aPluginList;
+
 }
 
 PrefsListView :: ~PrefsListView() {
@@ -405,6 +400,9 @@ PrefsListView :: ~PrefsListView() {
 		delete fListView->RemoveItem((int32) 0);
 	}
 	fListView->MakeEmpty();
+
+	delete mPluginList;
+	
 }
 
 void PrefsListView :: AttachedToWindow() {
@@ -428,18 +426,50 @@ void PrefsListView :: AttachedToWindow() {
 	
 	/* I want a font size of 12.0 */
 	fListView->SetFontSize( 12.0 );
-	
+
 	/* add the list items */
 	int32 i = 0;
-	while(kPrefsItems[i].name != NULL) {
-		fListView->AddItem(
-			new PrefsListItem(
-				kPrefsItems[i].name,
-				kPrefsItems[i].bitmap));
-		
-		i++;
-	}	
+	fListView->AddItem(
+		new PrefsListItem(
+			"Window", 
+			kPrefsIconGeneral));
+	fListView->AddItem(
+		new PrefsListItem(
+			"Privacy", 
+			kPrefsIconPrivacy));
 
+	int32 countFound;
+	type_code typeFound;
+	status_t status = mPluginList->GetInfo(
+		"plug_name",
+		&typeFound,
+		&countFound);
+	if (status == B_OK) {
+		int32 type;
+		const char * name;
+		PlugClass * plugin;
+		for (int32 i = 0; i < countFound; i++) {
+			mPluginList->FindPointer("plug_object", i, (void **)&plugin);
+			type = plugin->Type();
+			name = plugin->SettingsViewLabel();
+			if (name != NULL) {
+				if (type != TARGET_PARSER) {
+					fListView->AddItem(
+						new PrefsListItem(
+							name,
+							kPrefsIconParser));
+					
+				}
+				else {
+					fListView->AddItem(
+						new PrefsListItem(
+							name,
+							kPrefsIconGeneral));
+				}
+			}
+		}
+	}
+	
 	fListView->SetSelectionMessage(new BMessage(LIST_SELECTION_CHANGED));
 	fListView->MakeFocus(true);
 	

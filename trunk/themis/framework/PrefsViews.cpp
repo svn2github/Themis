@@ -26,29 +26,6 @@
 
 
 /*
- * BasePrefsView
- */
-
-
-BasePrefsView :: BasePrefsView(BRect frame,
-							   const char* name)
-			  : BView(frame,
-					  name,
-					  B_FOLLOW_ALL,
-					  0) {
-
-	fMainBox = new BBox(
-		Bounds(),
-		"MainBox",
-		B_FOLLOW_ALL);
-	fMainBox->SetLabel(Name());
-	AddChild(fMainBox);
-
-	SetViewColor(ui_color(B_PANEL_BACKGROUND_COLOR));
-
-}
-
-/*
  * WindowPrefsView
  */
 
@@ -75,7 +52,7 @@ WindowPrefsView :: WindowPrefsView(BRect frame,
 	homepage->SetModificationMessage(new BMessage(HOMEPAGE_CHANGED));
 	homepage->SetDivider(be_plain_font->StringWidth("Home Page:") + kDividerSpacing);
 	homepage->SetText(str.String());
-	fMainBox->AddChild(homepage);
+	mMainBox->AddChild(homepage);
 	
 	/* blank button */
 	rect.top = homepage->Frame().bottom + kItemSpacing;
@@ -92,7 +69,7 @@ WindowPrefsView :: WindowPrefsView(BRect frame,
 	blankbtn->MoveTo(
 		homepage->Frame().right - blankbtn->Bounds().Width(),
 		blankbtn->Frame().top );
-	fMainBox->AddChild(blankbtn);
+	mMainBox->AddChild(blankbtn);
 
 	/* intelligent zoom */
 	rect.left = Bounds().left + kItemSpacing;
@@ -109,7 +86,7 @@ WindowPrefsView :: WindowPrefsView(BRect frame,
 		IZcbox->SetValue(0);
 	else
 		IZcbox->SetValue(1);
-	fMainBox->AddChild(IZcbox);
+	mMainBox->AddChild(IZcbox);
 	
 	/* type ahead */
 	rect.top = IZcbox->Frame().bottom + kItemSpacing;
@@ -122,7 +99,7 @@ WindowPrefsView :: WindowPrefsView(BRect frame,
 	bool ShowTypeAhead = false;
 	AppSettings->FindBool(kPrefsShowTypeAheadWindow, &ShowTypeAhead);
 	ShowTypeAhead ? ShowTypeAheadbox->SetValue(1) : ShowTypeAheadbox->SetValue(0);
-	fMainBox->AddChild(ShowTypeAheadbox);
+	mMainBox->AddChild(ShowTypeAheadbox);
 	
 	/* show tabs */
 	rect.top = ShowTypeAheadbox->Frame().bottom + kItemSpacing;
@@ -135,7 +112,7 @@ WindowPrefsView :: WindowPrefsView(BRect frame,
 	bool ShowTabs = false;
 	AppSettings->FindBool(kPrefsShowTabsAtStartup, &ShowTabs);
 	ShowTabs ? ShowTabscbox->SetValue(1) : ShowTabscbox->SetValue(0);
-	fMainBox->AddChild(ShowTabscbox);
+	mMainBox->AddChild(ShowTabscbox);
 					
 	/* open tabs in background */
 	rect.top = ShowTabscbox->Frame().bottom + kItemSpacing;
@@ -148,7 +125,7 @@ WindowPrefsView :: WindowPrefsView(BRect frame,
 	bool OpenInBackground = false;
 	AppSettings->FindBool(kPrefsOpenTabsInBackground, &OpenInBackground);
 	OpenInBackground ? OpenTabsInBackgroundcbox->SetValue(1) : OpenTabsInBackgroundcbox->SetValue(0);
-	fMainBox->AddChild( OpenTabsInBackgroundcbox );
+	mMainBox->AddChild( OpenTabsInBackgroundcbox );
 	
 	/* open blank targets in tab (instead of new window) */
 	rect.top = OpenTabsInBackgroundcbox->Frame().bottom + kItemSpacing;
@@ -161,7 +138,7 @@ WindowPrefsView :: WindowPrefsView(BRect frame,
 	bool OpenBlankInTab = false;
 	AppSettings->FindBool(kPrefsOpenBlankTargetInTab, &OpenBlankInTab);
 	OpenBlankInTab ? OpenBlankTargetInTab_CBox->SetValue(1) : OpenBlankTargetInTab_CBox->SetValue(0);
-	fMainBox->AddChild(OpenBlankTargetInTab_CBox);
+	mMainBox->AddChild(OpenBlankTargetInTab_CBox);
 	
 	/* new windows open with ... */
 	rect = Bounds();
@@ -170,7 +147,7 @@ WindowPrefsView :: WindowPrefsView(BRect frame,
 	rect.bottom = rect.top + 100;
 	BBox * newInPageBox = new BBox(rect, "NEWWINPAGEBOX");
 	newInPageBox->SetLabel("New Windows open with ...");
-	fMainBox->AddChild(newInPageBox);
+	mMainBox->AddChild(newInPageBox);
 	
 	/* blank page */
 	rect = newInPageBox->Bounds();
@@ -241,7 +218,7 @@ PrivacyPrefsView :: PrivacyPrefsView(BRect frame,
 				 : BasePrefsView(frame,
 								 name) {
 
-	BRect rect = fMainBox->Bounds();
+	BRect rect = mMainBox->Bounds();
 	
 	rect.InsetBy(kItemSpacing, kItemSpacing);
 	rect.top += kBBoxExtraInset;
@@ -251,7 +228,7 @@ PrivacyPrefsView :: PrivacyPrefsView(BRect frame,
 		rect,
 		"historyBox");
 	historyBox->SetLabel("History");
-	fMainBox->AddChild(historyBox);
+	mMainBox->AddChild(historyBox);
 	
 	/* history depth */
 	rect = historyBox->Bounds();
@@ -359,7 +336,7 @@ PrivacyPrefsView :: PrivacyPrefsView(BRect frame,
 	rect.bottom = rect.top + 100;
 	BBox* CacheBox = new BBox(rect, "CACHEBOX");
 	CacheBox->SetLabel("Cache");
-	fMainBox->AddChild(CacheBox);
+	mMainBox->AddChild(CacheBox);
 
 	/* cookie box */
 	rect = CacheBox->Frame();
@@ -367,115 +344,10 @@ PrivacyPrefsView :: PrivacyPrefsView(BRect frame,
 	rect.bottom = rect.top + 100;
 	BBox* CookieBox = new BBox(rect, "COOKIEBOX");
 	CookieBox->SetLabel("Cookies");
-	fMainBox->AddChild(CookieBox);
+	mMainBox->AddChild(CookieBox);
 
 }
 
-
-/*
- * HTMLParserPrefsView
- */
-
-
-HTMLParserPrefsView :: HTMLParserPrefsView(BRect frame,
-										   const char* name)
-					: BasePrefsView(frame,
-									name) {
-
-	/* DTD selection */
-	mPopUpMenu = new BPopUpMenu(
-		"No DTD selected or available!",
-		true,
-		true,
-		B_ITEMS_IN_COLUMN);
-					
-	/* find a DTD */
-	AppSettings->FindString(kPrefsSettingsDirectory, &mDTDDir);
-	mDTDDir.Append("/dtd/");
-	printf("DTD dir: %s\n", mDTDDir.String());
-			
-	BDirectory dir(mDTDDir.String());
-	if(dir.InitCheck() != B_OK) {
-		printf("DTD directory (%s) not found!\n", mDTDDir.String());
-		printf("Setting DTDToUsePath to \"none\"\n");
-		AppSettings->AddString(kPrefsActiveDTDPath, kNoDTDFoundString);
-	}
-	else {
-		BString activeDTD;
-		AppSettings->FindString(kPrefsActiveDTDPath, &activeDTD);
-		
-		BEntry entry;
-		while(dir.GetNextEntry(&entry, false) != B_ENTRY_NOT_FOUND) {
-			BPath path;
-			entry.GetPath(&path);
-			char name[B_FILE_NAME_LENGTH];
-			entry.GetName(name);
-				
-			BString nstring(name);
-			printf("----------------\n");
-			printf("found file: %s\n", nstring.String());
-			if(nstring.IFindFirst("DTD", nstring.Length() - 3) != B_ERROR) {
-				printf("found DTD file: %s\n", nstring.String());
-								
-				/* add the file to the popupmenu */
-				BMessage* msg = new BMessage(DTD_SELECTED);
-				msg->AddString("DTDFileString", path.Path());
-				BMenuItem* item = new BMenuItem(name, msg, 0, 0);
-				mPopUpMenu->AddItem(item);
-								
-				// if the path of the current file equals the one of the settings,
-				// mark the item
-				if(strcmp(activeDTD.String(), path.Path()) == 0) {
-					printf("DTD from settings found -> SetMarked( true )\n");
-					(mPopUpMenu->ItemAt(mPopUpMenu->CountItems() - 1))->SetMarked(true);
-				}
-			}
-		} // while
-						
-	}
-	// end: find a DTD
-	BRect rect = fMainBox->Bounds();
-	rect.InsetBy(kItemSpacing, kItemSpacing);
-	rect.top += kBBoxExtraInset;
-					
-	BMenuField* dtdmenufield = new BMenuField(
-		rect,
-		"DTDFIELD", "Document Type Definition:",
-		mPopUpMenu,
-		true,
-		B_FOLLOW_TOP,
-		B_WILL_DRAW);
-	dtdmenufield->SetDivider(be_plain_font->StringWidth("Document Type Definition:") + kItemSpacing);
-	fMainBox->AddChild(dtdmenufield);
-
-}
-
-void HTMLParserPrefsView :: AttachedToWindow() {
-
-	// if we found some DTDs, but still no DTD is saved in the prefs,
-	// or no DTD is selected: 
-	// set the last found DTD in the prefs. we save it to the prefs,
-	// because the user might not reselect a DTD in the list, which
-	// would save the DTD.
-	BMessage imsg(DTD_SELECTED);
-	BMessenger msgr(NULL, Window()->Looper());
-	if(mPopUpMenu->CountItems() > 0) {
-		if(mPopUpMenu->FindMarked() == NULL) {
-			printf("no marked item found\n");
-			BMenuItem* item = mPopUpMenu->ItemAt(mPopUpMenu->CountItems() - 1);
-			item->SetMarked(true);
-			// as we cannot invoke the item here, send the DTD_SELECTED message here
-			BString dtdstring(mDTDDir.String());
-			dtdstring.Append(item->Label());
-			imsg.AddString("DTDFileString", dtdstring.String());
-			msgr.SendMessage(&imsg);
-		}
-	}
-	else {
-		imsg.AddString("DTDFileString", kNoDTDFoundString);
-		msgr.SendMessage(&imsg);
-	}
-}
 
 /*
  * CSSParserPrefsView
@@ -537,7 +409,7 @@ CSSParserPrefsView :: CSSParserPrefsView(BRect frame,
 	}
 	// end: find a CSS file
 		
-	BRect rect = fMainBox->Bounds();
+	BRect rect = mMainBox->Bounds();
 	rect.InsetBy(kItemSpacing, kItemSpacing);
 	rect.top += kBBoxExtraInset;
 					
@@ -549,7 +421,7 @@ CSSParserPrefsView :: CSSParserPrefsView(BRect frame,
 		B_FOLLOW_TOP,
 		B_WILL_DRAW);
 	cssmenufield->SetDivider(be_plain_font->StringWidth("Cascading Style Sheet:") + kItemSpacing);
-	fMainBox->AddChild(cssmenufield);
+	mMainBox->AddChild(cssmenufield);
 }
 
 void CSSParserPrefsView :: AttachedToWindow() {

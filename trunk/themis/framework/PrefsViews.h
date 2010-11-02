@@ -11,8 +11,10 @@
 #include <View.h>
 #include <String.h>
 
+// Themis headers
+#include "BasePrefsView.hpp"
+
 // Declarations used
-class BBox;
 class BPopUpMenu;
 
 /*
@@ -20,18 +22,6 @@ class BPopUpMenu;
  */
 
 class WindowPrefsView;
-
-
-class BasePrefsView : public BView {
-
-	protected:
-		BBox * fMainBox;		
-
-	public:
-		BasePrefsView(BRect frame,
-					  const char* name);
-		
-};
 
 
 /*
@@ -72,25 +62,6 @@ class PrivacyPrefsView : public BasePrefsView {
 	public:
 		PrivacyPrefsView(BRect frame,
 						 const char* name);
-
-};
-
-
-/*
- * HTML ParserPrefsView
- */
-
-
-class HTMLParserPrefsView : public BasePrefsView {
-
-	private:
-		BPopUpMenu * mPopUpMenu;
-		BString mDTDDir;
-
-	public:
-		HTMLParserPrefsView(BRect frame,
-							const char* name);
-		virtual void AttachedToWindow();
 
 };
 

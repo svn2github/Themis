@@ -29,11 +29,11 @@ class PrefsWin : public BWindow  {
 		BRect fViewFrame;
 		vector<BView *> mPrefViews;
 		
-		void CreatePrefViews();
+		void CreatePrefViews(BMessage * aPluginList);
 		void SaveAppSettings();
 
 	public:
-		PrefsWin(BRect frame);
+		PrefsWin(BRect aFrame, BMessage * aPluginList);
 		virtual ~PrefsWin();
 		virtual void MessageReceived(BMessage* msg);
 		virtual bool QuitRequested();	
@@ -58,9 +58,10 @@ class PrefsListView : public BView {
 	private:
 		BListView * fListView;
 		BBox * fBox;
+		BMessage * mPluginList;
 
 	public:
-		PrefsListView(BRect frame);
+		PrefsListView(BRect aFrame, BMessage * aPluginList);
 		virtual ~PrefsListView();
 		virtual void AttachedToWindow();
 		int32 CurrentSelection();
