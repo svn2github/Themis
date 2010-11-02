@@ -39,20 +39,6 @@ class WindowPrefsView : public BasePrefsView {
 
 
 /*
- * NetworkPrefsView
- */
-
-
-class NetworkPrefsView : public BasePrefsView {
-
-	public:
-		NetworkPrefsView(BRect frame,
-						 const char* name);
-
-};
-
-
-/*
  * PrivacyPrefsView
  */
 
@@ -82,19 +68,6 @@ class CSSParserPrefsView : public BasePrefsView {
 						   const char* name);
 		virtual void AttachedToWindow();
 
-};
-
-/*
- * RendererPrefsView
- */
-
-
-class RendererPrefsView : public BasePrefsView {
-
-	public:
-		RendererPrefsView(BRect frame,
-						  const char* name);
-									
 };
 
 #endif

@@ -197,18 +197,6 @@ WindowPrefsView :: WindowPrefsView(BRect frame,
 }
 
 /*
- * NetworkPrefsView
- */
-
-
-NetworkPrefsView :: NetworkPrefsView(BRect frame,
-									 const char* name)
-				 : BasePrefsView(frame,
-								 name) {
-}
-
-
-/*
  * PrivacyPrefsView
  */
 
@@ -450,15 +438,3 @@ void CSSParserPrefsView :: AttachedToWindow() {
 			msgr.SendMessage(&imsg);
 		}
 }
-
-/*
- * RendererPrefsView
- */
-
-
-RendererPrefsView :: RendererPrefsView(BRect frame,
-									   const char* name)
-				  : BasePrefsView(frame,
-								  name) {
-}
-
