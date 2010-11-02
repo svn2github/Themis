@@ -380,7 +380,7 @@ class PlugClass: public MessageSystem {
 				be used to generate a simple about view.
 			*/
 		virtual char *SettingsViewLabel();//name as it should appear in the settings list
-		virtual BView *SettingsView();
+		virtual BView *SettingsView(BRect frame);
 			/*
 				The top level view to add to the settings window. Be sure to SetTarget()
 				any controls to this view in either the constructor, AllAttached(), or

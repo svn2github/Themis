@@ -220,6 +220,6 @@ char *PlugClass::SettingsViewLabel() {
 	return NULL;
 }
 
-BView *PlugClass::SettingsView() {
+BView *PlugClass::SettingsView(BRect frame) {
 	return NULL;
 }
