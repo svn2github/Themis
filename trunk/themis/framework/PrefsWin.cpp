@@ -334,23 +334,6 @@ void PrefsWin :: MessageReceived(BMessage* msg) {
 			
 			break;
 		}
-		case CSS_SELECTED: {
-			printf("PREFS: CSS_SELECTED\n");
-			
-			BString str;
-			msg->FindString("CSSFileString", &str);
-			
-			AppSettings->ReplaceString(kPrefsActiveCSSPath, str.String());
-			
-			SaveAppSettings();
-			
-			/*
-			 * use the app to tell css parser about the CSS change.
-			 */
-			be_app_messenger.SendMessage(CSS_CHANGED);
-			
-			break;
-		}
 		default :
 			BWindow::MessageReceived(msg);
 	}

@@ -223,7 +223,8 @@ CSSPARSERSOURCES= \
 	CSSParser/MediaAtRuleParser.cpp \
 	CSSParser/Position.cpp \
 	CSSParser/ReadException.cpp \
-	CSSParser/RuleSetParser.cpp
+	CSSParser/RuleSetParser.cpp \
+	CSSParser/CSSParserPrefsView.cpp
 	
 DOMVIEWSOURCES= \
 	DOMView/DOMView.cpp \

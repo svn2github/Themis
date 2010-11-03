@@ -266,15 +266,6 @@ void App::MessageReceived(BMessage *msg){
 			
 			break;
 		}
-		case CSS_CHANGED :
-		{
-			printf( "APP CSS_CHANGED\n" );
-			BMessage* chgmsg = new BMessage( CSS_CHANGED_PARSER );
-			chgmsg->AddInt32( "command", COMMAND_INFO );
-			Broadcast( MS_TARGET_PARSER, chgmsg );
-			delete chgmsg;
-			break;
-		}
 		case PREFSWIN_CLOSE :
 		{
 			printf( "APP PREFSWIN_CLOSE\n" );
@@ -607,55 +598,6 @@ App::CheckSettings(
 		AppSettings->AddInt8( kPrefsGlobalHistoryFreeURLCount, 50 );
 	if( !AppSettings->HasInt8( kPrefsTabHistoryDepth ) )
 		AppSettings->AddInt8( kPrefsTabHistoryDepth, 10 );
-	
-	/* Prefs Parser */
-	if(	!AppSettings->HasString( kPrefsActiveCSSPath ) ||
-			strcmp( AppSettings->FindString( kPrefsActiveCSSPath ), kNoCSSFoundString ) == 0 )
-	{
-		/* set our default */
-		if( !AppSettings->HasString( kPrefsActiveCSSPath ) )
-			AppSettings->AddString( kPrefsActiveCSSPath, kNoCSSFoundString );
-		
-		/* find a CSS file */
-		BString cssdir;
-		AppSettings->FindString( kPrefsSettingsDirectory, &cssdir );
-		cssdir.Append( "/css/" );
-		printf( "CSS dir: %s\n", cssdir.String() );
-		
-		BDirectory dir( cssdir.String() );		
-		if( dir.InitCheck() != B_OK )
-		{
-			printf( "CSS directory (%s) not found!\n", cssdir.String() );
-			printf( "Setting kPrefsActiveCSSPath to \"none\"\n" );
-			AppSettings->AddString( kPrefsActiveCSSPath, kNoCSSFoundString );
-		}
-		else
-		{
-			BEntry entry;
-			while( dir.GetNextEntry( &entry, false ) != B_ENTRY_NOT_FOUND )
-			{
-				BPath path;
-				entry.GetPath( &path );
-				char name[B_FILE_NAME_LENGTH];
-				entry.GetName( name );
-						
-				BString nstring( name );
-				printf( "----------------\n" );
-				printf( "found CSS file: %s\n", nstring.String() );
-				if( AppSettings->HasString( kPrefsActiveCSSPath ) )
-				{
-					printf( "replacing kPrefsActiveCSSPath with: %s\n", path.Path() );
-					AppSettings->ReplaceString( kPrefsActiveCSSPath, path.Path() );
-				}
-				else
-				{
-					printf( "adding kPrefsActiveCSSPath: %s\n", path.Path() );
-					AppSettings->AddString( kPrefsActiveCSSPath, path.Path() );
-				}
-			}
-		}
-		/* end: find a CSS file */
-	}
 	
 	AppSettings->PrintToStream();
 }

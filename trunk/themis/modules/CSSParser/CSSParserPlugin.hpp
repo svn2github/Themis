@@ -112,6 +112,8 @@ class CSSParserPlugin : public BHandler, public PlugClass {
 		status_t BroadcastReply(BMessage * aMessage);
 		uint32 BroadcastTarget();
 		int32 Type();
+		char * SettingsViewLabel();
+		BView * SettingsView(BRect aFrame);
 
 };
 

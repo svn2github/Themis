@@ -52,24 +52,6 @@ class PrivacyPrefsView : public BasePrefsView {
 };
 
 
-/*
- * CSS ParserPrefsView
- */
-
-
-class CSSParserPrefsView : public BasePrefsView {
-
-	private:
-		BPopUpMenu * mPopUpMenu;
-		BString mCSSDir;
-
-	public:
-		CSSParserPrefsView(BRect frame,
-						   const char* name);
-		virtual void AttachedToWindow();
-
-};
-
 #endif
 
 

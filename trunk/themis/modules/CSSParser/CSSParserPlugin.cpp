@@ -42,15 +42,19 @@
 #include <algorithm>
 #include <ctype.h>
 
-// Be headers
+// BeOS headers
 #include <Message.h>
 #include <DataIO.h>
+#include <storage/Directory.h>
 
-// CSSParser headers
-#include "CSSParserPlugin.hpp"
+// Themis headers
 #include "commondefs.h"
 #include "plugman.h"
 #include "PrefsDefs.h"
+
+// CSSParser headers
+#include "CSSParserPlugin.hpp"
+#include "CSSParserPrefsView.hpp"
 
 CSSParserPlugin * parser;
 BMessage ** appSettings_p;
@@ -104,6 +108,18 @@ CSSParserPlugin :: CSSParserPlugin(BMessage * aInfo)
 	
 	// We only support one mimetype at the momemt.
 	mMimeTypes.push_back("text/css");
+
+	// Check the settings...
+	if(!appSettings->HasString(kPrefsCSSDirectory)) {
+		BString dir;
+		AppSettings->FindString(kPrefsSettingsDirectory, &dir);
+		dir.Append("/css");
+		AppSettings->AddString(kPrefsCSSDirectory, dir.String());
+		BEntry ent(dir.String(), true);
+		if (!ent.Exists()) {
+			create_directory(dir.String(), 0555);
+		}
+	}
 	
 }
 
@@ -269,7 +285,27 @@ void CSSParserPlugin :: ParseDocument(string aURL,
 
 void CSSParserPlugin :: MessageReceived(BMessage * aMessage) {
 
-	BHandler::MessageReceived(aMessage);
+	switch (aMessage->what) {
+		case CSS_CHANGED_PARSER: {
+			Debug("Request to change base css file", PlugID());
+			if (appSettings != NULL) {
+				const char * path;
+				appSettings->FindString(kPrefsActiveCSSPath, &path);
+				string cssLoad = "Loading new CSS file: ";
+				cssLoad += path;
+				printf("%s\n", cssLoad.c_str());
+				Debug(cssLoad.c_str(), PlugID());
+				CSSStyleSheetPtr document = mParser->parse(path);
+				mDocuments.push_back(document);
+				NotifyParseFinished(mDocuments.end() - 1, "cssdom", aMessage);
+			}
+			break;
+		}
+		default: {
+			BHandler::MessageReceived(aMessage);
+			break;
+		}
+	}
 
 }
 
@@ -305,7 +341,7 @@ char * CSSParserPlugin :: PlugName() {
 
 float CSSParserPlugin :: PlugVersion() {
 
-	return 0.2;
+	return 0.3;
 
 }
 
@@ -338,21 +374,6 @@ status_t CSSParserPlugin :: ReceiveBroadcast(BMessage * aMessage) {
 				case PlugInUnLoaded: {
 					if (MessageSentByCache(aMessage)) {
 						UnregisterCache(aMessage);
-					}
-					break;
-				}
-				case CSS_CHANGED_PARSER: {
-					Debug("Request to change base css file", PlugID());
-					if (appSettings != NULL) {
-						const char * path;
-						appSettings->FindString(kPrefsActiveCSSPath, &path);
-						string cssLoad = "Loading new CSS file: ";
-						cssLoad += path;
-						printf("%s\n", cssLoad.c_str());
-						Debug(cssLoad.c_str(), PlugID());
-						CSSStyleSheetPtr document = mParser->parse(path);
-						mDocuments.push_back(document);
-						NotifyParseFinished(mDocuments.end() - 1, "cssdom", aMessage);
 					}
 					break;
 				}
@@ -406,4 +427,20 @@ int32 CSSParserPlugin :: Type() {
 
 	return TARGET_PARSER;
 
+}
+
+char * CSSParserPlugin :: SettingsViewLabel() {
+	
+	return "CSS Parser";
+}
+
+BView * CSSParserPlugin :: SettingsView(BRect aFrame) {
+	
+	CSSParserPrefsView * view = new CSSParserPrefsView(
+		aFrame,
+		"CSS Parser",
+		this);
+	
+	return view;
+	
 }
