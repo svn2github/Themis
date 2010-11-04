@@ -249,46 +249,30 @@ bool ElementParser :: parseDeclaration(TElementDeclarationPtr aDeclaration,
 					currentNode = mElmToken.getNode();
 					aParentNode->appendChild(currentNode);
 					mElmToken = nextElmToken();
-					printf("Tag %s is correct here.\n", name.c_str());
 				}
 				else {
 					currentNode = mDocument->createElement(aDeclaration->getElementName());
 					aParentNode->appendChild(currentNode);
-					printf("Skipping optional start tag.\n");
 				}
 				// Get the content rule.
 				TSchemaRulePtr rule = aDeclaration->getContent();
 				name = mElmToken.getName();
 				if (rule->hasToken(name)) {
-					printf("Rule %s has token %s\n", rule->getTagName().c_str(), name.c_str());
 					found = parse(rule, currentNode);
-					if (found) {
-						printf("Content found correctly\n");
-					}
-					else {
-						printf("Content was not correct\n");
-					}
 				}
 				else if (rule->hasEmpty()) {
-					printf("Skipping content in parseDeclaration for rule %s and token %s\n", rule->getTagName().c_str(), name.c_str());
-				}
-				else {
-					printf("Failed to find %s in rule %s\n", name.c_str(), rule->getTagName().c_str());
+					// Doing nothing
 				}
 				// I don't think this should be here, but we will see what happens
 				if (mElmToken.getType() == END_TAG && (elementName == mElmToken.getName())) {
-					printf("Found correct end tag: %s\n", elementName.c_str());
 					mElmToken = nextElmToken();
 					found = true;
 				}
 				else {
 					if (!end) {
-						printf("End tag not required\n");
 						found = true;
 					}
 					else {
-						printf("Found unknown token in end tag declaration part\n");
-						printf("Expected %s, found %s\n", elementName.c_str(), mElmToken.getName().c_str());
 						found = false;
 					}
 				}
@@ -296,7 +280,7 @@ bool ElementParser :: parseDeclaration(TElementDeclarationPtr aDeclaration,
 			break;
 		}
 		default: {
-			printf("Skipping element token in parseDeclaration\n");
+			break;
 		}
 	}
 	
@@ -320,7 +304,6 @@ bool ElementParser :: parseSequence(TSchemaRulePtr aRule,
 		TSchemaRulePtr rule = shared_static_cast<TSchemaRule>(child);
 		if (rule->hasToken(name)) {
 			// Parse token with this rule.
-			printf("Parsing token with rule %u in sequence part\n", i);
 			tokenFound = parse(rule, aParentNode);
 			name = mElmToken.getName();
 			if (tokenFound)
@@ -328,7 +311,6 @@ bool ElementParser :: parseSequence(TSchemaRulePtr aRule,
 		}
 		else if (rule->hasEmpty()) {
 			// We can skip it. It is optional.
-			printf("Skipping optional sequence rule\n");
 			j++;
 		}
 		else
@@ -369,7 +351,6 @@ bool ElementParser :: parseAll(TSchemaRulePtr aRule,
 				TSchemaRulePtr rule = shared_static_cast<TSchemaRule>(child);
 				if (rule->hasToken(name)) {
 					// Parse token with this rule.
-					printf("Parsing token with rule %u in all part\n", i);
 					tokenFound = parse(rule, aParentNode);
 					name = mElmToken.getName();
 					if (tokenFound) {
@@ -411,11 +392,9 @@ bool ElementParser :: parseChoice(TSchemaRulePtr aRule,
 				found = parse(rule, aParentNode);
 				if (found) {
 					tokenName = mElmToken.getName();
-					printf("Found correct |. Got next token name: %s\n", tokenName.c_str());
 				}
 				else {
 					tokenName = mElmToken.getName();
-					printf("Sub |-rule not correct. Find the next one\n");
 				}
 			}
 			i++;
@@ -453,21 +432,13 @@ bool ElementParser :: parseContent(TSchemaRulePtr aRule,
 				}
 			}
 			if (length > 0) {
-				printf("Looking in normal content\n");
 				TNodePtr child = aRule->getFirstChild();
 				TSchemaRulePtr rule = shared_static_cast<TSchemaRule>(child);
 				found = parse(rule, aParentNode);
-				if (found) {
-					printf("Content found correctly in parseContent\n");
-				}
-				else {
-					printf("Content was not correct in parseContent\n");
-				}
 			}
 			// Hmm, there could still be exceptions.
 			// Loop until we can't find any anymore.
 			if (length > 1) {
-				printf("Looking for any extra exceptions\n");
 				TNodePtr child = children->item(1);
 				TSchemaRulePtr rule = shared_static_cast<TSchemaRule>(child);
 				if (rule->getAttribute("type") == "+") {
@@ -487,12 +458,6 @@ bool ElementParser :: parseContent(TSchemaRulePtr aRule,
 				}
 			}
 		}
-		else {
-			printf("Empty content unsupported right now\n");
-		}
-	}
-	else {
-		printf("Unsupported content in parseContent\n");
 	}
 	
 	return found;
@@ -560,7 +525,6 @@ bool ElementParser :: parse(TSchemaRulePtr aRule, TNodePtr aParentNode) {
 				// We need to see if the rule contains the token we found.
 				TDOMString name = mElmToken.getName();
 				if (aRule->hasToken(name)) {
-					printf("Rule %s contains %s\n", ruleName.c_str(), name.c_str());
 					if (ruleName == "declaration") {
 						TElementDeclarationPtr declaration = shared_static_cast<TElementDeclaration>(aRule);
 						tokenFound = parseDeclaration(declaration, aParentNode);
@@ -589,53 +553,42 @@ bool ElementParser :: parse(TSchemaRulePtr aRule, TNodePtr aParentNode) {
 					}
 				}
 				else if (aRule->hasEmpty()) {
-					printf("Rule contains empty while looking for start tag %s\n", name.c_str());
 					tokenFound = false;
 				}
 				else {
-					printf("Rule not found for start tag %s\n", name.c_str());
 					tokenFound = false;
 				}
 				break;
 			}
 			case TEXT: {
-				printf("Found text\n");
 				TDOMString name = mElmToken.getName();
 				if (aRule->hasToken(name)) {
-					printf("Rule %s contains %s\n", ruleName.c_str(), name.c_str());
 					if (ruleName == "declaration") {
-						printf("Parsing text in declaration ?\n");
 						TElementDeclarationPtr declaration = shared_static_cast<TElementDeclaration>(aRule);
 						tokenFound = parseDeclaration(declaration, aParentNode);
 					}
 					else if (ruleName == "content") {
-						printf("Parsing text in content\n");
 						tokenFound = parseContent(aRule, aParentNode);
 					}
 					else if (ruleName == name) {
-						printf("Text is correct here.\n");
 						// Get the next element token and return true.
 						aParentNode->appendChild(mElmToken.getNode());
 						mElmToken = nextElmToken();
 						tokenFound = true;
 					}
 					else if (ruleName == "|") {
-						printf("Parsing text in choice\n");
 						tokenFound = parseChoice(aRule, aParentNode);
 					}
 					else {
-						printf("Skipping element token for text\n");
 						tokenFound = false;
 					}
 				}
 				else {
-					printf("Hmmm\n");
 					tokenFound = false;
 				}
 				break;
 			}
 			default: {
-				printf("Not doing anything with this token here\n");
 				tokenFound = false;
 			}
 		}
@@ -643,8 +596,6 @@ bool ElementParser :: parse(TSchemaRulePtr aRule, TNodePtr aParentNode) {
 			i++;
 		}
 	}
-
-	printf("Ending parse rule %s\n", ruleName.c_str());
 
 	if (i > 0) {
 		// Found at least one instance, so found the rule.
@@ -666,7 +617,6 @@ ElementToken ElementParser :: nextElmToken(bool aSkipSpace) {
 				if (!aSkipSpace) {
 					elmToken = ElementToken(SPACE, mScanner->getTokenText());
 					mToken = mScanner->nextToken();
-//					printf("Found space\n"); 
 		
 					elmTokenFound = true;
 				}
@@ -680,33 +630,24 @@ ElementToken ElementParser :: nextElmToken(bool aSkipSpace) {
 				TElementPtr element = parseStartTag();
 				TDOMString tagName = element->getTagName();
 				if (mSchema->hasDeclaration(tagName)) {
-//					printf("Found start tag: %s\n", tagName.c_str()); 
 					elmToken = ElementToken(START_TAG, tagName, element);
 	
 					elmTokenFound = true;
-				}
-				else {
-					printf("Found invalid start token: %s\n", tagName.c_str());
 				}
 				break;
 			}
 			case ELEMENT_CLOSE_SYM: {
 				TDOMString tagName = parseEndTag();
 				if (mSchema->hasDeclaration(tagName)) {
-//					printf("Found end tag: %s\n", tagName.c_str()); 
 					elmToken = ElementToken(END_TAG, tagName);
 	
 					elmTokenFound = true;
-				}
-				else {
-					printf("Found invalid end token: %s\n", tagName.c_str());
 				}
 				break;
 			}
 			case TEXT_SYM: {
 				TTextPtr text = mDocument->createText(mScanner->getTokenText());
 				elmToken = ElementToken(TEXT, "#PCDATA", text);
-//				printf("Found text: %s\n", mScanner->getTokenText().c_str()); 
 				mToken = mScanner->nextToken();
 				
 				elmTokenFound = true;
@@ -715,7 +656,6 @@ ElementToken ElementParser :: nextElmToken(bool aSkipSpace) {
 			case RAW_TEXT_SYM: {
 				TTextPtr text = mDocument->createText(mScanner->getTokenText());
 				elmToken = ElementToken(TEXT, "CDATA", text);
-//				printf("Found text: %s\n", mScanner->getTokenText().c_str()); 
 				mToken = mScanner->nextToken();
 				
 				elmTokenFound = true;
@@ -741,7 +681,6 @@ ElementToken ElementParser :: nextElmToken(bool aSkipSpace) {
 				break;
 			}
 			default: {
-//				printf("Found unknown element token\n");
 				throw ReadException(mScanner->getLineNr(),
 									mScanner->getCharNr(),
 									"Unexpected token found: " + mScanner->getTokenText(),
