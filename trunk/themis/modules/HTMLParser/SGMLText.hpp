@@ -23,7 +23,7 @@
 	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	
-	Original Author: 	Mark Hellegers (M.H.Hellegers@stud.tue.nl)
+	Original Author: 	Mark Hellegers (mark@firedisk.net)
 	Project Start Date: October 18, 2000
 	Class Start Date: April 11, 2003
 */
@@ -31,7 +31,7 @@
 /*	SGMLText
 	Stores a piece of raw text from an entity
 
-	Mark Hellegers (M.H.Hellegers@stud.tue.nl)
+	Mark Hellegers (mark@firedisk.net)
 	11-04-2003
 */
 

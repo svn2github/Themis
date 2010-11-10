@@ -1,7 +1,7 @@
 /*	HTMLParser addon
 	Basically only testing at the moment
 	
-	Mark Hellegers (M.H.Hellegers@stud.tue.nl)
+	Mark Hellegers (mark@firedisk.net)
 	03-09-2002
 	
 */
