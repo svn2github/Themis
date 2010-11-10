@@ -161,14 +161,13 @@ status_t CSSViewer :: ReceiveBroadcast(BMessage * aMessage) {
 				aMessage->FindPointer("pointer", &document);
 				if (document) {
 					CSSStyleSheetPtr * temp = (CSSStyleSheetPtr *) document;
-					CSSStyleSheetPtr copy = *temp;
 					if (!mView) {
-						mView = new CSSView(copy);
+						mView = new CSSView(*temp);
 					}
 					else {
 						BAutolock viewLock(mView);
 						if (viewLock.IsLocked()) {
-							mView->SetStyleSheet(copy);
+							mView->SetStyleSheet(*temp);
 						}
 					}
 				}
