@@ -42,6 +42,9 @@
 #include <View.h>
 #include <Rect.h>
 
+// Declarations used
+class BBox;
+
 /// Class to define the basic view of the preferences.
 
 /**
