@@ -55,8 +55,10 @@
 #include "MediaList.hpp"
 
 // Themis headers
+#include "ColumnListView.h"
 #include "ColumnTypes.h"
 #include "TTextView.hpp"
+
 
 // Constants used
 const int32 SELECTION = 'slct';

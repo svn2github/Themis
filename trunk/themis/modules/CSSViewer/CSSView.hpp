@@ -43,11 +43,9 @@
 // DOM Style headers
 #include "CSSStyleSheet.hpp"
 
-// Themis headers
-#include "ColumnListView.h"
-
 // Declarations of Themis classes
 class TTextView;
+class BColumnListView;
 
 class CSSView : public BWindow {
 
