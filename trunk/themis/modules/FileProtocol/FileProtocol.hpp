@@ -23,16 +23,17 @@ extern "C" __declspec( dllexport ) status_t Initialize( void * info = NULL );
 extern "C" __declspec( dllexport ) status_t Shutdown( bool now = false );
 extern "C" __declspec( dllexport ) PlugClass * GetObject();
 
-class FileProtocol	:	public BHandler, public ProtocolPlugClass	{
+class FileProtocol : public BHandler, public ProtocolPlugClass {
 
 	private:
 		CachePlug * cache;
 		uint32 userToken;
 	
 	public:
-		FileProtocol( BMessage * info = NULL );
+		FileProtocol(BMessage * info = NULL);
 		~FileProtocol();
-		void MessageReceived( BMessage * message );
+
+		void MessageReceived(BMessage * message);
 		bool IsHandler();
 		BHandler * Handler();
 		bool IsPersistent();
@@ -40,15 +41,14 @@ class FileProtocol	:	public BHandler, public ProtocolPlugClass	{
 		char * PlugName();
 		float PlugVersion();
 		void Heartbeat();
-		status_t ReceiveBroadcast( BMessage * message );
-		status_t BroadcastReply( BMessage * message );
+		status_t ReceiveBroadcast(BMessage * message);
+		status_t BroadcastReply(BMessage * message);
 		uint32 BroadcastTarget();
 		int32 Type();
-		virtual void ConnectionEstablished( connection * conn );
-		virtual void ConnectionDisconnected( connection * conn, uint32 reason = 0 );
-		virtual void DataWaiting( connection * conn );
+		virtual void ConnectionEstablished(connection * conn);
+		virtual void ConnectionDisconnected(connection * conn, uint32 reason = 0);
+		virtual void DataWaiting(connection * conn);
 
 };
 
 #endif
-
