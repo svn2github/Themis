@@ -28,25 +28,30 @@ Project Start Date: October 18, 2000
 */
 #ifndef _themis_about_win
 #define _themis_about_win
-#include <Window.h>
-#include "aboutview.h"
 
+// BeOS headers
+#include <Window.h>
+
+// Declarations used
+class aboutview;
 
 /*!
 \brief The actual about window.
 
 This is the actual "About" window for the application.
 */
-class aboutwin:public BWindow {
+
+class aboutwin : public BWindow {
+
 	private:
 		aboutview *view;
-	
+
 	public:
 		aboutwin(BRect frame, const char *title, window_type type, uint32 flags, uint32 wspaces=B_CURRENT_WORKSPACE);
 		~aboutwin();
 		bool QuitRequested();
 		void MessageReceived(BMessage *msg);
-};
 
+};
 
 #endif

@@ -32,6 +32,7 @@ Project Start Date: October 18, 2000
 
 // Themis headers
 #include "../common/commondefs.h"
+#include "aboutview.h"
 #include "aboutwin.h"
 
 aboutwin::aboutwin(
