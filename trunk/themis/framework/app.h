@@ -77,6 +77,8 @@ class App : public BApplication, public MessageSystem {
 		int32 fIDCounter;
 		//! The SiteHandler object.
 		SiteHandler * fSiteHandler;
+		//! A pointer to the new network system.
+		_Themis_Networking_::TCPManager * TCPMan;
 
 	public:
 		//! Application object constructor.
@@ -121,8 +123,6 @@ class App : public BApplication, public MessageSystem {
 		status_t SaveSettings();
 		//! Used to change the pointer to the first win, whenever it is closed.
 		void SetFirstWindow(Win * newfirst);
-		//! A pointer to the new network system.
-		_Themis_Networking_::TCPManager * TCPMan;
 
 };
 
