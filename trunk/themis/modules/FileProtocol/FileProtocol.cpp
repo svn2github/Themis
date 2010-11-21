@@ -7,10 +7,11 @@
 
 // Standard C++ headers
 #include <string>
-#include <fstream>
 
 // BeOS headers
 #include <Message.h>
+#include <be/storage/File.h>
+#include <be/storage/NodeInfo.h>
 
 // Themis headers
 #include "commondefs.h"
@@ -118,7 +119,7 @@ char * FileProtocol :: PlugName() {
 
 float FileProtocol :: PlugVersion() {
 
-	return 0.2;
+	return 0.3;
 
 }
 
@@ -168,30 +169,40 @@ status_t FileProtocol :: ReceiveBroadcast(BMessage * message) {
 						string fileLocation(urlString.substr(7, urlString.size() - 7));
 						if (!protocolString.compare("file://")) {
 							printf("FILE_PROTO: File location: %s\n", fileLocation.c_str());
-							ifstream file( fileLocation.c_str(), ios::binary | ios::in );
-							if (!file) {
-								printf( "FILE_PROTO: Error loading file\n" );
+							BFile file(fileLocation.c_str(), B_READ_ONLY);
+							BNodeInfo fileInfo(&file);
+							if (fileInfo.InitCheck() == B_OK) {
+								char * mimeType = new char[255];
+								status_t status = fileInfo.GetType(mimeType);
+								if (status == B_OK) {
+									// Put the file contents in the cache
+									int32 objectToken =
+										cache->CreateObject(userToken, fileLocation.c_str(), TYPE_DISK_FILE);
+									
+									BMessage * fileMessage = new BMessage(SH_LOADING_PROGRESS);
+									int32 site_id = 0;
+									int32 url_id = 0;
+									message->FindInt32("site_id", &site_id);
+									message->FindInt32("url_id", &url_id);
+									
+									fileMessage->AddInt32("site_id", site_id);
+									fileMessage->AddInt32("url_id", url_id);
+									fileMessage->AddInt32("command", COMMAND_INFO);
+									fileMessage->AddBool("request_done", true);
+									fileMessage->AddString("url", fileLocation.c_str());
+									fileMessage->AddInt32("cache_object_token", objectToken);
+									fileMessage->AddInt64("bytes_received", cache->GetObjectSize(userToken,objectToken));
+									fileMessage->AddString("mime-type", mimeType);
+									Broadcast(MS_TARGET_ALL, fileMessage);
+									delete fileMessage;
+								}
+								else {
+									printf( "FILE_PROTO: Error loading file\n" );
+								}
+								delete[] mimeType;
 							}
 							else {
-								// Put the file contents in the cache
-								int32 objectToken =
-									cache->CreateObject(userToken, fileLocation.c_str(), TYPE_DISK_FILE);
-								
-								BMessage * fileMessage = new BMessage(SH_LOADING_PROGRESS);
-								int32 site_id = 0;
-								int32 url_id = 0;
-								message->FindInt32("site_id", &site_id);
-								message->FindInt32("url_id", &url_id);
-								
-								fileMessage->AddInt32("site_id", site_id);
-								fileMessage->AddInt32("url_id", url_id);
-								fileMessage->AddInt32("command", COMMAND_INFO);
-								fileMessage->AddBool("request_done", true);
-								fileMessage->AddString("url", fileLocation.c_str());
-								fileMessage->AddInt32("cache_object_token", objectToken);
-								fileMessage->AddInt64("bytes_received", cache->GetObjectSize(userToken,objectToken));
-								Broadcast(MS_TARGET_ALL, fileMessage);
-								delete fileMessage;
+								printf( "FILE_PROTO: Error loading file\n" );
 							}
 						}
 					}
