@@ -378,23 +378,22 @@ status_t HTMLParser :: ReceiveBroadcast(BMessage * aMessage) {
 					}
 					break;
 				}
-				case SH_PARSE_DOC_START: {
-					// Not used as the message is sent directly to this parser without a mime-type.
-//					if (IsDocumentSupported(aMessage)) {
-						const char * url = NULL;
-						aMessage->FindString("url", &url);
-						if (url == NULL) {
-							// What the heck
-							printf("HTMLPARSER: Aborting. No url specified.\n");
+				case SH_LOADING_PROGRESS: {
+					if (IsDocumentSupported(aMessage)) {
+						bool requestDone;
+						aMessage->FindBool("request_done", &requestDone);
+						if (requestDone) {
+							const char * url = NULL;
+							aMessage->FindString("url", &url);
+							if (url == NULL) {
+								// What the heck
+								printf("HTMLPARSER: Aborting. No url specified.\n");
+							}
+							else {
+								ParseDocument(url, aMessage);
+							}
 						}
-						else {
-							printf("HTMLPARSER: url: %s\n", url);
-							ParseDocument(url, aMessage);
-						}
-//					}
-//					else {
-//						printf("HTML Parser: Document not supported\n");
-//					}
+					}
 					break;
 				}
 			}

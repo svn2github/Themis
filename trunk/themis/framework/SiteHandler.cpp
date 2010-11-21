@@ -422,31 +422,6 @@ SiteHandler::ReceiveBroadcast(
 
 					site_entry->Print();
 					
-					/*
-					 * Now check if the site is loaded completely. If so, broadcast SH_PARSE_DOC_START.
-					 */
-					
-					if( site_entry->GetLoadingProgress() == 100 )
-					{
-						/* Now set up the UH_PARSE_DOC_START message. */
-						printf( "SiteHandler: sending SH_PARSE_DOC_START\n" );
-						
-						/*
-						 * As the file protocol returns a file system url, we grab the url from the
-						 * loading progress message, and attach it to the broadcast.
-						 */
-						const char* url = NULL;
-						msg->FindString( "url", &url );
-						
-						BMessage* parse = new BMessage( SH_PARSE_DOC_START );
-						parse->AddInt32( "command", COMMAND_INFO );
-						parse->AddInt32( "site_id", site_id );
-						parse->AddInt32( "url_id", url_id );
-						parse->AddString( "url", url );
-						Broadcast( MS_TARGET_HTML_PARSER, parse );
-						delete parse;
-					}
-						
 					/* Broadcast the loading progress notify to the windows. */
 					BMessage* notify = new BMessage( SH_WIN_LOADING_PROGRESS );
 					notify->AddInt32( "command", COMMAND_INFO );
