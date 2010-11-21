@@ -26,15 +26,22 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
-#include "aboutview.h"
+
+// Standard C+ headers
+#include <string.h>
+
+// BeOS headers
+#include <Application.h>
 #include <Messenger.h>
 #include <Window.h>
-#include "app.h"
-#include "appaboutview.h"
-#include <string.h>
 #include <String.h>
 #include <TextView.h>
+
+// Themis headers
+#include "appaboutview.h"
 #include "plugclass.h"
+#include "aboutview.h"
+
 aboutview *meAboutView;
 #define SelectionChanged 'selc'
 int sortaboutitems(const void *one,const void *two) {

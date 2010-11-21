@@ -27,12 +27,13 @@ Original Author & Project Manager: Z3R0 One (z3r0_one@bbnk.dhs.org)
 Project Start Date: October 18, 2000
 */
 
+// Standard C headers
 #include <stdio.h>
 #include <time.h>
 
-#include "app.h"
-#include "GlobalHistory.h"
+// Themis headers
 #include "../common/PrefsDefs.h"
+#include "GlobalHistory.h"
 
 GlobalHistory::GlobalHistory(
 	int8 depth,

@@ -52,6 +52,7 @@ Project Start Date: October 18, 2000
 #include "ThemisUrlPopUpWindow.h"
 #include "../common/commondefs.h"
 #include "../common/PrefsDefs.h"
+#include "GlobalHistory.h"
 #include "win.h"
 
 extern plugman *PluginManager;

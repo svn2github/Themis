@@ -14,7 +14,6 @@
 #include "ThemisUrlView.h"
 #include "ThemisUrlPopUpWindow.h"
 #include "win.h"
-#include "app.h"
 #include "../common/commondefs.h"
 #include "ThemisNavView.h"
 

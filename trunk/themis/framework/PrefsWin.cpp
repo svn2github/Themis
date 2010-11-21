@@ -4,21 +4,25 @@
  * author: Michael Weirauch
  */
 
+// Standard C headers
 #include <stdio.h>
+#include <stdlib.h>
 
+// BeOS headers
 #include <app/Application.h>
 #include <interface/CheckBox.h>
 #include <interface/TextControl.h>
 
-#include <stdlib.h>
-
+// Themis headers
 #include "app.h"
+#include "win.h"
 #include "commondefs.h"
+#include "plugclass.h"
+#include "GlobalHistory.h"
 #include "PrefsDefs.h"
 #include "PrefsIcons.h"
 #include "PrefsViews.h"
 #include "PrefsWin.h"
-#include "win.h"
 
 /* the struct which defines the order of the prefs */
 static struct prefs_item_info kPrefsItems [] =

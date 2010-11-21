@@ -1,6 +1,10 @@
-#include "appaboutview.h"
-#include "app.h"
+// BeOS headers
 #include <ScrollView.h>
+#include <String.h>
+
+// Themis headers
+#include "appdefines.h"
+#include "appaboutview.h"
 
 appaboutview::appaboutview(
 	BRect frame,

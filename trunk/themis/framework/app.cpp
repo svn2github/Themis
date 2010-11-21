@@ -34,15 +34,22 @@ Project Start Date: October 18, 2000
 #include <storage/FindDirectory.h>
 #include <String.h>
 #include <Path.h>
+#include <Roster.h>
 
 // Themis headers
-#include "app.h"
+#include "aboutwin.h"
+#include "appdefines.h"
+#include "GlobalHistory.h"
+#include "msgdaemon.h"
+#include "plugman.h"
+#include "win.h"
 #include "PrefsDefs.h"
 #include "PrefsWin.h"
 #include "ThemisTab.h"
 #include "SiteHandler.h"
 #include "ThemisUrlView.h"
 #include "ThemisNavView.h"
+#include "app.h"
 
 // Namespaces used
 using namespace _Themis_Networking_;

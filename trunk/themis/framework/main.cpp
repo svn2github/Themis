@@ -41,11 +41,20 @@ This is the where Themis begins execution.
 * What is Themis? The Themis project is an effort by a handfull of developers to bring a modern
 * web browser to the BeOS platform.
 */
-#include "app.h"
+
 #define DEBUG 1
+
+// BeOS headers
 #include <SupportKit.h>
+
+// Standard C headers
 #include <stdio.h>
+
+// Themis headers
+#include "app.h"
 #include "protocol_plugin.h"
+#include "appdefines.h"
+
 int main() {
 	SET_DEBUG_ENABLED(TRUE);
 	(new App(AppSig));

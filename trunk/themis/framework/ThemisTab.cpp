@@ -1,22 +1,25 @@
 /* ThemisTab.cpp */
 
+// Standard C/C++ headers
+#include <stdio.h>
+
+// Standard C++ headers
+#include <iostream>
+#include <string>
+
 // BeOS headers
 #include <GraphicsDefs.h>
 #include <StringView.h>
 #include <String.h>
 #include <Bitmap.h>
 
-// C/C++ headers
-#include <iostream>
-#include <stdio.h>
-#include <string.h>
-
-// myheaders
-#include "ThemisIcons.h"
-#include "ThemisTab.h"
-#include "ThemisTabView.h"
+// Themis headers
 #include "win.h"
-#include "app.h"
+#include "PrefsDefs.h"
+#include "commondefs.h"
+#include "ThemisIcons.h"
+#include "ThemisTabView.h"
+#include "ThemisTab.h"
 
 ThemisTab :: ThemisTab(BView* view)
 		  : BTab(view) {

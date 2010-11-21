@@ -26,8 +26,13 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
+
+// BeOS headers
+#include <Application.h>
+
+// Themis headers
+#include "../common/commondefs.h"
 #include "aboutwin.h"
-#include "app.h"
 
 aboutwin::aboutwin(
 	BRect frame,

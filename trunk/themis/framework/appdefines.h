@@ -30,6 +30,9 @@ Project Start Date: October 18, 2000
 #define _appdefines
 #include "../common/commondefs.h"
 
+//! The application framework version number. 
+#define THEMIS_FRAMEWORK_APP_VERSION 0.40
+
 //! An alias for the application signature. The real application signature is now in ThemisAppSig.
 #define AppSig ThemisAppSig
 

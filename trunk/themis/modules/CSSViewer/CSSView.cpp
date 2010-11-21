@@ -267,6 +267,7 @@ void CSSView :: CreatePropertiesListView(BRect aRect) {
 						  10,
 						  500,
 						  0);
+	printf("Adding column\n");
 	mPropertiesView->AddColumn(propName, 0);
 	
 	BStringColumn * propValue =

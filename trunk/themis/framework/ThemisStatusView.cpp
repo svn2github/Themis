@@ -1,14 +1,15 @@
 /* ThemisStatusView.cpp */
 
+
+// Standard C++ headers
+#include <iostream>
+
 // BeOS headers
 #include <Box.h>
 
-// C/C++ headers
-#include <iostream>
-
-// myheaders
+// Themis headers
+#include "commondefs.h"
 #include "ThemisStatusView.h"
-#include "app.h"
 
 ThemisStatusView::ThemisStatusView(
 	BRect rect )

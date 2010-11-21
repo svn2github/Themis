@@ -7,7 +7,13 @@
 #ifndef _PREFSDEFS_H_
 #define _PREFSDEFS_H_
 
-extern BMessage* AppSettings;
+// BeOS headers
+#include <SupportDefs.h>
+
+// Declarations used
+class BMessage;
+
+extern BMessage * AppSettings;
 
 /*
  * local prefs win message constants

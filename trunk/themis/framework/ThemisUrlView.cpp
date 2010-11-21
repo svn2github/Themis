@@ -1,18 +1,18 @@
 /* ThemisUrlView.cpp */
 
+// Standard C++ headers
+#include <string>
+#include <iostream>
+
 // BeOS headers
 #include <Clipboard.h>
 #include <String.h>
 #include <Window.h>
 #include <Polygon.h>
 
-// Standard C++ headers
-#include <string>
-#include <iostream>
-
 // Themis headers
 #include "win.h"
-#include "app.h"
+#include "commondefs.h"
 #include "ThemisUrlPopUpWindow.h"
 #include "ThemisTabView.h"
 #include "ThemisUrlView.h"

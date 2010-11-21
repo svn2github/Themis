@@ -1,17 +1,13 @@
 /* ThemisUrlPopUpView.cpp */
 
-// BeOS headers
-//#include <Window.h>
-
-// C/C++ headers
+// Standard C++ headers
 #include <iostream>
-#include <string.h>
+#include <string>
 
-// myheaders
-#include "ThemisUrlPopUpView.h"
+// Themis headers
 #include "win.h"
-#include "app.h"
 #include "../common/commondefs.h"
+#include "ThemisUrlPopUpView.h"
 
 ThemisUrlPopUpView::ThemisUrlPopUpView(
 	BRect frame )

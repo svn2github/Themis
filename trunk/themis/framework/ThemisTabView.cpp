@@ -1,11 +1,5 @@
 /* ThemisTabView.cpp */
 
-// BeOS headers
-#include <GraphicsDefs.h>
-#include <TranslationUtils.h>
-#include <PopUpMenu.h>
-#include <MenuItem.h>
-
 // Standard C headers
 #include <stdio.h>
 #include <math.h>
@@ -13,8 +7,16 @@
 // Standard C++ headers
 #include <iostream>
 
+// BeOS headers
+#include <GraphicsDefs.h>
+#include <TranslationUtils.h>
+#include <PopUpMenu.h>
+#include <MenuItem.h>
+
 // Themis headers
 #include "win.h"
+#include "commondefs.h"
+#include "plugclass.h"
 #include "ThemisTab.h"
 #include "ThemisNavView.h"	// ThemisPictureButton
 #include "app.h"
