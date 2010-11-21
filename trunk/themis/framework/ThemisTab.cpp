@@ -12,9 +12,9 @@
 #include <StringView.h>
 #include <String.h>
 #include <Bitmap.h>
+#include <Message.h>
 
 // Themis headers
-#include "win.h"
 #include "PrefsDefs.h"
 #include "commondefs.h"
 #include "ThemisIcons.h"

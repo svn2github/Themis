@@ -5,7 +5,6 @@
 #include <string>
 
 // Themis headers
-#include "win.h"
 #include "../common/commondefs.h"
 #include "ThemisUrlPopUpView.h"
 

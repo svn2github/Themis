@@ -58,8 +58,7 @@ class ThemisTabView : public BTabView
 #ifndef CONTAINERVIEWMESSAGEFILTER
 #define CONTAINERVIEWMESSAGEFILTER
 
-#include "win.h"
-
+// Declarations used
 class Win;
 
 class ContainerViewMessageFilter : public BMessageFilter

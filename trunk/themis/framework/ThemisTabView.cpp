@@ -20,7 +20,6 @@
 #include "ThemisTab.h"
 #include "ThemisNavView.h"	// ThemisPictureButton
 #include "app.h"
-#include "win.h"
 #include "SiteHandler.h"
 #include "ThemisUrlView.h"
 #include "ThemisStatusView.h"
