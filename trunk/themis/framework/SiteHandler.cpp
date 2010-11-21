@@ -4,6 +4,7 @@
 
 // BeOS headers
 #include <Locker.h>
+#include <Bitmap.h>
 
 // Standard C headers
 #include <stdio.h>

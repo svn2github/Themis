@@ -26,18 +26,25 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
+
+// BeOS headers
 #include <Alert.h>
 #include <Directory.h>
 #include <Screen.h>
 #include <storage/FindDirectory.h>
 #include <String.h>
+#include <Path.h>
+
+// Themis headers
 #include "app.h"
 #include "PrefsDefs.h"
 #include "PrefsWin.h"
 #include "ThemisTab.h"
 #include "SiteHandler.h"
 #include "ThemisUrlView.h"
-#include <Path.h>
+#include "ThemisNavView.h"
+
+// Namespaces used
 using namespace _Themis_Networking_;
 
 plugman *PluginManager;
@@ -254,9 +261,9 @@ void App::MessageReceived(BMessage *msg){
 			do
 			{
 				win->Lock();
-				for( int32 i = 0; i < win->tabview->CountTabs(); i++ )
-					( ( ThemisTab* )win->tabview->TabAt( i ) )->GetHistory()->Clear();
-				win->tabview->SetNavButtonsByTabHistory();
+				for( int32 i = 0; i < win->GetTabView()->CountTabs(); i++ )
+					( ( ThemisTab* )win->GetTabView()->TabAt( i ) )->GetHistory()->Clear();
+				win->GetTabView()->SetNavButtonsByTabHistory();
 				
 				win->Unlock();
 				win = win->NextWindow();
@@ -455,7 +462,7 @@ void App::MessageReceived(BMessage *msg){
 					if( WindowAt( i )->IsActive() == true )
 					{
 						Win* win = ( Win* )WindowAt( i );
-						currenturl.SetTo( win->navview->urlview->Text() );
+						currenturl.SetTo( win->GetNavView()->urlview->Text() );
 						break;
 					}
 				}

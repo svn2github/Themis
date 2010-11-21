@@ -2,15 +2,18 @@
 
 // BeOS headers
 
-// C/C++ headers
-#include <iostream>
+// Standard C headers
 #include <stdio.h>
 
-// myheaders
-#include "ThemisUrlPopUpWindow.h"
+// Standard C++ headers
+#include <iostream>
+
+// Themis headers
 #include "ThemisUrlView.h"
+#include "ThemisNavView.h"
 #include "win.h"
 #include "../common/commondefs.h"
+#include "ThemisUrlPopUpWindow.h"
 
 ThemisUrlPopUpWindow::ThemisUrlPopUpWindow( BWindow* parent, BRect frame )
 	: BWindow(
@@ -68,7 +71,7 @@ ThemisUrlPopUpWindow::MessageReceived( BMessage *msg )
 				urlpopupview->ulv->CurrentSelection() );
 						
 			parentwindow->Lock();
-			((Win*)parentwindow)->navview->urlview->SetText( item->Text() );
+			((Win*)parentwindow)->GetNavView()->urlview->SetText( item->Text() );
 			parentwindow->Unlock();
 			
 			// doubleclick opens url
@@ -103,7 +106,7 @@ ThemisUrlPopUpWindow::MessageReceived( BMessage *msg )
 				break;
 			
 			parentwindow->Lock();
-			((Win*)parentwindow)->navview->urlview->SetText( item->Text() );
+			((Win*)parentwindow)->GetNavView()->urlview->SetText( item->Text() );
 			parentwindow->Unlock();
 			
 			Unlock();				
@@ -124,7 +127,7 @@ ThemisUrlPopUpWindow::MessageReceived( BMessage *msg )
 				break;
 			
 			parentwindow->Lock();
-			((Win*)parentwindow)->navview->urlview->SetText( item->Text() );
+			((Win*)parentwindow)->GetNavView()->urlview->SetText( item->Text() );
 			parentwindow->Unlock();
 			
 			Unlock();
@@ -185,7 +188,7 @@ ThemisUrlPopUpWindow::ResizeToPrefered()
 	
 	float difference = parent_bottom_cts.y - new_popup_bottom_cts.y - 20;
 	
-	float urlview_width = ((Win*)parentwindow)->navview->urlview->Bounds().right;
+	float urlview_width = ((Win*)parentwindow)->GetNavView()->urlview->Bounds().right;
 	
 	if( difference < 0 )
 	{

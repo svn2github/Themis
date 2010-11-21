@@ -6,17 +6,16 @@
 #include <Window.h>
 #include <Polygon.h>
 
-// C/C++ headers
-#include <string.h>
+// Standard C++ headers
+#include <string>
 #include <iostream>
-#include <iostream.h>
 
-// myheaders
-#include "ThemisUrlView.h"
+// Themis headers
 #include "win.h"
 #include "app.h"
-
-class ThemisUrlTextView;
+#include "ThemisUrlPopUpWindow.h"
+#include "ThemisTabView.h"
+#include "ThemisUrlView.h"
 
 ThemisUrlView::ThemisUrlView(
 	BRect frame,
@@ -108,8 +107,7 @@ ThemisUrlView::MouseDown( BPoint point )
 	Win* win = ( Win* )Window();
 	BRect rect = Bounds();
 	if( point.x > rect.right - 20 )
-		if( win->urlpopupwindow == NULL )
-		{
+		if (win->GetUrlPopUpWindow() == NULL) {
 			BMessage* open = new BMessage( URL_TYPED );
 			open->AddBool( "show_all", true );
 			win->PostMessage( open );
@@ -138,7 +136,7 @@ ThemisUrlView::SetFavIcon( BBitmap *fav )
 	else
 		// we could also have copied from icon_document_hex here
 		memcpy( fav_icon->Bits(), 
-			( ( Win* )Window() )->bitmaps[9]->Bits(), 1024 );
+			( ( Win* )Window() )->GetBitmap(9)->Bits(), 1024 );
 	if( Parent() )
 		Draw( Bounds() );
 }
@@ -284,9 +282,9 @@ ThemisUrlViewMessageFilter::Filter( BMessage *msg, BHandler **target )
 					//cout << "B_DOWN_ARROW received" << endl;
 					
 					// if we have the urlpopupwindow
-					if( ((Win*)window)->urlpopupwindow != NULL )
-					{
-						BMessenger msgr( ((Win*)window)->urlpopupwindow->Looper() );
+					ThemisUrlPopUpWindow * popUpWindow = ((Win *)window)->GetUrlPopUpWindow();
+					if (popUpWindow != NULL) {
+						BMessenger msgr(popUpWindow->Looper());
 						msgr.SendMessage( URL_SELECT_NEXT );
 					}
 					else // create it if ( urltext fits older urls )
@@ -303,9 +301,9 @@ ThemisUrlViewMessageFilter::Filter( BMessage *msg, BHandler **target )
 					//cout << "B_DOWN_ARROW received" << endl;
 					
 					// if we have the urlpopupwindow
-					if( ((Win*)window)->urlpopupwindow != NULL )
-					{
-						BMessenger msgr( ((Win*)window)->urlpopupwindow->Looper() );
+					ThemisUrlPopUpWindow * popUpWindow = ((Win *)window)->GetUrlPopUpWindow();
+					if (popUpWindow != NULL) {
+						BMessenger msgr(popUpWindow->Looper());
 						msgr.SendMessage( URL_SELECT_PREV );
 					}
 					
@@ -343,19 +341,19 @@ ThemisUrlViewMessageFilter::Filter( BMessage *msg, BHandler **target )
 					}
 					
 					// if we have the urlpopupwindow
-					if( ((Win*)window)->urlpopupwindow != NULL )
-					{
+					ThemisUrlPopUpWindow * popUpWindow = ((Win *)window)->GetUrlPopUpWindow();
+					if (popUpWindow != NULL) {
 						BMessenger msgr( window->Looper() );
 						msgr.SendMessage( CLOSE_URLPOPUP );
 						
 						result = B_SKIP_MESSAGE;
 						break;
 					}
-					if( ((Win*)window)->tabview->TabAt( ((Win*)window)->tabview->Selection() )->View() != NULL )
-					{
+					ThemisTabView * tabView = ((Win *)window)->GetTabView();
+					if (tabView->TabAt(tabView->Selection() )->View() != NULL) {
 						if( window->CurrentFocus() )
 							window->CurrentFocus()->MakeFocus( false );
-						((Win*)window)->tabview->TabAt( ((Win*)window)->tabview->Selection() )->View()->MakeFocus( true );
+						tabView->TabAt(tabView->Selection())->View()->MakeFocus( true );
 					}	
 								
 					result = B_SKIP_MESSAGE;

@@ -6,21 +6,25 @@
 #include <PopUpMenu.h>
 #include <MenuItem.h>
 
-// C/C++ headers
-#include <iostream>
+// Standard C headers
 #include <stdio.h>
 #include <math.h>
 
-// myheaders
+// Standard C++ headers
+#include <iostream>
+
+// Themis headers
 #include "win.h"
-#include "ThemisTabView.h"
 #include "ThemisTab.h"
 #include "ThemisNavView.h"	// ThemisPictureButton
 #include "app.h"
 #include "win.h"
 #include "SiteHandler.h"
 #include "ThemisUrlView.h"
+#include "ThemisStatusView.h"
+#include "ThemisUrlPopUpWindow.h"
 #include "../common/PrefsDefs.h"
+#include "ThemisTabView.h"
 
 ThemisTabView::ThemisTabView(
 	BRect frame,
@@ -209,11 +213,7 @@ ThemisTabView::MouseDown( BPoint point )
 	// at first check, if the urlpopupwindow is still open
 	// if yes, close it and return.
 	Win* win = ( Win* )Window();
-	if( win->urlpopupwindow != NULL )
-	{
-		win->urlpopupwindow->Lock();
-		win->urlpopupwindow->Quit();
-		win->urlpopupwindow = 0;
+	if(win->CloseUrlPopUpWindow()) {
 		return;
 	}
 		
@@ -281,7 +281,7 @@ ThemisTabView::MouseDown( BPoint point )
 			{
 				if( Window()->CurrentFocus() != NULL )
 					Window()->CurrentFocus()->MakeFocus( false );
-				( ( Win* )Window() )->navview->urlview->TextView()->MakeFocus( true );
+				( ( Win* )Window() )->GetNavView()->urlview->TextView()->MakeFocus( true );
 			}
 			break;
 		}
@@ -353,7 +353,7 @@ ThemisTabView::MouseDown( BPoint point )
 				// if the newtab button is disabled, and no more tabs are
 				// out of range, enable the button
 				if( ( CountTabs() * tab_width ) <= ( Bounds().right - 22 ) )
-					( ( Win* )Window() )->navview->buttons[4]->SetMode( 0 );
+					( ( Win* )Window() )->GetNavView()->buttons[4]->SetMode( 0 );
 								
 				// calculate new ( bigger ) size of tabs and draw again
 				DynamicTabs( false );
@@ -380,7 +380,7 @@ ThemisTabView::Select( int32 tabindex )
 	printf( "ThemisTabView::Select( %ld )\n", tabindex );
 	
 	/* Hinder tab selection when urlpopupwindow is open. */
-	if( ( ( Win* )Window() )->urlpopupwindow != NULL )
+	if (((Win *)Window())->GetUrlPopUpWindow() != NULL)
 		return;
 	
 	/* Get a pointer to the tab. We need to query it for the view's ID. */
@@ -440,11 +440,9 @@ ThemisTabView::Select( int32 tabindex )
 
 		win->SetTitle( wtitle.String() );
 		tab->SetLabel( ttitle.String() );
-		win->navview->urlview->SetText( url.String() );
-		win->navview->urlview->SetFavIcon( tab->GetFavIcon() );
-		win->statusview->SetLoadingInfo(
-			lprog,
-			stext.String() );
+		win->GetNavView()->urlview->SetText( url.String() );
+		win->GetNavView()->urlview->SetFavIcon( tab->GetFavIcon() );
+		win->SetLoadingInfo(lprog, stext.String());
 			
 	}
 	
@@ -606,7 +604,7 @@ ThemisTabView::CreateCloseTabViewButton()
 	
 		smallbmp = new BBitmap( BRect( 0,0,15,15 ), B_RGB32 );
 		
-		unsigned char* p1 = ( unsigned char* )win->bitmaps[7]->Bits();
+		unsigned char* p1 = ( unsigned char* )win->GetBitmap(7)->Bits();
 		unsigned char* p2 = ( unsigned char* )smallbmp->Bits();
 			
 		for( int k = 0; k < 16; k++ )
@@ -751,7 +749,7 @@ ThemisTabView::SetNavButtonsByTabHistory()
 //	printf( "ThemisTabView::SetNavButtonsByTabHistory()\n" );
 	ThemisTab* tab = ( ThemisTab* )TabAt( Selection() );
 	
-	ThemisNavView* nv = ( ( Win* )Window() )->navview;
+	ThemisNavView* nv = ( ( Win* )Window() )->GetNavView();
 	
 //	printf( "CurrentPosition: %d\n", tab->GetHistory()->GetCurrentPosition() );
 	tab->GetHistory()->PrintHistory();
@@ -833,14 +831,8 @@ ContainerViewMessageFilter::Filter( BMessage *msg, BHandler **target )
 	{
 		case B_MOUSE_DOWN :
 		{
-			if( window->urlpopupwindow != NULL )
-			{
-				window->urlpopupwindow->Lock();
-				window->urlpopupwindow->Quit();
-				window->urlpopupwindow = 0;
-
+			if (window->CloseUrlPopUpWindow())
 				result = B_SKIP_MESSAGE;
-			}
 			break;
 		}
 		default :

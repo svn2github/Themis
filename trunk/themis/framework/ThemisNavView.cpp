@@ -6,17 +6,17 @@
 #include <Picture.h>
 #include <String.h>
 
-// C/C++ headers
+// Standard C++ headers
 #include <iostream>
 
-// myheaders
-#include "ThemisNavView.h"
+// Themis headers
 #include "ThemisIcons.h"
 #include "ThemisUrlView.h"
+#include "ThemisUrlPopUpWindow.h"
 #include "win.h"
 #include "app.h"
 #include "../common/commondefs.h"
-
+#include "ThemisNavView.h"
 
 ThemisNavView::ThemisNavView( BRect rect ) :
 	BView( rect, "THEMISNAVVIEW", B_FOLLOW_LEFT_RIGHT, B_WILL_DRAW | B_FULL_UPDATE_ON_RESIZE )
@@ -95,14 +95,9 @@ ThemisNavView::MouseDown( BPoint point )
 	// check, if the urlpopupwindow is still open
 	// if yes, close it and return.
 	Win* win = ( Win* )Window();
-	if( win->urlpopupwindow != NULL )
-	{
-		win->urlpopupwindow->Lock();
-		win->urlpopupwindow->Quit();
-		win->urlpopupwindow = 0;
-		return;
+	if (!win->CloseUrlPopUpWindow()) {
+		BView::MouseDown(point);
 	}
-	BView::MouseDown( point );
 }
 
 void
@@ -156,7 +151,7 @@ ThemisNavView::CreateInterfaceButtons()
 			
 			smallbmp = new BBitmap( BRect( 0,0,15,15 ), B_RGB32 );
 									
-			unsigned char* p1 = ( unsigned char* )win->bitmaps[i]->Bits();
+			unsigned char* p1 = ( unsigned char* )win->GetBitmap(i)->Bits();
 			unsigned char* p2 = ( unsigned char* )smallbmp->Bits();
 			
 			for( int k = 0; k < 16; k++ )

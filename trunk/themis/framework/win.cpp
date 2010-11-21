@@ -27,25 +27,32 @@ Original Author & Project Manager: Z3R0 One (z3r0_one@yahoo.com)
 Project Start Date: October 18, 2000
 */
 
+// BeOS headers
 #include <Deskbar.h>
 #include <Directory.h>
 #include <MenuItem.h>
 #include <Screen.h>
 #include <TranslationKit.h>
 
+// Standard C headers
 #include <stdlib.h>
 #include <ctype.h>
 
+// Themis headers
 #include "app.h"
 #include "protocol_plugin.h"
 #include "iostream.h"
 #include "ThemisIcons.h"
 #include "ThemisTab.h"
-#include "win.h"
 #include "SiteHandler.h"
 #include "ThemisUrlView.h"
+#include "ThemisNavView.h"
+#include "ThemisStatusView.h"
+#include "ThemisTabView.h"
+#include "ThemisUrlPopUpWindow.h"
 #include "../common/commondefs.h"
 #include "../common/PrefsDefs.h"
+#include "win.h"
 
 extern plugman *PluginManager;
 extern BMessage *AppSettings;
@@ -808,6 +815,53 @@ Win::AddNewTab( bool hidden )
 		tabview->SetNormalTabView();
 		
 	Unlock();
+}
+
+ThemisTabView * Win :: GetTabView() const {
+	
+	return tabview;
+	
+}
+
+ThemisNavView * Win :: GetNavView() const {
+
+	return navview;
+
+}
+
+ThemisUrlPopUpWindow * Win :: GetUrlPopUpWindow() const {
+
+	return urlpopupwindow;
+
+}
+
+BBitmap * Win :: GetBitmap(unsigned int aIndex = 0) const {
+
+	return bitmaps[aIndex];
+
+}
+
+bool Win :: CloseUrlPopUpWindow() {
+	
+	bool result = false;
+	
+	if (urlpopupwindow != NULL) {
+		urlpopupwindow->Lock();
+		urlpopupwindow->Quit();
+		urlpopupwindow = NULL;
+		
+		result = true;
+	}
+	
+	return result;	
+	
+}
+
+void Win :: SetLoadingInfo(int doc_progress,
+							const char* status_text) {
+
+	statusview->SetLoadingInfo(doc_progress, status_text);
+
 }
 
 void
