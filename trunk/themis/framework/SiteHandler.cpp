@@ -2,6 +2,9 @@
  * SiteHandler.cpp
  */
 
+// BeOS headers
+#include <Locker.h>
+
 // Standard C headers
 #include <stdio.h>
 
@@ -10,7 +13,9 @@
 #include "plugman.h"
 #include "ThemisIcons.h"
 #include "../common/commondefs.h"
+#include "../common/cacheplug.h"
 #include "UrlEntry.h"
+#include "SiteEntry.h"
 #include "SiteHandler.h"
 
 extern plugman* PluginManager;
