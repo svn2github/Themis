@@ -2,9 +2,16 @@
  * SiteEntry.cpp
  */
 
+// BeOS headers
+#include <Bitmap.h>
+#include <String.h>
+
+// Standard C headers
 #include <stdio.h>
 
+// Themis headers
 #include "SiteEntry.h"
+#include "UrlEntry.h"
 
 SiteEntry::SiteEntry(
 	int32 id,

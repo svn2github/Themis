@@ -2,13 +2,16 @@
  * SiteHandler.cpp
  */
 
+// Standard C headers
 #include <stdio.h>
 
+// Themis headers
 #include "app.h"
 #include "plugman.h"
 #include "ThemisIcons.h"
-#include "SiteHandler.h"
 #include "../common/commondefs.h"
+#include "UrlEntry.h"
+#include "SiteHandler.h"
 
 extern plugman* PluginManager;
 

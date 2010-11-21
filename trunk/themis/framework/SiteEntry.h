@@ -5,83 +5,54 @@
 #ifndef SITEENTRY_H
 #define SITEENTRY_H
 
-#include <Bitmap.h>
-#include <String.h>
-
+// Standard C++ headers
 #include <vector.h>
 
-#include "SiteEntry.h"
-#include "UrlEntry.h"
-
+// Namespaces used
 using namespace std;
 
-class SiteEntry
-{
-	public:
-									SiteEntry(
-										int32 id,
-										const char* url );
-									
-									~SiteEntry();
-		
-		void						AddEntry(
-										int32 id,
-										const char* url );
-		
-		bool						GetCookiesDisabled();
-		
-		BBitmap*					GetFavIcon();
-		
-		UrlEntry*					GetEntry(
-										int32 id );
-		
-		int32						GetID();
+// Declarations used
+class BString;
+class BBitmap;
+class UrlEntry;
 
-		int8						GetLoadingProgress();
-		
-		bool						GetSecureConnection();
-		
-		const char*					GetStatusText();
-		
-		const char*					GetTitle();
-		
-		const char*					GetUrl();
-		
-		void						Print();
-		
-		void						SetCookiesDisabled(
-										bool value );
-		
-		void						SetFavIcon(
-										BBitmap* bmp );
-		
-		void						SetLoadingProgress(
-										int8 loadingprogress );
-		
-		void						SetSecureConnection(
-										bool value );		
-		
-		void						SetStatusText(
-										const char* text );
-				
-		void						SetTitle(
-										const char* title );
-									
+class SiteEntry {
+
 	private:
-		vector< UrlEntry* >			fEntryList;
+		vector<UrlEntry*> fEntryList;
+		int32 fID;
+		int8 fLoadingProgress;
+		BString * fUrl;
+		BString * fTitle;
+		BString * fStatusText;
+		bool fCookiesDisabled;
+		bool fSecureConnection;
+		BBitmap * fFavIcon;
+
+	public:
+		SiteEntry(int32 id,
+				  const char* url);
+	    ~SiteEntry();
 		
-		int32						fID;
-		
-		int8						fLoadingProgress;
-		
-		BString*					fUrl;
-		BString*					fTitle;
-		BString*					fStatusText;
-		
-		bool						fCookiesDisabled;
-		bool						fSecureConnection;
-		
-		BBitmap*					fFavIcon;
+		void AddEntry(int32 id,
+					  const char* url);
+		bool GetCookiesDisabled();
+		BBitmap * GetFavIcon();
+		UrlEntry * GetEntry(int32 id);
+		int32 GetID();
+		int8 GetLoadingProgress();
+		bool GetSecureConnection();
+		const char * GetStatusText();
+		const char * GetTitle();
+		const char * GetUrl();
+		void Print();
+		void SetCookiesDisabled(bool value);
+		void SetFavIcon(BBitmap* bmp);
+		void SetLoadingProgress(int8 loadingprogress);
+		void SetSecureConnection(bool value);		
+		void SetStatusText(const char* text);
+		void SetTitle(const char* title);
+									
 };
 
 #endif
