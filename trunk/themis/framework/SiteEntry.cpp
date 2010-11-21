@@ -13,20 +13,16 @@
 #include "SiteEntry.h"
 #include "UrlEntry.h"
 
-SiteEntry::SiteEntry(
-	int32 id,
-	const char* url )
-{
-	printf( "SiteEntry::SiteEntry()\n" );
-	
+SiteEntry :: SiteEntry(int32 id,
+					   const char* url) {
 	fID = id;
 	fLoadingProgress = -1;
 	
-	fUrl = new BString( url );
+	fUrl = new BString(url);
 	
-	fStatusText = new BString( "Transfering data from " );
-	fStatusText->Append( url );
-	fStatusText->Append( " ..." );
+	fStatusText = new BString("Transfering data from ");
+	fStatusText->Append(url);
+	fStatusText->Append(" ...");
 	
 	/*
 	 * The page title is set to "loading..." now.
@@ -36,7 +32,7 @@ SiteEntry::SiteEntry(
 	 * I wait for the renderer to finish, which then delivers me
 	 * the page title.
 	 */
-	fTitle = new BString( "loading..." );
+	fTitle = new BString("loading...");
 	
 	fCookiesDisabled = false;
 	fSecureConnection = false;
@@ -44,191 +40,151 @@ SiteEntry::SiteEntry(
 	fFavIcon = NULL;
 }
 
-SiteEntry::~SiteEntry()
-{
-	printf( "SiteEntry::~SiteEntry()\n" );
-	
-	if( fUrl != NULL )
+SiteEntry :: ~SiteEntry() {
+
+	if (fUrl != NULL)
 		delete fUrl;
-	if( fStatusText != NULL )
+	if (fStatusText != NULL)
 		delete fStatusText;
-	if( fTitle != NULL )
+	if (fTitle != NULL)
 		delete fTitle;
+
 }
 
-void
-SiteEntry::AddEntry(
-	int32 id,
-	const char* url )
-{
-	printf( "SiteEntry::AddEntry()\n" );
-	
-	printf( "SiteEntry: adding following item: ID[%ld] URL[%s]\n", id, url );
-	
-	UrlEntry* entry = new UrlEntry(
-		id,
-		url );
-	
-	fEntryList.push_back( entry );
+void SiteEntry :: AddEntry(int32 id,
+						   const char* url) {
+
+	UrlEntry* entry = new UrlEntry(id, url);
+	fEntryList.push_back(entry);
+
 }
 
-bool
-SiteEntry::GetCookiesDisabled()
-{
+bool SiteEntry :: GetCookiesDisabled() {
+
 	return fCookiesDisabled;
+
 }
 
-BBitmap*
-SiteEntry::GetFavIcon()
-{
+BBitmap * SiteEntry :: GetFavIcon() {
+
 	return fFavIcon;
+
 }
 
-UrlEntry*
-SiteEntry::GetEntry(
-	int32 id )
-{
-//	fLocker->Lock();
-	
-	printf( "SiteEntry::GetEntry( %ld )\n", id );
-	
+UrlEntry * SiteEntry :: GetEntry(int32 id) {
+
 	UrlEntry* entry = NULL;
 	
 	// browse through the entry list to find the UrlEntry with the matching id
-	
-	vector< UrlEntry* >::iterator it;
-	for( it = fEntryList.begin(); it != fEntryList.end(); it++ )
-	{
-		if( ( ( UrlEntry* )*it )->GetID() == id )
-		{
+	vector<UrlEntry *>::iterator it;
+	for (it = fEntryList.begin(); it != fEntryList.end(); it++) {
+		if (((UrlEntry *)*it)->GetID() == id) {
 			entry = *it;
 		}
 	}
 
-//	fLocker->Unlock();
 	return entry;
+
 }
 
-int32
-SiteEntry::GetID()
-{
+int32 SiteEntry :: GetID() {
+
 	return fID;
+
 }
 
-int8
-SiteEntry::GetLoadingProgress()
-{
-	printf( "SiteEntry::GetLoadingProgress()\n" );
-		
+int8 SiteEntry :: GetLoadingProgress() {
+
 	/* cycle through the list of UrlEntries and calculate the loading progress */
-	
 	uint32 progress = 0;
-	
-	vector< UrlEntry* >::iterator it;
-	for( it = fEntryList.begin(); it != fEntryList.end(); it++ )
-	{
-		progress += ( ( UrlEntry* )*it )->GetLoadingProgress();
+	vector<UrlEntry *>::iterator it;
+	for (it = fEntryList.begin(); it != fEntryList.end(); it++) {
+		progress += ((UrlEntry *)*it)->GetLoadingProgress();
 	}
-	
-	progress = ( uint32 )( progress / fEntryList.size() );
 
-	SetLoadingProgress( ( uint8 )progress );
-	
-	printf( "SITEENTRY: fLoadingProgress: %d\n", fLoadingProgress );
-	
+	progress = (uint32)(progress / fEntryList.size());
+	SetLoadingProgress((uint8 )progress);
+
 	return fLoadingProgress;
+
 }
 
-bool
-SiteEntry::GetSecureConnection()
-{
+bool SiteEntry :: GetSecureConnection() {
+
 	return fSecureConnection;
+
 }
 
-const char*
-SiteEntry::GetStatusText()
-{
+const char * SiteEntry :: GetStatusText() {
+
 	return fStatusText ? fStatusText->String() : "";
+
 }
 
-const char*
-SiteEntry::GetTitle()
-{
-	printf( "  GetTitle(): %s\n", fTitle->String() );
+const char  * SiteEntry :: GetTitle() {
+
 	return fTitle ? fTitle->String() : "";
+
 }
 
-const char*
-SiteEntry::GetUrl()
-{
+const char * SiteEntry :: GetUrl() {
+
 	return fUrl ? fUrl->String() : "";
+
 }
 
-void
-SiteEntry::Print()
-{
-	printf( "------------------------------------\n" );
-	printf( "SiteEntry: ID[%ld] URL[%s] TITLE[%s]\n", fID, fUrl->String(), fTitle->String() );
-	printf( "           LoadingProgess[%d] CookiesDisabled[%s], SecureConnection[%s]\n",
+void SiteEntry :: Print() {
+
+	printf("------------------------------------\n");
+	printf("SiteEntry: ID[%ld] URL[%s] TITLE[%s]\n", fID, fUrl->String(), fTitle->String());
+	printf("           LoadingProgess[%d] CookiesDisabled[%s], SecureConnection[%s]\n",
 		fLoadingProgress,
 		fCookiesDisabled ? "true" : "false",
-		fSecureConnection ? "true" : "false" );
+		fSecureConnection ? "true" : "false");
+
+	printf("  -- SiteEntrys UrlEntries --\n");
 	
-	printf( "  -- SiteEntrys UrlEntries --\n" );
-	
-	vector< UrlEntry* >::iterator it;
-	for( it = fEntryList.begin(); it != fEntryList.end(); it++ )
-	{
-		( ( UrlEntry* )*it )->Print();
+	vector<UrlEntry *>::iterator it;
+	for (it = fEntryList.begin(); it != fEntryList.end(); it++) {
+		((UrlEntry *)*it)->Print();
 	}
-	
 	printf( "------------------------------------\n" );
+
 }
 
-void
-SiteEntry::SetCookiesDisabled(
-	bool value )
-{
+void SiteEntry :: SetCookiesDisabled(bool value) {
+
 	fCookiesDisabled = value;
+
 }
 
-void
-SiteEntry::SetFavIcon(
-	BBitmap* bmp )
-{
-	if( bmp )
-	{
-		if( !fFavIcon )
-			fFavIcon = new BBitmap(
-				BRect( 0, 0, 15, 15 ), B_RGB32 );
-		
-		memcpy( fFavIcon->Bits(), bmp->Bits(), 1024 );
+void SiteEntry :: SetFavIcon(BBitmap * bmp) {
+
+	if (bmp) {
+		if (!fFavIcon)
+			fFavIcon = new BBitmap(BRect(0, 0, 15, 15), B_RGB32);
+		memcpy(fFavIcon->Bits(), bmp->Bits(), 1024);
 	}
 }
 
-void
-SiteEntry::SetLoadingProgress(
-	int8 loadingprogress )
-{
+void SiteEntry :: SetLoadingProgress(int8 loadingprogress) {
+
 	fLoadingProgress = loadingprogress;
-	
-	if( fLoadingProgress == 100 )
-	{
-		fStatusText->SetTo( "Done." );
-		fTitle->SetTo( fUrl->String() );
+
+	if (fLoadingProgress == 100) {
+		fStatusText->SetTo("Done.");
+		fTitle->SetTo(fUrl->String());
 	}
 }
 
-void
-SiteEntry::SetSecureConnection(
-	bool value )
-{
+void SiteEntry :: SetSecureConnection(bool value) {
+
 	fSecureConnection = value;
+
 }
 
-void
-SiteEntry::SetTitle(
-	const char* title )
-{
-	fTitle->SetTo( title );
+void SiteEntry :: SetTitle(const char* title) {
+
+	fTitle->SetTo(title);
+
 }
