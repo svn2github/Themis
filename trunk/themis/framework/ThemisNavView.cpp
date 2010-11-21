@@ -43,7 +43,7 @@ ThemisNavView::AttachedToWindow( void )
 		"URLVIEW", B_FOLLOW_LEFT_RIGHT, B_WILL_DRAW | //B_NAVIGABLE |
 		B_FULL_UPDATE_ON_RESIZE );
 
-	urlview->TextView()->AddFilter( new ThemisUrlViewMessageFilter( ( Win* )Window() ) );
+	urlview->TextView()->AddFilter(new ThemisUrlViewMessageFilter(Window()));
 	AddChild( urlview );
 	
 	// now create the buttons in my adventurous method :D
