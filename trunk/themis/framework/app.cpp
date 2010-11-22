@@ -31,9 +31,9 @@ Project Start Date: October 18, 2000
 #include <Alert.h>
 #include <Directory.h>
 #include <Screen.h>
-#include <storage/FindDirectory.h>
+#include <be/storage/FindDirectory.h>
+#include <be/storage/Path.h>
 #include <String.h>
-#include <Path.h>
 #include <Roster.h>
 
 // Themis headers
@@ -571,10 +571,17 @@ App::CheckSettings(
 	}
 	else
 	{
-		if( !AppSettings->HasString( kPrefsSettingsDirectory ) )
-			AppSettings->AddString( kPrefsSettingsDirectory, "/boot/home/config/settings/Themis/" );
-		if( !AppSettings->HasString( kPrefsSettingsFilePath ) )
-			AppSettings->AddString( kPrefsSettingsFilePath, "/boot/home/config/settings/Themis/ThemisSettings" );
+		BPath settingsPath;
+		status_t status = find_directory(B_USER_SETTINGS_DIRECTORY, &settingsPath, false);
+		if (status == B_OK) {
+			settingsPath.Append("Themis/");
+		}
+		if (!AppSettings->HasString(kPrefsSettingsDirectory) && (status == B_OK))
+			AppSettings->AddString(kPrefsSettingsDirectory, settingsPath.Path());
+		if (!AppSettings->HasString(kPrefsSettingsFilePath) && (status == B_OK)) {
+			settingsPath.Append("ThemisSettings");
+			AppSettings->AddString(kPrefsSettingsFilePath, settingsPath.Path());
+		}
 	}
 	
 	/* check if the settings message contains an entry. if not add it with its default value. */
