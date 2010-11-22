@@ -153,8 +153,6 @@ DOMLIBRARYSOURCES= \
 	framework/DOM/TDocument.cpp
 DOMTESTSOURCES= \
 	framework/DOM/DOMTest.cpp
-DOMLOADTESTSOURCES= \
-	framework/DOM/LoadTest.cpp
 DOMSTYLELIBRARYSOURCES= \
 	framework/DOMStyle/Counter.cpp \
 	framework/DOMStyle/CSSCharsetRule.cpp \
@@ -437,7 +435,6 @@ endif
 #			domvaddon
 #			libs
 #			domtest
-#			domloadtest
 #			testplug
 all: framework libs addons
 	@echo "Themis application and add-ons built successfully."
@@ -482,7 +479,6 @@ help:
 	@echo " cssvaddon   CSSViewer add-on"
 	@echo "	core		Framework, HTTP, HTMLParser and cache add-ons"
 	@echo "	core2		Framework, HTTP, cache, testplug, HTMLParser, DOMView and CSSViewer add-ons"
-	@echo "	domloadtest	DOM LoadTest application"
 	@echo "	testplug	A sample/test plug-in"
 	@echo "	imagehaddon	The official image handling add-on"
 	@echo "	zip		zips up the files in the Themis directory to Themis.zip"
@@ -912,22 +908,6 @@ ifneq ($(MAKECMDGOALS),clean)
 endif
 	
 domtestobjects: $(foreach file,$(DOMTESTSOURCES),$(DOMLIBRARY_OBJECT_DIR)$(notdir $(file:.cpp=.o)))
-	@echo "DOM Test application objects are done."
-
-#DOM LoadTest application
-domloadtest: framework domlib domltestdepends domltestobjects
-	@$(CC) -o $(BASE_INSTALL_DIR)DOMLoadTest $(foreach file,$(notdir $(DOMLOADTESTSOURCES:.cpp=.o)),$(DOMLIBRARY_OBJECT_DIR)$(file)) -Xlinker $(LDFLAGS) -L ./ -L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) -lbe -ldom -lstdc++.r4
-	@echo "DOM LoadTest application (DOMLoadTest) is now linked. Doing mimeset."
-	@mimeset -F $(BASE_INSTALL_DIR)DOMLoadTest
-	@cp framework/DOM/LoadTest.html $(BASE_INSTALL_DIR)
-	@echo "DOM LoadTest application (DOMLoadTest) compiled and linked successfully."
-domltestdepends:  $(DOMTESTSOURCES) $(foreach file,$(DOMLOADTESTSOURCES:.cpp=.d),$(DOMLIBRARY_DEPENDS_DIR)$(notdir $(file)))
-	@echo "DOM Test application depends are done."
-ifneq ($(MAKECMDGOALS),clean)
--include $(foreach file,$(DOMLOADTESTSOURCES:.cpp=.d),$(DOMLIBRARY_DEPENDS_DIR)$(notdir $(file)))
-endif
-	
-domltestobjects: $(foreach file,$(DOMLOADTESTSOURCES),$(DOMLIBRARY_OBJECT_DIR)$(notdir $(file:.cpp=.o)))
 	@echo "DOM Test application objects are done."
 
 #DOMStyle Library
