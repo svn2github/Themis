@@ -313,7 +313,7 @@ status_t SiteHandler :: ReceiveBroadcast(BMessage* msg) {
 						int8 loadprogress = -1;
 					
 						if (content_length != 0) {
-							loadprogress = (int8)((bytes_received / content_length) * 100);
+							loadprogress = (int8)(((float)bytes_received / (float)content_length) * 100);
 						}
 						else { // chunked transfer mode
 							loadprogress = 50;
