@@ -144,7 +144,6 @@ ThemisUrlView::SetFavIcon( BBitmap *fav )
 void
 ThemisUrlView::SetText( const char *newtext )
 {
-	printf( "ThemisUrlView::SetText(%s)\n", newtext );
 	textview->SetText( newtext );
 	// move the cursor to the right
 	textview->Select( strlen( newtext ), strlen( newtext ) );
