@@ -976,41 +976,18 @@ status_t Win :: ReceiveBroadcast(BMessage * message) {
 
 					int32 tabindex;
 					ThemisTab * tab = FindTabFor(id, &tabindex);
-					if (!tab)
-						break;
-
-					SiteHandler * sh = ((App *)be_app)->GetSiteHandler();
-					if (!sh)
-						break;
-
-					if (sh->EntryValid(id)) {
-						Lock();
-						/* Update the tabs label and icon */
-						tab->SetLabel(sh->GetTitleFor(id));
-						tab->SetFavIcon( sh->GetFavIconFor(id));
-						tabview->DrawTabs();
-
-						if (tabindex == tabview->Selection()) {
-							/*
-							 * I could introduce some checking here, if things have changed at all.
-							 * But imo this is ok for now.
-							 */
-							
-							/* Update the window title */
-							BString wtitle("Themis - ");
-							wtitle.Append(sh->GetTitleFor(id));
-							SetTitle(wtitle.String());
-							
-							/* Update the FavIcon and Text in the NavView */
-							navview->urlview->SetText(sh->GetUrlFor(id));
-							navview->urlview->SetFavIcon(sh->GetFavIconFor(id));
-							
-							/* Update the StatusView */
-							statusview->SetLoadingInfo(
-								sh->GetLoadingProgressFor(id),
-								sh->GetStatusTextFor(id));
+					if (tab) {
+						SiteHandler * sh = ((App *)be_app)->GetSiteHandler();
+						if (sh) {
+							if (sh->EntryValid(id) && tabindex == tabview->Selection()) {
+								Lock();
+								/* Update the StatusView */
+								statusview->SetLoadingInfo(
+									sh->GetLoadingProgressFor(id),
+									sh->GetStatusTextFor(id));
+								Unlock();
+							}
 						}
-						Unlock();
 					}
 					break;
 				}
