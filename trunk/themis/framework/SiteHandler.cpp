@@ -295,12 +295,10 @@ status_t SiteHandler :: ReceiveBroadcast(BMessage* msg) {
 					
 					int64 content_length = 0;
 					int64 bytes_received = 0;
-					int64 size_delta = 0;
 					bool request_done = false;
 					bool secure = false;
 
 					msg->FindInt64("bytes-received", &bytes_received);
-					msg->FindInt64("size-delta", &size_delta);
 					msg->FindBool("request_done", &request_done);
 					msg->FindBool("secure", &secure );
 
