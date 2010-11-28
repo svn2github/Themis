@@ -97,13 +97,13 @@ int8 SiteEntry :: GetLoadingProgress() {
 
 	/* cycle through the list of UrlEntries and calculate the loading progress */
 	uint32 progress = 0;
-	vector<UrlEntry *>::iterator it;
-	for (it = fEntryList.begin(); it != fEntryList.end(); it++) {
-		progress += ((UrlEntry *)*it)->GetLoadingProgress();
+	unsigned int nrOfEntries = fEntryList.size();
+	for (unsigned int i = 0; i < nrOfEntries; i++) {
+		progress += fEntryList[i]->GetLoadingProgress();
 	}
 
-	progress = (uint32)(progress / fEntryList.size());
-	SetLoadingProgress((uint8 )progress);
+	progress = (uint32)(progress / nrOfEntries);
+	SetLoadingProgress((uint8)progress);
 
 	return fLoadingProgress;
 
