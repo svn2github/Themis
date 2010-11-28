@@ -24,7 +24,6 @@ class CachePlug;
 class SiteHandler : public MessageSystem {
 
 	private:
-		SiteEntry * GetEntry(int32 id);
 		CachePlug *	fCachePlug;
 		uint32 fCacheUserToken;
 		BLocker * fLocker;
@@ -34,6 +33,7 @@ class SiteHandler : public MessageSystem {
 		SiteHandler();
 		~SiteHandler();
 
+		SiteEntry * GetEntry(int32 id);
 		void BroadcastFinished();
 		uint32 BroadcastTarget();
 		status_t BroadcastReply(BMessage * msg);

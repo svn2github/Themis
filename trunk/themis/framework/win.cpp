@@ -46,6 +46,8 @@ Project Start Date: October 18, 2000
 #include "ThemisIcons.h"
 #include "ThemisTab.h"
 #include "SiteHandler.h"
+#include "SiteEntry.h"
+#include "UrlEntry.h"
 #include "ThemisUrlView.h"
 #include "ThemisNavView.h"
 #include "ThemisStatusView.h"
@@ -970,22 +972,68 @@ status_t Win :: ReceiveBroadcast(BMessage * message) {
 
 					break;
 				}
-				case SH_WIN_LOADING_PROGRESS: {
-					int32 id = 0;
-					message->FindInt32("site_id", &id);
+				case SH_LOADING_PROGRESS: {
+					int32 site_id = 0;
+					message->FindInt32("site_id", &site_id);
 
-					int32 tabindex;
-					ThemisTab * tab = FindTabFor(id, &tabindex);
-					if (tab) {
-						SiteHandler * sh = ((App *)be_app)->GetSiteHandler();
-						if (sh) {
-							if (sh->EntryValid(id) && tabindex == tabview->Selection()) {
-								Lock();
-								/* Update the StatusView */
-								statusview->SetLoadingInfo(
-									sh->GetLoadingProgressFor(id),
-									sh->GetStatusTextFor(id));
-								Unlock();
+					SiteHandler * sh = ((App *)be_app)->GetSiteHandler();
+					if (sh) {
+						SiteEntry * site_entry = sh->GetEntry(site_id);
+						UrlEntry * url_entry = NULL;
+
+						if (site_entry != NULL) {
+							int32 url_id = 0;
+							message->FindInt32("url_id", &url_id);
+							url_entry = site_entry->GetEntry(url_id);
+
+							if (url_entry != NULL) {
+								int64 content_length = 0;
+								int64 bytes_received = 0;
+								bool request_done = false;
+								bool secure = false;
+			
+								message->FindInt64("bytes-received", &bytes_received);
+								message->FindBool("request_done", &request_done);
+								message->FindBool("secure", &secure );
+			
+								if (message->HasInt64("content-length"))
+									message->FindInt64("content-length", &content_length);
+			
+								site_entry->SetSecureConnection(secure);
+								int8 loadprogress = -1;
+								if (request_done == false) {
+									if (content_length != 0) {
+										loadprogress = (int8)(((float)bytes_received / (float)content_length) * 100);
+									}
+									else { // chunked transfer mode
+										loadprogress = 50;
+									}
+								}
+								else {
+									loadprogress = 100;
+										
+									/*
+									 * As long, as we have no FavIcon loading ready, I do set
+									 * the non-empty document icon here.
+									 */
+									BBitmap * bmp =
+										new BBitmap(BRect(0, 0, 15,15), B_RGB32);
+									memcpy(bmp->Bits(), icon_document_hex, 1024);
+									site_entry->SetFavIcon(bmp);
+									delete bmp;
+								}
+								url_entry->SetLoadingProgress(loadprogress);
+
+								int32 tabindex;
+								ThemisTab * tab = FindTabFor(site_id, &tabindex);
+								if (tab && tabindex == tabview->Selection()) {
+									Lock();
+									/* Update the StatusView */
+									statusview->SetLoadingInfo(
+										sh->GetLoadingProgressFor(site_id),
+										sh->GetStatusTextFor(site_id));
+									Unlock();
+								}
 							}
 						}
 					}
