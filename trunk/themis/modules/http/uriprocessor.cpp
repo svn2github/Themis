@@ -35,7 +35,9 @@ Project Start Date: October 18, 2000
 #include <stdio.h>
 URIProcessor::URIProcessor(void)
 {
-	uri=NULL;
+	uri= new char[2];
+	memset(uri,0,2);
+	strcpy(uri,"/");
 	Set("/");
 }
 URIProcessor::URIProcessor(const char *URI)
@@ -59,13 +61,13 @@ status_t URIProcessor::GetParent(URIProcessor *URI)
 		int32 length=0;
 	if (*(uri+(strlen(uri)-1))=='/')
 	{
-		printf("path 1\n");
 		lastslash=strrchr(uri,'/');
 		char *old=lastslash;
 		(*old)=0x0;
 		lastslash=strrchr(uri,'/');
 		(*old)='/';
-		length=(lastslash-uri)+1;
+		if( lastslash == NULL) length = strlen(uri);
+		else length=(lastslash-uri)+1;
 		char *tempuri=new char[length+1];
 		memset(tempuri,0,length+1);
 		strncpy(tempuri,uri,length);
@@ -76,7 +78,6 @@ status_t URIProcessor::GetParent(URIProcessor *URI)
 	}
 	else
 	{
-		printf("path 2\n");
 		lastslash=strrchr(uri,'/');
 		length=(lastslash-uri)+1;
 		char *tempuri=new char[length+1];
@@ -112,8 +113,9 @@ const char *URIProcessor::Set(const char *URI)
 	uri=new char[length+1];
 	memset(uri,0,length+1);
 	strncpy(uri,URI,length);
-	printf("URI: %s\n",uri);
-	return uri;
+//	printf("URI: %s\n",uri);
+	const char *copy = uri;
+	return copy;
 }
 bool URIProcessor::Contains(const char *URI)
 {
