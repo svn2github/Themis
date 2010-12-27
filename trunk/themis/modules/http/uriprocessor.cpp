@@ -45,6 +45,12 @@ URIProcessor::URIProcessor(const char *URI)
 }
 URIProcessor::~URIProcessor()
 {
+	if( uri != NULL)
+	{
+		memset((char*)uri,0,strlen(uri)+1);
+		delete uri;
+		uri = NULL;
+	}
 }
 status_t URIProcessor::GetParent(URIProcessor *URI)
 {
@@ -53,30 +59,32 @@ status_t URIProcessor::GetParent(URIProcessor *URI)
 		int32 length=0;
 	if (*(uri+(strlen(uri)-1))=='/')
 	{
+		printf("path 1\n");
 		lastslash=strrchr(uri,'/');
 		char *old=lastslash;
 		(*old)=0x0;
 		lastslash=strrchr(uri,'/');
 		(*old)='/';
 		length=(lastslash-uri)+1;
-		const char *tempuri=new char[length+1];
-		memset((char*)tempuri,0,length+1);
-		strncpy((char*)tempuri,uri,length);
+		char *tempuri=new char[length+1];
+		memset(tempuri,0,length+1);
+		strncpy(tempuri,uri,length);
 		URI->Set(tempuri);
+		memset(tempuri,0,length+1);
 		delete tempuri;
-		memset((char*)tempuri,0,length+1);
 		tempuri=NULL;
 	}
 	else
 	{
+		printf("path 2\n");
 		lastslash=strrchr(uri,'/');
 		length=(lastslash-uri)+1;
-		const char *tempuri=new char[length+1];
-		memset((char*)tempuri,0,length+1);
-		strncpy((char*)tempuri,uri,length);
+		char *tempuri=new char[length+1];
+		memset(tempuri,0,length+1);
+		strncpy(tempuri,uri,length);
 		URI->Set(tempuri);
+		memset(tempuri,0,length+1);
 		delete tempuri;
-		memset((char*)tempuri,0,length+1);
 		tempuri=NULL;
 	}
 	return B_OK;
@@ -87,22 +95,23 @@ const char *URIProcessor::Set(const char *URI)
 	
 	if (uri!=NULL)
 	{
-		memset((char*)uri,0,strlen(uri)+1);
+		memset(uri,0,strlen(uri)+1);
 		delete uri;
 		uri=NULL;
 	}
 	if (URI==NULL)
 	{
 		uri=new char[2];
-		strcpy((char*)uri,"/\0");
+		memset(uri,0,2);
+		strcpy(uri,"/");
 		return uri;
 	}
-	if (URI[0]!='/')
-		return NULL;
+//	if (URI[0]!='/')
+//		return NULL;
 	int32 length=strlen(URI);
 	uri=new char[length+1];
-	memset((char*)uri,0,length+1);
-	strcpy((char*)uri,URI);
+	memset(uri,0,length+1);
+	strncpy(uri,URI,length);
 	printf("URI: %s\n",uri);
 	return uri;
 }
@@ -126,7 +135,8 @@ void URIProcessor::operator=(URIProcessor &URI)
 }
 const char *URIProcessor::String(void)
 {
-	return uri;
+	const char *output = uri;
+	return output;
 }
 int32 URIProcessor::Length(void)
 {

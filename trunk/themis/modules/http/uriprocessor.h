@@ -46,7 +46,7 @@ Project Start Date: October 18, 2000
 class URIProcessor
 {
 	private:
-		const char *uri;
+		char *uri;
 	public:
 	URIProcessor(void);
 	URIProcessor(const char *URI);
