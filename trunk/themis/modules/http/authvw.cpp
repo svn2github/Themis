@@ -94,7 +94,7 @@ authwin::authwin(AuthManager *AManager,const char *title,http_request_info_st *r
 	update=upd;
 	realm=rlm;
 	request=req;
-	printf("request: %p\nrequest auth_info: %p\n",request,request->auth_info);
+//	printf("request: %p\nrequest auth_info: %p\n",request,request->auth_info);
 	auth_method=method;
 	AddChild(view);
 	SetDefaultButton(view->ok);
@@ -122,7 +122,7 @@ authwin::~authwin() {
 void authwin::MessageReceived(BMessage *msg) {
 //msg->PrintToStream();
 int32 auth_copy=auth_method;
-printf("authwin: auth method basic? %ld\n",(auth_method&AuthManager::AUTHENTICATION_TYPE_BASIC));
+//printf("authwin: auth method basic? %ld\n",(auth_method&AuthManager::AUTHENTICATION_TYPE_BASIC));
 	switch(msg->what) {
 		case B_QUIT_REQUESTED:
 		{
@@ -150,7 +150,7 @@ printf("authwin: auth method basic? %ld\n",(auth_method&AuthManager::AUTHENTICAT
 						if ((auth_object->SetUser(view->user->Text())!=true) || (auth_object->SetPassword(view->pass->Text())!=true))
 						{
 //							Debug("AuthWin: Failed to update authentication information.\n");
-							printf("AuthWin: Failed to update authentication information.\n");
+//							printf("AuthWin: Failed to update authentication information.\n");
 							BMessenger msgr(NULL,this,NULL);
 							msgr.SendMessage(B_QUIT_REQUESTED);
 							return;
@@ -170,7 +170,7 @@ printf("authwin: auth method basic? %ld\n",(auth_method&AuthManager::AUTHENTICAT
 status_t stat=B_OK;
 			BMessenger msgr(NULL,this,&stat);
 			msgr.SendMessage(B_QUIT_REQUESTED);
-			printf("authwin status: 0x%x\n",(unsigned int)stat);
+//			printf("authwin status: 0x%x\n",(unsigned int)stat);
 		}break;
 		case B_CANCEL: {
 			request->auth_win=NULL;
@@ -183,6 +183,6 @@ status_t stat=B_OK;
 	
 }
 bool authwin::QuitRequested(){
-	printf("authwin QuitRequested\n");
+//	printf("authwin QuitRequested\n");
 	return true;
 }

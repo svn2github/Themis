@@ -176,7 +176,7 @@ status_t AuthManager::GetAuth(http_request_info_st *http_request)
 			realm=new char[length+1];
 			memset((char*)realm,0,length+1);
 			strncpy((char*)realm,start,length);
-			printf("Auth Manager auth code: %ld\n",method);
+//			printf("Auth Manager auth code: %ld\n",method);
 			//if digest, then search for nonce, algorithm,and qop
 			if ((method&AUTHENTICATION_SERVER_AUTH)!=0)
 			{
@@ -205,7 +205,7 @@ status_t AuthManager::AddProxyAuthentication(http_request_info_st *http_request,
 	auth_info_st *proxy_auth=new auth_info_st;
 	if ((auth_method&AUTHENTICATION_TYPE_BASIC)!=0)
 	{
-		printf("Adding basic proxy info to HTTP\n");
+//		printf("Adding basic proxy info to HTTP\n");
 		proxy_auth->auth_object=new AuthTypeBasic(http_request->host,http_request->port,"/",user,pass,realm);
 		proxy_auth->auth_type=auth_method;
 		HTTP->SetProxyAuthInfo(proxy_auth);
@@ -217,7 +217,7 @@ status_t AuthManager::AddProxyAuthentication(http_request_info_st *http_request,
 		}
 	}
 	HTTP->proxy_auth_win=NULL;
-	printf("AddProxyAuthentication done\n");
+//	printf("AddProxyAuthentication done\n");
 	}
 	return B_OK;
 }
@@ -230,7 +230,7 @@ status_t AuthManager::AddAuthentication(http_request_info_st *http_request,const
 		if (auth_mode!=AUTHENTICATION_TYPE_ALL)
 			if (auth_mode!=auth_method)
 				return status;
-		printf("request->auth_info: %p\n",http_request->auth_info);
+//		printf("request->auth_info: %p\n",http_request->auth_info);
 		http_request->auth_win=NULL;
 		if (http_request->auth_info!=NULL)
 		{

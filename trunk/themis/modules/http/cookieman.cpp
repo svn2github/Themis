@@ -101,16 +101,16 @@ int qsort_cookies(const void *Alpha, const void *Beta) {
 
 CookieManager::CookieManager():MessageSystem("Cookie Manager") {
 	MsgSysRegister(this);
-	printf("CookieManager()\n");
+//	printf("CookieManager()\n");
 	CookieSettings=new BMessage();
 	cookie_head=NULL;
 //	lock=new BLocker("cookie manager lock",true);
-	printf("HTTPv4: %p\n",HTTP);
-	printf("AppSettings: %p\n",HTTP->AppSettings);
+//	printf("HTTPv4: %p\n",HTTP);
+//	printf("AppSettings: %p\n",HTTP->AppSettings);
 	if ((HTTP!=NULL) && (HTTP->AppSettings!=NULL))
 		if (HTTP->AppSettings->HasMessage("cookie_settings"))
 			HTTP->AppSettings->FindMessage("cookie_settings",CookieSettings);
-	printf("Checking MIME...\n");
+//	printf("Checking MIME...\n");
 	CheckMIME();
 /*
 At the moment, there is a debate going on within myself that asks whether cookies should
@@ -122,13 +122,13 @@ For the time being, I'm going to load all cookies at start up.
 */
 //	printf("Checking Indicies...\n");
 //	CheckIndicies();
-	printf("Finding cookie directory...\n");
+//	printf("Finding cookie directory...\n");
 	FindCookieDirectory();
 	LoadAllCookies();
 }
 
 CookieManager::~CookieManager() {
-	printf("~CookieManager()\n");
+//	printf("~CookieManager()\n");
 	MsgSysUnregister(this);
 	SaveAllCookies();
 	BAutolock alock(lock);
@@ -144,16 +144,16 @@ CookieManager::~CookieManager() {
 	}
 //	delete lock;
 	delete CookieSettings;
-	printf("cookie mime: %s\n",ThemisCookieFile);
-	printf("shutting down at: %ld\n",time(NULL));
+//	printf("cookie mime: %s\n",ThemisCookieFile);
+//	printf("shutting down at: %ld\n",time(NULL));
 }
 void CookieManager::CheckMIME() {
 	BMimeType mime(ThemisCookieFile);//application/x-Themis-cookie
-	printf("InitCheck: %ld\n",mime.InitCheck());
-	printf("MIME Type valid? %s\n",mime.IsValid()?"yes":"no");
+//	printf("InitCheck: %ld\n",mime.InitCheck());
+//	printf("MIME Type valid? %s\n",mime.IsValid()?"yes":"no");
 	if (!mime.IsInstalled()) {
 		status_t stat=mime.Install();
-		printf("Cookie MIME Type Installed (%s): %ld\n",ThemisCookieFile,stat);
+//		printf("Cookie MIME Type Installed (%s): %ld\n",ThemisCookieFile,stat);
 	}
 	char type[B_MIME_TYPE_LENGTH];
 	mime.GetShortDescription(type);
@@ -428,30 +428,30 @@ void CookieManager::CheckIndicies() {
     if ((vol.KnowsQuery()) && (vol.KnowsAttr()) && (!vol.IsReadOnly())) {
       memset(voln,0,256);
       vol.GetName(voln);
-      printf("Checking %s...\n",voln);
+//      printf("Checking %s...\n",voln);
       d=fs_open_index_dir(vol.Device());
       if (!d) {
-        printf("\tcouldn't open index directory.\n");
+ //       printf("\tcouldn't open index directory.\n");
         continue;
        }
 	  found=false;
       //duplicate and modify the next block as necessary to add more indices
       //begin block
       //Themis:creceivedate 
-      printf("\t\tlooking for \"Themis:creceivedate\" index...");
+//      printf("\t\tlooking for \"Themis:creceivedate\" index...");
       fflush(stdout);
       while((ent=fs_read_index_dir(d)))
        {
         if (strcasecmp(ent->d_name,"Themis:creceivedate")==0)
          {
-          printf("found it.\n");
+ //         printf("found it.\n");
           found=true;
           break;
          }
        }
       if (!found)
        {
-        printf("created it.\n");
+ //       printf("created it.\n");
         fs_create_index(vol.Device(),"Themis:creceivedate",B_INT32_TYPE,0);
        }
       fs_rewind_index_dir(d);
@@ -459,20 +459,20 @@ void CookieManager::CheckIndicies() {
       //end block
       //begin block
       //Themis:domain
-      printf("\t\tlooking for \"Themis:domain\" index...");
+ //     printf("\t\tlooking for \"Themis:domain\" index...");
       fflush(stdout);
       while((ent=fs_read_index_dir(d)))
        {
         if (strcasecmp(ent->d_name,"Themis:domain")==0)
          {
-          printf("found it.\n");
+ //         printf("found it.\n");
           found=true;
           break;
          }
        }
       if (!found)
        {
-        printf("created it.\n");
+//        printf("created it.\n");
         fs_create_index(vol.Device(),"Themis:domain",B_STRING_TYPE,0);
        }
       fs_rewind_index_dir(d);
@@ -480,20 +480,20 @@ void CookieManager::CheckIndicies() {
       //end block
       //begin block
       //Themis:cookiepath
-      printf("\t\tlooking for \"Themis:cookiepath\" index...");
+//      printf("\t\tlooking for \"Themis:cookiepath\" index...");
       fflush(stdout);
       while((ent=fs_read_index_dir(d)))
        {
         if (strcasecmp(ent->d_name,"Themis:cookiepath")==0)
          {
-          printf("found it.\n");
+//          printf("found it.\n");
           found=true;
           break;
          }
        }
       if (!found)
        {
-        printf("created it.\n");
+//        printf("created it.\n");
         fs_create_index(vol.Device(),"Themis:cookiepath",B_STRING_TYPE,0);
        }
       fs_rewind_index_dir(d);
@@ -501,20 +501,20 @@ void CookieManager::CheckIndicies() {
       //end block
       //begin block
       //Themis:cookiename
-      printf("\t\tlooking for \"Themis:cookiename\" index...");
+//      printf("\t\tlooking for \"Themis:cookiename\" index...");
       fflush(stdout);
       while((ent=fs_read_index_dir(d)))
        {
         if (strcasecmp(ent->d_name,"Themis:cookiename")==0)
          {
-          printf("found it.\n");
+//          printf("found it.\n");
           found=true;
           break;
          }
        }
       if (!found)
        {
-        printf("created it.\n");
+//        printf("created it.\n");
         fs_create_index(vol.Device(),"Themis:cookiename",B_STRING_TYPE,0);
        }
       fs_rewind_index_dir(d);
@@ -522,20 +522,20 @@ void CookieManager::CheckIndicies() {
       //end block
       //begin block
       //Themis:cookievalue
-      printf("\t\tlooking for \"Themis:cookievalue\" index...");
+//      printf("\t\tlooking for \"Themis:cookievalue\" index...");
       fflush(stdout);
       while((ent=fs_read_index_dir(d)))
        {
         if (strcasecmp(ent->d_name,"Themis:cookievalue")==0)
          {
-          printf("found it.\n");
+//          printf("found it.\n");
           found=true;
           break;
          }
        }
       if (!found)
        {
-        printf("created it.\n");
+//        printf("created it.\n");
         fs_create_index(vol.Device(),"Themis:cookievalue",B_STRING_TYPE,0);
        }
       fs_rewind_index_dir(d);
@@ -543,20 +543,20 @@ void CookieManager::CheckIndicies() {
       //end block
       //begin block
       //Themis:expiredate
-      printf("\t\tlooking for \"Themis:expiredate\" index...");
+//      printf("\t\tlooking for \"Themis:expiredate\" index...");
       fflush(stdout);
       while((ent=fs_read_index_dir(d)))
        {
         if (strcasecmp(ent->d_name,"Themis:expiredate")==0)
          {
-          printf("found it.\n");
+//          printf("found it.\n");
           found=true;
           break;
          }
        }
       if (!found)
        {
-        printf("created it.\n");
+//        printf("created it.\n");
         fs_create_index(vol.Device(),"Themis:expiredate",B_INT32_TYPE,0);
        }
       fs_rewind_index_dir(d);
@@ -564,20 +564,20 @@ void CookieManager::CheckIndicies() {
       //end block
       //begin block
       //Themis:cookiesecure
-      printf("\t\tlooking for \"Themis:cookiesecure\" index...");
+//      printf("\t\tlooking for \"Themis:cookiesecure\" index...");
       fflush(stdout);
       while((ent=fs_read_index_dir(d)))
        {
         if (strcasecmp(ent->d_name,"Themis:cookiesecure")==0)
          {
-          printf("found it.\n");
+//          printf("found it.\n");
           found=true;
           break;
          }
        }
       if (!found)
        {
-        printf("created it.\n");
+//        printf("created it.\n");
         fs_create_index(vol.Device(),"Themis:cookiesecure",B_BOOL_TYPE,0);
        }
       fs_rewind_index_dir(d);
@@ -1416,8 +1416,8 @@ void CookieManager::ClearExpiredCookies() {
 		while (cur!=NULL) {
 //			printf("Expire %s: current time: %ld\texpire time: %ld\tdifference: %2.2f\n",cur->name,currenttime,cur->expiredate,difftime(cur->expiredate,currenttime));
 			if (cur->expiredate<=currenttime) {
-				printf("The following cookie has expired:\n");
-				PrintCookie(cur);
+//				printf("The following cookie has expired:\n");
+//				PrintCookie(cur);
 				if (cur==cookie_head) {
 					cookie_head=cookie_head->next;
 					BEntry ent(&cur->ref);
@@ -1729,7 +1729,7 @@ void CookieManager::LoadAllCookies() {
 			continue;
 		ent.GetRef(&ref);
 		path.SetTo(&ref);
-		printf("cookie file at: %s\n",path.Path());
+//		printf("cookie file at: %s\n",path.Path());
 		nucookie=new cookie_st;
 		nucookie->ref=ref;
 		if (curcookie==NULL) {
@@ -1752,7 +1752,7 @@ void CookieManager::LoadAllCookies() {
 		
 		count++;
 	}
-	printf("%ld cookie(s) loaded.\n",count);
+//	printf("%ld cookie(s) loaded.\n",count);
 		delete trashdir;
 	}
 	PrintCookies();

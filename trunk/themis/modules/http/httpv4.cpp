@@ -140,7 +140,7 @@ http_request_info_st::~http_request_info_st()
 	if (auth_info!=NULL)
 		delete auth_info;
 	next=NULL;
-	printf("~http_request_info_st end\n");
+//	printf("~http_request_info_st end\n");
 }
 
 
@@ -322,14 +322,14 @@ void HTTPv4::Heartbeat(void)
 				if (build_request_thid!=0)
 					wait_for_thread(build_request_thid,&status);
 				build_request_thid=spawn_thread(BuildRequest_th,"http - build request", B_LOW_PRIORITY,bri);
-				printf("HTTPv4 (Heartbeat):\tbuild request thread id %ld\n",build_request_thid);
+//				printf("HTTPv4 (Heartbeat):\tbuild request thread id %ld\n",build_request_thid);
 				
 				resume_thread(build_request_thid);
 				wait_for_thread(build_request_thid,&status);
 				build_request_thid=0;
-				printf("HTTPv4 (Heartbeat): build request thread completed\n");
+//				printf("HTTPv4 (Heartbeat): build request thread completed\n");
 			}
-			printf("HTTPv4 Heartbeat: No more work.\n");
+//			printf("HTTPv4 Heartbeat: No more work.\n");
 		}
 	thread_info info;
 	status_t status=B_OK;
@@ -339,7 +339,7 @@ void HTTPv4::Heartbeat(void)
 		if (_terminate_==0)
 		{//the thread terminated abnormally... hmmm... restart it!
 			Debug("HTTPv4: Layer manager thread exited abnormally (0x%x); restarting it.\n",status);
-			printf("HTTPv4: Layer manager thread exited abnormally; restarting it.\n");
+//			printf("HTTPv4: Layer manager thread exited abnormally; restarting it.\n");
 			if (request_lock.IsLocked())
 				request_lock.Unlock();
 			
@@ -352,7 +352,7 @@ void HTTPv4::Heartbeat(void)
 }
 void HTTPv4::ResubmitRequest(http_request_info_st *request,const char *alt_url,int32 request_method)
 {
-	printf("Resubmit request: alternate URL: %s\n",alt_url);
+//	printf("Resubmit request: alternate URL: %s\n",alt_url);
 	build_request_st *bri=new build_request_st();
 	bri->redirection_counter=request->redirection_counter;
 	bri->url_id=request->url_id;
@@ -383,7 +383,7 @@ void HTTPv4::ResubmitRequest(http_request_info_st *request,const char *alt_url,i
 				memset((char*)request->url,0,new_url.Length()+1);
 				strcpy((char*)request->url,new_url.String());
 				url=request->url;
-				printf("redirecting to %s\n",url);
+//				printf("redirecting to %s\n",url);
 			}
 			else
 			{
@@ -453,12 +453,12 @@ void HTTPv4::Stop(void)
 	CacheSystem=NULL;
 	if (AppSettings!=NULL)
 	{
-		AppSettings->PrintToStream();
+//		AppSettings->PrintToStream();
 		if (AppSettings->HasMessage("httpv4_settings"))
 			AppSettings->ReplaceMessage("httpv4_settings",HTTPSettings);
 		else
 			AppSettings->AddMessage("httpv4_settings",HTTPSettings);
-		AppSettings->PrintToStream();
+//		AppSettings->PrintToStream();
 	}
 	status_t stat;
 	wait_for_thread(layer_manager_thid,&stat);
@@ -481,22 +481,22 @@ uint32 HTTPv4::ConnectionEstablished(Connection *connection)
 	if (connection->NotifiedConnect())
 		return STATUS_NOTIFICATION_SUCCESSFUL;
 	request_lock.Lock();
-	printf("HTTPv4 Connection established! %p\n",connection);
+//	printf("HTTPv4 Connection established! %p\n",connection);
 	http_request_info_st *current=http_request_list;
 	while(current!=NULL)
 	{
 		if (current->connection==connection)
 		{
-			printf("(ConnectionEstablished) request found %p (%s)\n",current,current->host);
+//			printf("(ConnectionEstablished) request found %p (%s)\n",current,current->host);
 			current->internal_status|=STATUS_CONNECTED_TO_SERVER;
 			if ((current->internal_status&STATUS_REQUEST_SENT_TO_SERVER)==0)
 			{
 				off_t bytes=current->connection->Send((char*)current->request_string.String(),current->request_string.Length());
 				current->internal_status|=STATUS_REQUEST_SENT_TO_SERVER;
-				printf("(ConnectionEstablished) request sent %Ld\n",bytes);
+//				printf("(ConnectionEstablished) request sent %Ld\n",bytes);
 				if (bytes==-1)
 				{
-					printf("(ConnectionEstablished) Error: %s\n",current->connection->ErrorString(current->connection->Error()));
+//					printf("(ConnectionEstablished) Error: %s\n",current->connection->ErrorString(current->connection->Error()));
 				}
 			}
 			break;
@@ -518,18 +518,18 @@ uint32 HTTPv4::ConnectionAlreadyExists(Connection *connection)
 	http_request_info_st *current=http_request_list;
 	while(current!=NULL)
 	{
-		printf("Considering: %p - %p\n",current,current->connection);
+//		printf("Considering: %p - %p\n",current,current->connection);
 		if (current->connection==connection)
 		{
-			printf("(ConnectionAlreadyExists) request found %p (%s)\n",current,current->host);
+//			printf("(ConnectionAlreadyExists) request found %p (%s)\n",current,current->host);
 			current->internal_status|=STATUS_CONNECTED_TO_SERVER;
 			if ((current->internal_status&STATUS_REQUEST_SENT_TO_SERVER)==0)
 			{
 				off_t bytes=current->connection->Send((char*)current->request_string.String(),current->request_string.Length());
-				printf("(ConnectionAlreadyExists) request sent %Ld\n",bytes);
+//				printf("(ConnectionAlreadyExists) request sent %Ld\n",bytes);
 				if (bytes==-1)
 				{
-					printf("[ConnectionAlreadyExists] Error on send attempt; closing current connection, and requesting new one.\n");
+//					printf("[ConnectionAlreadyExists] Error on send attempt; closing current connection, and requesting new one.\n");
 					current->internal_status^=STATUS_CONNECTED_TO_SERVER;
 					current->connection=NULL;
 					tcp_manager->Disconnect(connection);
@@ -541,7 +541,7 @@ uint32 HTTPv4::ConnectionAlreadyExists(Connection *connection)
 		current=current->next;
 	}
 	request_lock.Unlock();
-	printf("HTTPv4::ConnectionAlreadyExists() done %p\n",current);
+//	printf("HTTPv4::ConnectionAlreadyExists() done %p\n",current);
 	return STATUS_NOTIFICATION_SUCCESSFUL;
 }
 
@@ -549,11 +549,11 @@ uint32 HTTPv4::ConnectionTerminated(Connection *connection)
 {
 	if (_terminate_)
 		return STATUS_NOTIFICATION_FAILED;
-	printf("HTTPv4: Disconnected from server %p: %s\n",connection,connection->ErrorString(connection->Error()));
+//	printf("HTTPv4: Disconnected from server %p: %s\n",connection,connection->ErrorString(connection->Error()));
 	BAutolock autolock(&request_lock);
 	if (autolock.IsLocked())
 	{
-		printf("HTTPv4::ConnectionTerminated() lock acquired\n");
+//		printf("HTTPv4::ConnectionTerminated() lock acquired\n");
 		http_request_info_st *current=http_request_list;
 		while(current!=NULL)
 		{
@@ -566,7 +566,7 @@ uint32 HTTPv4::ConnectionTerminated(Connection *connection)
 					{
 						//The original attempt to connect to the server asynchronously failed.
 						//Try again synchronously.
-						printf("HTTPv4: Switching to synchronous socket for host %s\n",current->host);
+//						printf("HTTPv4: Switching to synchronous socket for host %s\n",current->host);
 						//tcp_manager->Disconnect(connection);//DoneWithSession(connection);
 						current->connection->OwnerRelease();
 						current->connection=NULL;
@@ -630,7 +630,7 @@ uint32 HTTPv4::DataIsWaiting(Connection *connection)
 			{
 				if (current->connection==connection)
 				{
-					printf("Data is waiting for %s (s: %ld u: %ld ; %Ld bytes)\n",current->url,current->site_id,current->url_id,current->connection->DataSize());
+//					printf("Data is waiting for %s (s: %ld u: %ld ; %Ld bytes)\n",current->url,current->site_id,current->url_id,current->connection->DataSize());
 					if ((current->internal_status&STATUS_RESPONSE_RECEIVED_FROM_SERVER)==0)
 						current->internal_status|=STATUS_RESPONSE_RECEIVED_FROM_SERVER;
 					if ((current->internal_status&STATUS_RECEIVING_DATA)==0)
@@ -657,7 +657,7 @@ uint32 HTTPv4::ConnectionFailed(Connection *connection)
 {
 	if (_terminate_)
 		return STATUS_NOTIFICATION_FAILED;
-	printf("HTTPv4: Connection failed %p\n",connection);
+//	printf("HTTPv4: Connection failed %p\n",connection);
 	return STATUS_NOTIFICATION_SUCCESSFUL;
 }
 
@@ -699,7 +699,7 @@ status_t HTTPv4::ReceiveBroadcast(BMessage *msg)
 					if (strstr(url,"://")==NULL)
 					{
 						//Great... the url doesn't have a protocol identifier; default to http.
-						printf("HTTPv4: Protocol not specified in URL; defaulting to HTTP.\n");
+//						printf("HTTPv4: Protocol not specified in URL; defaulting to HTTP.\n");
 						char *temp_str=new char[strlen(url)+8];
 						memset(temp_str,0,strlen(url)+8);
 						strcpy(temp_str,"http://");
@@ -722,11 +722,11 @@ status_t HTTPv4::ReceiveBroadcast(BMessage *msg)
 					if (build_request_thid==0)
 					{
 						build_request_thid=spawn_thread(BuildRequest_th,"http - build request", B_LOW_PRIORITY,bri);
-						printf("HTTPv4:\tbuild request thread id %ld\n",build_request_thid);
+//						printf("HTTPv4:\tbuild request thread id %ld\n",build_request_thid);
 						resume_thread(build_request_thid);
 						wait_for_thread(build_request_thid,&status);
 						build_request_thid=0;
-						printf("HTTPv4 (RB): build request thread completed\n");
+//						printf("HTTPv4 (RB): build request thread completed\n");
 					} else {
 						//add it to a queue, and check that periodically in the heartbeat to see if we have anything we need to process.
 						request_queue->AddItem(bri);
@@ -740,7 +740,7 @@ status_t HTTPv4::ReceiveBroadcast(BMessage *msg)
 		}break;
 		case COMMAND_RETRIEVE:
 		{
-		msg->PrintToStream();
+//		msg->PrintToStream();
 			
 
 			switch(msg->what)
@@ -757,7 +757,7 @@ status_t HTTPv4::ReceiveBroadcast(BMessage *msg)
 					if (strstr(url,"://")==NULL)
 					{
 						//Great... the url doesn't have a protocol identifier; default to http.
-						printf("HTTPv4: Protocol not specified in URL; defaulting to HTTP.\n");
+//						printf("HTTPv4: Protocol not specified in URL; defaulting to HTTP.\n");
 						char *temp_str=new char[strlen(url)+8];
 						memset(temp_str,0,strlen(url)+8);
 						strcpy(temp_str,"http://");
@@ -798,11 +798,11 @@ status_t HTTPv4::ReceiveBroadcast(BMessage *msg)
 					if (build_request_thid==0)
 					{
 						build_request_thid=spawn_thread(BuildRequest_th,"http - build request", B_LOW_PRIORITY,bri);
-						printf("HTTPv4:\tbuild request thread id %ld\n",build_request_thid);
+//						printf("HTTPv4:\tbuild request thread id %ld\n",build_request_thid);
 						resume_thread(build_request_thid);
 						wait_for_thread(build_request_thid,&status);
 						build_request_thid=0;
-						printf("HTTPv4 (RB): build request thread completed\n");
+//						printf("HTTPv4 (RB): build request thread completed\n");
 					} else {
 						//add it to a queue, and check that periodically in the heartbeat to see if we have anything we need to process.
 						request_queue->AddItem(bri);
@@ -912,9 +912,9 @@ status_t HTTPv4::ReceiveBroadcast(BMessage *msg)
 
 status_t HTTPv4::BroadcastReply(BMessage *msg)
 {
-	printf("HTTPv4: BroadcastReply()\n\b");
+//	printf("HTTPv4: BroadcastReply()\n\b");
 	
-	msg->PrintToStream();
+//	msg->PrintToStream();
 	int32 command=msg->FindInt32("command");
 	switch (command)
 	{
@@ -924,7 +924,7 @@ status_t HTTPv4::BroadcastReply(BMessage *msg)
 			{
 				case SupportedMIMEType:
 				{
-					printf("Supported MIME Types returned\n");
+//					printf("Supported MIME Types returned\n");
 #warning Rewrite this section if at all possible...
 					BString str;
 					int32 count=0;
@@ -1001,7 +1001,7 @@ void HTTPv4::BuildRequest(build_request_st *bri)
 	//bri = build request info
 	HTTPv4 *http=bri->http;
 //	status_t status=B_ERROR;
-	printf("HTTPv4:\tBuild request for url: %s\n",bri->url);
+//	printf("HTTPv4:\tBuild request for url: %s\n",bri->url);
 	http->request_lock.Lock();
 	http_request_info_st *current_item=NULL,*new_item=new http_request_info_st;
 	http->request_lock.Unlock();
@@ -1013,7 +1013,7 @@ void HTTPv4::BuildRequest(build_request_st *bri)
 	new_item->request_method=bri->request_method;
 	if (http->ParseURL(bri->url,new_item)!=B_OK)
 	{
-		printf("HTTPv4:\tProblem parsing the URL (%s). Abandoning attempt.\n",bri->url);
+//		printf("HTTPv4:\tProblem parsing the URL (%s). Abandoning attempt.\n",bri->url);
 		delete new_item;
 		return;
 	}
@@ -1091,8 +1091,8 @@ void HTTPv4::BuildRequest(build_request_st *bri)
 		}
 	}
 	//check for authentication
-	if (auth_manager->HasAuthInfo(new_item))
-		printf("Authentication info is available\n");
+//	if (auth_manager->HasAuthInfo(new_item))
+//		printf("Authentication info is available\n");
 	if (new_item->auth_info!=NULL)
 	{
 		new_item->request_string<<"Authorization: ";
@@ -1202,7 +1202,7 @@ void HTTPv4::BuildRequest(build_request_st *bri)
 			new_item->request_string<<"Proxy-Connection: close\r\n";
 		}
 	}
-	printf("HTTPv4: Request String\n%s\nHTTPv4: End Request String\n",new_item->request_string.String());
+//	printf("HTTPv4: Request String\n%s\nHTTPv4: End Request String\n",new_item->request_string.String());
 	new_item->internal_status|=STATUS_REQUEST_BUILT;
 	new_item->request_string<<"\r\n";//the final CRLF pair necessary for the request.
 	//add new item to the list...
@@ -1217,7 +1217,7 @@ void HTTPv4::BuildRequest(build_request_st *bri)
 		current_item->next=new_item;
 	}
 	http->request_lock.Unlock();
-	printf("HTTPv4: Build request all done.\n");
+//	printf("HTTPv4: Build request all done.\n");
 //	exit_thread(status);
 }
 status_t HTTPv4::ParseURL(const char *url,http_request_info_st *request)
@@ -1305,7 +1305,7 @@ status_t HTTPv4::ParseURL(const char *url,http_request_info_st *request)
 			char *protocol=new char[1+len];
 			memset(protocol,0,len+1);
 			strncpy(protocol,url,len);
-			printf("HTTPv4: length %ld %s\n",len, protocol);
+//			printf("HTTPv4: length %ld %s\n",len, protocol);
 			if ((len==5) && (strcasecmp(protocol,"https")==0))
 			{
 				request->secure=true;
@@ -1387,7 +1387,7 @@ status_t HTTPv4::ParseURL(const char *url,http_request_info_st *request)
 			}//find beginning of uri
 		}//check protocol information
 		status=B_OK;
-		printf("host: %s\nuri: %s\nport: %u\nsecure: %d\n",request->host,request->uri,request->port,request->secure);
+//		printf("host: %s\nuri: %s\nport: %u\nsecure: %d\n",request->host,request->uri,request->port,request->secure);
 		
 	}
 	return status;
@@ -1460,7 +1460,7 @@ void HTTPv4::layer_manager(HTTPv4 *http)
 					delete current;
 					current=next;
 					http->request_lock.Unlock();
-					printf("HTTPv4: A request was just deleted.\n");
+//					printf("HTTPv4: A request was just deleted.\n");
 					snooze(10000);
 					continue;
 				}
@@ -1481,7 +1481,7 @@ void HTTPv4::layer_manager(HTTPv4 *http)
 					{//Request has been built but server connection hasn't been established begin
 						if (current->connection==NULL)
 						{
-							printf("layer_manager: making connection\n");
+//							printf("layer_manager: making connection\n");
 							const char *host=current->host;
 							uint16 port=current->port;
 							if (http->use_proxy_server)
@@ -1624,7 +1624,7 @@ void HTTPv4::ProcessData(http_request_info_st *request, unsigned char *buffer, i
 				memset((char*)request->http_status_message,0,Length+1);
 				strncpy((char*)request->http_status_message,space2+1,Length);
 			}
-			printf("HTTPv4: Server HTTP Version: %u.%u\nHTTPv4: Status Code: %d\nHTTPv4: Status Message: %s\n",request->http_major_version,request->http_minor_version,request->http_status_code,request->http_status_message);
+//			printf("HTTPv4: Server HTTP Version: %u.%u\nHTTPv4: Status Code: %d\nHTTPv4: Status Message: %s\n",request->http_major_version,request->http_minor_version,request->http_status_code,request->http_status_message);
 		} else
 		{
 			request->header_buffer=(char*)malloc(length+1);
@@ -1714,13 +1714,13 @@ void HTTPv4::ProcessData(http_request_info_st *request, unsigned char *buffer, i
 					request->http_status_message=new char[Length+1];
 					memset((char*)request->http_status_message,0,Length+1);
 					strncpy((char*)request->http_status_message,space2+1,Length);
-					printf("HTTPv4: Server HTTP Version: %u.%u\nHTTPv4: Status Code: %d\nHTTPv4: Status Message: %s\n",request->http_major_version,request->http_minor_version,request->http_status_code,request->http_status_message);
+//					printf("HTTPv4: Server HTTP Version: %u.%u\nHTTPv4: Status Code: %d\nHTTPv4: Status Message: %s\n",request->http_major_version,request->http_minor_version,request->http_status_code,request->http_status_message);
 					data=eol+2;
 				}
 			}
 			char *end_of_header=strstr(data,"\r\n\r\n");
 			bool end_of_headers_present=(end_of_header==NULL)?false:true;
-			printf("the end of the headers was present: %d\n",end_of_headers_present);
+//			printf("the end of the headers was present: %d\n",end_of_headers_present);
 			if (end_of_headers_present)
 			{
 				request->internal_status|=STATUS_HEADERS_COMPLETED;//once this is set, we start processing received data.
@@ -1751,9 +1751,9 @@ void HTTPv4::ProcessData(http_request_info_st *request, unsigned char *buffer, i
 					printf("HTTPv4: Unknown HTTP response code: %d - %s\n",request->http_status_code,request->http_status_message);
 					
 				}
-				printf("header length: %ld\n" ,((end_of_header+4)-(char*)data)+orig_head_len);
-				printf("length received: %ld\n",length);
-				printf("difference: %ld\n",length-((end_of_header+4)-(char*)data)+orig_head_len);
+//				printf("header length: %ld\n" ,((end_of_header+4)-(char*)data)+orig_head_len);
+//				printf("length received: %ld\n",length);
+//				printf("difference: %ld\n",length-((end_of_header+4)-(char*)data)+orig_head_len);
 				ProcessData2(request,(unsigned char*)(end_of_header+4),length-((end_of_header+4)-(char*)data)+orig_head_len);
 			}
 
@@ -1766,7 +1766,7 @@ void HTTPv4::ProcessData(http_request_info_st *request, unsigned char *buffer, i
 			}
 		}		
 	}
-	printf("Exiting ProcessData\n");
+//	printf("Exiting ProcessData\n");
 }
 void HTTPv4::ProcessData2(http_request_info_st *request,unsigned char *buffer, int32 length)
 {
@@ -1823,14 +1823,14 @@ void HTTPv4::ProcessData2(http_request_info_st *request,unsigned char *buffer, i
 	}//not chunked file transfer
 	else
 	{//chunked file transfer
-		printf("============\nChunked Transfer Encoding\nBytes Remaining: %ld\n============\n",length);
+//		printf("============\nChunked Transfer Encoding\nBytes Remaining: %ld\n============\n",length);
 		ProcessChunk(request,buffer,length);
 	}//chunked file transfer
-	printf("Exiting ProcessData2\n");
+//	printf("Exiting ProcessData2\n");
 }
 void HTTPv4::StoreData(http_request_info_st *request,unsigned char *buffer, int32 length)
 {
-	printf("HTTPv4: Store Data: %ld bytes buffer: %p request: %p\n",length,buffer,request);
+//	printf("HTTPv4: Store Data: %ld bytes buffer: %p request: %p\n",length,buffer,request);
 	if ((length>0) && (buffer!=NULL) && (request!=NULL))
 	{
 		BMessage *broadcast=new BMessage(SH_LOADING_PROGRESS);
@@ -1909,9 +1909,9 @@ void HTTPv4::StoreData(http_request_info_st *request,unsigned char *buffer, int3
 					delete headers;
 					request->cache_state|=CACHE_STATE_ATTRIBUTES_UPDATED;
 				}
-				printf("HTTPv4::StoreData() about to write.\n");
+//				printf("HTTPv4::StoreData() about to write.\n");
 				CacheSystem->Write(cache_user_token,request->cache_object_token,dbuffer,dlength);
-				printf("HTTPv4::StoreData() done writing.\n");
+//				printf("HTTPv4::StoreData() done writing.\n");
 	
 			}
 		} else
@@ -1940,22 +1940,22 @@ void HTTPv4::StoreData(http_request_info_st *request,unsigned char *buffer, int3
 				delete headers;
 				request->cache_state|=CACHE_STATE_ATTRIBUTES_UPDATED;
 			}
-			printf("HTTPv4::StoreData() about to write.\n");
+//			printf("HTTPv4::StoreData() about to write.\n");
 			CacheSystem->Write(cache_user_token,request->cache_object_token,dbuffer,dlength);
-			printf("HTTPv4::StoreData() done writing.\n");
+//			printf("HTTPv4::StoreData() done writing.\n");
 		}
-		broadcast->PrintToStream();
+//		broadcast->PrintToStream();
 		Broadcast(MS_TARGET_ALL,broadcast);
-		printf("Broadcast call completed.\n");
+//		printf("Broadcast call completed.\n");
 		delete broadcast;
 		if (compressed)
 			delete dbuffer;
 	}
-	printf("Exiting StoreData()\n");
+//	printf("Exiting StoreData()\n");
 }
 void HTTPv4::ProcessChunk(http_request_info_st *request,unsigned char *buffer, int32 length)
 {
-	printf("ProcessChunk: %ld bytes\n",length);
+//	printf("ProcessChunk: %ld bytes\n",length);
 	if (length<=0)
 		return;
 //	uint32 start_time=0,current_time=0;
@@ -1983,7 +1983,7 @@ void HTTPv4::ProcessChunk(http_request_info_st *request,unsigned char *buffer, i
 		request->temporary_data_size+=length;
 	}
 	ProcessChunkedData(request);
-	printf("End of ProcessChunk\n");
+//	printf("End of ProcessChunk\n");
 }
 void HTTPv4::ProcessChunkedData(http_request_info_st *request)
 {
@@ -2015,7 +2015,7 @@ void HTTPv4::ProcessChunkedData(http_request_info_st *request)
 		request->chunk_size=strtol(temp,&end,16);
 		memset(temp,0,len+1);
 		delete temp;
-		printf("First chunk size: %lu bytes (0x%02lx)\n",request->chunk_size,(uint32)request->chunk_size);
+//		printf("First chunk size: %lu bytes (0x%02lx)\n",request->chunk_size,(uint32)request->chunk_size);
 		temp=NULL;
 		if (request->chunk_size==0)
 		{
@@ -2068,7 +2068,7 @@ void HTTPv4::ProcessChunkedData(http_request_info_st *request)
 				crlf2=strstr(crlf1+2,"\r\n");//find the end of the chunk size line
 				if (crlf2==NULL)
 				{
-					printf("we have the start of a chunk header, but not the whole thing.\n");
+//					printf("we have the start of a chunk header, but not the whole thing.\n");
 					unsigned char *temp2=(unsigned char *)malloc(bytes_remaining);
 					memset(temp2,0,bytes_remaining);
 					memcpy(temp2,crlf1,bytes_remaining);
@@ -2089,14 +2089,14 @@ void HTTPv4::ProcessChunkedData(http_request_info_st *request)
 				request->chunk_size=strtol(temp,&end2,16);
 				memset(temp,0,len+1);
 				delete temp;
-				printf("chunk size: %lu bytes (0x%lx)\n",request->chunk_size,(uint32)request->chunk_size);
+//				printf("chunk size: %lu bytes (0x%lx)\n",request->chunk_size,(uint32)request->chunk_size);
 				bytes_remaining-=(len+4);
 				current_time=real_time_clock();
 				if ((current_time-start_time)>=max_seconds)
 				{
-					printf("HTTPv4: ProcessChunk() ran out of allotted time to process. (%u seconds)\n",max_seconds);
+//					printf("HTTPv4: ProcessChunk() ran out of allotted time to process. (%u seconds)\n",max_seconds);
 					int32 size=(request->temporary_data_buffer+request->temporary_data_size)-(unsigned char*)end;
-					printf("size: %ld\n",size);
+//					printf("size: %ld\n",size);
 					//size should == bytes_remaining
 					unsigned char *temp2=(unsigned char*)malloc(size);
 					memset(temp2,0,size);
@@ -2113,9 +2113,9 @@ void HTTPv4::ProcessChunkedData(http_request_info_st *request)
 				}
 				if (request->chunk_size>bytes_remaining)
 				{
-					printf("Not enough data left in buffer: chunk size %ld - bytes remaining %ld\n",request->chunk_size,bytes_remaining);
+//					printf("Not enough data left in buffer: chunk size %ld - bytes remaining %ld\n",request->chunk_size,bytes_remaining);
 					int32 size=(request->temporary_data_buffer+request->temporary_data_size)-(unsigned char*)end;
-					printf("size: %ld\n",size);
+//					printf("size: %ld\n",size);
 					//size should == bytes_remaining
 					unsigned char *temp2=(unsigned char*)malloc(size);
 					memset(temp2,0,size);
@@ -2133,9 +2133,9 @@ void HTTPv4::ProcessChunkedData(http_request_info_st *request)
 					free(request->temporary_data_buffer);
 					request->temporary_data_buffer=NULL;
 					request->temporary_data_size=0l;
-					printf("Chunk Size==0\n");
+//					printf("Chunk Size==0\n");
 					end=crlf2+2;
-					printf("Remainder: %ld\n",strlen(end));
+//					printf("Remainder: %ld\n",strlen(end));
 					DoneWithRequest(request);
 //					request->connection->OwnerRelease();
 //					request->connection=NULL;
@@ -2158,20 +2158,20 @@ void HTTPv4::ProcessChunkedData(http_request_info_st *request)
 				end=start+request->chunk_size;
 				request->chunk_size=-1;
 			}while((bytes_remaining>0) &&(bytes_remaining>request->chunk_size));
-			printf("bytes remaining: %ld\tchunk size: %ld\n",bytes_remaining,request->chunk_size);
+//			printf("bytes remaining: %ld\tchunk size: %ld\n",bytes_remaining,request->chunk_size);
 		} else
 		{//this chunk isn't big enough to be complete.
-			printf("incomplete chunk\n");
+//			printf("incomplete chunk\n");
 			request->chunk_id=0;
 			return;
 		}
 	} else
 	{
-		printf("Chunk!=0\n");
+//		printf("Chunk!=0\n");
 		end=(char*)request->temporary_data_buffer;
 		if ((request->chunk_size>0) && (request->chunk_size<=request->temporary_data_size))
 		{
-			printf("completing earlier chunk\n");
+//			printf("completing earlier chunk\n");
 			bytes_remaining=request->temporary_data_size-=request->chunk_size;
 			end+=request->chunk_size;
 			if (!Compressed(request))
@@ -2189,9 +2189,9 @@ void HTTPv4::ProcessChunkedData(http_request_info_st *request)
 				{//we seem to have run out of data...
 					//there isn't a CRLF pair at the current position... that means that
 					//we have data here...
-					printf("End data at loop start\n");
-					for (int i=0; i<10; i++)
-						printf("\t%d:\t0x%x\n",i,end[i]);
+//					printf("End data at loop start\n");
+//					for (int i=0; i<10; i++)
+//						printf("\t%d:\t0x%x\n",i,end[i]);
 					unsigned char *temp2=(unsigned char*)malloc(bytes_remaining);
 					memset(temp2,0,bytes_remaining);
 					memcpy(temp2,end,bytes_remaining);
@@ -2205,9 +2205,9 @@ void HTTPv4::ProcessChunkedData(http_request_info_st *request)
 				crlf2=strstr(crlf1+2,"\r\n");//find the end of the chunk size line
 				if (crlf2==NULL)
 				{
-					printf("we have the start of a chunk header, but not the whole thing.\n");
-					for (int i=0; i<10; i++)
-						printf("\t%d:\t0x%x\n",i,crlf1[i]);
+//					printf("we have the start of a chunk header, but not the whole thing.\n");
+//					for (int i=0; i<10; i++)
+//						printf("\t%d:\t0x%x\n",i,crlf1[i]);
 					unsigned char *temp2=(unsigned char *)malloc(bytes_remaining);
 					memset(temp2,0,bytes_remaining);
 					memcpy(temp2,crlf1,bytes_remaining);
@@ -2224,22 +2224,22 @@ void HTTPv4::ProcessChunkedData(http_request_info_st *request)
 				temp=new char[len+1];
 				memset(temp,0,len+1);
 				strncpy(temp,crlf1+2,len);
-				printf("[temp] chunk size: %s (%ld)\n",temp,strlen(temp));
+//				printf("[temp] chunk size: %s (%ld)\n",temp,strlen(temp));
 				end2=NULL;
 				request->chunk_size=strtol(temp,&end2,16);
 				memset(temp,0,len+1);
 				delete temp;
-				printf("chunk size: %ld bytes (0x%lx)\n",request->chunk_size,(uint32)request->chunk_size);
+//				printf("chunk size: %ld bytes (0x%lx)\n",request->chunk_size,(uint32)request->chunk_size);
 				bytes_remaining-=(len+4);
-				printf("bytes remaining: %ld (0x%lx)\n",bytes_remaining,(uint32)bytes_remaining);
+//				printf("bytes remaining: %ld (0x%lx)\n",bytes_remaining,(uint32)bytes_remaining);
 				
 				current_time=real_time_clock();
-				printf("processing time: %ld\n",(current_time-start_time));
+//				printf("processing time: %ld\n",(current_time-start_time));
 				if ((current_time-start_time)>=max_seconds)
 				{
-					printf("HTTPv4: ProcessChunk() ran out of allotted time to process. (%u seconds)\n",max_seconds);
+//					printf("HTTPv4: ProcessChunk() ran out of allotted time to process. (%u seconds)\n",max_seconds);
 					int32 size=(request->temporary_data_buffer+request->temporary_data_size)-(unsigned char*)end;
-					printf("size: %ld\n",size);
+//					printf("size: %ld\n",size);
 					//size should == bytes_remaining
 					unsigned char *temp2=(unsigned char*)malloc(size);
 					memset(temp2,0,size);
@@ -2256,9 +2256,9 @@ void HTTPv4::ProcessChunkedData(http_request_info_st *request)
 				}
 				if (request->chunk_size>bytes_remaining)
 				{
-					printf("Not enough data left in buffer: chunk size %ld - bytes remaining %ld\n",request->chunk_size,bytes_remaining);
+//					printf("Not enough data left in buffer: chunk size %ld - bytes remaining %ld\n",request->chunk_size,bytes_remaining);
 					int32 size=(request->temporary_data_buffer+request->temporary_data_size)-(unsigned char*)end;//bytes_remaining;
-					printf("size: %ld\n",size);
+//					printf("size: %ld\n",size);
 					//size should == bytes_remaining
 					unsigned char *temp2=(unsigned char*)malloc(size);
 					memset(temp2,0,size);
@@ -2276,9 +2276,9 @@ void HTTPv4::ProcessChunkedData(http_request_info_st *request)
 					free(request->temporary_data_buffer);
 					request->temporary_data_buffer=NULL;
 					request->temporary_data_size=0l;
-					printf("Chunk Size==0\n");
+//					printf("Chunk Size==0\n");
 					end=crlf2+2;
-					printf("Remainder: %ld\n",strlen(end));
+//					printf("Remainder: %ld\n",strlen(end));
 					if (((request->internal_status&STATUS_RECEIVING_DATA)==0) &&
 						(request->connection->DataSize()<=0))
 					{
@@ -2302,7 +2302,7 @@ void HTTPv4::ProcessChunkedData(http_request_info_st *request)
 				end=start+request->chunk_size;
 				request->chunk_size=0;
 			}while((bytes_remaining>0) &&(bytes_remaining>request->chunk_size));
-			printf("bytes remaining: %ld\tchunk size: %ld\n",bytes_remaining,request->chunk_size);
+//			printf("bytes remaining: %ld\tchunk size: %ld\n",bytes_remaining,request->chunk_size);
 	}
 	}
 }
@@ -2351,11 +2351,11 @@ void HTTPv4::ProcessHeadersGeneral(http_request_info_st *request, char *buffer, 
 	}while ((start<eoh) && (eol!=NULL));
 	request->header_list=new_list;
 	current=request->header_list;
-	printf("Headers:\n");
+//	printf("Headers:\n");
 	BString temp;//available for anything that might need it.
 	while (current!=NULL)
 	{
-		printf("\t%s:\t%s\n",current->attribute,current->value);
+//		printf("\t%s:\t%s\n",current->attribute,current->value);
 		if (strcasecmp("warning",current->attribute)==0)
 		{
 			BString warning;
@@ -2402,7 +2402,7 @@ void HTTPv4::ProcessHeadersGeneral(http_request_info_st *request, char *buffer, 
 		if (strcasecmp("Content-Length",current->attribute)==0)
 		{
 			request->content_length=atol(current->value);
-			printf("HTTPv4 Expected Content Length: %Ld bytes\n",request->content_length);
+//			printf("HTTPv4 Expected Content Length: %Ld bytes\n",request->content_length);
 		}
 		if ((strcasecmp("Set-cookie",current->attribute)==0) || (strcasecmp("Set-Cookie2",current->attribute)==0))
 		{
@@ -2434,7 +2434,7 @@ void HTTPv4::ProcessHeadersGeneral(http_request_info_st *request, char *buffer, 
 void HTTPv4::ProcessHeaderLevel100(http_request_info_st *request, char *buffer, int32 length)
 {
 	uint8 subcode=request->http_status_code%100;
-	printf("Header Level %d Status Sub-code: %d\n",100,subcode);
+//	printf("Header Level %d Status Sub-code: %d\n",100,subcode);
 	switch(subcode)
 	{
 		case 0://100 Continue
@@ -2450,7 +2450,7 @@ void HTTPv4::ProcessHeaderLevel100(http_request_info_st *request, char *buffer, 
 void HTTPv4::ProcessHeaderLevel200(http_request_info_st *request, char *buffer, int32 length)
 {
 	uint8 subcode=request->http_status_code%100;
-	printf("Header Level %d Status Sub-code: %d\n",200,subcode);
+//	printf("Header Level %d Status Sub-code: %d\n",200,subcode);
 	switch(subcode)
 	{
 		case 0://200 Ok
@@ -2485,7 +2485,7 @@ void HTTPv4::ProcessHeaderLevel200(http_request_info_st *request, char *buffer, 
 void HTTPv4::ProcessHeaderLevel300(http_request_info_st *request, char *buffer, int32 length)
 {
 	uint8 subcode=request->http_status_code%100;
-	printf("Header Level %d Status Sub-code: %d\n",300,subcode);
+//	printf("Header Level %d Status Sub-code: %d\n",300,subcode);
 	switch(subcode)
 	{
 		case 0://300 Multiple Choices
@@ -2498,7 +2498,7 @@ void HTTPv4::ProcessHeaderLevel300(http_request_info_st *request, char *buffer, 
 				ResubmitRequest(request,FindHeader(request,"location"));
 			else
 			{
-				printf("Redirection limit exceeded!\n");
+//				printf("Redirection limit exceeded!\n");
 				Debug("Redirection limit exceeded!\n");
 				DoneWithRequest(request);
 			}
@@ -2512,7 +2512,7 @@ void HTTPv4::ProcessHeaderLevel300(http_request_info_st *request, char *buffer, 
 				ResubmitRequest(request,FindHeader(request,"location"));
 			else
 			{
-				printf("Redirection limit exceeded!\n");
+//				printf("Redirection limit exceeded!\n");
 				Debug("Redirection limit exceeded!\n");
 				DoneWithRequest(request);
 			}
@@ -2553,7 +2553,7 @@ void HTTPv4::ProcessHeaderLevel300(http_request_info_st *request, char *buffer, 
 void HTTPv4::ProcessHeaderLevel400(http_request_info_st *request, char *buffer, int32 length)
 {
 	uint8 subcode=request->http_status_code%100;
-	printf("Header Level %d Status Sub-code: %d\n",400,subcode);
+//	printf("Header Level %d Status Sub-code: %d\n",400,subcode);
 	request->cache_state|=CACHE_STATE_DONT_CACHE;
 	switch(subcode)
 	{
@@ -2589,7 +2589,7 @@ void HTTPv4::ProcessHeaderLevel400(http_request_info_st *request, char *buffer, 
 		{
 			if (proxy_auth_info!=NULL)
 			{
-				printf("HTTPv4: Proxy auth info is invalid.\n");
+//				printf("HTTPv4: Proxy auth info is invalid.\n");
 				SetProxyAuthInfo(NULL);
 			}
 			request->internal_status|=STATUS_WAITING_ON_AUTH_INFO;
@@ -2626,7 +2626,7 @@ void HTTPv4::ProcessHeaderLevel400(http_request_info_st *request, char *buffer, 
 void HTTPv4::ProcessHeaderLevel500(http_request_info_st *request, char *buffer, int32 length)
 {
 	uint8 subcode=request->http_status_code%100;
-	printf("Header Level %d Status Sub-code: %d\n",500,subcode);
+//	printf("Header Level %d Status Sub-code: %d\n",500,subcode);
 	request->cache_state|=CACHE_STATE_DONT_CACHE;
 	switch(subcode)
 	{
@@ -2659,12 +2659,12 @@ void HTTPv4::DoneWithRequest(http_request_info_st *request)
 	if ((request->internal_status&STATUS_DELETE_REQUEST)!=0)
 		return;
 	request_lock.Lock();
-	printf("HTTPv4: DoneWithRequest()\n");
-	printf("Bytes Received: %Ld\n",request->bytes_received);
-	if (request->content_length>0)
-		printf("Expected Content Length: %Ld\n",request->content_length);
-	if (Compressed(request))
-		printf("Data was compressed\n");
+//	printf("HTTPv4: DoneWithRequest()\n");
+//	printf("Bytes Received: %Ld\n",request->bytes_received);
+//	if (request->content_length>0)
+//		printf("Expected Content Length: %Ld\n",request->content_length);
+//	if (Compressed(request))
+//		printf("Data was compressed\n");
 		http_request_info_st *current=http_request_list;
 		while (current!=NULL)
 		{
@@ -2705,7 +2705,7 @@ void HTTPv4::DoneWithRequest(http_request_info_st *request)
 		if (request->cached)
 			broadcast->AddInt32("cache_object_token",request->cache_object_token);
 		broadcast->AddBool("request_done",true);
-		broadcast->PrintToStream();
+//		broadcast->PrintToStream();
 		Broadcast(MS_TARGET_ALL,broadcast);
 		delete broadcast;
 	request_lock.Unlock();
@@ -2748,8 +2748,8 @@ void HTTPv4::SetProxyAuthInfo(auth_info_st *proxy_auth)
 }
 unsigned char *HTTPv4::GUnzip(http_request_info_st *request,unsigned char *buffer, int32 offset,int32 length,int32 *out_length)
 {
-	printf("zlib version: %s\n",zlibVersion());
-	printf("GUnzip: buffer: %p\toffset: %ld\tlength: %ld\n",buffer,offset,length);
+//	printf("zlib version: %s\n",zlibVersion());
+//	printf("GUnzip: buffer: %p\toffset: %ld\tlength: %ld\n",buffer,offset,length);
 	if ((request==NULL)||(buffer==NULL) || (length<=0) || (offset<0))
 		return NULL;
 		{
@@ -2776,9 +2776,9 @@ unsigned char *HTTPv4::GUnzip(http_request_info_st *request,unsigned char *buffe
 			int32 window_bits=47;//15 for normal size, +32 for automatic deflate and gzip header detection.
 			if (init)
 			{
-				printf("initializing zlib library.\n");
+//				printf("initializing zlib library.\n");
 				request->gzip_info->error=inflateInit2(request->gzip_info->stream,window_bits);
-				printf("zlib init status: %ld\n",request->gzip_info->error);
+//				printf("zlib init status: %ld\n",request->gzip_info->error);
 			}
 //			bool good=false;
 //			int32 error=Z_OK;
@@ -2790,7 +2790,7 @@ unsigned char *HTTPv4::GUnzip(http_request_info_st *request,unsigned char *buffe
 //			stream->avail_in=length;
 //			error=Z_OK;
 				bool cont=true;
-				printf("available in: %d\n",request->gzip_info->stream->avail_in);
+//				printf("available in: %d\n",request->gzip_info->stream->avail_in);
 				int32 session_bytes_received=0,start_total=request->gzip_info->stream->total_out;//,current_total=0;
 			while (cont && request->gzip_info->stream->avail_in>0)
 			{
@@ -2807,23 +2807,23 @@ unsigned char *HTTPv4::GUnzip(http_request_info_st *request,unsigned char *buffe
 					request->gzip_info->stream->avail_out=(uncompressed_size-session_bytes_received);
 				}
 				request->gzip_info->error=inflate(request->gzip_info->stream,Z_SYNC_FLUSH);
-				printf("inflate status: %ld - %s\n",request->gzip_info->error,request->gzip_info->stream->msg);
-				printf("total bytes expanded: %ld\n",request->gzip_info->stream->total_out);
+//				printf("inflate status: %ld - %s\n",request->gzip_info->error,request->gzip_info->stream->msg);
+//				printf("total bytes expanded: %ld\n",request->gzip_info->stream->total_out);
 				session_bytes_received=request->gzip_info->stream->total_out-start_total;
-				printf("expanded %ld bytes this session\n",session_bytes_received);
+//				printf("expanded %ld bytes this session\n",session_bytes_received);
 				switch(request->gzip_info->error)
 				{
 					case Z_BUF_ERROR:
 					{
 						int32 offset2=uncompressed_size;
 						uncompressed_size+=(int32)(uncompressed_size*0.10);
-						printf("HTTPv4: [Inflate] Increasing uncompressed buffer size to %ld bytes.\n",uncompressed_size);
+//						printf("HTTPv4: [Inflate] Increasing uncompressed buffer size to %ld bytes.\n",uncompressed_size);
 						uncompressed_buffer=(unsigned char*)realloc(uncompressed_buffer,uncompressed_size+1);
 						memset(uncompressed_buffer+offset2,0,uncompressed_size-offset2+1);
 					}break;
 					case Z_STREAM_END:
 					{
-						printf("decompression successful\n");
+//						printf("decompression successful\n");
 						inflate(request->gzip_info->stream,Z_FINISH);
 						inflateEnd(request->gzip_info->stream);
 						request->size_delta=session_bytes_received;
@@ -2837,7 +2837,7 @@ unsigned char *HTTPv4::GUnzip(http_request_info_st *request,unsigned char *buffe
 						//to the real value.
 						memcpy(&request->content_length,buffer+offset+length-4,4);
 						request->bytes_received=request->gzip_info->stream->total_out;
-						printf("Uncompressed File Size: %Ld/%Ld\n",request->bytes_received,request->content_length);
+//						printf("Uncompressed File Size: %Ld/%Ld\n",request->bytes_received,request->content_length);
 						unsigned char *temp=new unsigned char[*out_length+1];
 						memcpy(temp,uncompressed_buffer,*out_length);
 						memset(uncompressed_buffer,0,uncompressed_size+1);
@@ -2846,44 +2846,44 @@ unsigned char *HTTPv4::GUnzip(http_request_info_st *request,unsigned char *buffe
 						delete request->gzip_info->stream;
 						delete request->gzip_info;
 						request->gzip_info=NULL;
-						printf("uncompressed: %s\n",uncompressed_buffer);
+//						printf("uncompressed: %s\n",uncompressed_buffer);
 						return uncompressed_buffer;
 					}break;
 					case Z_OK:
 					{
-						printf("HTTPv4: [inflate] Z_OK total bytes expanded: %ld\n",request->gzip_info->stream->total_out);
+//						printf("HTTPv4: [inflate] Z_OK total bytes expanded: %ld\n",request->gzip_info->stream->total_out);
 						session_bytes_received=request->gzip_info->stream->total_out-start_total;
 						
 					}break;
 					default:
 					{
-						printf("error %ld: %s\n",request->gzip_info->error,request->gzip_info->stream->msg);
+//						printf("error %ld: %s\n",request->gzip_info->error,request->gzip_info->stream->msg);
 						cont=false;
 					}
 				}
 			}
-			printf("expanded %ld bytes this session\n",session_bytes_received);
+//			printf("expanded %ld bytes this session\n",session_bytes_received);
 			if (cont==true)
 			{
-				printf("available in must have been 0\n");
+//				printf("available in must have been 0\n");
 //				bytes_received=request->gzip_info->stream->total_out-bytes_received;//calculation may be wrong
 						session_bytes_received=request->gzip_info->stream->total_out-start_total;
 				bytes_received=session_bytes_received;//uncompressed_size-request->gzip_info->stream->avail_out;
 //				printf("Bytes received A: %ld\tB: %ld\n",bytes_received,uncompressed_size-request->gzip_info->stream->avail_out);
 				if (bytes_received>0)
 				{
-				printf(">0\n");
-				printf("creating new buffer\n");
+//				printf(">0\n");
+//				printf("creating new buffer\n");
 				unsigned char *temp=new unsigned char [bytes_received+1];
-				printf("nulling buffer\n");
+//				printf("nulling buffer\n");
 				memset(temp,0,bytes_received+1);
-				printf("copying data\n");
+//				printf("copying data\n");
 				memcpy(temp,uncompressed_buffer,bytes_received);
-				printf("nulling old buffer\n");
+//				printf("nulling old buffer\n");
 				memset(uncompressed_buffer,0,uncompressed_size+1);
-				printf("freeing old buffer\n");
+//				printf("freeing old buffer\n");
 				free( uncompressed_buffer);
-				printf("assigning variables\n");
+//				printf("assigning variables\n");
 				uncompressed_buffer=temp;
 				*out_length=bytes_received;
 				request->size_delta=session_bytes_received;
@@ -2893,13 +2893,13 @@ unsigned char *HTTPv4::GUnzip(http_request_info_st *request,unsigned char *buffe
 
 				} else
 				{
-					printf("<=0\n");
+//					printf("<=0\n");
 					*out_length=0;
 				memset(uncompressed_buffer,0,uncompressed_size+1);
 					free(uncompressed_buffer);
 					uncompressed_buffer=NULL;
 				}
-				printf("GUnzip returning\n");
+//				printf("GUnzip returning\n");
 				return uncompressed_buffer;
 			}
 			delete uncompressed_buffer;

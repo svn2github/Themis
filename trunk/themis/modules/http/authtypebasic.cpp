@@ -57,14 +57,14 @@ const char *AuthTypeBasic::Credentials(void)
 		password=Password();
 		strcat((char*)unencrypted_credentials,password);
 		memset((char*)password,0,strlen(password)+1);
-		printf("Unencrypted Credentials: %s\n",unencrypted_credentials);
+//		printf("Unencrypted Credentials: %s\n",unencrypted_credentials);
 		delete password;
 		password=NULL;
 		encrypt_length=base64::expectedencodedsize(unencrypt_length);
 		encrypted_credentials=new char[encrypt_length+1];
 		memset((char*)encrypted_credentials,0,unencrypt_length+1);
 		base64::encode((void*)unencrypted_credentials,unencrypt_length,(void*)encrypted_credentials,&encrypt_length);
-		printf("auth credentials: %s\n",encrypted_credentials);
+//		printf("auth credentials: %s\n",encrypted_credentials);
 		memset((char*)unencrypted_credentials,0,unencrypt_length+1);
 		delete unencrypted_credentials;
 		unencrypted_credentials=NULL;
