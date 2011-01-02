@@ -101,6 +101,8 @@ SiteEntry * SiteHandler :: AddEntry(int32 aSiteID, const char * aUrl) {
 	/* Get an unique ID from the app */
 	int32 urlID = ((App *)be_app)->GetNewID();
 	entry->AddEntry(urlID, aUrl);
+
+	return entry;
 	
 }
 
