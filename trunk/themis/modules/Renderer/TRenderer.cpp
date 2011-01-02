@@ -119,7 +119,7 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 					if (((uint32)(message->FindInt32("type")) & TARGET_CACHE) != 0)
 						cache = NULL;
 					}break;
-				case SH_RENDER_START:{ //New way to do
+				case SH_PARSE_DOC_FINISHED: {
 					void *buffer = NULL;
 					TDocumentPtr document;
 					message->FindPointer("dom_tree_pointer",&buffer);
