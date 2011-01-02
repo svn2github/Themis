@@ -93,6 +93,17 @@ SiteEntry * SiteHandler :: GetEntry(int32 id) {
 
 }
 
+SiteEntry * SiteHandler :: AddEntry(int32 aSiteID, const char * aUrl) {
+
+	SiteEntry * entry = new SiteEntry(aSiteID, aUrl);
+	fEntryList.push_back(entry);
+	
+	/* Get an unique ID from the app */
+	int32 urlID = ((App *)be_app)->GetNewID();
+	entry->AddEntry(urlID, aUrl);
+	
+}
+
 BBitmap * SiteHandler :: GetFavIconFor(int32 id) {
 
 	fLocker->Lock();
@@ -196,59 +207,15 @@ status_t SiteHandler :: ReceiveBroadcast(BMessage* msg) {
 				case SH_LOAD_NEW_PAGE:
 				case SH_RELOAD_PAGE: {
 					/* create a SiteEntry, and add it to fEntryList */
-					int32 site_id;
+					int32 siteID;
 					BString url;
-					msg->FindInt32("site_id", &site_id);
+					msg->FindInt32("site_id", &siteID);
 					msg->FindString("url", &url);
 					
-					printf( "SiteHandler: adding following item: ID[%ld] URL[%s]\n", site_id, url.String() );
+					printf( "SiteHandler: adding following item: ID[%ld] URL[%s]\n", siteID, url.String() );
 					
-					SiteEntry * siteentry = new SiteEntry(site_id, url.String());
-					fEntryList.push_back(siteentry);
-					
-					/*
-					 * GENERAL PROCESSING IDEA:
-					 * 
-					 * The main idea now would be to tell the network, to retrieve the site. When loading is
-					 * finished, the parser would be given the url for parsing. The parser then tells us if
-					 * the document is a single-framed or multi-framed document. According to this info,
-					 * we create the appropriate count of UrlEntry items in the parent SiteEntry.
-					 * Each UrlEntry for the site is then to be loaded from the network system, and loading
-					 * states are reported back accordingly.
-					 * An idea would be, that as soon, an url of the site is retrieved, the parser gets it for
-					 * parsing, and then returns the pointer to the dom tree, which is stored in the appropriate
-					 * UrlEntry for later processing by the Renderer.
-					 * If all URLs for the site are retrieved, we hand over all the dom tree pointers and stuff
-					 * to the Renderer with the SH_RENDER_START broadcast.
-					 * Though it is not said, that we may not even tell the Renderer to render parts ( URLs ) of
-					 * the site in between.
-					 *
-					 * Note: The first retrieve will contain an site_id > 0 and an url_id = 0. This makes it clear
-					 * for the SiteHandler that the response from the network is for the intial URL.
-					 */
-					 
-					/*
-					 * WORKAROUND IDEA:
-					 *
-					 * As we currently can't ask the parser to tell us about the single- and/or multi-framed-ness
-					 * of a site, we just create an UrlEntry and store it in the SiteEntry.
-					 * Then we tell the network to retrieve exactly that site_id/url_id combination.
-					 * This means site_id > 0 and url_id > 0.
-					 */
-					
-					/* Go the workaround way */
-					
-					/* Get an unique ID from the app */
-					int32 url_id = ((App *)be_app)->GetNewID();
-					siteentry->AddEntry(url_id, url.String());
-
-					/*
-					 * TODO
-					 * 
-					 * I was planning to move all urlparsing and handler decision making from the windows
-					 * URL_OPEN/BUTTON_RELOAD switch in here.
-					 */
-
+					SiteEntry * entry = AddEntry(siteID, url.String());
+					UrlEntry * urlEntry = entry->GetEntry(url.String());
 					
 					/*
 					 * Inform the protocol(s) to retrieve the site.
@@ -257,8 +224,8 @@ status_t SiteHandler :: ReceiveBroadcast(BMessage* msg) {
 					
 					BMessage* retrieve = new BMessage(SH_RETRIEVE_START);
 					retrieve->AddInt32("command", COMMAND_RETRIEVE);
-					retrieve->AddInt32("site_id", site_id);
-					retrieve->AddInt32("url_id", url_id);
+					retrieve->AddInt32("site_id", siteID);
+					retrieve->AddInt32("url_id", urlEntry->GetID());
 					retrieve->AddString("url", url.String());
 					if (msg->what ==  SH_RELOAD_PAGE)
 						retrieve->AddBool("reload", true);

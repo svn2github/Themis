@@ -76,10 +76,34 @@ UrlEntry * SiteEntry :: GetEntry(int32 id) {
 	UrlEntry* entry = NULL;
 	
 	// browse through the entry list to find the UrlEntry with the matching id
-	vector<UrlEntry *>::iterator it;
-	for (it = fEntryList.begin(); it != fEntryList.end(); it++) {
+	vector<UrlEntry *>::iterator it = fEntryList.begin();
+	while (it != fEntryList.end() && entry == NULL) {
 		if (((UrlEntry *)*it)->GetID() == id) {
 			entry = *it;
+		}
+		else {
+			it++;
+		}
+	}
+
+	return entry;
+
+}
+
+UrlEntry * SiteEntry :: GetEntry(const char * aUrl) {
+
+	UrlEntry * entry = NULL;
+	BString urlString = aUrl;
+	
+	// browse through the entry list to find the UrlEntry with the matching url
+	vector<UrlEntry *>::iterator it = fEntryList.begin();
+	while (it != fEntryList.end() && entry == NULL) {
+		BString listUrlString = ((UrlEntry *)*it)->GetUrl();
+		if (urlString == listUrlString) {
+			entry = *it;
+		}
+		else {
+			it++;
 		}
 	}
 

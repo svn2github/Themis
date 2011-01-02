@@ -39,6 +39,7 @@ class SiteEntry {
 		bool GetCookiesDisabled();
 		BBitmap * GetFavIcon();
 		UrlEntry * GetEntry(int32 id);
+		UrlEntry * GetEntry(const char * aUrl);
 		int32 GetID();
 		int8 GetLoadingProgress();
 		bool GetSecureConnection();
