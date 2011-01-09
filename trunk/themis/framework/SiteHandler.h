@@ -34,7 +34,7 @@ class SiteHandler : public MessageSystem {
 		~SiteHandler();
 
 		SiteEntry * GetEntry(int32 id);
-		SiteEntry * AddEntry(int32 aSiteID, const char * aUrl);
+		void AddEntry(SiteEntry * aEntry);
 		void BroadcastFinished();
 		uint32 BroadcastTarget();
 		status_t BroadcastReply(BMessage * msg);

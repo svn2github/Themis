@@ -367,17 +367,24 @@ void Win :: MessageReceived(BMessage * msg) {
 				break;
 			
 			uint32 selection = tabview->Selection();
-			int32 site_id = ((App *)be_app)->GetNewID();
+			/* Get an unique ID from the app for the site entry*/
+			int32 siteId = ((App *)be_app)->GetNewID();
+			SiteEntry * siteEntry = new SiteEntry(siteId, url.String());
+			/* Get an unique ID from the app for the url entry */
+			int32 urlId = ((App *)be_app)->GetNewID();
+			UrlEntry * urlEntry = new UrlEntry(urlId, url.String());
+			siteEntry->addEntry(urlEntry);
+			((App *)be_app)->GetSiteHandler()->AddEntry(siteEntry);
 						
 			if (msg->HasInt32("tab_to_open_in")) {
 				int32 tab_index = msg->FindInt32("tab_to_open_in");
-				((ThemisTab *)tabview->TabAt(tab_index))->SetSiteID(site_id);
+				((ThemisTab *)tabview->TabAt(tab_index))->SetSiteID(siteId);
 				// add history entry for tab
 				if (msg->HasBool("no_history_add") == false)
 					((ThemisTab *)tabview->TabAt(tab_index))->GetHistory()->AddEntry(url.String());
 			}
 			else {
-				((ThemisTab *)tabview->TabAt(selection))->SetSiteID(site_id);
+				((ThemisTab *)tabview->TabAt(selection))->SetSiteID(siteId);
 				// add history entry for tab
 				if(msg->HasBool("no_history_add") == false)
 					((ThemisTab *)tabview->TabAt(selection))->GetHistory()->AddEntry(url.String());
@@ -395,19 +402,15 @@ void Win :: MessageReceived(BMessage * msg) {
 			// I don't want to destroy anything working right now. So let's just
 			// get something new in.
 			
-			BMessage * load = NULL;
-			if (msg->what == URL_OPEN)
-				load = new BMessage(SH_LOAD_NEW_PAGE);
-			else
-				load = new BMessage(SH_RELOAD_PAGE);
-			
-			load->AddInt32("command", COMMAND_INFO);
-			load->AddInt32("site_id", site_id);
+			BMessage * load = new BMessage(SH_RETRIEVE_START);
+			load->AddInt32("command", COMMAND_RETRIEVE);
+			load->AddInt32("site_id", siteId);
+			load->AddInt32("url_id", urlId);
 			load->AddString("url", url.String());
+			if (msg->what != URL_OPEN)
+				load->AddBool("reload", true);
 			
-			/* We need to directly trigger the SiteHandler. Yap, bad. */
-			((App *)be_app)->GetSiteHandler()->ReceiveBroadcast(load);
-			
+			Broadcast(MS_TARGET_PROTOCOL, load);
 			delete load;
 
 			/*

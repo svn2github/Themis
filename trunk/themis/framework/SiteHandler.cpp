@@ -93,13 +93,13 @@ SiteEntry * SiteHandler :: GetEntry(int32 id) {
 
 }
 
-SiteEntry * SiteHandler :: AddEntry(int32 aSiteID, const char * aUrl) {
+void SiteHandler :: AddEntry(SiteEntry * aEntry) {
+	
+	fLocker->Lock();
 
-	SiteEntry * entry = new SiteEntry(aSiteID, aUrl);
-	fEntryList.push_back(entry);
-	
-	return entry;
-	
+	fEntryList.push_back(aEntry);
+
+	fLocker->Unlock();
 }
 
 BBitmap * SiteHandler :: GetFavIconFor(int32 id) {
@@ -202,44 +202,7 @@ status_t SiteHandler :: ReceiveBroadcast(BMessage* msg) {
 					}
 					break;					
 				}
-				case SH_LOAD_NEW_PAGE:
-				case SH_RELOAD_PAGE: {
-					/* create a SiteEntry, and add it to fEntryList */
-					int32 siteID;
-					BString url;
-					msg->FindInt32("site_id", &siteID);
-					msg->FindString("url", &url);
-					
-					printf( "SiteHandler: adding following item: ID[%ld] URL[%s]\n", siteID, url.String() );
-					
-					SiteEntry * entry = AddEntry(siteID, url.String());
-					/* Get an unique ID from the app */
-					int32 urlID = ((App *)be_app)->GetNewID();
-					UrlEntry * urlEntry = new UrlEntry(urlID, url.String());
-					entry->addEntry(urlEntry);
-				
-					/*
-					 * Inform the protocol(s) to retrieve the site.
-					 * Remember, this is the workaround way, with an url_id > 0.
-					 */
-					
-					BMessage* retrieve = new BMessage(SH_RETRIEVE_START);
-					retrieve->AddInt32("command", COMMAND_RETRIEVE);
-					retrieve->AddInt32("site_id", siteID);
-					retrieve->AddInt32("url_id", urlID);
-					retrieve->AddString("url", url.String());
-					if (msg->what ==  SH_RELOAD_PAGE)
-						retrieve->AddBool("reload", true);
-						
-					Broadcast(MS_TARGET_PROTOCOL, retrieve);
-					delete retrieve;
-					
-					break;
-				}
 			}
-			break;
-		}
-		case COMMAND_RETRIEVE: {
 			break;
 		}
 	}
