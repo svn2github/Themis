@@ -8,51 +8,36 @@
 // Standard C++ headers
 #include <vector.h>
 
+// Themis headers
+#include "BaseEntry.hpp"
+
 // Namespaces used
 using namespace std;
 
 // Declarations used
-class BString;
 class BBitmap;
 class UrlEntry;
 
-class SiteEntry {
-
-	private:
-		vector<UrlEntry*> fEntryList;
-		int32 fID;
-		int8 fLoadingProgress;
-		BString * fUrl;
-		BString * fTitle;
-		BString * fStatusText;
-		bool fCookiesDisabled;
-		bool fSecureConnection;
-		BBitmap * fFavIcon;
+class SiteEntry : public BaseEntry {
 
 	public:
 		SiteEntry(int32 id,
-				  const char* url);
-	    ~SiteEntry();
+				  const char * url);
 		
-		void AddEntry(int32 id,
-					  const char* url);
 		bool GetCookiesDisabled();
 		BBitmap * GetFavIcon();
-		UrlEntry * GetEntry(int32 id);
-		UrlEntry * GetEntry(const char * aUrl);
-		int32 GetID();
-		int8 GetLoadingProgress();
+		int GetLoadingProgress();
 		bool GetSecureConnection();
 		const char * GetStatusText();
 		const char * GetTitle();
 		const char * GetUrl();
 		void Print();
 		void SetCookiesDisabled(bool value);
-		void SetFavIcon(BBitmap* bmp);
-		void SetLoadingProgress(int8 loadingprogress);
+		void SetFavIcon(BBitmap * bmp);
+		void SetLoadingProgress(int loadingprogress);
 		void SetSecureConnection(bool value);		
-		void SetStatusText(const char* text);
-		void SetTitle(const char* title);
+		void SetStatusText(const char * text);
+		void SetTitle(const char * title);
 									
 };
 

@@ -5,21 +5,28 @@
 // Standard C headers
 #include <stdio.h>
 
+// Standard C++ headers
+#include <string>
+
 // BeOS headers
 #include <String.h>
 
 // Themis headers
 #include "UrlEntry.h"
 
-UrlEntry::UrlEntry(
-	int32 id,
-	const char* url )
-{
+// Namespaces used
+using std::string;
+
+// Constants declared
+const string kUrl = "Url";
+const string kTitle = "Title";
+const string kSecureConnection = "SecureConnection";
+const string kLoadingProgress = "LoadingProgress";
+
+UrlEntry :: UrlEntry(int32 id, const char * url) : BaseEntry(id) {
 	
-	fID = id;
-	fLoadingProgress = -1;
-	
-	fUrl = new BString( url );
+	set(kLoadingProgress, -1);
+	set(kUrl, url);
 	
 	/*
 	 * The page title is set to "loading..." now.
@@ -29,83 +36,63 @@ UrlEntry::UrlEntry(
 	 * I wait for the renderer to finish, which then delivers me
 	 * the page title.
 	 */
-	fTitle = new BString( "loading..." );
+	set(kTitle, "loading...");
 	
-	fSecureConnection = false;
+	set(kSecureConnection, false);
 	
 }
 
-UrlEntry::~UrlEntry()
-{
-	
-	if( fUrl != NULL )
-		delete fUrl;
-	if( fTitle != NULL )
-		delete fTitle;
+int UrlEntry :: GetLoadingProgress() {
+
+	return getInteger(kLoadingProgress);
+
 }
 
-int32
-UrlEntry::GetID()
-{
-	return fID;
+bool UrlEntry :: GetSecureConnection() {
+
+	return getBoolean(kSecureConnection);
+
 }
 
-int8
-UrlEntry::GetLoadingProgress()
-{
-	return fLoadingProgress;
+const char * UrlEntry :: GetTitle() {
+
+	return getString(kTitle).c_str();
+
 }
 
-bool
-UrlEntry::GetSecureConnection()
-{
-	return fSecureConnection;
+const char * UrlEntry :: GetUrl() {
+
+	return getString(kUrl).c_str();
+
 }
 
-const char*
-UrlEntry::GetTitle()
-{
-	return fTitle ? fTitle->String() : "";
-}
+void UrlEntry :: Print() {
 
-const char*
-UrlEntry::GetUrl()
-{
-	return fUrl ? fUrl->String() : "";
-}
-
-void
-UrlEntry::Print()
-{
-	printf( "  URLENTRY: ID[%ld] URL[%s] TITLE[%s]\n", fID, fUrl->String(), fTitle->String() );
+	printf( "  URLENTRY: ID[%ld] URL[%s] TITLE[%s]\n", getId(), getString(kUrl).c_str(), getString(kTitle).c_str());
 	printf( "            LoadingProgess[%d] SecureConnection[%s]\n",
-		fLoadingProgress,
-		fSecureConnection ? "true" : "false" );
+		getInteger(kLoadingProgress),
+		getBoolean(kSecureConnection) ? "true" : "false" );
 
 }
 
-void
-UrlEntry::SetLoadingProgress(
-	int8 loadingprogress )
-{
-	fLoadingProgress = loadingprogress;
+void UrlEntry :: SetLoadingProgress(int loadingprogress) {
+
+	set(kLoadingProgress, loadingprogress);
 	
-	if( fLoadingProgress == 100 )
-	{
-		fTitle->SetTo( fUrl->String() );
+	if (loadingprogress == 100) {
+		set(kTitle, getString(kUrl));
 	}
+
 }
 
-void
-UrlEntry::SetSecureConnection(
-	bool value )
-{
-	fSecureConnection = value;
+void UrlEntry :: SetSecureConnection(bool value) {
+
+	set(kSecureConnection, value);
+
 }
 
-void
-UrlEntry::SetTitle(
-	const char* title )
-{
-	fTitle->SetTo( title );
+void UrlEntry :: SetTitle(const char* title) {
+
+	set(kTitle, title);
+
 }

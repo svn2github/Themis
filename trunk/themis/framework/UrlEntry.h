@@ -5,31 +5,21 @@
 #ifndef URLENTRY_H
 #define URLENTRY_H
 
-// Declarations used
-class BString;
+#include "BaseEntry.hpp"
 
-class UrlEntry {
-
-	private:
-		int32 fID;
-		int8 fLoadingProgress;
-		BString * fUrl;
-		BString * fTitle;
-		bool fSecureConnection;
+class UrlEntry : public BaseEntry {
 
 	public:
 		UrlEntry(int32 id,
-				 const char* url);
-		~UrlEntry();
+				 const char * url);
 
-		int32 GetID();
-		int8 GetLoadingProgress();
+		int GetLoadingProgress();
 		bool GetSecureConnection();
 		const char * GetTitle();
 		
 		const char * GetUrl();
 		void Print();
-		void SetLoadingProgress(int8 loadingprogress);
+		void SetLoadingProgress(int loadingprogress);
 		void SetSecureConnection(bool value);
 		void SetTitle(const char * title);
 									

@@ -117,7 +117,8 @@ COMMONSOURCES= \
 	common/cacheobject.cpp \
 	common/stripwhite.cpp \
 	common/TTextView.cpp \
-	common/BasePrefsView.cpp
+	common/BasePrefsView.cpp \
+	common/BaseEntry.cpp
 #add similar lines for new plugins, libraries, etc.
 HTTPADDONSOURCES= \
 	http/optionshandler.cpp \

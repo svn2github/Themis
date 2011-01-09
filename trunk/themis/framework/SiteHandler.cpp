@@ -83,7 +83,7 @@ SiteEntry * SiteHandler :: GetEntry(int32 id) {
 	
 	vector< SiteEntry* >::iterator it;
 	for (it = fEntryList.begin(); it != fEntryList.end(); it++) {
-		if (((SiteEntry *)*it)->GetID() == id) {
+		if (((SiteEntry *)*it)->getId() == id) {
 			entry = *it;
 		}
 	}
@@ -98,10 +98,6 @@ SiteEntry * SiteHandler :: AddEntry(int32 aSiteID, const char * aUrl) {
 	SiteEntry * entry = new SiteEntry(aSiteID, aUrl);
 	fEntryList.push_back(entry);
 	
-	/* Get an unique ID from the app */
-	int32 urlID = ((App *)be_app)->GetNewID();
-	entry->AddEntry(urlID, aUrl);
-
 	return entry;
 	
 }
@@ -217,8 +213,11 @@ status_t SiteHandler :: ReceiveBroadcast(BMessage* msg) {
 					printf( "SiteHandler: adding following item: ID[%ld] URL[%s]\n", siteID, url.String() );
 					
 					SiteEntry * entry = AddEntry(siteID, url.String());
-					UrlEntry * urlEntry = entry->GetEntry(url.String());
-					
+					/* Get an unique ID from the app */
+					int32 urlID = ((App *)be_app)->GetNewID();
+					UrlEntry * urlEntry = new UrlEntry(urlID, url.String());
+					entry->addEntry(urlEntry);
+				
 					/*
 					 * Inform the protocol(s) to retrieve the site.
 					 * Remember, this is the workaround way, with an url_id > 0.
@@ -227,7 +226,7 @@ status_t SiteHandler :: ReceiveBroadcast(BMessage* msg) {
 					BMessage* retrieve = new BMessage(SH_RETRIEVE_START);
 					retrieve->AddInt32("command", COMMAND_RETRIEVE);
 					retrieve->AddInt32("site_id", siteID);
-					retrieve->AddInt32("url_id", urlEntry->GetID());
+					retrieve->AddInt32("url_id", urlID);
 					retrieve->AddString("url", url.String());
 					if (msg->what ==  SH_RELOAD_PAGE)
 						retrieve->AddBool("reload", true);
@@ -255,7 +254,7 @@ void SiteHandler :: RemoveEntry(int32 id) {
 
 	vector<SiteEntry *>::iterator it;
 	for (it = fEntryList.begin(); it != fEntryList.end(); it++) {
-		if (((SiteEntry *)*it)->GetID() == id) {
+		if (((SiteEntry *)*it)->getId() == id) {
 			SiteEntry * entry = *(it);
 			delete entry;
 			fEntryList.erase(it);

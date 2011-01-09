@@ -984,7 +984,7 @@ status_t Win :: ReceiveBroadcast(BMessage * message) {
 						if (site_entry != NULL) {
 							int32 url_id = 0;
 							message->FindInt32("url_id", &url_id);
-							url_entry = site_entry->GetEntry(url_id);
+							url_entry = (UrlEntry *) site_entry->getEntry(url_id);
 
 							if (url_entry != NULL) {
 								int64 content_length = 0;
