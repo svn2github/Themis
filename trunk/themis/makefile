@@ -117,6 +117,7 @@ COMMONSOURCES= \
 	common/cacheobject.cpp \
 	common/stripwhite.cpp \
 	common/TTextView.cpp \
+	common/prefsman.cpp \
 	common/BasePrefsView.cpp \
 	common/BaseEntry.cpp
 #add similar lines for new plugins, libraries, etc.
