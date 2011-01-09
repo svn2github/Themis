@@ -48,6 +48,11 @@ SiteEntry :: ~SiteEntry() {
 		delete fStatusText;
 	if (fTitle != NULL)
 		delete fTitle;
+	
+	unsigned int size = fEntryList.size();
+	for (unsigned int i = 0; i < size; i++) {
+		delete fEntryList[i];
+	}
 
 }
 
