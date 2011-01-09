@@ -15,14 +15,14 @@ PrefsManager::PrefsManager(const char *PREF_FILENAME, int32 FLAGS)
 	{
 		//BEntry entry();
 		int32 length = strlen(PREF_FILENAME);
-		strncpy((char*)this->pref_filename,PREF_FILENAME,min(length,B_FILE_NAME_LENGTH));
+		strncpy((char*)this->pref_filename,PREF_FILENAME,min_c(length,B_FILE_NAME_LENGTH));
 		BPath settingsFilePath(this->base_dir_entry);
 		settingsFilePath.Append(this->pref_filename,false);
 		BEntry settingsFileEntry(settingsFilePath.Path(),true);
-		printf("Settings File Path: %s\tExists? %s\n",settingsFilePath.Path(),settingsFileEntry.Exists()?"yes":"no");
+//		printf("Settings File Path: %s\tExists? %s\n",settingsFilePath.Path(),settingsFileEntry.Exists()?"yes":"no");
 		status_t error = get_ref_for_path(settingsFilePath.Path(), &this->ref);
 		BPath testPath(&this->ref);
-		printf("Test result: %s\n",testPath.Path());
+		//printf("Test result: %s\n",testPath.Path());
 		if( (FLAGS & PrefsManager::FLAG_CREATE_FILE) != 0 )
 		{
 			this->createPrefsFile(PREF_FILENAME,FLAGS);
@@ -46,7 +46,7 @@ PrefsManager::~PrefsManager()
 void PrefsManager::init(void)
 {
 	this->pref_filename = new char[B_FILE_NAME_LENGTH+1];
-	memset(this->pref_filename,0,B_FILE_NAME_LENGTH+1);
+	memset((char*)this->pref_filename,0,B_FILE_NAME_LENGTH+1);
 	BPath path;
 	if( find_directory(B_USER_SETTINGS_DIRECTORY,&path) == B_OK)
 	{
@@ -89,7 +89,7 @@ status_t PrefsManager::deletePrefsFile()
 BMessage *PrefsManager::loadPrefs(status_t *RESULT)
 {
 	BMessage *prefs = NULL;
-	status_t result = B__OK;
+	status_t result = B_OK;
 	BEntry prefsFileEntry(&this->ref,true);
 	if( prefsFileEntry.Exists() )
 	{
@@ -129,9 +129,9 @@ void PrefsManager::setFilename(const char *FILENAME)
 {
 	if(this->pref_filename != NULL)
 	{
-		memset(this->pref_filename,0,B_FILE_NAME_LENGTH+1);
+		memset((char*)this->pref_filename,0,B_FILE_NAME_LENGTH+1);
 	}
-	strncpy(this->pref_filename,FILENAME,min(strlen(FILENAME),B_FILE_NAME_LENGTH));
+	strncpy((char*)this->pref_filename,FILENAME,min_c(strlen(FILENAME),B_FILE_NAME_LENGTH));
 }
 status_t PrefsManager::renameTo(const char *NEW_FILENAME, bool CLOBBER)
 {

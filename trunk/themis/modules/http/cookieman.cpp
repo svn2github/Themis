@@ -44,11 +44,13 @@ Project Start Date: October 18, 2000
 #include <Entry.h>
 #include <VolumeRoster.h>
 #include <Node.h>
+#include <NodeInfo.h>
 #include <Volume.h>
 #include <kernel/fs_index.h>
 #include <fs_attr.h>
 #include <Query.h>
 #include "commondefs.h"
+#include "prefsman.h"
 #include "httpv4.h"
 #include "date.h"
 #include "uriprocessor.h"
@@ -80,7 +82,12 @@ char *trim(char *target)
 	return NULL;
 }
 #endif
-
+char *attvalue(char *attrib)
+{
+	char *eq = strchr(attrib,'=');
+	if( eq != NULL) eq = (eq+1);
+	return eq;
+}
 int qsort_cookies(const void *Alpha, const void *Beta) {
 	cookie_st **alpha=(cookie_st**)Alpha,**beta=(cookie_st**)Beta;
 	cookie_st *one=*alpha,*two=*beta;
@@ -101,15 +108,19 @@ int qsort_cookies(const void *Alpha, const void *Beta) {
 
 CookieManager::CookieManager():MessageSystem("Cookie Manager") {
 	MsgSysRegister(this);
+	prefMan = new PrefsManager("cookie_settings",PrefsManager::FLAG_CREATE_FILE|PrefsManager::FLAG_REPLACE_FILE);
 //	printf("CookieManager()\n");
-	CookieSettings=new BMessage();
+	CookieSettings = prefMan->loadPrefs();
+	if( CookieSettings == NULL) CookieSettings=new BMessage();
+	if( CookieSettings->HasBool("strict_mode") ) strictMode = CookieSettings->FindBool("strict_mode");
+	else
+	{
+		strictMode = false;
+		CookieSettings->AddBool("strict_mode",strictMode);
+	}
 	cookie_head=NULL;
 //	lock=new BLocker("cookie manager lock",true);
 //	printf("HTTPv4: %p\n",HTTP);
-//	printf("AppSettings: %p\n",HTTP->AppSettings);
-	if ((HTTP!=NULL) && (HTTP->AppSettings!=NULL))
-		if (HTTP->AppSettings->HasMessage("cookie_settings"))
-			HTTP->AppSettings->FindMessage("cookie_settings",CookieSettings);
 //	printf("Checking MIME...\n");
 	CheckMIME();
 /*
@@ -130,6 +141,7 @@ For the time being, I'm going to load all cookies at start up.
 CookieManager::~CookieManager() {
 //	printf("~CookieManager()\n");
 	MsgSysUnregister(this);
+	ClearExpiredCookies();
 	SaveAllCookies();
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
@@ -142,10 +154,12 @@ CookieManager::~CookieManager() {
 			}
 		}
 	}
+	prefMan->savePrefs(CookieSettings);
 //	delete lock;
 	delete CookieSettings;
 //	printf("cookie mime: %s\n",ThemisCookieFile);
 //	printf("shutting down at: %ld\n",time(NULL));
+	delete prefMan;
 }
 void CookieManager::CheckMIME() {
 	BMimeType mime(ThemisCookieFile);//application/x-Themis-cookie
@@ -314,6 +328,27 @@ void CookieManager::CheckMIME() {
 	if ((!found) || (installall)) {
 		attrinf.AddString("attr:name","Themis:cookiesecure");
 		attrinf.AddString("attr:public_name","Secure");
+		attrinf.AddInt32("attr:type",B_BOOL_TYPE);
+		attrinf.AddInt32("attr:width",50);
+		attrinf.AddInt32("attr:alignment",B_ALIGN_CENTER);
+		attrinf.AddBool("attr:public",true);
+		attrinf.AddBool("attr:editable",true);
+		attrinf.AddBool("attr:viewable",true);
+		attrinf.AddBool("attr:extra",false);
+	} else
+		found=false;
+	//Make Themis:httponly a visible attribute
+	for (int32 i=0;i<attrcount;i++) {
+		BString item;
+		attrinf.FindString("attr:name",i,&item);
+		if (item=="Themis:httponly") {
+			found=true;
+			break;
+		}
+	}
+	if ((!found) || (installall)) {
+		attrinf.AddString("attr:name","Themis:httponly");
+		attrinf.AddString("attr:public_name","HTTP Only");
 		attrinf.AddInt32("attr:type",B_BOOL_TYPE);
 		attrinf.AddInt32("attr:width",50);
 		attrinf.AddInt32("attr:alignment",B_ALIGN_CENTER);
@@ -604,9 +639,10 @@ void CookieManager::FindCookieDirectory() {
 					path.SetTo(&cookiedirref);
 					temp=path.Path();
 				} else {
-					HTTP->AppSettings->FindString(kPrefsSettingsFilePath,&temp);
+					HTTP->AppSettings->FindString(kPrefsSettingsDirectory,&temp);
 					temp<<"/cookies";
 				}
+				printf("Cookie Directory: %s\n",temp.String() );
 			BEntry ent;
 			FindCookieDirPoint1:
 			ent.SetTo(temp.String());
@@ -735,13 +771,22 @@ cookie_st **CookieManager::FindCookies(int32 *count,const char *domain, const ch
 }
 int32 CookieManager::SetCookie(const char *header, const char *request_host, const char *request_uri,uint16 port,bool secure)
 {
-//	printf("CookieManager::SetCookie() header info: %s\n",header);
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
+	//printf("CookieManager::SetCookie() header info: %s\n",header);
 	/*
 		Determine how many cookies we might be receiving in this header. The default
 		is 1 as that seems to be the common and simplest case, however RFC 2109 specifies
 		that multiple may be sent separated by commas. Bastards. RFC 2965 doesn't really
 		state whether or not there can be multiple cookies in a Set-Cookie2 header...
 	*/
+	bool reject_cookie = false;
+	URIProcessor *URI = new URIProcessor(request_uri), *parentURI = new URIProcessor(), *pathURI = new URIProcessor();
+	if( request_uri[strlen(request_uri)-1] == '/') parentURI->Set(request_uri);
+	else URI->GetParent(parentURI);
+	const char *a = URI->String(), *b = parentURI->String();
+	//printf("URI/Parent:\n\t%s\n\t%s\n",a,b);
+	//printf("moving on...\n");
 	const char *known_attributes[]=	{
 										"Comment",
 										"CommentURL",
@@ -753,508 +798,395 @@ int32 CookieManager::SetCookie(const char *header, const char *request_host, con
 										"Port",
 										"Secure",//secure and discard don't have values
 										"Discard",
+										"HTTPOnly",
 										NULL
 									};
 	int32 header_length=strlen(header);
 	char *header_copy=new char[header_length+1];
 	memset(header_copy,0,header_length+1);
-	strcpy(header_copy,header);
+	strncpy(header_copy,header,header_length);
 	int32 cookie_count=1;
 	int32 comma_count=0;
 	char *comma=NULL;
 	char *equal=NULL;
-	char *temp=NULL,*temp2=NULL;
+	char *temp=NULL,*temp2=NULL, *nvpairs = NULL;
 	int32 distance=0;
 	int32 counter=0;
+	int32 current_time = real_time_clock();
+	bool abort = false;
 	bool found=false;
-	comma=strchr(header_copy,',');
+	char **cookie_array=NULL;
+	bool has_attributes = false;
+//	comma=strchr(header_copy,',');
 //	printf("comma: %s\n",comma);
-	while (comma!=NULL)
-	{
-//		printf("searching for cookies...\n");
-		comma_count++;
-		if (comma!=NULL)
+	// First, lets deal only with the cookie setting portion. If there are any attributes, they will be after a semicolon, so we're going to deal only with the part before any
+	// present semicolons.
+	char *semicolon = strchr(header_copy,';');
+	if( semicolon != NULL)
+	{// semicolon found, isolate cookie name-value pairs
+		distance = semicolon-header_copy;
+		has_attributes = true;
+	}// semicolon found, isolate cookie name-value pairs
+	else
+	{// no semicolon found, no attributes, so just copy the header portion
+		distance = header_length;
+	}// no semicolon found, no attributes, so just copy the header portion
+	//printf("distance (cookie bytes): %d\n",distance);
+	nvpairs = new char[distance+1];
+	memset(nvpairs,0,distance+1);
+	strncpy(nvpairs,header_copy,distance);
+	//printf("isolated pair(s): %s\n",nvpairs);
+	// Check to see if there are multiple name-value pairs within the nvpairs variable
+	comma = strchr(nvpairs,',');
+	uint32 nvpair_counter = 0;
+	if( comma != NULL)
+	{ // we have at least one comma, check out the rest for nv pairs
+		nvpair_counter = 1;
+		for(int32 i=0; i< (strlen(nvpairs)-1); i++)
+		{// kick it old school
+			if( nvpairs[i] == ',' && strchr((nvpairs+i),'=') != NULL)
+				nvpair_counter++;
+		}// kick it old school
+		printf("name=value pairs: %d\n",nvpair_counter);
+		cookie_array = new char*[nvpair_counter];
+		int32 pair_length = 0;
+		if( nvpair_counter > 1)
 		{
-			//Check to see if there is a attribute-value pair after this comma
-			equal=strchr(comma,'=');
-			if (equal!=NULL)
+			for(uint32 i=0; i<nvpair_counter; i++)
 			{
-				//Ok, there is at least one attribute-value pair after this comma.
-				//Let's copy the data and do some analyzing.
-				distance=equal-(comma+1);
-				temp=new char[distance+1];
-				memset(temp,0,distance+1);
-				strncpy(temp,comma+1,distance);
-				temp2=trim(temp);//strip away extra whitespace
-				delete temp;
-				temp=temp2;//I prefer working with the original temp variable
-				temp2=NULL;
-				//we should now have the attribute part of the attribute-value pair.
-				//either that or we have everything after the day of the week of an
-				//expiration date expression plus semicolon, and the attribute part of
-				//an attribute-value pair.
-//				printf("temp: %s\n",temp);
-				found=false;
-				//Make sure we don't have part of the date stuck in there...
-					int32 length=strlen(temp);
-					found=false;
-					for (int i=0; i<length; i++)
-						if (isspace(temp[i]))
-						{
-							found=true;	
-							break;
-						}
-					if (found)
-					{
-						int32 real_length=0;
-						//we do have white space in the string, probably part of the date.
-						//lets start at the end of the string, and work backwards...
-						for (int32 i=length; i>=0; i--)
-						{
-							if (isspace(temp[i]))
-							{
-								//we found the first white space character, stop moving backwards.
-								real_length=length-i;
-								temp2=new char[real_length+1];
-								memset(temp2,0,real_length+1);
-								strncpy(temp2,temp+i+1,real_length);
-								memset(temp,0,length);
-								delete temp;
-								temp=temp2;
-								temp2=NULL;
-//								printf("New version of temp: %s\n",temp);
-								break;
-							}
-						}
-					}
-				while (known_attributes[counter]!=NULL)
+				if( i == 0)
 				{
-					if (strcasecmp(temp,known_attributes[counter])==0)
-					{
-//						printf("This is a known attribute.\n");
-						found=true;
-						break;
-					}
-					counter++;
+					temp = strtok(nvpairs,",");
 				}
-				if (!found)
+				else
 				{
-					//if there are spaces in the string, then we likely have the date
-					//and part of an attribute string...
-//					printf("This is an excellent cookie attribute candidate: %s\n",temp);
-					cookie_count++;
+					temp = strtok(NULL,",");
+				}
+				if( temp != NULL)
+				{
+					temp2 = trim(temp);
+					pair_length = strlen(temp2);
 					
+					cookie_array[i] = new char[pair_length+1];
+					memset(cookie_array[i],0,pair_length+1);
+					strncpy(cookie_array[i],temp2,pair_length);
+					memset(temp2,0,pair_length+1);
+					delete temp2;
 				}
-				counter=0;
-				delete temp;
-				temp=NULL;
 			}
 		}
-		comma=strchr(comma+1,',');
-	}
-//	printf("estimated cookie count: %ld\n",cookie_count);
-	/*
-		Rinse and repeat: make it count this time.
-	*/
-	char **cookie_array=new char*[cookie_count];
-	cookie_array[0]=header_copy;
-	if (cookie_count>1)
-	{
-	comma=strchr(header_copy,',');
-//	printf("comma: %s\n",comma);
-//	char *start=NULL;
-	int32 offset=0;
-	int32 cookie_count2=1;
-	while (comma!=NULL)
-	{
-		comma_count++;
-		if (comma!=NULL)
+		else
 		{
-			//Check to see if there is a attribute-value pair after this comma
-			equal=strchr(comma,'=');
-			if (equal!=NULL)
+			cookie_array = new char*[1];
+			cookie_array[0] = new char[distance+1];
+			memset(cookie_array[0],0,distance+1);
+			strncpy(cookie_array[0],nvpairs,distance);
+		}
+	} // we have at least one comma, check out the rest for nv pairs
+	else
+	{// we only have the one name-value pair, so fake it for simplicity's sake
+		nvpair_counter = 1;
+		cookie_array = new char*[1];
+		cookie_array[0] = new char[distance+1];
+		memset(cookie_array[0],0,distance+1);
+		strncpy(cookie_array[0],nvpairs,distance);
+	}// we only have the one name-value pair, so fake it for simplicity's sake
+	//for(uint32 i = 0; i < nvpair_counter; i++)
+	//	printf("\t\tcookie pair %d: %s\n",(i+1),cookie_array[i]);
+	// ok, create entries for each name-value pair.
+	cookie_st *default_cookie = new cookie_st;
+	int32 tlen = strlen(parentURI->String());
+	default_cookie->path = new char[tlen+1];
+	memset(default_cookie->path,0,tlen+1);
+	strcpy(default_cookie->path,parentURI->String());
+	default_cookie->datereceived = current_time;
+	tlen = strlen(request_host);
+	default_cookie->domain = new char[tlen+1];
+	memset(default_cookie->domain,0,tlen+1);
+	strncpy(default_cookie->domain,request_host,tlen);
+	if( semicolon != NULL)
+	{ // process the remaining cookie header info
+		int semicolons = 0, segments = 0;
+		char **attributes=NULL;
+		bool loop_first = true;
+		do
+		{
+			if( loop_first ) 
 			{
-				//Ok, there is at least one attribute-value pair after this comma.
-				//Let's copy the data and do some analyzing.
-				offset=equal-header_copy+1;
-				distance=equal-(comma+1);
-				temp=new char[distance+1];
-				memset(temp,0,distance+1);
-				strncpy(temp,comma+1,distance);
-				temp2=trim(temp);//strip away extra whitespace
-				delete temp;
-				temp=temp2;//I prefer working with the original temp variable
-				temp2=NULL;
-				//we should now have the attribute part of the attribute-value pair.
-				//either that or we have everything after the day of the week of an
-				//expiration date expression plus semicolon, and the attribute part of
-				//an attribute-value pair.
-//				printf("temp: %s\n",temp);
-				found=false;
-				//Make sure we don't have part of the date stuck in there...
-				//If it's the date, there will be a semicolon between the comma and equal sign.
-					int32 length=strlen(temp);
-					found=false;
-					if (strchr(temp,';')!=NULL)
-						found=true;
-//					for (int i=0; i<length; i++)
-//						if (temp[i]==';')
-//						{
-//							found=true;	
-//							break;
-//						}
-					if (found)
-					{
-						int32 real_length=0;
-						//we do have a semicolon in the string, we probably have part of the date.
-						//lets start at the end of the string, and work backwards...
-						for (int32 i=length; i>=0; i--)
-						{
-							offset--;
-							if (isspace(temp[i]))
-							{
-								//we found the first white space character, stop moving backwards.
-								offset++;
-								real_length=length-i;
-								temp2=new char[real_length+1];
-								memset(temp2,0,real_length+1);
-								strncpy(temp2,temp+i+1,real_length);
-								memset(temp,0,length);
-								delete temp;
-								temp=temp2;
-								temp2=NULL;
-//								printf("New version of temp: %s\n",temp);
-//								printf("header copy offset: %ld - %s\n",offset,header_copy+offset);
-								break;
-							}
-						}
-					} else
-					{
-						for (int32 i=length; i>=0; i--)
-						{
-							offset--;
-							if (isspace(temp[i]))
-							{
-								offset++;
-//								printf("header copy offset: %ld - %s\n",offset,header_copy+offset);
-								break;
-							}
-						}
-					}
-				while (known_attributes[counter]!=NULL)
-				{
-					if (strcasecmp(temp,known_attributes[counter])==0)
-					{
-//						printf("This is a known attribute.\n");
-						found=true;
-						break;
-					}
-					counter++;
-				}
-				if (!found)
-				{
-					//if there are spaces in the string, then we likely have the date
-					//and part of an attribute string...
-//					printf("This is an excellent cookie attribute candidate: %s\n",temp);
-//								start=
-//					printf("header copy offset: %ld - %s\n",offset,header_copy+offset);
-					cookie_array[cookie_count2]=header_copy+offset;
-					*(header_copy+offset-1)=(char)NULL;
-					cookie_count2++;
-					*comma=(char)NULL;
-				}
-				counter=0;
-				delete temp;
-				temp=NULL;
+				temp = strchr(semicolon+1,';');
+				loop_first = false;
 			}
-		}
-		comma=strchr(comma+1,',');
-	}
-	}
-//	for (int32 i=0; i<cookie_count; i++)
-//		printf("cookie %d:\t%s\n",i+1,cookie_array[i]);
-	/*
-		Now lets start eating those cookies...
-	*/
-	int32 semicolons=0,segments=1;;
-	char *semicolon=NULL;
-	char **attributes=NULL;
-	cookie_st /**current_cookie=cookie_head,*/*new_cookie=NULL,*last_cookie=cookie_head;
-	int32 currenttime=0;
-	while(last_cookie!=NULL)
-	{
-		if (last_cookie->next==NULL)
-			break;
-		last_cookie=last_cookie->next;
-	}
-	for (int32 i=0; i<cookie_count; i++)
-	{
-		/*
-			Count the attributes
-		*/
-		semicolons=0;
-		segments=1;
-		semicolon=strchr(cookie_array[i],';');
-		while (semicolon!=NULL)
+			else if( temp != NULL)
+				temp = strchr(temp+1,';');
+			if( temp != NULL) semicolons++;
+		} while( temp != NULL);
+		segments = semicolons+1;
+		printf("segments: %d\n",segments);
+		attributes = new char *[segments];
+		attributes[0] = trim(strtok(semicolon+1,";"));
+		for( int32 i=1; i<segments; i++)
 		{
-			semicolons++;
-			semicolon=strchr(semicolon+1,';');
+			attributes[i] = trim(strtok(NULL,";"));
 		}
-		segments=semicolons+1;
-		attributes=new char *[segments];
-		if (semicolons>0)
+		for(int32 i = 0; i< segments; i++)
 		{
-			attributes[0]=trim(strtok(cookie_array[i],";"));
-			for (int32 j=1; j<segments; j++)
-				attributes[j]=trim(strtok(NULL,";"));
-		}
-		new_cookie=new cookie_st;
-		currenttime=real_time_clock();
-		new_cookie->datereceived=mktime(localtime(&currenttime));
-		bool saved=false;
-		for (int32 j=0; j<segments; j++)
-		{
-			saved=false;
-//			printf("segments: %s\n",attributes[j]);
-			if (attributes[j]!=NULL)
+			//printf("\t\tcookie attributes: %s\n",attributes[i]);
+			for(int8 kac = 0; kac < 10; kac++)
 			{
-				equal=strchr(attributes[j],'=');
-				if (equal==NULL)
+				if(strncasecmp(attributes[i],known_attributes[kac],min_c(strlen(known_attributes[kac]),strlen(attributes[i]))) == 0)
 				{
-					if (strcasecmp("secure",attributes[j])==0)
-						new_cookie->secure=false;
-					if (strcasecmp("discard",attributes[j])==0)
-						new_cookie->discard=true;
-				} else
-				{
-					int32 alen=equal-attributes[j];
-					int32 vlen=strlen(attributes[j])-(alen+1);
-					if (strncasecmp("expires",attributes[j],min_c(alen,7))==0)
+					//printf("\t\t\tattrib: %s\n",known_attributes[kac]);
+					if( strcasecmp(known_attributes[kac],"path") == 0 ) {
+						pathURI->Set(attvalue(attributes[i]));
+					if( default_cookie->path != NULL)
 					{
-						if (vlen>0)
-						{
-							temp=new char[vlen+1];
-							memset(temp,0,vlen+1);
-							strncpy(temp,equal+1,vlen);
-							Date date(temp);
-							memset(temp,0,vlen+1);
-							delete temp;
-							temp=NULL;
-							new_cookie->expiredate=date.Timestamp();
-//							new_cookie->expiredate=mktime(localtime(&new_cookie->expiredate));
-							new_cookie->maxage=new_cookie->expiredate-currenttime;
-							new_cookie->discard=false;
-						}
-							continue;
+						memset(default_cookie->path,0,strlen(default_cookie->path)+1);
+						delete default_cookie->path;
+						default_cookie->path = NULL;
 					}
-					if (strncasecmp("max-age",attributes[j],min_c(alen,7))==0)
-					{
-						if (vlen>0)
+						if( strictMode)
 						{
-							temp=new char[vlen+1];
-							memset(temp,0,vlen+1);
-							strncpy(temp,equal+1,vlen);
-							new_cookie->maxage=atol(temp);
-							memset(temp,0,vlen+1);
-							delete temp;
-							temp=NULL;
-							new_cookie->expiredate=currenttime+new_cookie->maxage;
-							new_cookie->discard=false;
-						}
-							continue;
-					}
-					if (strncasecmp("version",attributes[j],min_c(alen,7))==0)
-					{
-						if (vlen>0)
-						{
-							temp=new char[vlen+1];
-							memset(temp,0,vlen+1);
-							strncpy(temp,equal+1,vlen);
-							new_cookie->version=atoi(temp);
-							memset(temp,0,vlen+1);
-							delete temp;
-							temp=NULL;
-						}
-							continue;
-					}
-					if (strncasecmp("domain",attributes[j],min_c(alen,6))==0)
-					{
-						if (vlen>0)
-						{
-							new_cookie->domain=new char[vlen+1];
-							memset(new_cookie->domain,0,vlen+1);
-							strncpy(new_cookie->domain,equal+1,vlen);
-						} else
-						{
-							new_cookie->domain=new char[strlen(request_host)+1];
-							memset(new_cookie->domain,0,strlen(request_host)+1);
-							strcpy(new_cookie->domain,request_host);
-						}
-							continue;
-					}
-					if (strncasecmp("path",attributes[j],min_c(alen,4))==0)
-					{
-/*
-	This section should eventually be migrated to utilize the URI processor with code
-	similar to:
-						URIProcessor uri(equal+1);
-						if ((uri.String())[uri.Length()-1]!='/')
-							uri.GetParent(&uri);
-						new_cookie->path=new char[uri.Length()+1];
-						memset(new_cookie->path,0,uri.Length()+1);
-						strcpy(new_cookie->path,uri.String());
-	The catch is that cookie paths are not supposed to end in a '/' unless the path is
-	the root path. There is another instance with similar needs below for path, in case
-	the Set-cookie processing exits with a NULL value for path.
-*/
-						if (vlen>0)
-						{
-							new_cookie->path=new char[vlen+1];
-							memset(new_cookie->path,0,vlen+1);
-							strncpy(new_cookie->path,equal+1,vlen);
-						} else
-						{
-							if (strlen(request_uri)>1)
+								default_cookie->path = new char[pathURI->Length()+1];
+								memset(default_cookie->path,0,pathURI->Length()+1);
+								strncpy(default_cookie->path,pathURI->String(),pathURI->Length());
+							if( pathURI->Contains(parentURI->String()) || parentURI->Contains(pathURI->String()) )
 							{
-								char *last_slash=strrchr(request_uri,'/');
-								int32 len=(last_slash-request_uri);
-								new_cookie->path=new char[len+1];
-								memset(new_cookie->path,0,len+1);
-								strncpy(new_cookie->path,request_uri,len);
-							} else
+								//printf("\t\t\t\tsetting cookie path to %s\n",pathURI->String());
+							}
+							else
 							{
-								new_cookie->path=new char[2];
-								strcpy(new_cookie->path,"/\0");
+									//printf("cookie path isn't parent of request uri and isn't a child of the request uri's parent path; flagging cookie for rejection.\n");
+									reject_cookie = true;
 							}
 						}
-							continue;
-					}
-					if (strncasecmp("comment",attributes[j],min_c(alen,7))==0)
-					{
-						if (vlen>0)
+						else
 						{
-							new_cookie->comment=new char[vlen+1];
-							memset(new_cookie->comment,0,vlen+1);
-							strncpy(new_cookie->comment,equal+1,vlen);
+							default_cookie->path = new char[pathURI->Length()+1];
+							memset(default_cookie->path,0,pathURI->Length()+1);
+							strncpy(default_cookie->path,pathURI->String(),pathURI->Length());
 						}
-							continue;
 					}
-					if (strncasecmp("commenturl",attributes[j],min_c(alen,10))==0)
-					{
-						if (vlen>0)
+					else if( strcasecmp(known_attributes[kac],"expires") == 0) {
+						Date date(attvalue(attributes[i]));
+						default_cookie->expiredate = date.Timestamp();
+						default_cookie->expiredate = mktime(localtime(&default_cookie->expiredate));
+						default_cookie->maxage = default_cookie->expiredate - current_time;
+						default_cookie->session = false;
+						/*
+						if( default_cookie->expiredate < current_time)
 						{
-							new_cookie->commenturl=new char[vlen+1];
-							memset(new_cookie->commenturl,0,vlen+1);
-							strncpy(new_cookie->commenturl,equal+1,vlen);
+							 printf("expiration time has already passed\n");
+							 //default_cookie->discard = true;
 						}
-							continue;
+						*/
 					}
-					if (strncasecmp("port",attributes[j],min_c(alen,4))==0)
-					{
-						if (vlen>0)
+					else if( strcasecmp(known_attributes[kac],"domain") == 0 ) {
+						printf("\t\t\t\tdomain: %s\n",attvalue(attributes[i]));
+						if( default_cookie->domain != NULL)
 						{
-							new_cookie->ports=new char[vlen+1];
-							memset(new_cookie->ports,0,vlen+1);
-							strncpy(new_cookie->ports,equal+1,vlen);
-						} else
-						{
-							new_cookie->ports=new char[8];
-							memset(new_cookie->ports,0,8);
-							sprintf(new_cookie->ports,"\"%u\"",port);
+							memset(default_cookie->domain,0,strlen(default_cookie->domain)+1);
+							delete default_cookie->domain;
+							default_cookie->domain = NULL;
 						}
-							continue;
+						char *d = attvalue(attributes[i]);
+						int32 len = strlen(d);
+						default_cookie->domain = new char[len+1];
+						memset(default_cookie->domain,0,len+1);
+						strncpy(default_cookie->domain,d,len);
 					}
-					/*
-						If it's none of the above attributes, then it has to be the
-						cookie name as set by the URL.
-					*/
-					new_cookie->name=new char[alen+1];
-					new_cookie->value=new char[vlen+1];
-					memset(new_cookie->name,0,alen+1);
-					memset(new_cookie->value,0,vlen+1);
-					strncpy(new_cookie->name,attributes[j],alen);
-					strncpy(new_cookie->value,equal+1,vlen);
+					else if( strcasecmp(known_attributes[kac],"secure") == 0) {
+						default_cookie->secure = true;
+					}
+					else if( strcasecmp(known_attributes[kac],"httponly") == 0 ) {
+						default_cookie->httponly = true;
+					}
+					else if( strcasecmp(known_attributes[kac],"comment") == 0 ) {
+						if( default_cookie->comment != NULL)
+						{
+							memset(default_cookie->comment,0,strlen(default_cookie->comment)+1);
+							delete default_cookie->comment;
+							default_cookie->comment = NULL;
+						}
+						char *comment = attvalue(attributes[i]);
+						int32 len = strlen(comment);
+						default_cookie->comment = new char[len+1];
+						memset(default_cookie->comment,0,len+1);
+						strncpy(default_cookie->comment,comment,len);
+					}
+					else if( strcasecmp(known_attributes[kac],"commenturl") == 0 ) {
+						if( default_cookie->commenturl != NULL)
+						{
+							memset(default_cookie->commenturl,0,strlen(default_cookie->commenturl)+1);
+							delete default_cookie->commenturl;
+							default_cookie->commenturl = NULL;
+						}
+						char *commenturl = attvalue(attributes[i]);
+						int32 len = strlen(commenturl);
+						default_cookie->commenturl = new char[len+1];
+						memset(default_cookie->commenturl,0,len+1);
+						strncpy(default_cookie->commenturl,commenturl,len);
+					}
+					else if( strcasecmp(known_attributes[kac],"max-age") == 0) {
+						default_cookie->session = false;
+						default_cookie->maxage = atol(attvalue(attributes[i]));
+						default_cookie->expiredate = current_time+default_cookie->maxage;
+						if( default_cookie->maxage == 0)
+						{
+							 abort = true;
+							 default_cookie->discard = true;
+						}
+					}
+					else if( strcasecmp(known_attributes[kac],"discard") == 0) {
+						default_cookie->discard = true;
+						default_cookie->session = true;
+					}
+					else if( strcasecmp(known_attributes[kac],"ports") == 0 ) {
+					}
+					else if( strcasecmp(known_attributes[kac],"version") == 0) {
+						default_cookie->version = atoi(attvalue(attributes[i]));
+					}
+					break;
 				}
-				memset(attributes[j],0,strlen(attributes[j])+1);
-				delete attributes[j];
-				attributes[j]=NULL;
 			}
-		}
-		if (new_cookie->domain==NULL)
-		{
-							new_cookie->domain=new char[strlen(request_host)+1];
-							memset(new_cookie->domain,0,strlen(request_host)+1);
-							strcpy(new_cookie->domain,request_host);
-		}
-		if (new_cookie->path==NULL)
-		{
-							if (strlen(request_uri)>1)
-							{
-								char *last_slash=strrchr(request_uri,'/');
-								int32 len=(last_slash-request_uri);
-								new_cookie->path=new char[len+1];
-								memset(new_cookie->path,0,len+1);
-								strncpy(new_cookie->path,request_uri,len);
-							} else
-							{
-								new_cookie->path=new char[2];
-								strcpy(new_cookie->path,"/\0");
-							}
-		}
-		if (new_cookie->expiredate==0)
-			new_cookie->expiredate=currenttime+new_cookie->maxage;
-		/*
-			The DuplicatedCookie check was moved to before the validation check
-			to make sure that any attempt to expire a cookie (by updating the expiration
-			date to an already past date/time) will succeed. The original will then die
-			off on its own. Otherwise, the original would linger until its original
-			expiration date/time passed.
-		*/
-		if (DuplicatedCookie(new_cookie))
-		{
-			cookie_st *original=FindCookie(new_cookie->name,new_cookie->path,new_cookie->domain);
-			original->expiredate=new_cookie->expiredate;
-			original->discard=new_cookie->discard;
-			original->secure=new_cookie->secure;
-			original->version=new_cookie->version;
-			original->maxage=new_cookie->maxage;
-			if (!original->discard)
-			{
-				SaveCookie(original);
-				saved=true;
-			}
-//			printf("Original Cookie Updated\n");
-//			PrintCookie(original);
-			original->maxage=-1;//trigger a validation failure to delete the new copy.
-		}
-		if (!Validate(new_cookie,request_host,request_uri))
-		{
-			delete new_cookie;
-			continue;
-		}
-		if (!saved)
-		{
-			SaveCookie(new_cookie);
-			saved=true;
 		}
 		delete []attributes;
-		if (cookie_head==NULL)
-		{
-			cookie_head=new_cookie;
-			last_cookie=cookie_head;
-			
-		} else
-		{
-			last_cookie->next=new_cookie;
-			last_cookie=last_cookie->next;
-		}
+	} // process the remaining cookie header info
+	cookie_st *new_cookie = NULL,*last_cookie = cookie_head, *original = NULL;
+	char **nvarr = new char*[2];
+	if( last_cookie != NULL)
+	{
+		while( last_cookie->next != NULL)
+			last_cookie = last_cookie->next;
 	}
+	char *buf = NULL,*eq = NULL;
+	for( int32 i=0; i< nvpair_counter; i++)
+	{
+		tlen = strlen(cookie_array[i]);
+		buf = new char[tlen+1];
+		memset(buf,0,tlen+1);
+		strncpy(buf,cookie_array[i],tlen);
+		eq = strchr(buf,'=');
+		tlen = eq-buf;
+		nvarr[0] = strtok(buf,"=");
+		nvarr[1] = strtok(NULL,"=");
+		//printf("name: %s\tvalue: %s\n",nvarr[0],nvarr[1]);
+		new_cookie = new cookie_st(default_cookie);
+		if( nvarr[0] != NULL ) {
+		tlen = strlen(nvarr[0]);
+		new_cookie->name = new char[tlen+1];
+		memset(new_cookie->name,0,tlen+1);
+		strncpy(new_cookie->name,nvarr[0],tlen);
+		}
+		else
+		{
+			new_cookie->name = NULL;
+		}
+		if(nvarr[1] != NULL) {
+		tlen = strlen(nvarr[1]);
+		new_cookie->value = new char[tlen+1];
+		memset(new_cookie->value,0,tlen+1);
+		strncpy(new_cookie->value,nvarr[1],tlen);
+		}
+		else
+		{
+			new_cookie->value = NULL;
+			
+		}
+		delete buf;
+//		delete nvarr[0];
+//		delete nvarr[1];
+		if( DuplicatedCookie(new_cookie) )
+		{
+			original = FindCookie(new_cookie->name,new_cookie->path, new_cookie->domain);
+			printf("found cookie %s, updating value from \"%s\" to \"%s\"\n",new_cookie->name,original->value,new_cookie->value);
+			if( original->secure == new_cookie->secure )
+			{
+				original->discard = new_cookie->discard;
+				original->session = new_cookie->session;
+				original->httponly = new_cookie->httponly;
+				original->expiredate = new_cookie->expiredate;
+				original->maxage = new_cookie->maxage;
+				original->datereceived = new_cookie->datereceived;
+				original->version = new_cookie->version;
+				if( original->value != NULL) {
+					tlen = strlen(original->value);
+					memset(original->value,0,tlen+1);
+					delete original->value;
+					original->value = NULL;
+				}
+				if( new_cookie->value != NULL ) {
+					tlen = strlen(new_cookie->value);
+					original->value = new char[tlen+1];
+					memset(original->value,0,tlen+1);
+					strncpy(original->value,new_cookie->value,tlen);
+				}
+				if( original->comment != NULL)
+				{
+					tlen = strlen(original->comment);
+					memset(original->comment,0,tlen+1);
+					delete original->comment;
+					if(new_cookie->comment != NULL)
+					{
+						tlen = strlen(new_cookie->comment);
+						original->comment = new char[tlen+1];
+						memset(original->comment,0,tlen+1);
+						strncpy(original->comment,new_cookie->comment,tlen);
+					}
+				}
+				if( original->commenturl != NULL)
+				{
+					tlen = strlen(original->commenturl);
+					memset(original->commenturl,0,tlen+1);
+					delete original->commenturl;
+					if(new_cookie->commenturl != NULL)
+					{
+						tlen = strlen(new_cookie->commenturl);
+						original->commenturl = new char[tlen+1];
+						memset(original->commenturl,0,tlen+1);
+						strncpy(original->commenturl,new_cookie->commenturl,tlen);
+					}
+				}
+				SaveCookie(original);
+				delete new_cookie;
+				continue;
+			}
+		}
+		if( Validate(new_cookie,request_host,request_uri) )
+		{
+			//printf("Validation succeeded\n discard? %s\n", (new_cookie->discard ? "yes":"no"));
+			if( new_cookie->discard != true) SaveCookie(new_cookie);
+			if(cookie_head == NULL )
+			{
+				cookie_head = new_cookie;
+				last_cookie = cookie_head;
+			}
+			else
+			{
+				last_cookie->next = new_cookie;
+				last_cookie = last_cookie->next;
+			}
+		}
+		else
+		{
+			 //printf("Validation failed\n");
+			 delete new_cookie;
+		}
+		//PrintCookie(new_cookie);
+		//delete new_cookie;
+	}
+	delete default_cookie;
+	delete []nvarr;
 	delete []cookie_array;
 	cookie_array=NULL;
 	memset(header_copy,0,header_length+1);
 	delete header_copy;
 	header_copy=NULL;
+}
+	//ClearExpiredCookies();
 	return B_OK;
+}
+void CookieManager::ProcessAttributes(char **attributes, cookie_st *cookie, const char *request_host, const char *request_uri)
+{
 }
 cookie_st *CookieManager::FindCookie(const char *name,const char *path,const char *domain)
 {
@@ -1284,7 +1216,7 @@ bool CookieManager::DuplicatedCookie(cookie_st *cookie)
 		if (
 				strcmp(cookie->name,current->name)==0 &&
 				strcmp(cookie->path,current->path)==0 &&
-				strcasecmp(cookie->domain,current->domain)==0
+				strcasecmp(cookie->domain,current->domain)==0 && cookie->secure == current->secure
 			)
 		{
 			found=true;
@@ -1415,13 +1347,14 @@ void CookieManager::ClearExpiredCookies() {
 		cookie_st *cur=cookie_head, *last=NULL;
 		while (cur!=NULL) {
 //			printf("Expire %s: current time: %ld\texpire time: %ld\tdifference: %2.2f\n",cur->name,currenttime,cur->expiredate,difftime(cur->expiredate,currenttime));
-			if (cur->expiredate<=currenttime) {
+			if (cur->session == false && cur->discard == false && cur->expiredate<=currenttime) {
 //				printf("The following cookie has expired:\n");
 //				PrintCookie(cur);
 				if (cur==cookie_head) {
+					printf("ClearExpiredCookies line 1764: cur %p\n",cur);
 					cookie_head=cookie_head->next;
 					BEntry ent(&cur->ref);
-					if (ent.Exists())
+					if (ent.InitCheck() == B_OK && ent.Exists())
 						ent.Remove();
 					delete cur;
 					last=cur=cookie_head;
@@ -1463,6 +1396,7 @@ void CookieManager::PrintCookie(cookie_st *cookie) {
 		printf("\tName:\t%s\n\tValue:\t%s\n",cookie->name,cookie->value);
 		printf("\tExpiration Date:\t%s\n\tMax-Age:\t%ld\n",ctime(&cookie->expiredate),cookie->maxage);
 		printf("\tDate Received:\t%s\n",ctime(&cookie->datereceived));
+		printf("\tSession Cookie:\t%s\n",(cookie->session?"yes":"no"));
 		printf("\tDiscard On Close:\t%s\n",cookie->discard?"yes":"no");
 		printf("\tRequires Secure Connection:\t%s\n",cookie->secure?"yes":"no");
 		printf("\tVersion:\t%d\n",cookie->version);
@@ -1504,7 +1438,7 @@ char *CookieManager::stristr(const char *str1, const char *str2) {
 	return NULL;
 }
 bool CookieManager::Validate(cookie_st *cookie, const char *request_host, const char *request_uri) {
-	PrintCookie(cookie);
+	//PrintCookie(cookie);
 	BAutolock alock(lock);
 	bool valid=false;
 	if (alock.IsLocked()) {
@@ -1512,10 +1446,15 @@ bool CookieManager::Validate(cookie_st *cookie, const char *request_host, const 
 		time_t currenttime=time(NULL);
 		currenttime=mktime(localtime(&currenttime));
 //		printf("expiredate: %ld\ncurrent time: %ld\n",cookie->expiredate, currenttime);
+		if( cookie->discard == false && cookie->session == false )
+		{
 		if (cookie->expiredate<=currenttime)
 			return ValidateFail("Cookie has already expired.");
 		if ((cookie->maxage+cookie->datereceived)<=currenttime)
 			return ValidateFail("Cookie has already expired.");
+		}
+		else if( cookie->discard ) printf("Cookie is marked for discarding.\n");
+		else if( cookie->session ) printf("Cookie is a session cookie.\n");
 		if (cookie->domain==NULL)
 			return ValidateFail("Cookie domain is NULL.");
 		else {
@@ -1540,7 +1479,7 @@ With this in mind, I'm making this possibility available in code here.
 						dots++;
 				}
 				if (dots<2)
-					return ValidateFail("There domain contained no embedded dots. (4.3.2:2)");
+					return ValidateFail("Their domain contained no embedded dots. (4.3.2:2)");
 				if (strlen(cookie->domain)>strlen(request_host)) {
 					return ValidateFail("Cookie domain is longer than request host's domain.");
 				}
@@ -1632,6 +1571,8 @@ status_t CookieManager::LoadCookie(cookie_st *cookie) {
 				case B_BOOL_TYPE:{
 					if (strcasecmp(attname,"Themis:cookiesecure")==0)
 						node.ReadAttr("Themis:cookiesecure",B_BOOL_TYPE,0,&cookie->secure,ai.size);
+						if(strcasecmp(attname,"Themis:httponly") == 0 )
+						node.ReadAttr("Themis:httponly",B_BOOL_TYPE,0,&cookie->httponly,ai.size);
 				}break;
 			}
 			delete data;
@@ -1642,28 +1583,35 @@ status_t CookieManager::LoadCookie(cookie_st *cookie) {
 		if ((cookie->datereceived!=0) && (cookie->expiredate!=0)) {
 			cookie->maxage=cookie->expiredate-cookie->datereceived;
 		}
-		
+	//PrintCookie(cookie);	
 	return B_OK;
 }
 
 status_t CookieManager::SaveCookie(cookie_st *cookie) {
 	if (cookie==NULL)
 		return B_ERROR;
-	if (cookie->discard)
+	if (cookie->discard || cookie->session)
 		return B_NO_ERROR;
 	BEntry ent(&cookie->ref,true);
 	if (ent.InitCheck()==B_OK) {
 		SaveCookiePoint1:
+		BPath testPath;
+		ent.GetPath(&testPath);
+		//printf("Saving cookie to: %s\n",testPath.Path());
 		BFile file(&ent,B_CREATE_FILE|B_ERASE_FILE|B_WRITE_ONLY);
+		BNodeInfo nodeInfo(&file);
+		nodeInfo.SetType(ThemisCookieFile);
+		nodeInfo.SetTo(NULL);
 		file.Unset();
 		BNode node(&cookie->ref);
 		node.Lock();
-		char *type=new char[strlen(ThemisCookieFile)+1];
-		memset(type,0,strlen(ThemisCookieFile)+1);
-		strcpy(type,ThemisCookieFile);
-		node.WriteAttr("BEOS:TYPE",B_STRING_TYPE,0,type,strlen(ThemisCookieFile)+1);
-		delete type;
+		//char *type=new char[strlen(ThemisCookieFile)+1];
+		//memset(type,0,strlen(ThemisCookieFile)+1);
+		//strcpy(type,ThemisCookieFile);
+		//node.WriteAttr("BEOS:TYPE",B_STRING_TYPE,0,type,strlen(ThemisCookieFile)+1);
+		//delete type;
 		node.WriteAttr("Themis:cookiesecure",B_BOOL_TYPE,0,&cookie->secure,sizeof(cookie->secure));
+		node.WriteAttr("Themis:httponly",B_BOOL_TYPE,0,&cookie->httponly,sizeof(cookie->httponly));
 		node.WriteAttr("Themis:creceivedate",B_INT32_TYPE,0,&cookie->datereceived,sizeof(cookie->datereceived));
 		node.WriteAttr("Themis:expiredate",B_INT32_TYPE,0,&cookie->expiredate,sizeof(cookie->expiredate));
 		if (cookie->domain!=NULL)
@@ -1674,6 +1622,11 @@ status_t CookieManager::SaveCookie(cookie_st *cookie) {
 			node.WriteAttr("Themis:cookiename",B_STRING_TYPE,0,cookie->name,strlen(cookie->name)+1);
 		if (cookie->value!=NULL)
 			node.WriteAttr("Themis:cookievalue",B_STRING_TYPE,0,cookie->value,strlen(cookie->value)+1);
+		else 
+		{
+			status_t res = node.RemoveAttr("Themis:cookievalue");
+			printf("removal of cookievalue attribute (null cookie value) successful? %s\n", (res == B_OK ? "yes":"no"));
+		}
 		if (cookie->version==1)
 			if (cookie->ports!=NULL)
 				node.WriteAttr("Themis:cookieports",B_STRING_TYPE,0,cookie->ports,strlen(cookie->ports)+1);
@@ -1691,6 +1644,7 @@ status_t CookieManager::SaveCookie(cookie_st *cookie) {
 		path.Append(fname.String());
 		ent.SetTo(path.Path());
 		ent.GetRef(&cookie->ref);
+		printf("Cookie will be saved to: %s\n",path.Path());
 		goto SaveCookiePoint1;
 		
 	}
@@ -1699,8 +1653,59 @@ status_t CookieManager::SaveCookie(cookie_st *cookie) {
 }
 
 void CookieManager::LoadAllCookies() {
+	uint32 count = 0;
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
+		entry_ref cookiedirref,current_ref;
+		
+		if (CookieSettings->FindRef("cookie_ref",&cookiedirref)==B_OK) {
+			BDirectory *dir = new BDirectory(&cookiedirref);
+			BPath path;
+			BNode node;
+			BNodeInfo nodeinfo;
+			char mime[B_MIME_TYPE_LENGTH+1];
+			cookie_st *curcookie=cookie_head;
+			cookie_st *nucookie=NULL;
+			if( curcookie != NULL)
+			{
+				//This function should only get called at initialization; if there are already cookies loaded, remove them...
+				while( cookie_head != NULL)
+				{
+					curcookie = cookie_head->next;
+					delete cookie_head;
+					cookie_head = curcookie;
+				}
+			}
+			while( dir->GetNextRef(&current_ref) == B_OK) {
+				path.SetTo(&current_ref);
+				//printf("Looking at: %s\n",path.Path());
+				node.SetTo(&current_ref);
+				nodeinfo.SetTo(&node);
+				memset(mime,0,B_MIME_TYPE_LENGTH+1);
+				nodeinfo.GetType(mime);
+				if( strcasecmp(mime,ThemisCookieFile) == 0 )
+				{
+					//printf("We have a cookie!\n");
+					nucookie = new cookie_st;
+					nucookie->ref = current_ref;
+					LoadCookie(nucookie);
+					count++;
+					if(cookie_head == NULL)
+					{
+						cookie_head = nucookie;
+						curcookie = cookie_head;
+					}
+					else
+					{
+						curcookie->next = nucookie;
+						curcookie = curcookie->next;
+					}
+				}
+				node.Unset();
+				nodeinfo.SetTo(NULL);
+			}
+		}
+		/*
 	BPath trashpath;
 	BDirectory *trashdir;
 	if (find_directory(B_TRASH_DIRECTORY,&trashpath)==B_OK) {
@@ -1709,6 +1714,8 @@ void CookieManager::LoadAllCookies() {
 		trashdir=new BDirectory("/boot/home/Desktop/Trash");
 	}
 		BEntry ent(&cookiedirref,true);
+		BPath tempP(&ent);
+		printf("Looking for cookies at %s\n",tempP.Path());
 		struct stat devstat;
 		ent.GetStat(&devstat);
 		BVolume vol(devstat.st_dev);
@@ -1717,7 +1724,22 @@ void CookieManager::LoadAllCookies() {
 		query.PushAttr("BEOS:TYPE");
 		query.PushString(ThemisCookieFile);
 		query.PushOp(B_EQ);
-		query.Fetch();
+		status_t status = query.Fetch();
+		switch(status)
+		{
+			case B_OK: {
+				printf("Query is fine, still may not have a result though...\n");
+			}break;
+			case B_NO_INIT: {
+				printf("Query fetch returned B_NO_INIT\n");
+			}break;
+			case B_BAD_VALUE: {
+				printf("Query fetch returned B_BAD_VALUE\n");
+			}break;
+			case B_NOT_ALLOWED: {
+				printf("Query fetch returned B_NOT_ALLOWED, you already fetched?\n");
+			}break;
+		}
 		ent.Unset();
 		BPath path;
 		entry_ref ref;
@@ -1729,7 +1751,7 @@ void CookieManager::LoadAllCookies() {
 			continue;
 		ent.GetRef(&ref);
 		path.SetTo(&ref);
-//		printf("cookie file at: %s\n",path.Path());
+		printf("cookie file at: %s\n",path.Path());
 		nucookie=new cookie_st;
 		nucookie->ref=ref;
 		if (curcookie==NULL) {
@@ -1754,8 +1776,10 @@ void CookieManager::LoadAllCookies() {
 	}
 //	printf("%ld cookie(s) loaded.\n",count);
 		delete trashdir;
+		*/
 	}
-	PrintCookies();
+	//PrintCookies();
+	printf("%u cookie(s) loaded\n",count);
 }
 
 void CookieManager::SaveAllCookies() {

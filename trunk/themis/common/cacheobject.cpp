@@ -174,7 +174,7 @@ void CacheObject::AddUser(CacheUser *user)
 {
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
-		if (FindUser(user->Token())==NULL) {
+		if (user != NULL && FindUser(user->Token())==NULL) {
 			ulist->AddItem(new CacheUser(user));
 			
 			UpdateAccessTime();

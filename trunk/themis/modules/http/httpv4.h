@@ -395,6 +395,8 @@ class HTTPv4: public ProtocolPlugClass
 		*/
 		bool Compressed(http_request_info_st *request);
 	public:
+		char *SettingsViewLabel();
+		BView *SettingsView(BRect frame);
 		/*!
 			\brief Find the specified header for the given HTTP request.
 			

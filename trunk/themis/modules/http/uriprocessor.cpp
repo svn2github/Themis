@@ -120,7 +120,7 @@ const char *URIProcessor::Set(const char *URI)
 bool URIProcessor::Contains(const char *URI)
 {
 	uint32 length=strlen(uri);
-	if (strlen(URI)>length)
+	if (strlen(URI)<length)
 		return false;
 	if (strncmp(uri,URI,min_c(length,strlen(URI)))==0)
 		return true;

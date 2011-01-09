@@ -43,6 +43,7 @@ Project Start Date: October 18, 2000
 #include <Locker.h>
 #include <Message.h>
 #include "msgsystem.h"
+#include "prefsman.h"
 
 //Set-Cookie: VisitorID=4; expires=Wed, 18-Feb-2004 04:15:52 GMT; path=/
 //Set-Cookie: NewVisitor=Yes; expires=Wed, 19-Feb-2003 06:15:52 GMT; path=/    
@@ -77,6 +78,10 @@ struct cookie_st {
 	bool secure;
 	//! Determines whether the cookie will be stored more permanently than the current browser session.
 	bool discard;
+	//! Session cookie
+	bool session;
+	//! Determines whether the cookie should be transmitted for HTTP requests only, or should allow Javascript ones as well.
+	bool httponly;
 	//! The Unix time stamp of when the cookie should expire.
 	int32 expiredate;
 	//! The Unix time stamp from when the cookie was received. Used in combination with maxage.
@@ -97,7 +102,9 @@ struct cookie_st {
 	entry_ref ref;
 	cookie_st() {
 		discard=true;//discard cookie on shutdown if not set to false later
+		session = true; //same as discard, mostly, except there is a specific cookie flag for discard, but not for session
 		secure=false;
+		httponly = false;//not particularly useful right now. RR 1/9/2011
 		name=NULL;
 		value=NULL;
 		path=NULL;
@@ -111,9 +118,45 @@ struct cookie_st {
 		next=NULL;
 		version=0;
 	}
+	cookie_st(cookie_st *DEFAULT) {
+		discard = DEFAULT->discard;
+		session = DEFAULT->session;
+		secure = DEFAULT->secure;
+		httponly = DEFAULT->httponly;
+		int len = strlen(DEFAULT->path);
+		path = new char[len+1];
+		memset(path,0,len+1);
+		strncpy(path,DEFAULT->path,len);
+		len = strlen(DEFAULT->domain);
+		domain = new char[len+1];
+		memset(domain,0,len+1);
+		strncpy(domain,DEFAULT->domain,len);
+		expiredate = DEFAULT->expiredate;
+		datereceived = DEFAULT->datereceived;
+		maxage = DEFAULT->maxage;
+		ports = NULL;
+		next = NULL;
+		version = DEFAULT->version;
+		if( DEFAULT->comment != NULL)
+		{
+			len = strlen(DEFAULT->comment);
+			comment = new char[len+1];
+			memset(comment,0,len+1);
+			strncpy(comment,DEFAULT->comment,len);
+		}
+		else comment = NULL;
+		if( DEFAULT->commenturl != NULL)
+		{
+			len = strlen(DEFAULT->commenturl);
+			commenturl = new char[len+1];
+			memset(commenturl,0,len+1);
+			strncpy(commenturl,DEFAULT->commenturl,len);
+		}
+		else commenturl = NULL;
+	}
 	~cookie_st() {
 		if (name) {
-			printf("%p - name: %s\n",this,name);
+			//printf("%p - name: %s\n",this,name);
 			
 			memset(name,0,strlen(name));
 			delete name;
@@ -170,6 +213,8 @@ can be affected by this!
 */
 class CookieManager:public MessageSystem {
 	private:
+		PrefsManager *prefMan;
+		bool strictMode;
 		/*!
 		\brief This function breaks a cookie header up into it's name value pairs.
 		
@@ -181,7 +226,7 @@ class CookieManager:public MessageSystem {
 		/*!
 		\brief This function processes a cookie's attributes into the provided cookie structure.
 		*/
-		void ProcessAttributes(const char *attributes, cookie_st *cookie, const char *request_host, const char *request_uri);
+		void ProcessAttributes(char **attributes, cookie_st *cookie, const char *request_host, const char *request_uri);
 	
 		//! The start of the cookie linked list.
 		cookie_st *cookie_head;
@@ -231,6 +276,7 @@ class CookieManager:public MessageSystem {
 		*/
 		bool DuplicatedCookie(cookie_st *cookie);
 	public:
+		static const uint32 EXPIRED = 'expc';
 		BMessage *CookieSettings;
 		/*!
 			\brief Finds cookies appropriate for the requested domain and URI.

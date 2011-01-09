@@ -925,7 +925,7 @@ status_t HTTPv4::BroadcastReply(BMessage *msg)
 				case SupportedMIMEType:
 				{
 //					printf("Supported MIME Types returned\n");
-#warning Rewrite this section if at all possible...
+//#warning Rewrite this section if at all possible...
 					BString str;
 					int32 count=0;
 					type_code type;
@@ -1117,13 +1117,13 @@ void HTTPv4::BuildRequest(build_request_st *bri)
 	switch (use_useragent)
 	{
 		case USER_AGENT_THEMIS:
-		{
-			new_item->request_string<<"User-Agent: Themis (http://themis.sourceforge.net)\r\n";
-			
-		}break;
+//		{
+//			new_item->request_string<<"User-Agent: Themis (http://themis.sourceforge.net)\r\n";
+//			
+//		}break;
 		case USER_AGENT_MOZILLA:
 		{
-			new_item->request_string<<"User-Agent: Mozilla/5.0 (BeOS; BePC; rv: 4.0) Themis http://themis.sourceforge.net)\r\n";
+			new_item->request_string<<"User-Agent: Mozilla/5.0 (BeOS/Haiku; BePC; rv: 4.0) Themis\r\n";
 		}break;
 		case USER_AGENT_INTERNETEXPLORER:
 		{
@@ -2355,7 +2355,7 @@ void HTTPv4::ProcessHeadersGeneral(http_request_info_st *request, char *buffer, 
 	BString temp;//available for anything that might need it.
 	while (current!=NULL)
 	{
-//		printf("\t%s:\t%s\n",current->attribute,current->value);
+//		printf("%s:%d\t%s:\t%s\n",__FILE__,__LINE__,current->attribute,current->value);
 		if (strcasecmp("warning",current->attribute)==0)
 		{
 			BString warning;
@@ -2410,6 +2410,7 @@ void HTTPv4::ProcessHeadersGeneral(http_request_info_st *request, char *buffer, 
 			{
 				if (enable_cookies)
 				{
+					printf("Calling SetCookie:\n\theader: %s\n\thost: %s\n\turi: %s\n",current->value,request->host,request->uri);
 					CookieMonster->SetCookie(current->value,request->host, request->uri,request->port,request->secure);
 				}
 			}
@@ -2914,4 +2915,13 @@ bool HTTPv4::Compressed(http_request_info_st *request)
 		return true;
 	else
 		return false;
+}
+
+char * HTTPv4::SettingsViewLabel()
+{
+	return "HTTP";
+}
+BView * HTTPv4::SettingsView(BRect frame)
+{
+	return NULL;
 }
