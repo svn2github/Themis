@@ -101,7 +101,7 @@ struct cookie_st {
 	//! Location of the cookie on disk (if applicable)
 	entry_ref ref;
 	cookie_st() {
-		discard=true;//discard cookie on shutdown if not set to false later
+		discard=false;//discard cookie on shutdown if not set to false later
 		session = true; //same as discard, mostly, except there is a specific cookie flag for discard, but not for session
 		secure=false;
 		httponly = false;//not particularly useful right now. RR 1/9/2011
