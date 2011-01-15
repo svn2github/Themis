@@ -19,6 +19,7 @@ class BLocker;
 class BBitmap;
 class BMessage;
 class SiteEntry;
+class BaseEntry;
 class CachePlug;
 
 class SiteHandler : public MessageSystem {
@@ -35,6 +36,7 @@ class SiteHandler : public MessageSystem {
 
 		SiteEntry * GetEntry(int32 id);
 		void AddEntry(SiteEntry * aEntry);
+		void AddEntry(BaseEntry * aEntry, int32 aSiteId, int32 aParentId);
 		void BroadcastFinished();
 		uint32 BroadcastTarget();
 		status_t BroadcastReply(BMessage * msg);

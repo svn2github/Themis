@@ -27,6 +27,16 @@
 	Project Start Date: October 18, 2000
 */
 
+// BeOS headers
+#include <String.h>
+
+// Themis headers
+#include "framework/app.h"
+#include "framework/SiteHandler.h"
+#include "framework/SiteEntry.h"
+#include "DOMEntry.hpp"
+
+// Renderer headers
 #include "Globals.h"
 #include "TRenderer.h"
 
@@ -120,60 +130,33 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 						cache = NULL;
 					}break;
 				case SH_PARSE_DOC_FINISHED: {
-					void *buffer = NULL;
-					TDocumentPtr document;
-					message->FindPointer("dom_tree_pointer",&buffer);
-					if (!buffer)
-						break;
-					TDocumentPtr *typer = (TDocumentPtr *)buffer;
-					document = *typer;		
-					DOMTrees.push_back(document);								
-					//Start Processing in a new thread
-					// allocate the struct on the heap now ;) (thx emwe)
-					preprocess_thread_param* param = new preprocess_thread_param;
-					param->document = document;
-					param->renderer = this;
-					param->siteID = message->FindInt32("site_id");
-					param->urlID = message->FindInt32("url_id");
-					//feeding the random generator
-					srand(time(NULL));
-					thread_id id = spawn_thread(PreProcess,THREAD_NAME[rand()%THREAD_NAMES],30,(void *)param);								
-					resume_thread(id);
-				} break;
-/*				case ReturnedData:{ //OLD WAY TO DO
-					BString type = message->FindString("type");
-					if (type == "dom"){
-						void *buffer = NULL;
-						TDocumentPtr document;
-						message->FindPointer("data_pointer", &buffer);
-						if (!buffer)
-							break;
-						TDocumentPtr *typer = (TDocumentPtr *)buffer;
-						document = *typer;
-						
-					//Start Processing
-					preprocess_thread_param param = {document,new TRenderView(UIBox(800,450),document),this};
-					thread_id id = spawn_thread(PreProcess,"\"boing boing\" says the renderer",30,(void *)&param);								
-					resume_thread(id);					
+					BString typeOfDocument;
+					message->FindString("type", &typeOfDocument);
+					if (typeOfDocument == "dom") {
+						int32 siteId = message->FindInt32("site_id");
+						SiteEntry * site = ((App *)be_app)->GetSiteHandler()->GetEntry(siteId);
+						if (site != NULL) {
+							int32 domId = message->FindInt32("dom_id");
+							DOMEntry * entry = (DOMEntry *) site->getEntry(domId);
+							if (entry != NULL) {
+								TDocumentPtr document = entry->getDocument();
+								DOMTrees.push_back(document);								
+								//Start Processing in a new thread
+								// allocate the struct on the heap now ;) (thx emwe)
+								preprocess_thread_param* param = new preprocess_thread_param;
+								param->document = document;
+								param->renderer = this;
+								param->siteID = siteId;
+								param->urlID = message->FindInt32("url_id");
+								//feeding the random generator
+								srand(time(NULL));
+								thread_id id = spawn_thread(PreProcess,THREAD_NAME[rand()%THREAD_NAMES],30,(void *)param);								
+								resume_thread(id);
+							}
+						}
 					}
-					}break; */
-/*				case R_WELCOME:{
-					printf("RENDERER: R_WELCOME received\n");
-					BRect rect;
-					int32 doc_number, view_number;
-					BMessenger userInterface;
-				
-					//Retrieve data sent by UI
-					message->FindRect("rect",&rect);
-					message->FindInt32("document_number",&doc_number);
-					message->FindInt32("view_number",&view_number);
-					message->FindMessenger("messenger",&userInterface);
-				
-					//Start Processing
-					PreProcess(doc_number,view_number,rect,userInterface);
-					}break; */
+				} break;
 				default:{
-//					printf("Renderer doesn't handle this broadcast\n");
 					return PLUG_DOESNT_HANDLE;	
 					}
 			}	

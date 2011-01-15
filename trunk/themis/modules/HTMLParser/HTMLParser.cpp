@@ -18,9 +18,7 @@
 
 // HTMLParser headers
 #include "HTMLParser.h"
-#include "commondefs.h"
-#include "plugman.h"
-#include "PrefsDefs.h"
+#include "DOMEntry.hpp"
 
 // DOM headers
 #include "TDocument.h"
@@ -30,6 +28,13 @@
 #include "TSchema.hpp"
 #include "SGMLScanner.hpp"
 #include "HTMLParserPrefsView.hpp"
+
+// Themis headers
+#include "framework/app.h"
+#include "framework/SiteHandler.h"
+#include "commondefs.h"
+#include "plugman.h"
+#include "PrefsDefs.h"
 
 HTMLParser * parser;
 BMessage ** appSettings_p;
@@ -199,21 +204,27 @@ bool HTMLParser :: IsDocumentSupported(BMessage * aMessage) {
 
 }
 
-void HTMLParser :: NotifyParseFinished(void * aDocument,
+void HTMLParser :: NotifyParseFinished(TDocumentPtr aDocument,
 									   string aType,
 									   BMessage * aOriginalMessage) {
 
-	int32 siteID = 0;
-	int32 urlID = 0;
-	aOriginalMessage->FindInt32("site_id", &siteID);
-	aOriginalMessage->FindInt32("url_id", &urlID);
+	int32 siteId = 0;
+	int32 urlId = 0;
+	aOriginalMessage->FindInt32("site_id", &siteId);
+	aOriginalMessage->FindInt32("url_id", &urlId);
+
+	/* Get an unique ID from the app for the DOM entry */
+	int32 domId = ((App *)be_app)->GetNewID();
+	DOMEntry * entry = new DOMEntry(domId, aDocument);
+	((App *)be_app)->GetSiteHandler()->AddEntry(entry, siteId, urlId);
 
 	BMessage * done = new BMessage(SH_PARSE_DOC_FINISHED);
 	done->AddInt32("command", COMMAND_INFO);
 	done->AddString("type", aType.c_str());
-	done->AddPointer("dom_tree_pointer", aDocument);
-	done->AddInt32("site_id", siteID);
-	done->AddInt32("url_id", urlID);
+	done->AddInt32("site_id", siteId);
+	done->AddInt32("url_id", urlId);
+	done->AddInt32("dom_id", domId);
+
 	
 	// Message created. Broadcast it.
 	Broadcast(MS_TARGET_ALL, done);
@@ -269,7 +280,7 @@ void HTMLParser :: ParseDocument(string aURL,
 				document->setDocumentURI(aURL);
 				mDocuments.push_back(document);
 				
-				NotifyParseFinished(mDocuments.end() - 1, "dom", aOriginalMessage);
+				NotifyParseFinished(document, "dom", aOriginalMessage);
 			}
 		}
 	}

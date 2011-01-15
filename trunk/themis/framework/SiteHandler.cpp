@@ -15,6 +15,7 @@
 #include "ThemisIcons.h"
 #include "../common/commondefs.h"
 #include "../common/cacheplug.h"
+#include "../common/BaseEntry.hpp"
 #include "UrlEntry.h"
 #include "SiteEntry.h"
 #include "SiteHandler.h"
@@ -100,6 +101,23 @@ void SiteHandler :: AddEntry(SiteEntry * aEntry) {
 	fEntryList.push_back(aEntry);
 
 	fLocker->Unlock();
+}
+
+void SiteHandler :: AddEntry(BaseEntry * aEntry,
+							 int32 aSiteId,
+							 int32 aParentId) {
+
+	SiteEntry * site = GetEntry(aSiteId);
+
+	if (site != NULL) {
+		fLocker->Lock();
+		
+		BaseEntry * parent = site->getEntry(aParentId);
+		parent->addEntry(aEntry);
+		
+		fLocker->Unlock();
+	}
+
 }
 
 BBitmap * SiteHandler :: GetFavIconFor(int32 id) {

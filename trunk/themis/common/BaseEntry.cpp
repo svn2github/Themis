@@ -33,6 +33,8 @@
 
 */
 
+#include <stdio.h>
+
 // Themis headers
 #include "BaseEntry.hpp"
 
@@ -65,17 +67,30 @@ void BaseEntry :: addEntry(BaseEntry * aEntry) {
 
 BaseEntry * BaseEntry :: getEntry(int32 aId) {
 
+	printf("Trying to find %ld\n", aId);
+
 	BaseEntry * result = NULL;
 	
 	// browse through the entry list to find the UrlEntry with the matching id
 	vector<BaseEntry *>::iterator it = fChildEntries.begin();
 	while (it != fChildEntries.end() && result == NULL) {
-		if (((BaseEntry *)*it)->getId() == aId) {
+		BaseEntry * entry = (BaseEntry *)*it;
+		if (entry->getId() == aId) {
 			result = *it;
 		}
 		else {
-			it++;
+			result = entry->getEntry(aId);
+			if (result == NULL) {
+				it++;
+			}
 		}
+	}
+
+	if (result == NULL) {
+		printf("Failed to find %ld\n", aId);
+	}
+	else {
+		printf("Found %ld\n", aId);
 	}
 
 	return result;
@@ -136,22 +151,38 @@ void BaseEntry :: set(const string aName, void * aValue) {
 	};
 }
 
+void BaseEntry :: set(const string aName, SharedPtr aValue) {
+	
+	if (mSharedPtrs.count(aName) == 0) {
+		mSharedPtrs.insert(
+			map<string, SharedPtr>::value_type(aName, aValue));
+	}
+	else {
+		mSharedPtrs[aName] = aValue;
+	};
+}
+
 string BaseEntry :: getString(const string aName) {
 	
 	return mStrings[aName];
 }
 
 bool BaseEntry :: getBoolean(const string aName) {
-	
+
 	return mBooleans[aName];
 }
 
 int BaseEntry :: getInteger(const string aName) {
-	
+
 	return mIntegers[aName];
 }
 
 void * BaseEntry :: getPointer(const string aName) {
-	
+
 	return mPointers[aName];
+}
+
+SharedPtr BaseEntry :: getSharedPtr(const string aName) {
+
+	return mSharedPtrs[aName];
 }

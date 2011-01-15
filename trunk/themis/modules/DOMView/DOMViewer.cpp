@@ -44,158 +44,164 @@
 #include <Autolock.h>
 
 // Themis headers
+#include "framework/app.h"
+#include "framework/SiteHandler.h"
+#include "framework/SiteEntry.h"
+#include "DOMEntry.hpp"
 #include "commondefs.h"
 
 DOMViewer * viewer;
 BMessage ** appSettings_p;
 BMessage * appSettings;
 
-status_t Initialize( void * aInfo )	{
-	
+status_t Initialize(void * aInfo) {
+
 	viewer = NULL;
-	if ( aInfo != NULL )	{
+	if (aInfo != NULL) {
 		BMessage * message = (BMessage *) aInfo;
-		if ( message->HasPointer( "settings_message_ptr" ) )	{
-			message->FindPointer( "settings_message_ptr", (void **) & appSettings_p );
+		if (message->HasPointer("settings_message_ptr")) {
+			message->FindPointer("settings_message_ptr", (void **) & appSettings_p);
 			appSettings = *appSettings_p;
 		}
-		viewer = new DOMViewer( message );
+		viewer = new DOMViewer(message);
 	}
-	else	{
+	else {
 		viewer = new DOMViewer();
 	}
-	
+
 	return B_OK;
-	
+
 }
 
-status_t Shutdown( bool aNow )	{
-	
+status_t Shutdown(bool aNow) {
+
 	delete viewer;
-	
+
 	return B_OK;
-	
+
 }
 
-PlugClass * GetObject()	{
-	
+PlugClass * GetObject() {
+
 	return viewer;
-	
+
 }
 
-DOMViewer	::	DOMViewer( BMessage * aInfo )
-					:	BHandler( "DOMViewer" ), PlugClass( aInfo )	{
-	
+DOMViewer :: DOMViewer(BMessage * aInfo)
+		  : BHandler("DOMViewer"), PlugClass(aInfo) {
+
 	mView = NULL;
-	
+
 }
 
-DOMViewer	::	~DOMViewer()	{
+DOMViewer :: ~DOMViewer() {
 
-	if ( mView )	{
-		BMessenger messenger( mView );
-		messenger.SendMessage( B_QUIT_REQUESTED );
+	if (mView) {
+		BMessenger messenger(mView);
+		messenger.SendMessage(B_QUIT_REQUESTED);
 	}
-	
+
 }
 
-void DOMViewer	::	MessageReceived( BMessage * aMessage )	{
-	
+void DOMViewer :: MessageReceived( BMessage * aMessage) {
+
 }
 
-bool DOMViewer	::	IsHandler()	{
-	
+bool DOMViewer :: IsHandler() {
+
 	return true;
-	
+
 }
 
-BHandler * DOMViewer	::	Handler()	{
-	
+BHandler * DOMViewer :: Handler() {
+
 	return this;
-	
+
 }
 
-bool DOMViewer	::	IsPersistent()	{
-	
+bool DOMViewer :: IsPersistent() {
+
 	return true;
-	
+
 }
 
-uint32 DOMViewer	::	PlugID()	{
-	
+uint32 DOMViewer :: PlugID() {
+
 	return 'tree';
-	
+
 }
 
-char * DOMViewer	::	PlugName()	{
-	
+char * DOMViewer :: PlugName() {
+
 	return "DOM Viewer";
-	
+
 }
 
-float DOMViewer	::	PlugVersion()	{
-	
-	return 0.1;
-	
+float DOMViewer :: PlugVersion() {
+
+	return 0.2;
+
 }
 
-void DOMViewer	::	Heartbeat()	{
-	
+void DOMViewer :: Heartbeat() {
+
 }
 
-status_t DOMViewer	::	ReceiveBroadcast( BMessage * aMessage )	{
-	
+status_t DOMViewer :: ReceiveBroadcast(BMessage * aMessage) {
+
 	int32 command = 0;
-	aMessage->FindInt32( "command", &command );
-	
-	switch ( command )	{
-		case COMMAND_INFO:	{
+	aMessage->FindInt32("command", &command);
+
+	switch (command) {
+		case COMMAND_INFO: {
 			// Check if it is dom data
-			BString type;
-			aMessage->FindString( "type", &type );
-			if ( type == "dom" )	{
-				// Get the pointer out
-				void * document = NULL;
-				aMessage->FindPointer( "dom_tree_pointer", &document );
-				if ( document )	{
-					TDocumentPtr * temp = (TDocumentPtr *) document;
-					TDocumentPtr copy = *temp;
-					if ( ! mView )	{
-						mView = new DOMView( copy );
-					}
-					else	{
-						BAutolock viewLock( mView );
-						if ( viewLock.IsLocked() )	{
-							mView->setDocument( copy );
+			BString typeOfDocument;
+			aMessage->FindString("type", &typeOfDocument);
+			if (typeOfDocument == "dom") {
+				int32 siteId = aMessage->FindInt32("site_id");
+				SiteEntry * site = ((App *)be_app)->GetSiteHandler()->GetEntry(siteId);
+				if (site != NULL) {
+					int32 domId = aMessage->FindInt32("dom_id");
+					DOMEntry * entry = (DOMEntry *) site->getEntry(domId);
+					if (entry != NULL) {
+						TDocumentPtr document = entry->getDocument();
+						if (!mView) {
+							mView = new DOMView(document);
+						}
+						else {
+							BAutolock viewLock(mView);
+							if (viewLock.IsLocked()) {
+								mView->setDocument(document);
+							}
 						}
 					}
 				}
 			}
 			break;
 		}
-		default:	{
+		default: {
 			return PLUG_DOESNT_HANDLE;
 		}
 	}
-	
+
 	return PLUG_HANDLE_GOOD;
-	
+
 }
 
-status_t DOMViewer::BroadcastReply( BMessage * aMessage )	{
+status_t DOMViewer :: BroadcastReply(BMessage * aMessage) {
 
 	return B_OK;
 
 }
 
-uint32 DOMViewer::BroadcastTarget()	{
+uint32 DOMViewer :: BroadcastTarget() {
 
 	return MS_TARGET_DOM_VIEWER;
 
 }
 
-int32 DOMViewer	::	Type()	{
-	
+int32 DOMViewer :: Type() {
+
 	return TARGET_DOM;
-	
+
 }

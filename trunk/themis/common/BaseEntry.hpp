@@ -47,10 +47,17 @@
 // BeOS headers
 #include <be/support/SupportDefs.h>
 
+// Boost headers
+#include "boost/shared_ptr.hpp"
+#include "boost/weak_ptr.hpp"
+
 // Namespaces used
 using std::map;
 using std::string;
 using std::vector;
+
+// Typedefs declared.
+typedef boost::shared_ptr<void> SharedPtr;
 
 class BaseEntry {
 	
@@ -61,6 +68,7 @@ class BaseEntry {
 		map<string, bool> mBooleans;
 		map<string, int> mIntegers;
 		map<string, void *> mPointers;
+		map<string, SharedPtr> mSharedPtrs;
 
 	protected:
 		vector<BaseEntry *> fChildEntries;
@@ -76,10 +84,12 @@ class BaseEntry {
 		void set(const string aName, const bool aValue);
 		void set(const string aName, const int aValue);
 		void set(const string aName, void * aValue);
+		void set(const string aName, SharedPtr aValue);
 		string getString(const string aName);
 		bool getBoolean(const string aName);
 		int getInteger(const string aName);
 		void * getPointer(const string aName);
+		SharedPtr getSharedPtr(const string aName);
 	
 };
 
