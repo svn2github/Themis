@@ -540,11 +540,11 @@ commonobjects: $(foreach file,$(COMMONSOURCES),$(COMMON_OBJECT_DIR)$(notdir $(fi
 
 $(COMMON_DEPENDS_DIR)%.d: common/%.cpp
 	@echo "Common: Updating dependency file $(notdir $@)"
-	@set -e;VAR1=$(shell echo "$(COMMON_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(COMMON_OBJECT_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/common\/\1.o depends\/common\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
+	@set -e;VAR1=$(shell echo "$(COMMON_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(COMMON_OBJECT_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -I./ -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/common\/\1.o depends\/common\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
 
 $(COMMON_OBJECT_DIR)%.o: common/%.cpp $(COMMON_DEPENDS_DIR)%.d
 	@echo "Common: Updating object file $(notdir $@)"
-	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -c $< -o $@
+	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -I./ -c $< -o $@
 	
 
 #renderer
