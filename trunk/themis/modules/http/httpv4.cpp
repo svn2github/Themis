@@ -1672,10 +1672,12 @@ void HTTPv4::ProcessData(http_request_info_st *request, unsigned char *buffer, i
 				strcpy(request->header_buffer,data);
 			} else
 			{
+				if( eol != NULL) {
 				int32 Length=strlen(eol)-2;
 				request->header_buffer=(char*)malloc(Length+1);
 				memset(request->header_buffer,0,Length+1);
 				strcpy(request->header_buffer,eol+2);
+				}
 			}
 		}
 	} else

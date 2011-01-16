@@ -97,7 +97,7 @@ int32 Connection::CountConnections() {
 	
 }
 int32 Connection::ConnectionResult() {
-	printf("ConnectionResult\n");
+	//printf("ConnectionResult\n");
 	return connection_result;
 }
 bool Connection::NotifiedConnect() {
@@ -167,7 +167,7 @@ Connection::Connection(NetworkableObject *NetObject,const char *host, uint16 por
 	nonblocking=async;
 }
 Connection::~Connection() {
-	printf("Connection: Connection to %s is going away.\n",host_name);
+	//printf("Connection: Connection to %s is going away.\n",host_name);
 	if (!IsBufferEmpty())
 		EmptyBuffer();
 	session_id=0;
@@ -202,7 +202,7 @@ ssl_country_name=NULL;
 void Connection::OwnerRelease() {
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
-		printf("Connection::OwnerRelease\n");
+		//printf("Connection::OwnerRelease\n");
 		owner=NULL;
 		StopUsing();
 		NewSession();
@@ -216,7 +216,7 @@ void Connection::AssignNetObject(NetworkableObject *net_obj)
 	
 }
 void Connection::Connect() {
-	printf("Connection::Connect()\n");
+	//printf("Connection::Connect()\n");
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
 		if (IsConnected()) {
@@ -255,7 +255,7 @@ void Connection::Connect() {
 		
 		
 	}
-	printf("Connection::Connect() done\n");
+	//printf("Connection::Connect() done\n");
 	
 }
 void Connection::ConnectionEstablished(){
@@ -263,13 +263,13 @@ void Connection::ConnectionEstablished(){
 	if (alock.IsLocked()) {
 		if (use_ssl) {
 			int cryptstatus;
-			printf("CRYPT_OK: %d\n",CRYPT_OK);
+			//printf("CRYPT_OK: %d\n",CRYPT_OK);
 			cryptstatus=cryptCreateSession(&cryptSession,CRYPT_UNUSED,CRYPT_SESSION_SSL);
-			printf("session creation: %d\n",cryptstatus);
+			//printf("session creation: %d\n",cryptstatus);
 			cryptstatus=cryptSetAttribute(cryptSession,CRYPT_SESSINFO_NETWORKSOCKET,socket_id);
-			printf("passing network socket: %d\n",cryptstatus);
+			//printf("passing network socket: %d\n",cryptstatus);
 			cryptstatus=cryptSetAttribute(cryptSession,CRYPT_SESSINFO_ACTIVE,1);
-			printf("activating session: %d\n",cryptstatus);
+			//printf("activating session: %d\n",cryptstatus);
 			if (cryptStatusError(cryptstatus))
 			{
 			int errorcode,errorstrlen;
@@ -281,7 +281,7 @@ void Connection::ConnectionEstablished(){
 			cryptGetAttributeString(cryptSession,CRYPT_ATTRIBUTE_INT_ERRORMESSAGE,errstring,&errorstrlen);
 			printf("error: %d - %s\n",errorcode,errstring);
 			delete errstring;
-			printf("Closing connection.\n");
+			//printf("Closing connection.\n");
 			last_error=ERROR_CONNECTION_RESET;
 			Disconnect();
 			NotifyDisconnect();
@@ -327,7 +327,7 @@ void Connection::ConnectionEstablished(){
 //			if (owner!=NULL)
 //				owner->ConnectionEstablished(this);
 //			atomic_add(&notified_connect,1);
-			printf("connection %p: notified connect %ld\n",this,notified_connect);
+			//printf("connection %p: notified connect %ld\n",this,notified_connect);
 		}
 			
 	}
@@ -371,7 +371,7 @@ bool Connection::IsConnected() {
 				//Error!! Call NetworkableObject's error function.
 				switch(errno) {
 					case EWOULDBLOCK:
-						printf("Connection::IsConnected Would Block\n");
+						//printf("Connection::IsConnected Would Block\n");
 						last_error=ERROR_WOULD_BLOCK;
 						break;
 					case EINTR:
@@ -549,7 +549,7 @@ int32 Connection::SessionID() {
 	return id;
 }
 int32 Connection::NewSession() {
-	printf("[NewSession]\n");
+	//printf("[NewSession]\n");
 	fflush(stdout);
 	int32 id=0;
 	BAutolock alock(lock);
@@ -598,12 +598,12 @@ status_t Connection::AppendData(void *data, off_t size) {
 		current->buffer=new Buffer(data,size);
 		status=B_OK;
 		lastusedtime=real_time_clock();
-		printf("[Connection::AppendData] Buffer is now %Ld bytes long\n",DataSize());
+		//printf("[Connection::AppendData] Buffer is now %Ld bytes long\n",DataSize());
 //	}
 	return status;
 }
 off_t Connection::Receive(void *data, off_t max_size) {
-	printf("[Receive]\n");
+	//printf("[Receive]\n");
 	fflush(stdout);
 	off_t size=0L;
 //	BAutolock alock(lock);
@@ -619,10 +619,10 @@ off_t Connection::Receive(void *data, off_t max_size) {
 				break;
 			}
 			bytes=0;
-			printf("[Receive] at most %Ld can be read now.\n", max_size-size);
+			//printf("[Receive] at most %Ld can be read now.\n", max_size-size);
 			bytes=current->buffer->GetData((unsigned char*)data+size,max_size-size);
 			size+=bytes;
-			printf("[Receive] %ld (%Ld) bytes were copied into protocol buffer.\n",bytes,size);
+			//printf("[Receive] %ld (%Ld) bytes were copied into protocol buffer.\n",bytes,size);
 			prev=current;
 			current=current->next;
 			delete prev->buffer;
@@ -632,7 +632,7 @@ off_t Connection::Receive(void *data, off_t max_size) {
 		buffer_in=current;
 		lastusedtime=real_time_clock();
 		session_bytes_out+=size;
-		printf("[Connection::Receive] %Ld bytes have been transferred to owner. %Ld bytes left in buffer.\n\n",session_bytes_received,DataSize());
+		//printf("[Connection::Receive] %Ld bytes have been transferred to owner. %Ld bytes left in buffer.\n\n",session_bytes_received,DataSize());
 		fflush(stdout);
 		lock.Unlock();
 	}
@@ -751,7 +751,7 @@ int32 Connection::IsInUse() {
 }
 void Connection::StartUsing() 
 {
-	printf("Connection::StartUsing beginning.\n");
+	//printf("Connection::StartUsing beginning.\n");
 	BAutolock alock(lock);
 	if (alock.IsLocked())
 		if (in_use==0)
@@ -766,7 +766,7 @@ void Connection::StartUsing()
 //				atomic_add(&notified_connect,1);
 			
 		}
-		printf("Connection::StartUsing done.\n");
+		//printf("Connection::StartUsing done.\n");
 }
 void Connection::StopUsing()
 {

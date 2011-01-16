@@ -136,6 +136,7 @@ For the time being, I'm going to load all cookies at start up.
 //	printf("Finding cookie directory...\n");
 	FindCookieDirectory();
 	LoadAllCookies();
+	ClearExpiredCookies();
 }
 
 CookieManager::~CookieManager() {
@@ -642,7 +643,7 @@ void CookieManager::FindCookieDirectory() {
 					HTTP->AppSettings->FindString(kPrefsSettingsDirectory,&temp);
 					temp<<"/cookies";
 				}
-				printf("Cookie Directory: %s\n",temp.String() );
+				//printf("Cookie Directory: %s\n",temp.String() );
 			BEntry ent;
 			FindCookieDirPoint1:
 			ent.SetTo(temp.String());
@@ -847,7 +848,7 @@ int32 CookieManager::SetCookie(const char *header, const char *request_host, con
 			if( nvpairs[i] == ',' && strchr((nvpairs+i),'=') != NULL)
 				nvpair_counter++;
 		}// kick it old school
-		printf("name=value pairs: %d\n",nvpair_counter);
+		//printf("name=value pairs: %d\n",nvpair_counter);
 		cookie_array = new char*[nvpair_counter];
 		int32 pair_length = 0;
 		if( nvpair_counter > 1)
@@ -933,7 +934,7 @@ int32 CookieManager::SetCookie(const char *header, const char *request_host, con
 			//printf("\t\tcookie attributes: %s\n",attributes[i]);
 			for(int8 kac = 0; kac < 10; kac++)
 			{
-				if(strncasecmp(attributes[i],known_attributes[kac],min_c(strlen(known_attributes[kac]),strlen(attributes[i]))) == 0)
+				if(attributes[i] != NULL && strncasecmp(attributes[i],known_attributes[kac],min_c(strlen(known_attributes[kac]),strlen(attributes[i]))) == 0)
 				{
 					//printf("\t\t\tattrib: %s\n",known_attributes[kac]);
 					if( strcasecmp(known_attributes[kac],"path") == 0 ) {
@@ -981,7 +982,7 @@ int32 CookieManager::SetCookie(const char *header, const char *request_host, con
 						*/
 					}
 					else if( strcasecmp(known_attributes[kac],"domain") == 0 ) {
-						printf("\t\t\t\tdomain: %s\n",attvalue(attributes[i]));
+						//printf("\t\t\t\tdomain: %s\n",attvalue(attributes[i]));
 						if( default_cookie->domain != NULL)
 						{
 							memset(default_cookie->domain,0,strlen(default_cookie->domain)+1);
@@ -1098,7 +1099,7 @@ int32 CookieManager::SetCookie(const char *header, const char *request_host, con
 		if( DuplicatedCookie(new_cookie) )
 		{
 			original = FindCookie(new_cookie->name,new_cookie->path, new_cookie->domain);
-			printf("found cookie %s, updating value from \"%s\" to \"%s\"\n",new_cookie->name,original->value,new_cookie->value);
+			//printf("found cookie %s, updating value from \"%s\" to \"%s\"\n",new_cookie->name,original->value,new_cookie->value);
 			if( original->secure == new_cookie->secure )
 			{
 				original->discard = new_cookie->discard;
@@ -1213,10 +1214,10 @@ bool CookieManager::DuplicatedCookie(cookie_st *cookie)
 		return false;
 	while (current!=NULL)
 	{
-		if (
-				strcmp(cookie->name,current->name)==0 &&
-				strcmp(cookie->path,current->path)==0 &&
-				strcasecmp(cookie->domain,current->domain)==0 && cookie->secure == current->secure
+		if (  ((cookie->name == NULL && current->name == NULL) ||
+				strcmp(cookie->name,current->name)==0) && ((cookie->path == NULL && current->path == NULL) ||
+				strcmp(cookie->path,current->path)==0) && ((cookie->domain == NULL && current->domain == NULL) ||
+				strcasecmp(cookie->domain,current->domain)==0) && cookie->secure == current->secure
 			)
 		{
 			found=true;
@@ -1348,10 +1349,10 @@ void CookieManager::ClearExpiredCookies() {
 		while (cur!=NULL) {
 //			printf("Expire %s: current time: %ld\texpire time: %ld\tdifference: %2.2f\n",cur->name,currenttime,cur->expiredate,difftime(cur->expiredate,currenttime));
 			if (cur->session == false && cur->discard == false && cur->expiredate<=currenttime) {
-//				printf("The following cookie has expired:\n");
-//				PrintCookie(cur);
+				//printf("The following cookie has expired:\n");
+				//PrintCookie(cur);
 				if (cur==cookie_head) {
-					printf("ClearExpiredCookies line 1764: cur %p\n",cur);
+					//printf("ClearExpiredCookies line 1764: cur %p\n",cur);
 					cookie_head=cookie_head->next;
 					BEntry ent(&cur->ref);
 					if (ent.InitCheck() == B_OK && ent.Exists())
@@ -1453,8 +1454,8 @@ bool CookieManager::Validate(cookie_st *cookie, const char *request_host, const 
 		if ((cookie->maxage+cookie->datereceived)<=currenttime)
 			return ValidateFail("Cookie has already expired.");
 		}
-		else if( cookie->discard ) printf("Cookie is marked for discarding.\n");
-		else if( cookie->session ) printf("Cookie is a session cookie.\n");
+		//else if( cookie->discard ) printf("Cookie is marked for discarding.\n");
+		//else if( cookie->session ) printf("Cookie is a session cookie.\n");
 		if (cookie->domain==NULL)
 			return ValidateFail("Cookie domain is NULL.");
 		else {
@@ -1507,8 +1508,10 @@ status_t CookieManager::LoadCookie(cookie_st *cookie) {
 		memset(attname,0,B_ATTR_NAME_LENGTH+1);
 		BNode node(&cookie->ref);
 		cookie->discard=false;
+		cookie->session = false;
 		unsigned char *data=NULL;
 		BString aname;
+		int32 current_time = real_time_clock();
 		node.Lock();
 		while (node.GetNextAttrName(attname)==B_OK) {
 			node.GetAttrInfo(attname,&ai);
@@ -1520,6 +1523,7 @@ status_t CookieManager::LoadCookie(cookie_st *cookie) {
 					}
 					if (strcasecmp(attname,"Themis:expiredate")==0) {
 						node.ReadAttr("Themis:expiredate",B_INT32_TYPE,0,&cookie->expiredate,ai.size);
+						cookie->maxage = cookie->expiredate - current_time;
 					}
 					
 				}break;
@@ -1625,7 +1629,8 @@ status_t CookieManager::SaveCookie(cookie_st *cookie) {
 		else 
 		{
 			status_t res = node.RemoveAttr("Themis:cookievalue");
-			printf("removal of cookievalue attribute (null cookie value) successful? %s\n", (res == B_OK ? "yes":"no"));
+			//printf("removal of cookievalue attribute (null cookie value) successful? %s\n", (res == B_OK ? "yes":"no"));
+			if( res != B_OK) node.WriteAttr("Themis:cookievalue",B_STRING_TYPE,0,"",1);
 		}
 		if (cookie->version==1)
 			if (cookie->ports!=NULL)

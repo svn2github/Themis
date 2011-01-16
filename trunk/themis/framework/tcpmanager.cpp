@@ -51,7 +51,7 @@ TCPManager::TCPManager() {
 	
 }
 TCPManager::~TCPManager() {
-	printf("destroying connections...");
+	//printf("destroying connections...");
 	fflush(stdout);
 	
 	if (Connection::CountConnections()>0) {
@@ -66,7 +66,7 @@ TCPManager::~TCPManager() {
 			}
 		}
 	}
-	printf("done.\n");
+	//printf("done.\n");
 //	delete lock;
 	delete Connection::ListLock;
 	delete_sem(process_sem_1);
@@ -218,7 +218,7 @@ int32 TCPManager::_Manager_Thread() {
 }
 
 Connection *TCPManager::CreateConnection(NetworkableObject *net_obj,const char *host,uint16 port,bool secure,bool asynch) {
-	printf("CreateConnection begun\n");
+	//printf("CreateConnection begun\n");
 	Connection *connection=NULL;
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
@@ -239,7 +239,7 @@ Connection *TCPManager::CreateConnection(NetworkableObject *net_obj,const char *
 			}
 		}
 		if (existing_available) {
-			printf("TCP Manager: found available connection for use. (n: %p\tc: %p)\n",net_obj,connection);
+			//printf("TCP Manager: found available connection for use. (n: %p\tc: %p)\n",net_obj,connection);
 			connection->AssignNetObject(net_obj);
 			connection->StartUsing();
 //			connection->Connect();
@@ -252,7 +252,7 @@ Connection *TCPManager::CreateConnection(NetworkableObject *net_obj,const char *
 		}
 		
 	}
-	printf("CreateConnection is done: %p\n",connection);
+	//printf("CreateConnection is done: %p\n",connection);
 	return connection;
 }
 void TCPManager::Disconnect(Connection *connection) {
