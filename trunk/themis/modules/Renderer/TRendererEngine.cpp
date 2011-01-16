@@ -29,6 +29,11 @@
 #include <Alert.h>
 #include <Screen.h>
 
+// Themis headers
+#include "framework/app.h"
+#include "framework/SiteHandler.h"
+#include "BaseEntry.hpp"
+
 //General
 #include "CSS_HTM.h"
 #include "CSS_Units.h"
@@ -40,16 +45,6 @@
 #include "BlockElement.h"
 
 #define GET_ATTRIBUTE_VALUE(attribute,default_value) (attribute.get() != NULL) ? attribute->getNodeValue().c_str() : default_value; 
-
-void Renderer::BroadcastPointer(TRenderView *view)
-{
-	//Do the Broadcasting
-	BMessage message(RENDERVIEW_POINTER);
-	message.AddInt32("command",COMMAND_INFO);
-	message.AddString("type","TRenderView");
-	message.AddPointer("data_pointer",view);
-	Broadcast(MS_TARGET_ALL,&message);
-}
 
 int32 Renderer::PreProcess(void *data)
 {
@@ -89,27 +84,27 @@ int32 Renderer::PreProcess(void *data)
 	//Save the BMessenger to userIntterface
 	//view->userInterface = userInterface;
 
-	//Do the Broadcasting to give the view to the UI
-	BMessage *message = new BMessage(RENDERVIEW_POINTER);
-	message->AddInt32("command",COMMAND_INFO);
-	message->AddInt32("site_id",view->siteID);
-	message->AddInt32("url_id",view->urlID);
-	message->AddPointer("renderview_pointer",(void *)view);
-	cdata->renderer->Broadcast(MS_TARGET_ALL,message);
-						
 	//Start processing the DOM Tree
 	printf("RENDERER: START PROCESSING...\n");
 	processing_context context;
 	bigtime_t time = real_time_clock_usecs();
 	cdata->renderer->Process(cdata->document,view,context); 
 	printf("RENDERER: DONE PROCESSING in %lld microseconds.\n",real_time_clock_usecs() - time);
-	
-	//Do the Broadcasting to say we are done rendering
-	message->what = SH_RENDER_FINISHED;
-	message->RemoveName("renderview_pointer");
 
-	cdata->renderer->Broadcast(MS_TARGET_SITEHANDLER,message);	
-	
+	/* Get an unique ID from the app for the DOM entry */
+	int32 viewId = ((App *)be_app)->GetNewID();
+	BaseEntry * entry = new BaseEntry(viewId);
+	entry->set("render_view", (void *) view);
+	((App *)be_app)->GetSiteHandler()->AddEntry(entry, view->siteID, cdata->domID);
+
+	//Do the Broadcasting to give the view to the UI
+	BMessage *message = new BMessage(SH_RENDER_FINISHED);
+	message->AddInt32("command",COMMAND_INFO);
+	message->AddInt32("site_id",view->siteID);
+	message->AddInt32("url_id",view->urlID);
+	message->AddInt32("view_id",viewId);
+	cdata->renderer->Broadcast(MS_TARGET_ALL,message);
+
 	//Update the view
 	//cdata->view->Invalidate();
 	

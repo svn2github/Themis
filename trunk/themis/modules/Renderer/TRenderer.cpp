@@ -133,12 +133,16 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 					BString typeOfDocument;
 					message->FindString("type", &typeOfDocument);
 					if (typeOfDocument == "dom") {
-						int32 siteId = message->FindInt32("site_id");
+						int32 siteId = 0;
+						message->FindInt32("site_id", &siteId);
 						SiteEntry * site = ((App *)be_app)->GetSiteHandler()->GetEntry(siteId);
 						if (site != NULL) {
-							int32 domId = message->FindInt32("dom_id");
+							int32 domId = 0;
+							message->FindInt32("dom_id", &domId);
 							DOMEntry * entry = (DOMEntry *) site->getEntry(domId);
 							if (entry != NULL) {
+								int32 urlId = 0;
+								message->FindInt32("url_id", &urlId);
 								TDocumentPtr document = entry->getDocument();
 								DOMTrees.push_back(document);								
 								//Start Processing in a new thread
@@ -147,7 +151,8 @@ status_t Renderer::ReceiveBroadcast(BMessage *message)
 								param->document = document;
 								param->renderer = this;
 								param->siteID = siteId;
-								param->urlID = message->FindInt32("url_id");
+								param->urlID = urlId;
+								param->domID = domId;
 								//feeding the random generator
 								srand(time(NULL));
 								thread_id id = spawn_thread(PreProcess,THREAD_NAME[rand()%THREAD_NAMES],30,(void *)param);								

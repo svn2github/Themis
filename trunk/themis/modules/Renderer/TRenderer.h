@@ -59,6 +59,7 @@ struct preprocess_thread_param {
 	Renderer		*renderer;
 	int32			siteID;
 	int32			urlID;
+	int32           domID;
 };
 
 struct processing_context {
@@ -99,8 +100,6 @@ class Renderer : public PlugClass
 	private:
 				BList		UITrees;
 				vector 		<TDocumentPtr> DOMTrees;
-				
-				void		BroadcastPointer(TRenderView *view);
 				
 		//Below spreads the dark land of Processing methods.
 		

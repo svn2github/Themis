@@ -936,32 +936,42 @@ status_t Win :: ReceiveBroadcast(BMessage * message) {
 	switch (command) {
 		case COMMAND_INFO: {
 			switch (message->what) {
-				case RENDERVIEW_POINTER: {
+				case SH_RENDER_FINISHED: {
 					int32 site_id = 0;
 					message->FindInt32("site_id", &site_id);
 					if (site_id != 0) {
 						int32 tabindex;
 						ThemisTab * tab = FindTabFor(site_id, &tabindex);
 						if (tab != NULL) {
-							BView * renderview = NULL;
-							message->FindPointer("renderview_pointer", (void**)&renderview);
-							if (renderview != NULL) {
-								/* Attach the renderview to the correct tab. */
-								Lock();
-								/*
-								 * We don't need to resize the renderview here, as this is done in
-								 * ThemisTabView::Select().
-								 */
-								tabview->TabAt(tabindex)->SetView(renderview);
-								
-								if (tabview->Selection() == tabindex) {
-									tabview->Select(tabindex);
-									
-									if (CurrentFocus() != NULL)
-										CurrentFocus()->MakeFocus(false);
-									tabview->TabAt(tabindex)->View()->MakeFocus(true);
+							SiteHandler * sh = ((App *)be_app)->GetSiteHandler();
+							if (sh) {
+								SiteEntry * site = sh->GetEntry(site_id);
+								int32 viewId = 0;
+								message->FindInt32("view_id", &viewId);
+								if (viewId != 0) {
+									BaseEntry * entry = site->getEntry(viewId);
+									if (entry != NULL) {
+										BView * renderview = (BView *) entry->getPointer("render_view");
+										if (renderview != NULL) {
+											/* Attach the renderview to the correct tab. */
+											Lock();
+											/*
+											 * We don't need to resize the renderview here, as this is done in
+											 * ThemisTabView::Select().
+											 */
+											tabview->TabAt(tabindex)->SetView(renderview);
+											
+											if (tabview->Selection() == tabindex) {
+												tabview->Select(tabindex);
+												
+												if (CurrentFocus() != NULL)
+													CurrentFocus()->MakeFocus(false);
+												tabview->TabAt(tabindex)->View()->MakeFocus(true);
+											}
+											Unlock();
+										}
+									}
 								}
-								Unlock();
 							}
 						}
 					}
