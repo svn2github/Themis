@@ -943,35 +943,32 @@ status_t Win :: ReceiveBroadcast(BMessage * message) {
 				case RENDERVIEW_POINTER: {
 					int32 site_id = 0;
 					message->FindInt32("site_id", &site_id);
-					if (site_id == 0)
-						break;
-
-					int32 tabindex;
-					ThemisTab * tab = FindTabFor(site_id, &tabindex);
-					if (tab == NULL)
-						break;
-
-					BView * renderview = NULL;
-					message->FindPointer("renderview_pointer", (void**)&renderview);
-					if (renderview == NULL)
-						break;
-					
-					/* Attach the renderview to the correct tab. */
-					Lock();
-					/*
-					 * We don't need to resize the renderview here, as this is done in
-					 * ThemisTabView::Select().
-					 */
-					tabview->TabAt(tabindex)->SetView(renderview);
-					
-					if (tabview->Selection() == tabindex) {
-						tabview->Select(tabindex);
-						
-						if (CurrentFocus() != NULL)
-							CurrentFocus()->MakeFocus(false);
-						tabview->TabAt(tabindex)->View()->MakeFocus(true);
+					if (site_id != 0) {
+						int32 tabindex;
+						ThemisTab * tab = FindTabFor(site_id, &tabindex);
+						if (tab != NULL) {
+							BView * renderview = NULL;
+							message->FindPointer("renderview_pointer", (void**)&renderview);
+							if (renderview != NULL) {
+								/* Attach the renderview to the correct tab. */
+								Lock();
+								/*
+								 * We don't need to resize the renderview here, as this is done in
+								 * ThemisTabView::Select().
+								 */
+								tabview->TabAt(tabindex)->SetView(renderview);
+								
+								if (tabview->Selection() == tabindex) {
+									tabview->Select(tabindex);
+									
+									if (CurrentFocus() != NULL)
+										CurrentFocus()->MakeFocus(false);
+									tabview->TabAt(tabindex)->View()->MakeFocus(true);
+								}
+								Unlock();
+							}
+						}
 					}
-					Unlock();
 
 					break;
 				}
