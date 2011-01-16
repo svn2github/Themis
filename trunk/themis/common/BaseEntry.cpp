@@ -39,6 +39,7 @@
 BaseEntry :: BaseEntry(int32 aId) {
 
 	fId = aId;
+	fParent = NULL;
 
 }
 
@@ -59,6 +60,7 @@ int32 BaseEntry :: getId() const {
 
 void BaseEntry :: addEntry(BaseEntry * aEntry) {
 	
+	aEntry->setParent(this);
 	fChildEntries.push_back(aEntry);
 	
 }
@@ -83,6 +85,18 @@ BaseEntry * BaseEntry :: getEntry(int32 aId) {
 	}
 
 	return result;
+}
+
+void BaseEntry :: setParent(BaseEntry * aParent) {
+
+	fParent = aParent;
+	
+}
+
+BaseEntry * BaseEntry :: getParent() {
+
+	return fParent;
+
 }
 
 void BaseEntry :: set(const string aName, const char * aValue) {

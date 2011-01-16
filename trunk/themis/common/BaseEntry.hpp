@@ -63,6 +63,7 @@ class BaseEntry {
 	
 	private:
 		int32 fId;
+		BaseEntry * fParent;
 	
 		map<string, string> mStrings;
 		map<string, bool> mBooleans;
@@ -79,6 +80,8 @@ class BaseEntry {
 		int32 getId() const;
 		void addEntry(BaseEntry * aEntry);
 		BaseEntry * getEntry(int32 aId);
+		void setParent(BaseEntry * aParent);
+		BaseEntry * getParent();
 		void set(const string aName, const char * aValue);
 		void set(const string aName, const string aValue);
 		void set(const string aName, const bool aValue);
