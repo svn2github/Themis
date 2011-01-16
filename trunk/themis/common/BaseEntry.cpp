@@ -33,8 +33,6 @@
 
 */
 
-#include <stdio.h>
-
 // Themis headers
 #include "BaseEntry.hpp"
 
@@ -67,8 +65,6 @@ void BaseEntry :: addEntry(BaseEntry * aEntry) {
 
 BaseEntry * BaseEntry :: getEntry(int32 aId) {
 
-	printf("Trying to find %ld\n", aId);
-
 	BaseEntry * result = NULL;
 	
 	// browse through the entry list to find the UrlEntry with the matching id
@@ -84,13 +80,6 @@ BaseEntry * BaseEntry :: getEntry(int32 aId) {
 				it++;
 			}
 		}
-	}
-
-	if (result == NULL) {
-		printf("Failed to find %ld\n", aId);
-	}
-	else {
-		printf("Found %ld\n", aId);
 	}
 
 	return result;
