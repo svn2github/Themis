@@ -5,20 +5,13 @@
 #ifndef SITEENTRY_H
 #define SITEENTRY_H
 
-// Standard C++ headers
-#include <vector.h>
-
 // Themis headers
-#include "BaseEntry.hpp"
-
-// Namespaces used
-using namespace std;
+#include "UrlEntry.h"
 
 // Declarations used
 class BBitmap;
-class UrlEntry;
 
-class SiteEntry : public BaseEntry {
+class SiteEntry : public UrlEntry {
 
 	public:
 		SiteEntry(int32 id,
@@ -26,18 +19,13 @@ class SiteEntry : public BaseEntry {
 		
 		bool GetCookiesDisabled();
 		BBitmap * GetFavIcon();
-		int GetLoadingProgress();
-		bool GetSecureConnection();
+		virtual int GetLoadingProgress();
 		const char * GetStatusText();
-		const char * GetTitle();
-		const char * GetUrl();
-		void Print();
+		virtual void Print();
 		void SetCookiesDisabled(bool value);
 		void SetFavIcon(BBitmap * bmp);
-		void SetLoadingProgress(int loadingprogress);
-		void SetSecureConnection(bool value);		
+		virtual void SetLoadingProgress(int loadingprogress);
 		void SetStatusText(const char * text);
-		void SetTitle(const char * title);
 									
 };
 

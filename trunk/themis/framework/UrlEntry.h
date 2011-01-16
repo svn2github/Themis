@@ -13,13 +13,13 @@ class UrlEntry : public BaseEntry {
 		UrlEntry(int32 id,
 				 const char * url);
 
-		int GetLoadingProgress();
+		virtual int GetLoadingProgress();
 		bool GetSecureConnection();
 		const char * GetTitle();
 		
 		const char * GetUrl();
-		void Print();
-		void SetLoadingProgress(int loadingprogress);
+		virtual void Print();
+		virtual void SetLoadingProgress(int loadingprogress);
 		void SetSecureConnection(bool value);
 		void SetTitle(const char * title);
 									
