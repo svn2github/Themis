@@ -68,6 +68,8 @@ class Win : public BWindow, public MessageSystem {
 		ThemisTabView * tabview;
 		ThemisStatusView * statusview;
 		BBitmap * bitmaps[10];
+		
+		void SendUrlOpenMessage(const char * aUrl, bool aAddToHistory = true);
 
 	public:
 		Win(BRect frame,

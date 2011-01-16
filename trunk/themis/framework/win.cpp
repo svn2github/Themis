@@ -162,6 +162,19 @@ Win :: ~Win() {
 
 }
 
+void Win :: SendUrlOpenMessage(const char * aUrl, bool aAddToHistory) {
+	
+	BMessage * message = new BMessage(URL_OPEN);
+	message->AddString("url_to_open", aUrl);
+	if (!aAddToHistory) {
+		message->AddBool("no_history_add", true);
+	}
+	BMessenger msgr(this);
+	msgr.SendMessage(message);
+	delete message;
+
+}
+
 bool Win :: QuitRequested() {
 
  	if (fQuitConfirmed == false) {
@@ -180,6 +193,8 @@ bool Win :: QuitRequested() {
 }
 
 void Win :: MessageReceived(BMessage * msg) {
+
+	msg->PrintToStream();
 
 	switch (msg->what) {
 		case B_ABOUT_REQUESTED: {
@@ -221,13 +236,7 @@ void Win :: MessageReceived(BMessage * msg) {
 			const char * previous = NULL;
 			previous = ((ThemisTab *)tabview->TabAt(tabview->Selection()))->GetHistory()->GetPreviousEntry();
 			if (previous != NULL) {
-				BMessage * backmsg = new BMessage(URL_OPEN);
-				backmsg->AddString("url_to_open", previous);
-				backmsg->AddBool("no_history_add", true);
-				BMessenger * msgr = new BMessenger(this);
-				msgr->SendMessage(backmsg);
-				delete backmsg;
-				delete msgr;
+				SendUrlOpenMessage(previous, false);
 			}
 			break;
 		}
@@ -235,13 +244,7 @@ void Win :: MessageReceived(BMessage * msg) {
 			const char * next = NULL;
 			next = ((ThemisTab *)tabview->TabAt(tabview->Selection()))->GetHistory()->GetNextEntry();
 			if (next != NULL) {
-				BMessage * fwdmsg = new BMessage(URL_OPEN);
-				fwdmsg->AddString("url_to_open", next);
-				fwdmsg->AddBool("no_history_add", true);
-				BMessenger* msgr = new BMessenger(this);
-				msgr->SendMessage(fwdmsg);
-				delete fwdmsg;
-				delete msgr;
+				SendUrlOpenMessage(next, false);
 			}
 			else
 			{
@@ -255,14 +258,7 @@ void Win :: MessageReceived(BMessage * msg) {
 		case BUTTON_HOME: {
 			BString homepage;
 			AppSettings->FindString(kPrefsHomePage, &homepage);
-			
-			BMessage * homemsg = new BMessage(URL_OPEN);
-			homemsg->AddString("url_to_open", homepage.String());
-			BMessenger * msgr = new BMessenger(this);
-			msgr->SendMessage(homemsg);
-			delete homemsg;
-			delete msgr;
-
+			SendUrlOpenMessage(homepage.String());
 			break;
 		}
 		case CLOSE_OTHER_TABS: {
