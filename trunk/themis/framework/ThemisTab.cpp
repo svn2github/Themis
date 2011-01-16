@@ -29,7 +29,7 @@ ThemisTab :: ThemisTab(BView* view)
 	fLabel = new BString( "(untitled)" );
 		
 	int8 histdepth;
-	AppSettings->FindInt8( "TabHistoryDepth", &histdepth );
+	AppSettings->FindInt8("PrefsTabHistoryDepth", &histdepth);
 	fHistory = new TabHistory( histdepth );
 	
 	fFavIcon = new BBitmap( BRect( 0, 0, 15, 15 ), B_RGB32 );
