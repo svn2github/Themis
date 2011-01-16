@@ -18,7 +18,6 @@
 
 // HTMLParser headers
 #include "HTMLParser.h"
-#include "DOMEntry.hpp"
 
 // DOM headers
 #include "TDocument.h"
@@ -35,6 +34,7 @@
 #include "commondefs.h"
 #include "plugman.h"
 #include "PrefsDefs.h"
+#include "DOMEntry.hpp"
 
 HTMLParser * parser;
 BMessage ** appSettings_p;
