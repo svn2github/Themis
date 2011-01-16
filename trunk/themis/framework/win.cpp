@@ -194,8 +194,6 @@ bool Win :: QuitRequested() {
 
 void Win :: MessageReceived(BMessage * msg) {
 
-	msg->PrintToStream();
-
 	switch (msg->what) {
 		case B_ABOUT_REQUESTED: {
 			be_app_messenger.SendMessage(B_ABOUT_REQUESTED);
