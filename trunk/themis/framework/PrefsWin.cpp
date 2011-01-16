@@ -90,6 +90,18 @@ PrefsWin :: ~PrefsWin() {
 	
 }
 
+bool PrefsWin :: GetCheckBoxValue(BMessage * aMessage) {
+
+	BCheckBox * checkBox;
+	aMessage->FindPointer("source", (void**)&checkBox);
+	bool result = false;
+	if(checkBox->Value() == 1)
+		result = true;
+
+	return result;
+
+}
+
 void PrefsWin :: CreatePrefViews(BMessage * aPluginList) {
 
 	printf("Creating preferences views\n");
@@ -184,12 +196,7 @@ void PrefsWin :: MessageReceived(BMessage* msg) {
 		case IZ_CHECKBOX: {
 			printf("PREFS: IZ_CHECKBOX\n");
 			
-			BCheckBox* cbox;
-			msg->FindPointer("source", ( void** )&cbox);
-			bool value = false;
-			if(cbox->Value() == 1)
-				value = true;
-			
+			bool value = GetCheckBoxValue(msg);
 			AppSettings->ReplaceBool(kPrefsIntelligentZoom, value);
 			
 			SaveAppSettings();
@@ -200,12 +207,7 @@ void PrefsWin :: MessageReceived(BMessage* msg) {
 		{
 			printf("PREFS: SHOWTYPEAHEAD_CHECKBOX\n");
 			
-			BCheckBox* cbox;
-			msg->FindPointer("source", ( void** )&cbox);
-			bool value = false;
-			if(cbox->Value() == 1)
-				value = true;
-			
+			bool value = GetCheckBoxValue(msg);
 			AppSettings->ReplaceBool(kPrefsShowTypeAheadWindow, value);
 			
 			SaveAppSettings();
@@ -215,12 +217,7 @@ void PrefsWin :: MessageReceived(BMessage* msg) {
 		case SHOWTABS_CHECKBOX: {
 			printf("PREFS: SHOWTABS_CHECKBOX\n");
 			
-			BCheckBox* cbox;
-			msg->FindPointer("source", ( void** )&cbox);
-			bool value = false;
-			if(cbox->Value() == 1)
-				value = true;
-			
+			bool value = GetCheckBoxValue(msg);
 			AppSettings->ReplaceBool(kPrefsShowTabsAtStartup, value);
 			
 			SaveAppSettings();
@@ -230,12 +227,7 @@ void PrefsWin :: MessageReceived(BMessage* msg) {
 		case TABSBACKGROUND_CHECKBOX: {
 			printf("PREFS: TABSBACKGROUND_CHECKBOX\n");
 			
-			BCheckBox* cbox;
-			msg->FindPointer("source", ( void** )&cbox);
-			bool value = false;
-			if(cbox->Value() == 1)
-				value = true;
-			
+			bool value = GetCheckBoxValue(msg);
 			AppSettings->ReplaceBool(kPrefsOpenTabsInBackground, value);
 			
 			SaveAppSettings();
@@ -245,12 +237,7 @@ void PrefsWin :: MessageReceived(BMessage* msg) {
 		case TABSBLANK_CHECKBOX: {
 			printf("PREFS: TABSBACKGROUND_CHECKBOX\n");
 			
-			BCheckBox* cbox;
-			msg->FindPointer("source", ( void** )&cbox);
-			bool value = false;
-			if(cbox->Value() == 1)
-				value = true;
-			
+			bool value = GetCheckBoxValue(msg);
 			AppSettings->ReplaceBool(kPrefsOpenBlankTargetInTab, value);
 			
 			SaveAppSettings();

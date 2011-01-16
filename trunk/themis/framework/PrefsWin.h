@@ -29,6 +29,7 @@ class PrefsWin : public BWindow  {
 		BRect fViewFrame;
 		vector<BView *> mPrefViews;
 		
+		bool GetCheckBoxValue(BMessage * aMessage);
 		void CreatePrefViews(BMessage * aPluginList);
 		void SaveAppSettings();
 
@@ -89,7 +90,7 @@ class PrefsListItem : public BListItem {
 		const char * fName;
 		BBitmap * fBitmap;
 		float fFontHeight;
-
+		
 	public:
 		PrefsListItem(const char* name,
 					  const uint8* bitmapdata);
