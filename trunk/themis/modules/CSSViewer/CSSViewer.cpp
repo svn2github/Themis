@@ -47,6 +47,10 @@
 #include <Autolock.h>
 
 // Themis headers
+#include "framework/app.h"
+#include "framework/SiteHandler.h"
+#include "framework/SiteEntry.h"
+#include "CSSDOMEntry.hpp"
 #include "commondefs.h"
 
 CSSViewer * viewer;
@@ -137,7 +141,7 @@ char * CSSViewer :: PlugName() {
 
 float CSSViewer :: PlugVersion() {
 
-	return 0.1;
+	return 0.2;
 
 }
 
@@ -150,24 +154,27 @@ status_t CSSViewer :: ReceiveBroadcast(BMessage * aMessage) {
 	int32 command = 0;
 	aMessage->FindInt32("command", &command);
 
-	switch ( command )	{
-		case COMMAND_INFO:	{
+	switch (command) {
+		case COMMAND_INFO: {
 			// Check if it is css dom data
-			BString type;
-			aMessage->FindString("type", &type);
-			if ( type == "cssdom" )	{
-				// Get the pointer out
-				void * document = NULL;
-				aMessage->FindPointer("pointer", &document);
-				if (document) {
-					CSSStyleSheetPtr * temp = (CSSStyleSheetPtr *) document;
-					if (!mView) {
-						mView = new CSSView(*temp);
-					}
-					else {
-						BAutolock viewLock(mView);
-						if (viewLock.IsLocked()) {
-							mView->SetStyleSheet(*temp);
+			BString typeOfDocument;
+			aMessage->FindString("type", &typeOfDocument);
+			if (typeOfDocument == "cssdom") {
+				int32 siteId = aMessage->FindInt32("site_id");
+				SiteEntry * site = ((App *)be_app)->GetSiteHandler()->GetEntry(siteId);
+				if (site != NULL) {
+					int32 cssId = aMessage->FindInt32("cssdom_id");
+					CSSDOMEntry * entry = (CSSDOMEntry *) site->getEntry(cssId);
+					if (entry != NULL) {
+						CSSStyleSheetPtr document = entry->getStyleSheet();
+						if (!mView) {
+							mView = new CSSView(document);
+						}
+						else {
+							BAutolock viewLock(mView);
+							if (viewLock.IsLocked()) {
+								mView->SetStyleSheet(document);
+							}
 						}
 					}
 				}

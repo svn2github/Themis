@@ -90,12 +90,9 @@ class CSSParserPlugin : public BHandler, public PlugClass {
 		// Function to check if the document is a supported one.
 		bool IsDocumentSupported(BMessage * aMessage);
 		// Function to notify plugins that parsing is finished.
-		void NotifyParseFinished(void * aDocument,
+		void NotifyParseFinished(CSSStyleSheetPtr aStyleSheet,
 								 string aType,
 								 BMessage * aOriginalMessage);
-		// Function to parse a document.
-		void ParseDocument(string aURL,
-						   BMessage * aOriginalMessage);
 
 	public:
 		CSSParserPlugin(BMessage * aInfo = NULL);

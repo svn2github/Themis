@@ -48,9 +48,12 @@
 #include <storage/Directory.h>
 
 // Themis headers
+#include "framework/app.h"
+#include "framework/SiteHandler.h"
 #include "commondefs.h"
 #include "plugman.h"
 #include "PrefsDefs.h"
+#include "CSSDOMEntry.hpp"
 
 // CSSParser headers
 #include "CSSParserPlugin.hpp"
@@ -208,21 +211,28 @@ bool CSSParserPlugin :: IsDocumentSupported(BMessage * aMessage) {
 
 }
 
-void CSSParserPlugin :: NotifyParseFinished(void * aDocument,
+void CSSParserPlugin :: NotifyParseFinished(CSSStyleSheetPtr aStyleSheet,
 											string aType,
 											BMessage * aOriginalMessage) {
 
-	int32 siteID = 0;
-	int32 urlID = 0;
-	aOriginalMessage->FindInt32("site_id", &siteID);
-	aOriginalMessage->FindInt32("url_id", &urlID);
+	int32 siteId = 0;
+	int32 urlId = 0;
+	int32 domId = 0;
+	aOriginalMessage->FindInt32("site_id", &siteId);
+	aOriginalMessage->FindInt32("url_id", &urlId);
+	aOriginalMessage->FindInt32("dom_id", &domId);
+
+	/* Get an unique ID from the app for the DOM entry */
+	int32 cssId = ((App *)be_app)->GetNewID();
+	CSSDOMEntry * entry = new CSSDOMEntry(cssId, aStyleSheet);
+	((App *)be_app)->GetSiteHandler()->AddEntry(entry, siteId, domId);
 
 	BMessage * done = new BMessage(SH_PARSE_DOC_FINISHED);
 	done->AddInt32("command", COMMAND_INFO);
 	done->AddString("type", aType.c_str());
-	done->AddPointer("pointer", aDocument);
-	done->AddInt32("site_id", siteID);
-	done->AddInt32("url_id", urlID);
+	done->AddInt32("site_id", siteId);
+	done->AddInt32("url_id", urlId);
+	done->AddInt32("cssdom_id", cssId);
 	
 	// Message created. Broadcast it.
 	Broadcast(MS_TARGET_ALL, done);
@@ -230,57 +240,6 @@ void CSSParserPlugin :: NotifyParseFinished(void * aDocument,
 	Debug("File parsed", PlugID());
 	delete done;
 
-}
-
-void CSSParserPlugin :: ParseDocument(string aURL,
-								 	  BMessage * aOriginalMessage) {
-	
-	if (CacheRegistered()) {
-		int32 fileToken = mCache->FindObject(mUserToken, aURL.c_str());
-		ssize_t fileSize = mCache->GetObjectSize(mUserToken, fileToken);
-		
-		if (fileSize == 0) {
-			Debug("Requested file is 0 bytes long. Aborting parse", PlugID());
-		}
-		else {
-			// Read the file and parse it.
-			const unsigned int BUFFER_SIZE = 2000;
-			string content = "";
-			char * buffer = new char[BUFFER_SIZE];
-			ssize_t bytesRead = 0;
-			int totalBytes = 0;
-			bool foundData = true;
-			while (foundData) {
-				if (totalBytes > fileSize) {
-					foundData = false;
-					printf("Reading more bytes than possible. Skipping last buffer\n");
-				}
-				else {
-					bytesRead = mCache->Read(mUserToken, fileToken, buffer, BUFFER_SIZE);
-					if (bytesRead > 0) {
-						content += buffer;
-						memset(buffer, 0, BUFFER_SIZE);
-						totalBytes += bytesRead;
-					}
-					else {
-						foundData = false;
-					}
-				}
-			}
-			delete[] buffer;
-			
-			// Parse it
-			if (content.size() != 0) {
-				mParser->parse(content);
-				
-				NotifyParseFinished(mDocuments.end() - 1, "cssdom", aOriginalMessage);
-			}
-		}
-	}
-	else {
-		printf("Not registered with the cache. Nothing to do\n");
-	}
-	
 }
 
 void CSSParserPlugin :: MessageReceived(BMessage * aMessage) {
@@ -297,7 +256,7 @@ void CSSParserPlugin :: MessageReceived(BMessage * aMessage) {
 				Debug(cssLoad.c_str(), PlugID());
 				CSSStyleSheetPtr document = mParser->parse(path);
 				mDocuments.push_back(document);
-				NotifyParseFinished(mDocuments.end() - 1, "cssdom", aMessage);
+				NotifyParseFinished(document, "cssdom", aMessage);
 			}
 			break;
 		}
@@ -394,8 +353,13 @@ status_t CSSParserPlugin :: ReceiveBroadcast(BMessage * aMessage) {
 								Debug(cssLoad.c_str(), PlugID());
 								CSSStyleSheetPtr document = mParser->parse(path);
 								mDocuments.push_back(document);
-								NotifyParseFinished(mDocuments.end() - 1, "cssdom", aMessage);
+								NotifyParseFinished(document, "cssdom", aMessage);
 							}
+						}
+						else {
+							// Assuming the default stylesheet is parsed first!!!
+							CSSStyleSheetPtr document = mDocuments[0];
+							NotifyParseFinished(document, "cssdom", aMessage);
 						}
 					}
 				}
