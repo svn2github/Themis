@@ -41,6 +41,7 @@ HTMLPARSER_DEPENDS_DIR=$(BASE_DEPENDS_DIR)HTMLParser/
 IMAGEH_DEPENDS_DIR=$(BASE_ADDONS_DEPENDS_DIR)imageh/
 RENDERER_DEPENDS_DIR=$(BASE_ADDONS_DEPENDS_DIR)Renderer/
 CSSPARSER_DEPENDS_DIR=$(BASE_ADDONS_DEPENDS_DIR)CSSParser/
+CSSRENDERER_DEPENDS_DIR=$(BASE_ADDONS_DEPENDS_DIR)CSSRenderer/
 
 #object directories
 BASE_OBJECT_DIR=objects/
@@ -55,6 +56,7 @@ HTMLPARSER_OBJECT_DIR=$(BASE_OBJECT_DIR)HTMLParser/
 IMAGEH_OBJECT_DIR=$(BASE_ADDONS_OBJECT_DIR)imageh/
 RENDERER_OBJECT_DIR=$(BASE_ADDONS_OBJECT_DIR)Renderer/
 CSSPARSER_OBJECT_DIR=$(BASE_ADDONS_OBJECT_DIR)CSSParser/
+CSSRENDERER_OBJECT_DIR=$(BASE_ADDONS_OBJECT_DIR)CSSRenderer/
 
 #source files
 FRAMEWORKSOURCES= \
@@ -246,6 +248,13 @@ CSSVIEWERSOURCES= \
 	CSSViewer/ColumnListView.cpp \
 	CSSViewer/ColumnTypes.cpp \
 	CSSViewer/ColorTools.cpp
+CSSRENDERERSOURCES= \
+	CSSRenderer/CSSRenderer.cpp \
+	CSSRenderer/CSSRendererView.cpp \
+	CSSRenderer/CSSScrolledRendererView.cpp \
+	CSSRenderer/CSSView.cpp \
+	CSSRenderer/TextBox.cpp
+
 #make install directories as necessary
 ifeq "$(shell if [ -d $(BASE_ADDON_INSTALL_DIR) ] ; then echo 1 ; else mkdir -p $(BASE_ADDON_INSTALL_DIR) ; echo 0 ; fi)" "0"
 endif
@@ -306,6 +315,9 @@ endif
 #imageh add-on object directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)imageh/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)imageh/ ; echo 0 ; fi)" "0"
 endif
+#CSS Renderer add-on object directory
+ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)CSSRenderer/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)CSSRenderer/ ; echo 0 ; fi)" "0"
+endif
 
 
 #Make depends directories as necessary
@@ -360,6 +372,9 @@ ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)testplug/ ] ; then echo 1 ; else
 endif
 #imageh add-on depends directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)imageh/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)imageh/ ; echo 0 ; fi)" "0"
+endif
+#CSS Renderer add-on depends directory
+ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)CSSRenderer/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)CSSRenderer/ ; echo 0 ; fi)" "0"
 endif
 
 #Detect whether we are running Zeta or R5/Dano
@@ -440,6 +455,7 @@ endif
 #			libs
 #			domtest
 #			testplug
+#           cssraddon
 all: framework libs addons
 	@echo "Themis application and add-ons built successfully."
 addons: httpaddon cacheaddon htmlpaddon renderer fileaddon csspaddon
@@ -485,6 +501,7 @@ help:
 	@echo "	core2		Framework, HTTP, cache, testplug, HTMLParser, DOMView and CSSViewer add-ons"
 	@echo "	testplug	A sample/test plug-in"
 	@echo "	imagehaddon	The official image handling add-on"
+	@echo " cssraddon   CSSRenderer add-on"
 	@echo "	zip		zips up the files in the Themis directory to Themis.zip"
 	@echo "*** NOTE ***"
 	@echo "You will get errors if you use any of the \"clean\" targets in combination with any of the build targets."
@@ -788,6 +805,34 @@ $(BASE_ADDONS_DEPENDS_DIR)CSSViewer/%.d:  $(BASE_ADDON_SOURCE_DIR)CSSViewer/%.cp
 
 $(BASE_ADDONS_OBJECT_DIR)CSSViewer/%.o: $(BASE_ADDON_SOURCE_DIR)CSSViewer/%.cpp $(BASE_ADDONS_DEPENDS_DIR)CSSViewer/%.d
 	@echo "CSS Viewer: Updating object file $(notdir $@)"
+	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -Iframework/DOM -Iframework/DOMStyle -I./ -c $< -o $@
+
+#cssrenderer add-on
+cssraddon: framework $(BASE_ADDON_INSTALL_DIR)css_renderer.so domlib domstylelib
+$(BASE_ADDON_INSTALL_DIR)css_renderer.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(CSSRENDERERSOURCES),$(BASE_ADDONS_OBJECT_DIR)CSSRenderer/$(notdir $(file:.cpp=.o)))
+	@echo "Linking CSS Renderer add-on" 
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)css_renderer.so $(foreach file,$(notdir $(CSSRENDERERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)CSSRenderer/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=css_renderer.so -L ./ -L $(BELIBRARIES) -L$(BASE_APP_LIB_INSTALL_DIR)  -lbe -lroot -ldomstyle -ldom -lstdc++.r4 _APP_
+	@echo "CSS Renderer add-on is now linked. Doing mimeset."
+	@mimeset -F $(BASE_ADDON_INSTALL_DIR)css_renderer.so
+	@echo "CSS Renderer plug-in compiled and linked successfully."
+	
+cssrdepends: $(foreach file,$(CSSRENDERERSOURCES),$(BASE_ADDON_SOURCE_DIR)$(file)) common/plugman.cpp common/plugclass.cpp $(COMMON_DEPENDS_DIR)plugman.d $(COMMON_DEPENDS_DIR)plugclass.d\
+				$(foreach file,$(BASE_ADDON_SOURCE_DIR)$(CSSRENDERERSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)CSSRenderer/$(notdir $(file)))
+	@echo "CSSRenderer depends are done."
+ifneq ($(MAKECMDGOALS),clean)
+-include $(foreach file,$(BASE_ADDON_SOURCE_DIR)$(CSSRENDERERSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)CSSRenderer/$(notdir $(file)))
+endif
+	
+cssrobjects: $(COMMON_OBJECT_DIR)plugman.o $(COMMON_OBJECT_DIR)plugclass.o\
+					$(foreach file,$(BASE_ADDON_SOURCE_DIR)$(CSSRENDERERSOURCES),$(BASE_ADDONS_OBJECT_DIR)CSSRenderer/$(notdir $(file:.cpp=.o)))
+	@echo "CSS Renderer objects are done."
+	
+$(BASE_ADDONS_DEPENDS_DIR)CSSRenderer/%.d:  $(BASE_ADDON_SOURCE_DIR)CSSRenderer/%.cpp 
+	@echo "CSS Renderer: Updating dependency file $(notdir $@)"
+	@set -e;VAR1=$(shell echo "$(BASE_ADDONS_DEPENDS_DIR)CSSRenderer/$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(BASE_ADDONS_OBJECT_DIR)CSSRenderer/"|sed 's/\//\\\//g'); $(CC) -Icommon -Iframework/DOM -Iframework/DOMStyle -I./ -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/add-ons\/CSSRenderer\/\1.o depends\/add-ons\/CSSRenderer\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
+
+$(BASE_ADDONS_OBJECT_DIR)CSSRenderer/%.o: $(BASE_ADDON_SOURCE_DIR)CSSRenderer/%.cpp $(BASE_ADDONS_DEPENDS_DIR)CSSRenderer/%.d
+	@echo "CSS Renderer: Updating object file $(notdir $@)"
 	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -Iframework/DOM -Iframework/DOMStyle -I./ -c $< -o $@
 
 #http add-on
