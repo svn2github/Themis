@@ -26,6 +26,8 @@ class SiteEntry : public UrlEntry {
 		void SetFavIcon(BBitmap * bmp);
 		virtual void SetLoadingProgress(int loadingprogress);
 		void SetStatusText(const char * text);
+		void SetSize(int width, int height);
+		void GetSize(int & width, int & height);
 									
 };
 

@@ -17,6 +17,8 @@
 const string kStatusText = "StatusText";
 const string kCookiesDisabled = "CookiesDisabled";
 const string kFavIcon = "FavIcon";
+const string kWidth = "Width";
+const string kHeight = "Height";
 
 SiteEntry :: SiteEntry(int32 id,
 					   const char * url)
@@ -117,4 +119,18 @@ void SiteEntry :: SetStatusText(const char * text) {
 	
 	set(kStatusText, text);
 	
+}
+
+void SiteEntry :: SetSize(int width, int height) {
+
+	set(kWidth, width);
+	set(kHeight, height);
+
+}
+
+void SiteEntry :: GetSize(int & width, int & height) {
+	
+	width = getInteger(kWidth);
+	height = getInteger(kHeight);
+
 }
