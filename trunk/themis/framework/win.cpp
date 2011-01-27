@@ -369,20 +369,21 @@ void Win :: MessageReceived(BMessage * msg) {
 			UrlEntry * urlEntry = new UrlEntry(urlId, url.String());
 			siteEntry->addEntry(urlEntry);
 			((App *)be_app)->GetSiteHandler()->AddEntry(siteEntry);
-						
+
+			ThemisTab * tab = NULL;
 			if (msg->HasInt32("tab_to_open_in")) {
-				int32 tab_index = msg->FindInt32("tab_to_open_in");
-				((ThemisTab *)tabview->TabAt(tab_index))->SetSiteID(siteId);
-				// add history entry for tab
-				if (msg->HasBool("no_history_add") == false)
-					((ThemisTab *)tabview->TabAt(tab_index))->GetHistory()->AddEntry(url.String());
+				int32 index = msg->FindInt32("tab_to_open_in");
+				tab = (ThemisTab *) tabview->TabAt(index);
 			}
 			else {
-				((ThemisTab *)tabview->TabAt(selection))->SetSiteID(siteId);
-				// add history entry for tab
-				if(msg->HasBool("no_history_add") == false)
-					((ThemisTab *)tabview->TabAt(selection))->GetHistory()->AddEntry(url.String());
+				tab = (ThemisTab *) tabview->TabAt(selection);
 			}
+			tab->SetSiteID(siteId);
+			// add history entry for tab
+			if(msg->HasBool("no_history_add") == false)
+				tab->GetHistory()->AddEntry(url.String());
+			BRect rect = tabview->Bounds();
+			siteEntry->SetSize(rect.Width() - 2, rect.Height() - 2);
 			
 			/* add url to global history
 			 * ( You ask, why I am also adding the url on RELOAD, and not only on URL_OPEN?
