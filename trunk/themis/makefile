@@ -39,7 +39,6 @@ DOMSTYLELIBRARY_DEPENDS_DIR=$(BASE_LIBRARY_DEPENDS_DIR)DOMStyle/
 TESTPLUG_DEPENDS_DIR=$(BASE_DEPENDS_DIR)testplug/
 HTMLPARSER_DEPENDS_DIR=$(BASE_DEPENDS_DIR)HTMLParser/
 IMAGEH_DEPENDS_DIR=$(BASE_ADDONS_DEPENDS_DIR)imageh/
-RENDERER_DEPENDS_DIR=$(BASE_ADDONS_DEPENDS_DIR)Renderer/
 CSSPARSER_DEPENDS_DIR=$(BASE_ADDONS_DEPENDS_DIR)CSSParser/
 CSSRENDERER_DEPENDS_DIR=$(BASE_ADDONS_DEPENDS_DIR)CSSRenderer/
 
@@ -54,7 +53,6 @@ DOMSTYLELIBRARY_OBJECT_DIR=$(BASE_LIBRARY_OBJECT_DIR)DOMStyle/
 TESTPLUG_OBJECT_DIR=$(BASE_OBJECT_DIR)testplug/
 HTMLPARSER_OBJECT_DIR=$(BASE_OBJECT_DIR)HTMLParser/
 IMAGEH_OBJECT_DIR=$(BASE_ADDONS_OBJECT_DIR)imageh/
-RENDERER_OBJECT_DIR=$(BASE_ADDONS_OBJECT_DIR)Renderer/
 CSSPARSER_OBJECT_DIR=$(BASE_ADDONS_OBJECT_DIR)CSSParser/
 CSSRENDERER_OBJECT_DIR=$(BASE_ADDONS_OBJECT_DIR)CSSRenderer/
 
@@ -90,26 +88,6 @@ FRAMEWORKSOURCES= \
 	framework/UrlEntry.cpp \
 	framework/date.cpp
 #	framework/UrlHandler.cpp
-RENDERERSOURCES= \
-	Renderer/BlockElement.cpp \
-	Renderer/BitmapElement.cpp \
-	Renderer/CheckBoxElement.cpp \
-	Renderer/ButtonElement.cpp \
-	Renderer/FileElement.cpp \
-	Renderer/CSS_Units.cpp \
-	Renderer/TableElement.cpp \
-	Renderer/TextControlElement.cpp \
-	Renderer/TextElement.cpp \
-	Renderer/FormElement.cpp \
-	Renderer/PElement.cpp \
-	Renderer/RadioButtonElement.cpp \
-	Renderer/TextAreaElement.cpp \
-	Renderer/TRenderer.cpp \
-	Renderer/TRendererEngine.cpp \
-	Renderer/TRenderView.cpp \
-	Renderer/UIBox.cpp \
-	Renderer/UIElement.cpp \
-	Renderer/Utils.cpp
 COMMONSOURCES= \
 	common/plugclass.cpp \
 	common/msgsystem.cpp \
@@ -273,9 +251,6 @@ endif
 #css parser add-on object directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)CSSParser ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)CSSParser ; echo 0 ; fi)" "0"
 endif
-#renderer add-on object directory
-ifeq "$(shell if [ -d $(RENDERER_OBJECT_DIR) ] ; then echo 1 ; else mkdir -p $(RENDERER_OBJECT_DIR) ; echo 0 ; fi)" "0"
-endif
 #file protocol add-on object directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_OBJECT_DIR)FileProtocol/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_OBJECT_DIR)FileProtocol/ ; echo 0 ; fi)" "0"
 endif
@@ -330,9 +305,6 @@ endif
 #add a new line similar to those below for each plug-in/add-on
 #css parser add-on depends directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)CSSParser ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)CSSParser ; echo 0 ; fi)" "0"
-endif
-#renderer add-on depends directory
-ifeq "$(shell if [ -d $(RENDERER_DEPENDS_DIR) ] ; then echo 1 ; else mkdir -p $(RENDERER_DEPENDS_DIR) ; echo 0 ; fi)" "0"
 endif
 #file protocol add-on depends directory
 ifeq "$(shell if [ -d $(BASE_ADDONS_DEPENDS_DIR)FileProtocol/ ] ; then echo 1 ; else mkdir -p $(BASE_ADDONS_DEPENDS_DIR)FileProtocol/ ; echo 0 ; fi)" "0"
@@ -458,7 +430,7 @@ endif
 #           cssraddon
 all: framework libs addons
 	@echo "Themis application and add-ons built successfully."
-addons: httpaddon cacheaddon htmlpaddon renderer fileaddon csspaddon
+addons: httpaddon cacheaddon htmlpaddon cssraddon fileaddon csspaddon
 	@echo "All add-ons built successfully."
 clean: 
 	@rm -rf objects depends Themis
@@ -566,22 +538,6 @@ $(COMMON_OBJECT_DIR)%.o: common/%.cpp $(COMMON_DEPENDS_DIR)%.d
 	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -I./ -Iframework/DOM -Iframework/DOMStyle -c $< -o $@
 	
 
-#renderer
-renderer: framework $(BASE_ADDON_INSTALL_DIR)renderer.so domlib
-$(BASE_ADDON_INSTALL_DIR)renderer.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(RENDERERSOURCES),$(BASE_ADDONS_OBJECT_DIR)Renderer/$(notdir $(file:.cpp=.o)))
-	@echo "Linking renderer..."
-	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)renderer.so $(foreach file,$(notdir $(RENDERERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)/Renderer/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=renderer.so -L ./ -L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) $(STDLIBS) -ldom -ltracker -lstdc++.r4 _APP_ 
-	@mimeset -F $(BASE_ADDON_INSTALL_DIR)renderer.so
-	@echo "Renderer plug-in compiled and linked successfully."
-$(RENDERER_DEPENDS_DIR)%.d: $(BASE_ADDON_SOURCE_DIR)Renderer/%.cpp 
-	@echo "Renderer: Updating dependency file $(notdir $@)"
-	@set -e;VAR1=$(shell echo "$(RENDERER_DEPENDS_DIR)$(notdir $@)"|sed 's/\//\\\//g');VAR2=$(shell echo "$(RENDERER_DEPENDS_DIR)"|sed 's/\//\\\//g'); $(CC) -Icommon -Iframework/DOM -I./ -M $(CPPFLAGS) $< | sed 's/\($*\)\.o[ :]*/objects\/add-ons\/Renderer\/\1.o depends\/add-ons\/Renderer\/\1.d : /g' > $@;[ -s $@ ] || rm -f $@
-$(RENDERER_OBJECT_DIR)%.o: $(BASE_ADDON_SOURCE_DIR)Renderer/%.cpp $(BASE_ADDONS_DEPENDS_DIR)Renderer/%.d
-	@echo "Renderer: Updating object file $(notdir $@)"
-	@$(CC) $(CFLAGS) $(COMPILE_FLAGS) -Icommon -Iframework/DOM -I./ -c $< -o $@ 
-ifneq ($(MAKECMDGOALS),clean)
--include $(foreach file,$(BASE_ADDON_SOURCE_DIR)$(RENDERERSOURCES:.cpp=.d),$(BASE_ADDONS_DEPENDS_DIR)Renderer/$(notdir $(file)))
-endif
 #file protocol addon
 fileaddon: framework $(BASE_ADDON_INSTALL_DIR)file_protocol.so
 $(BASE_ADDON_INSTALL_DIR)file_protocol.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(FILEPROTOCOLSOURCES),$(BASE_ADDONS_OBJECT_DIR)FileProtocol/$(notdir $(file:.cpp=.o)))
