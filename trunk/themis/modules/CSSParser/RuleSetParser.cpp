@@ -45,6 +45,9 @@
 #include "CSSStyleDeclaration.hpp"
 #include "CSSRuleList.hpp"
 #include "CSSMediaRule.hpp"
+#include "CSSValue.hpp"
+#include "CSSPrimitiveValue.hpp"
+#include "RGBColor.hpp"
 
 RuleSetParser :: RuleSetParser(CSSScanner * aScanner,
 							   CSSStyleSheetPtr aStyleSheet)
@@ -54,6 +57,21 @@ RuleSetParser :: RuleSetParser(CSSScanner * aScanner,
 
 RuleSetParser :: ~RuleSetParser() {
 
+}
+
+ValueType RuleSetParser :: getValueTypeOfProperty(TDOMString aName) const {
+	
+	ValueType result;
+	
+	if (aName == "color") {
+		result = COLOR_TYPE;
+	}
+	else {
+		result = UNKNOWN_TYPE;
+	}
+	
+	return result;
+	
 }
 
 TDOMString RuleSetParser :: parseHash() {
@@ -174,7 +192,7 @@ TDOMString RuleSetParser :: parseFunction() {
 	TDOMString function = mScanner->getTokenText();
 
 	parseSStar();
-	function += parseExpression();
+	/*function += */parseExpression();
 	if (mToken == RROUNDBRACKET_SYM) {
 		function += mScanner->getTokenText();
 		mToken = mScanner->nextToken();
@@ -191,6 +209,36 @@ TDOMString RuleSetParser :: parseFunction() {
 
 }
 
+TDOMString RuleSetParser :: parsePseudoFunction() {
+
+	TDOMString function = mScanner->getTokenText();
+
+	parseSStar();
+	mToken = mScanner->nextToken();
+	if (mToken == IDENTIFIER_SYM) {
+		function += mScanner->getTokenText();
+		if (mToken == RROUNDBRACKET_SYM) {
+			function += mScanner->getTokenText();
+			mToken = mScanner->nextToken();
+			parseSStar();
+		}
+		else {
+			throw ReadException(mScanner->getLineNr(),
+								mScanner->getCharNr(),
+								"Expected )",
+								GENERIC);
+		}
+	}
+	else {
+		throw ReadException(mScanner->getLineNr(),
+							mScanner->getCharNr(),
+							"Expected identifier",
+							GENERIC);
+	}
+
+	return function;
+}
+
 TDOMString RuleSetParser :: parsePseudo() {
 
 	TDOMString pseudo = mScanner->getTokenText();
@@ -205,7 +253,7 @@ TDOMString RuleSetParser :: parsePseudo() {
 		case FUNCTION_SYM: {
 			pseudo += mScanner->getTokenText();
 			mToken = mScanner->nextToken();
-			pseudo += parseFunction();
+			pseudo += parsePseudoFunction();
 			break;
 		}
 		default: {
@@ -350,9 +398,11 @@ TDOMString RuleSetParser :: parseSelector() {
 	
 }
 
-TDOMString RuleSetParser :: parseNumericTerm() {
+CSSValuePtr RuleSetParser :: parseNumericTerm(bool aPositiveValue) {
 
 	TDOMString numericTerm = "";
+	unsigned short primitiveType;
+	float value = 0;
 
 	switch (mToken) {
 		case NUMBER_SYM: {
@@ -360,24 +410,50 @@ TDOMString RuleSetParser :: parseNumericTerm() {
 			mToken = mScanner->nextToken();
 			if (mToken == IDENTIFIER_SYM) {
 				string tokenText = mScanner->getTokenText();
-				if (tokenText == "px" ||
-					tokenText == "cm" ||
-					tokenText == "mm" ||
-					tokenText == "in" ||
-					tokenText == "pt" ||
-					tokenText == "pc" ||
-					tokenText == "em" ||
-					tokenText == "ex" ||
-					tokenText == "deg" ||
-					tokenText == "rad" ||
-					tokenText == "grad" ||
-					tokenText == "ms" ||
-					tokenText == "s" ||
-					tokenText == "hz" ||
-					tokenText == "khz") {
-					numericTerm += tokenText;
-					mToken = mScanner->nextToken();
-					parseSStar();
+				if (tokenText == "px") {
+					primitiveType = CSSPrimitiveValue::CSS_PX;
+				}
+				else if (tokenText == "cm") {
+					primitiveType = CSSPrimitiveValue::CSS_CM;
+				}
+				else if (tokenText == "mm") {
+					primitiveType = CSSPrimitiveValue::CSS_MM;
+				}
+				else if (tokenText == "in") {
+					primitiveType = CSSPrimitiveValue::CSS_IN;
+				}
+				else if (tokenText == "pt") {
+					primitiveType = CSSPrimitiveValue::CSS_PT;
+				}
+				else if (tokenText == "pc") {
+					primitiveType = CSSPrimitiveValue::CSS_PC;
+				}
+				else if (tokenText == "em") {
+					primitiveType = CSSPrimitiveValue::CSS_EMS;
+				}
+				else if (tokenText == "ex") {
+					primitiveType = CSSPrimitiveValue::CSS_EXS;
+				}
+				else if (tokenText == "deg") {
+					primitiveType = CSSPrimitiveValue::CSS_DEG;
+				}
+				else if (tokenText == "rad") {
+					primitiveType = CSSPrimitiveValue::CSS_RAD;
+				}
+				else if (tokenText == "grad") {
+					primitiveType = CSSPrimitiveValue::CSS_GRAD;
+				}
+				else if (tokenText == "ms") {
+					primitiveType = CSSPrimitiveValue::CSS_MS;
+				}
+				else if (tokenText == "s") {
+					primitiveType = CSSPrimitiveValue::CSS_S;
+				}
+				else if (tokenText == "hz") {
+					primitiveType = CSSPrimitiveValue::CSS_HZ;
+				}
+				else if (tokenText == "khz") {
+					primitiveType = CSSPrimitiveValue::CSS_KHZ;
 				}
 				else {
 					throw ReadException(mScanner->getLineNr(),
@@ -385,16 +461,22 @@ TDOMString RuleSetParser :: parseNumericTerm() {
 										"Expected term",
 										GENERIC);
 				}
+				mToken = mScanner->nextToken();
+				parseSStar();
 			}
 			else {
 				// Just a number is also possible.
+				primitiveType = CSSPrimitiveValue::CSS_NUMBER;
 				parseSStar();
 			}
+			value = atof(numericTerm.c_str());
 			break;
 		}
 		case PERCENTAGE_SYM: {
 			numericTerm = mScanner->getTokenText();
+			primitiveType = CSSPrimitiveValue::CSS_PERCENTAGE;
 			mToken = mScanner->nextToken();
+			value = atof(numericTerm.c_str());
 			break;
 		}
 		default: {
@@ -405,43 +487,65 @@ TDOMString RuleSetParser :: parseNumericTerm() {
 		}
 	}
 	
-	return numericTerm;
+	if (!aPositiveValue) {
+		// Multiply by -1 to get a negative value.
+		value *= -1;
+	}
+	
+	CSSPrimitiveValuePtr result = CSSPrimitiveValuePtr(new CSSPrimitiveValue(value, primitiveType));
+	
+	return result;
 
 }
 
-TDOMString RuleSetParser :: parseTerm() {
+CSSValuePtr RuleSetParser :: parseTerm(ValueType aType) {
 
 	TDOMString term = "";
+	CSSValuePtr result;
 
-	if (mToken == MINUS_SYM ||
-		mToken == PLUS_SYM) {
-		term = mScanner->getTokenText();
+	if (mToken == MINUS_SYM) {
 		mToken = mScanner->nextToken();
-		term += parseNumericTerm();
+		result = parseNumericTerm(false);
+	}
+	else if (mToken == PLUS_SYM) {
+		mToken = mScanner->nextToken();
+		 result = parseNumericTerm();
 	}
 	else {
 		switch (mToken) {
 			case NUMBER_SYM:
 			case PERCENTAGE_SYM: {
-				term = parseNumericTerm();
+				result = parseNumericTerm();
 				break;
 			}
 			case TEXT_SYM: {
 				term = mScanner->getTokenText();
 				mToken = mScanner->nextToken();
 				parseSStar();
+				result = CSSPrimitiveValuePtr(new CSSPrimitiveValue(term, CSSPrimitiveValue::CSS_STRING));
 				break;
 			}
 			case IDENTIFIER_SYM: {
 				term = mScanner->getTokenText();
 				mToken = mScanner->nextToken();
 				parseSStar();
+				switch(aType) {
+					case COLOR_TYPE: {
+						RGBColorPtr colorPtr = RGBColorPtr(new RGBColor(term));
+						result = CSSPrimitiveValuePtr(new CSSPrimitiveValue(colorPtr));
+						break;
+					}
+					default: {
+						result = CSSPrimitiveValuePtr(new CSSPrimitiveValue(term, CSSPrimitiveValue::CSS_IDENT));
+					}
+				}
 				break;
 			}
 			case URI_SYM: {
 				term = mScanner->getTokenText();
 				mToken = mScanner->nextToken();
 				parseSStar();
+				result = CSSPrimitiveValuePtr(new CSSPrimitiveValue(term, CSSPrimitiveValue::CSS_URI));
 				break;
 			}
 			case HASH_SYM: {
@@ -466,7 +570,7 @@ TDOMString RuleSetParser :: parseTerm() {
 		}
 	}
 
-	return term;
+	return result;
 
 }
 
@@ -495,43 +599,44 @@ bool RuleSetParser :: isTerm() {
 	return termFound;
 }
 
-TDOMString RuleSetParser :: parseExpression() {
+CSSValuePtr RuleSetParser :: parseExpression(ValueType aType) {
 	
-	TDOMString expression = parseTerm();
+	CSSValuePtr result = parseTerm(aType);
 	
 	bool termFound = true;
 	while (termFound) {
 		if (mToken == SLASH_SYM ||
 			mToken == COMMA_SYM) {
-			expression += mScanner->getTokenText();
+			/*expression +=*/ mScanner->getTokenText();
 			mToken = mScanner->nextToken();
 			parseSStar();
-			expression += parseTerm();
+			/*expression +=*/ parseTerm();
 		}
 		else if (isTerm()) {
-			expression += parseTerm();
+			/*expression +=*/ parseTerm();
 		}
 		else {
 			termFound = false;
 		}
 	}
 
-	return expression;
+	return result;
 
 }
 
 Property RuleSetParser :: parseDeclaration() {
 
 	TDOMString name = mScanner->getTokenText();
-	TDOMString value = "";
+	CSSValuePtr value;
 	TDOMString important = "";
+	ValueType type = getValueTypeOfProperty(name);
 	
 	mToken = mScanner->nextToken();
 	parseSStar();
 	if (mToken == COLON_SYM) {
 		mToken = mScanner->nextToken();
 		parseSStar();
-		value = parseExpression();
+		value = parseExpression(type);
 		if (mToken == IMPORTANT_SYM) {
 			mToken = mScanner->nextToken();
 			parseSStar();
@@ -603,7 +708,7 @@ Token RuleSetParser :: parse(Token aToken, CSSRulePtr aParentRule) {
 		CSSStyleDeclarationPtr style(new CSSStyleDeclaration(rule));
 		if (mToken == IDENTIFIER_SYM) {
 			Property prop = parseDeclaration();
-			style->setProperty(prop.getName(), prop.getValue(), prop.getPriority());
+			style->setPropertyCSSValue(prop.getName(), prop.getValue(), prop.getPriority());
 			// Found at least one property, so there is a style to set.
 			rule->setStyle(style);
 		}
@@ -615,9 +720,9 @@ Token RuleSetParser :: parse(Token aToken, CSSRulePtr aParentRule) {
 				parseSStar();
 				if (mToken == IDENTIFIER_SYM) {
 					Property prop = parseDeclaration();
-					style->setProperty(prop.getName(),
-									   prop.getValue(),
-									   prop.getPriority());
+					style->setPropertyCSSValue(prop.getName(),
+											   prop.getValue(),
+											   prop.getPriority());
 				}
 			}
 			else {

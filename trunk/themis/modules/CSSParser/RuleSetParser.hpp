@@ -47,21 +47,36 @@
 
 // DOM Style headers
 #include "Property.hpp"
+#include "CSSValue.hpp"
+
+enum ValueType {
+	UNKNOWN_TYPE,
+	COLOR_TYPE,
+	LENGTH_TYPE,
+	ANGLE_TYPE,
+	TIME_TYPE,
+	FREQUENCY_TYPE,
+	STRING_TYPE,
+	PERCENTAGE_TYPE,
+	URI_TYPE
+};
 
 class RuleSetParser : public BaseParser {
 
 	private:
+		ValueType getValueTypeOfProperty(TDOMString aName) const;
 		TDOMString parseHash();
 		TDOMString parseClass();
 		TDOMString parseAttrib();
 		TDOMString parseFunction();
+		TDOMString parsePseudoFunction();
 		TDOMString parsePseudo();
 		TDOMString parseSimpleSelector();
 		TDOMString parseSelector();
-		TDOMString parseNumericTerm();
-		TDOMString parseTerm();
+		CSSValuePtr parseNumericTerm(bool aPositiveValue = true);
+		CSSValuePtr parseTerm(ValueType aType = UNKNOWN_TYPE);
 		bool isTerm();
-		TDOMString parseExpression();
+		CSSValuePtr parseExpression(ValueType aType = UNKNOWN_TYPE);
 		Property parseDeclaration();
 
 	public:

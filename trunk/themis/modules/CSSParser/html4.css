@@ -1,12 +1,16 @@
-/* A sample HTML 4 style sheet, taken from the CSS2 specification
-**
-** Copyright 2001-2002 pinc Software. All Rights Reserved.
+/* 
+	Simple CSS stylesheet used to display html.
 */
 
-B { display: inline }
-A { display: inline }
-I { display: inline }
+B { display: inline;
+	font-weight: bold }
+A { display: inline;
+	color: blue }
+I { display: inline;
+	font-style: italic }
 U { display: inline }
+EM { display: inline;
+	 font-style: italic }
 FONT { display: inline }
 SPAN { display: inline }
 STRONG { display: inline }
@@ -16,8 +20,8 @@ STYLE { display: none }
 HEAD { display: none }
 P { margin-bottom: 5px }
 H1 { font-size: 2em;
-	 margin-bottom: 5px; }
+	 margin-bottom: 5px}
 H2 { font-size: 1.5em;
-	 margin-bottom: 5px; }
+	 margin-bottom: 5px}
 H3 { font-size: 1.1em;
-	 margin-bottom: 5px; }
+	 margin-bottom: 5px}
