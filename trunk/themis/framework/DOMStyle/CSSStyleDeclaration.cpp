@@ -38,6 +38,7 @@
 
 // DOM Style headers
 #include "CSSStyleDeclaration.hpp"
+#include "CSSValue.hpp"
 
 CSSStyleDeclaration :: CSSStyleDeclaration(CSSRulePtr aParentRule) {
 
@@ -63,55 +64,47 @@ void CSSStyleDeclaration :: setCSSText(const TDOMString aText) {
 
 TDOMString CSSStyleDeclaration :: getPropertyValue(const TDOMString aName) {
 
-	vector<Property>::iterator iter;
-	for (iter = mProperties.begin(); iter != mProperties.end(); iter++) {
-		if (iter->getName() == aName) {
-			return iter->getValue();
-		}
+	TDOMString result;
+
+	if (mValues.count(aName) == 0) {
+		result = "";
 	}
-	
-	return "";
+	else {
+		CSSValuePtr value = mValues[aName];
+		result = value->getCssText();
+	}
+
+	return result;
 
 }
 
 CSSValuePtr CSSStyleDeclaration :: getPropertyCSSValue(const TDOMString aName) {
 
-	return CSSValuePtr();
+	return mValues[aName];
 
 }
 
 TDOMString CSSStyleDeclaration :: removeProperty(const TDOMString aName) {
 
-	vector<Property>::iterator iter;
-	for (iter = mProperties.begin(); iter != mProperties.end(); iter++) {
-		if (iter->getName() == aName) {
-			TDOMString value = iter->getValue();
-			mProperties.erase(iter);
-			return value;
-		}
-	}
-	
+	TDOMString result = getPropertyValue(aName);
+	mValues.erase(aName);
+	mPriorities.erase(aName);
+
 	return "";
 
 }
 
 TDOMString CSSStyleDeclaration :: getPropertyPriority(const TDOMString aName) {
 
-	vector<Property>::iterator iter;
-	for (iter = mProperties.begin(); iter != mProperties.end(); iter++) {
-		if (iter->getName() == aName) {
-			return iter->getPriority();
-		}
-	}
-
-	return "";
+	return mPriorities[aName];
 
 }
 
 void CSSStyleDeclaration :: setProperty(const TDOMString aName,
 										const TDOMString aValue,
 										const TDOMString aPriority) {
-
+	
+/*
 	vector<Property>::iterator iter;
 	for (iter = mProperties.begin(); iter != mProperties.end(); iter++) {
 		if (iter->getName() == aName) {
@@ -123,27 +116,55 @@ void CSSStyleDeclaration :: setProperty(const TDOMString aName,
 
 	Property prop(aName, aValue, aPriority);
 	mProperties.push_back(prop);
+*/
 
 }
 															   
 unsigned long CSSStyleDeclaration :: getLength() {
 
-	return mProperties.size();
+	return mValues.size();
 
 }
 
 TDOMString CSSStyleDeclaration :: item(unsigned long aIndex) {
 
-	if (mProperties.size() <= aIndex) {
-		return "";
+	TDOMString result;
+
+	if (mValues.size() <= aIndex) {
+		result = "";
+	}
+	else {
+		unsigned int i = 0;
+		map<string, CSSValuePtr>::iterator it = mValues.begin();
+		while (it != mValues.end() && i < aIndex) {
+			it++;
+			i++;
+		}
+		if (it != mValues.end()) {
+			result = (*it).first;
+		}
 	}
 
-	return mProperties[aIndex].getName();
+	return result;
 
 }
 
 CSSRulePtr CSSStyleDeclaration :: getParentRule() {
 
 	return mParentRule;
+
+}
+
+void CSSStyleDeclaration :: setPropertyCSSValue(const TDOMString aName,
+												const CSSValuePtr aValue,
+												const TDOMString aPriority) {
+
+	if (mValues.count(aName) == 0) {
+		mValues.insert(
+			map<string, CSSValuePtr>::value_type(aName, aValue));
+	}
+	else {
+		mValues[aName] = aValue;
+	}
 
 }

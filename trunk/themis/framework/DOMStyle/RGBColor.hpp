@@ -37,9 +37,6 @@
 // Declarations
 class CSSPrimitiveValue;
 
-// Typedefs
-typedef boost::shared_ptr<CSSPrimitiveValue> CSSPrimitiveValuePtr;
-
 /// RGBColor implementation of the DOM CSS.
 
 /**
@@ -48,7 +45,7 @@ typedef boost::shared_ptr<CSSPrimitiveValue> CSSPrimitiveValuePtr;
 	http://www.w3.org/TR/2000/REC-DOM-Level-2-Style-20001113/css.html
 */
 
-class RGBColor	{
+class RGBColor {
 
 	private:
 		/// The red component of the color
@@ -57,6 +54,8 @@ class RGBColor	{
 		CSSPrimitiveValuePtr mGreen;
 		/// The blue component of the color
 		CSSPrimitiveValuePtr mBlue;
+		// The name of the color if created with a name
+		TDOMString mColorName;
 	
 	public:
 		/// Constructor of the RGBColor class.
@@ -68,8 +67,19 @@ class RGBColor	{
 			@param aGreen	The green component of the color.
 			@param aBlue	The blue component of the color.	
 		*/
-		RGBColor( CSSPrimitiveValuePtr aRed, CSSPrimitiveValuePtr aGreen,
-					   CSSPrimitiveValuePtr aBlue );
+		RGBColor(CSSPrimitiveValuePtr aRed,
+				 CSSPrimitiveValuePtr aGreen,
+				 CSSPrimitiveValuePtr aBlue);
+
+		/// Constructor of the RGBColor class.
+		/**
+			The constructor of the RGBColor class. It stores
+			the red, green and blue values of a color by converting
+			the name of the color to its red, green and blue components.
+
+			@param aColorName	The name of the color.
+		*/
+		RGBColor(TDOMString aColorName);
 
 		/// Destructor of the RGBColor class.
 		/**

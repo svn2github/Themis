@@ -41,8 +41,6 @@
 
 CSSValue	::	CSSValue( const TDOMString aCssText, unsigned short aCssValueType )	{
 
-	printf( "Creating CSSValue\n" );
-
 	setCssText( aCssText );
 	mCssValueType = aCssValueType;
 

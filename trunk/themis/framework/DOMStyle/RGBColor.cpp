@@ -40,11 +40,101 @@
 #include "RGBColor.hpp"
 #include "CSSPrimitiveValue.hpp"
 
-RGBColor	::	RGBColor( CSSPrimitiveValuePtr aRed, CSSPrimitiveValuePtr aGreen,
-								   CSSPrimitiveValuePtr aBlue )	{
+RGBColor :: RGBColor(CSSPrimitiveValuePtr aRed,
+					 CSSPrimitiveValuePtr aGreen,
+					 CSSPrimitiveValuePtr aBlue) {
+
+	mRed = aRed;
+	mGreen = aGreen;
+	mBlue = aBlue;
 	
-	printf( "Creating RGBColor\n" );
+}
+
+RGBColor :: RGBColor(TDOMString aColorName) {
 	
+	mColorName = aColorName;
+	
+	if (aColorName == "black") {
+		mRed = CSSPrimitiveValuePtr(new CSSPrimitiveValue(0, CSSPrimitiveValue::CSS_NUMBER));
+		mGreen = CSSPrimitiveValuePtr(new CSSPrimitiveValue(0, CSSPrimitiveValue::CSS_NUMBER));
+		mBlue = CSSPrimitiveValuePtr(new CSSPrimitiveValue(0, CSSPrimitiveValue::CSS_NUMBER));
+	}
+	else if (aColorName == "silver") {
+		mRed = CSSPrimitiveValuePtr(new CSSPrimitiveValue(192, CSSPrimitiveValue::CSS_NUMBER));
+		mGreen = CSSPrimitiveValuePtr(new CSSPrimitiveValue(192, CSSPrimitiveValue::CSS_NUMBER));
+		mBlue = CSSPrimitiveValuePtr(new CSSPrimitiveValue(192, CSSPrimitiveValue::CSS_NUMBER));
+	}
+	else if (aColorName == "gray") {
+		mRed = CSSPrimitiveValuePtr(new CSSPrimitiveValue(80, CSSPrimitiveValue::CSS_NUMBER));
+		mGreen = CSSPrimitiveValuePtr(new CSSPrimitiveValue(80, CSSPrimitiveValue::CSS_NUMBER));
+		mBlue = CSSPrimitiveValuePtr(new CSSPrimitiveValue(80, CSSPrimitiveValue::CSS_NUMBER));
+	}
+	else if (aColorName == "white") {
+		mRed = CSSPrimitiveValuePtr(new CSSPrimitiveValue(255, CSSPrimitiveValue::CSS_NUMBER));
+		mGreen = CSSPrimitiveValuePtr(new CSSPrimitiveValue(255, CSSPrimitiveValue::CSS_NUMBER));
+		mBlue = CSSPrimitiveValuePtr(new CSSPrimitiveValue(255, CSSPrimitiveValue::CSS_NUMBER));
+	}
+	else if (aColorName == "maroon") {
+		mRed = CSSPrimitiveValuePtr(new CSSPrimitiveValue(128, CSSPrimitiveValue::CSS_NUMBER));
+		mGreen = CSSPrimitiveValuePtr(new CSSPrimitiveValue(0, CSSPrimitiveValue::CSS_NUMBER));
+		mBlue = CSSPrimitiveValuePtr(new CSSPrimitiveValue(0, CSSPrimitiveValue::CSS_NUMBER));
+	}
+	else if (aColorName == "red") {
+		mRed = CSSPrimitiveValuePtr(new CSSPrimitiveValue(255, CSSPrimitiveValue::CSS_NUMBER));
+		mGreen = CSSPrimitiveValuePtr(new CSSPrimitiveValue(0, CSSPrimitiveValue::CSS_NUMBER));
+		mBlue = CSSPrimitiveValuePtr(new CSSPrimitiveValue(0, CSSPrimitiveValue::CSS_NUMBER));
+	}
+	else if (aColorName == "purple") {
+		mRed = CSSPrimitiveValuePtr(new CSSPrimitiveValue(128, CSSPrimitiveValue::CSS_NUMBER));
+		mGreen = CSSPrimitiveValuePtr(new CSSPrimitiveValue(0, CSSPrimitiveValue::CSS_NUMBER));
+		mBlue = CSSPrimitiveValuePtr(new CSSPrimitiveValue(128, CSSPrimitiveValue::CSS_NUMBER));
+	}
+	else if (aColorName == "fuchsia") {
+		mRed = CSSPrimitiveValuePtr(new CSSPrimitiveValue(255, CSSPrimitiveValue::CSS_NUMBER));
+		mGreen = CSSPrimitiveValuePtr(new CSSPrimitiveValue(0, CSSPrimitiveValue::CSS_NUMBER));
+		mBlue = CSSPrimitiveValuePtr(new CSSPrimitiveValue(255, CSSPrimitiveValue::CSS_NUMBER));
+	}
+	else if (aColorName == "green") {
+		mRed = CSSPrimitiveValuePtr(new CSSPrimitiveValue(0, CSSPrimitiveValue::CSS_NUMBER));
+		mGreen = CSSPrimitiveValuePtr(new CSSPrimitiveValue(128, CSSPrimitiveValue::CSS_NUMBER));
+		mBlue = CSSPrimitiveValuePtr(new CSSPrimitiveValue(0, CSSPrimitiveValue::CSS_NUMBER));
+	}
+	else if (aColorName == "lime") {
+		mRed = CSSPrimitiveValuePtr(new CSSPrimitiveValue(0, CSSPrimitiveValue::CSS_NUMBER));
+		mGreen = CSSPrimitiveValuePtr(new CSSPrimitiveValue(255, CSSPrimitiveValue::CSS_NUMBER));
+		mBlue = CSSPrimitiveValuePtr(new CSSPrimitiveValue(0, CSSPrimitiveValue::CSS_NUMBER));
+	}
+	else if (aColorName == "olive") {
+		mRed = CSSPrimitiveValuePtr(new CSSPrimitiveValue(128, CSSPrimitiveValue::CSS_NUMBER));
+		mGreen = CSSPrimitiveValuePtr(new CSSPrimitiveValue(128, CSSPrimitiveValue::CSS_NUMBER));
+		mBlue = CSSPrimitiveValuePtr(new CSSPrimitiveValue(0, CSSPrimitiveValue::CSS_NUMBER));
+	}
+	else if (aColorName == "yellow") {
+		mRed = CSSPrimitiveValuePtr(new CSSPrimitiveValue(255, CSSPrimitiveValue::CSS_NUMBER));
+		mGreen = CSSPrimitiveValuePtr(new CSSPrimitiveValue(255, CSSPrimitiveValue::CSS_NUMBER));
+		mBlue = CSSPrimitiveValuePtr(new CSSPrimitiveValue(0, CSSPrimitiveValue::CSS_NUMBER));
+	}
+	else if (aColorName == "navy") {
+		mRed = CSSPrimitiveValuePtr(new CSSPrimitiveValue(0, CSSPrimitiveValue::CSS_NUMBER));
+		mGreen = CSSPrimitiveValuePtr(new CSSPrimitiveValue(0, CSSPrimitiveValue::CSS_NUMBER));
+		mBlue = CSSPrimitiveValuePtr(new CSSPrimitiveValue(128, CSSPrimitiveValue::CSS_NUMBER));
+	}
+	else if (aColorName == "blue") {
+		mRed = CSSPrimitiveValuePtr(new CSSPrimitiveValue(0, CSSPrimitiveValue::CSS_NUMBER));
+		mGreen = CSSPrimitiveValuePtr(new CSSPrimitiveValue(0, CSSPrimitiveValue::CSS_NUMBER));
+		mBlue = CSSPrimitiveValuePtr(new CSSPrimitiveValue(255, CSSPrimitiveValue::CSS_NUMBER));
+	}
+	else if (aColorName == "teal") {
+		mRed = CSSPrimitiveValuePtr(new CSSPrimitiveValue(0, CSSPrimitiveValue::CSS_NUMBER));
+		mGreen = CSSPrimitiveValuePtr(new CSSPrimitiveValue(128, CSSPrimitiveValue::CSS_NUMBER));
+		mBlue = CSSPrimitiveValuePtr(new CSSPrimitiveValue(128, CSSPrimitiveValue::CSS_NUMBER));
+	}
+	else if (aColorName == "aqua") {
+		mRed = CSSPrimitiveValuePtr(new CSSPrimitiveValue(0, CSSPrimitiveValue::CSS_NUMBER));
+		mGreen = CSSPrimitiveValuePtr(new CSSPrimitiveValue(255, CSSPrimitiveValue::CSS_NUMBER));
+		mBlue = CSSPrimitiveValuePtr(new CSSPrimitiveValue(255, CSSPrimitiveValue::CSS_NUMBER));
+	}
+
 }
 
 RGBColor	::	~RGBColor()	{

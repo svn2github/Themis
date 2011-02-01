@@ -38,8 +38,11 @@
 
 // DOM Style headers
 #include "Property.hpp"
+#include "CSSValue.hpp"
 
-Property :: Property(TDOMString aName,TDOMString aValue, TDOMString aPriority) {
+Property :: Property(TDOMString aName,
+					 CSSValuePtr aValue,
+					 TDOMString aPriority) {
 
 	mName = aName;
 	mValue = aValue;
@@ -57,7 +60,7 @@ TDOMString Property :: getName() const {
 
 }
 
-TDOMString Property :: getValue() const {
+CSSValuePtr Property :: getValue() const {
 
 	return mValue;
 
@@ -69,7 +72,7 @@ TDOMString Property :: getPriority() const {
 
 }
 
-void Property :: setValue(TDOMString aValue) {
+void Property :: setValue(CSSValuePtr aValue) {
 
 	mValue = aValue;
 

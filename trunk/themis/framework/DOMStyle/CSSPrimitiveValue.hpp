@@ -39,11 +39,14 @@
 class Counter;
 class Rect;
 class RGBColor;
+class CSSPrimitiveValue;
 
 // Typedefs
 typedef boost::shared_ptr<Counter> CounterPtr;
 typedef boost::shared_ptr<Rect> RectPtr;
 typedef boost::shared_ptr<RGBColor> RGBColorPtr;
+typedef boost::shared_ptr<CSSPrimitiveValue> CSSPrimitiveValuePtr;
+
 
 /// CSSPrimitiveValue implementation of the DOM CSS.
 
@@ -62,6 +65,8 @@ class CSSPrimitiveValue	:	public CSSValue	{
 		CounterPtr mCounterValue;
 		RectPtr mRectValue;
 		RGBColorPtr mRGBColorValue;
+		
+		TDOMString computeCssString(float aValue, unsigned short aUnitType);
 
 	public:
 		enum	{
@@ -125,15 +130,61 @@ class CSSPrimitiveValue	:	public CSSValue	{
 			a css primitive value and its type. Only the value can be
 			changed after construction.
 			
-			@param	aCssText				The css text of the value to store.
+			@param	aValue				The string of the value to store.
 			@param	aPrimitiveType		The type of the value to store.
 			
 			@todo	Look if aPrimitiveType should be checked if it is a valid value
 						and what to do if it isn't.
 			
 		*/
-		CSSPrimitiveValue( const TDOMString aCssText,
-									unsigned short aPrimitiveType );
+		CSSPrimitiveValue(const TDOMString aValue,
+						  unsigned short aPrimitiveType);
+									
+		/// Constructor of the CSSPrimitive class.
+		/**
+			The constructor of the CSSPrimitive class. It stores
+			a css primitive value and its type. Only the value can be
+			changed after construction.
+			
+			@param	aValue		The float value to store.
+			@param	aUnitType	The type of the float value.
+			
+		*/
+		CSSPrimitiveValue(float aValue,
+						  unsigned short aUnitType);
+
+		/// Constructor of the CSSPrimitive class.
+		/**
+			The constructor of the CSSPrimitive class. It stores
+			a css primitive value and its type. Only the value can be
+			changed after construction.
+			
+			@param	aCssCounter	The Counter value to store.
+			
+		*/
+		CSSPrimitiveValue(CounterPtr aCounterValue);
+
+		/// Constructor of the CSSPrimitive class.
+		/**
+			The constructor of the CSSPrimitive class. It stores
+			a css primitive value and its type. Only the value can be
+			changed after construction.
+			
+			@param	aValue	The Rect value to store.
+			
+		*/
+		CSSPrimitiveValue(RectPtr aValue);
+
+		/// Constructor of the CSSPrimitive class.
+		/**
+			The constructor of the CSSPrimitive class. It stores
+			a css primitive value and its type. Only the value can be
+			changed after construction.
+			
+			@param	aValue	The RGBColor value to store.
+			
+		*/
+		CSSPrimitiveValue(RGBColorPtr aValue);
 
 		/// Destructor of the CSSPrimitiveValue class.
 		/**
@@ -196,7 +247,7 @@ class CSSPrimitiveValue	:	public CSSValue	{
 							  a string value.
 		*/
 		TDOMString getStringValue();
-		
+
 		/// A function to get a Counter value.
 		/**
 			This function gets a Counter value.

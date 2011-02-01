@@ -34,13 +34,19 @@
 // DOM Style headers
 #include "DOMStyleSupport.hpp"
 
+// Declarations
+class CSSValue;
+
+// Typedefs
+typedef boost::shared_ptr<CSSValue> CSSValuePtr;
+
 class Property	{
 
 	private:
 		/// The name of the property.
 		TDOMString mName;
 		/// The value of the property.
-		TDOMString mValue;
+		CSSValuePtr mValue;
 		/// The priority of the property.
 		TDOMString mPriority;
 
@@ -55,7 +61,7 @@ class Property	{
 			@param aPriority	The priority of the property.
 		*/
 		Property(TDOMString aName,
-				 TDOMString aValue,
+				 CSSValuePtr aValue,
 				 TDOMString aPriority);
 
 		/// Destructor of the Property class.
@@ -69,7 +75,7 @@ class Property	{
 		TDOMString getName() const;
 
 		/// A function to get the value of the property.
-		TDOMString getValue() const;
+		CSSValuePtr getValue() const;
 
 		/// A function to get the priority of the property.
 		TDOMString getPriority() const;
@@ -80,7 +86,7 @@ class Property	{
 			
 			@param	aValue	The value to set.
 		*/
-		void setValue(TDOMString aValue);
+		void setValue(CSSValuePtr aValue);
 
 		/// A function to set the priority of the property.
 		/**

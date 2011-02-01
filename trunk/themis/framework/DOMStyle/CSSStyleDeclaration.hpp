@@ -37,6 +37,7 @@
 
 // Standard C++ headers
 #include <vector>
+#include <map>
 
 // Declarations
 class CSSValue;
@@ -50,7 +51,9 @@ typedef boost::shared_ptr<CSSRule> CSSRulePtr;
 typedef boost::shared_ptr<CSSStyleDeclaration> CSSStyleDeclarationPtr;
 
 // Namespaces used
-using namespace std;
+using std::vector;
+using std::map;
+using std::string;
 
 /// CSSStyleDeclaration implementation of the DOM CSS.
 
@@ -67,7 +70,8 @@ class CSSStyleDeclaration {
 	private:
 		TDOMString mCSSText;
 		CSSRulePtr mParentRule;
-		vector<Property> mProperties;
+		map<string, CSSValuePtr> mValues;
+		map<string, string> mPriorities;
 
 	public:
 		/// Constructor of the CSSStyleDeclaration class.
@@ -186,6 +190,17 @@ class CSSStyleDeclaration {
 			If it is not contained in another rule, it returns a null item.
 		*/		
 		CSSRulePtr getParentRule();
+		
+		/// A function to set the CSS property value
+		/**
+			This function set the CSSvalue and priority of a property.
+			Not in the standard, but handy when parsing a CSS document,
+			so we don't need to parse it again to see what it is.
+		
+		*/
+		void setPropertyCSSValue(const TDOMString aName,
+						 		 const CSSValuePtr aValue,
+						 		 const TDOMString aPriority);
 
 };
 
