@@ -41,6 +41,7 @@
 
 // BeOS headers
 #include <View.h>
+#include <Point.h>
 
 // DOM headers
 #include "DOMSupport.h"
@@ -65,12 +66,14 @@ class CSSRendererView : public BView {
 						TDocumentPtr aDocument,
 						CSSStyleSheetPtr aStyleSheet);
 		~CSSRendererView();
+		virtual void MouseDown(BPoint aPoint);
 		virtual void Draw(BRect aRect);
 		void AttachedToWindow();
 		virtual void FrameResized(float aWidth, float aHeight);
 		void SetTitle(TDOMString aTitle);
 		TDOMString GetTitle();
 		BRect CSSViewSize();
+		TDOMString GetDocumentURI() const;
 };
 
 #endif

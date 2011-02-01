@@ -41,10 +41,12 @@
 
 // Standard C++ headers
 #include <vector>
+#include <string>
 
 // BeOS headers
 #include <Handler.h>
 #include <Rect.h>
+#include <Point.h>
 
 // DOM headers
 #include "DOMSupport.h"
@@ -59,6 +61,10 @@
 // Declarations used
 class CSSRendererView;
 class BFont;
+
+// Namespaces used
+using std::vector;
+using std::string;
 
 class CSSView : public BHandler {
 	
@@ -78,17 +84,27 @@ class CSSView : public BHandler {
 		bool mDisplay;
 		bool mBlock;
 		float mMarginBottom;
+		bool mClickable;
+		string mHref;
+		string mName;
+		rgb_color mColor;
+		
+		void RetrieveLink();
 	
 	public:
 		CSSView(CSSRendererView * aBaseView,
 				TNodePtr aNode,
 				CSSStyleSheetPtr aStyleSheet,
 				BRect aRect,
+				rgb_color aColor,
 				BFont * aFont = NULL);
 		~CSSView();
+		virtual void MouseDown(BPoint aPoint);
 		void Draw();
+		bool Contains(BPoint aPoint);
 		bool IsDisplayed();
 		bool IsBlock();
+		bool IsClickable();
 		BRect Bounds();
 		BPoint GetEndPoint();
 		void Layout(BRect aRect,

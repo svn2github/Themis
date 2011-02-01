@@ -60,10 +60,16 @@ CSSRendererView :: CSSRendererView(BRect aFrame,
 	mDocument = aDocument;
 	BRect rect = Bounds();
 	if (mDocument->hasChildNodes()) {
+		rgb_color defaultColor;
+		defaultColor.red = 0;
+		defaultColor.green = 0;
+		defaultColor.blue = 0;
+		
 		mView = new CSSView(this,
 							mDocument->getFirstChild(),
 							mStyleSheet,
-							rect);
+							rect,
+							defaultColor);
 		printf("Doing layout\n");
 		mView->Layout(rect, BPoint(rect.left, rect.top));
 		printf("Layout done\n");
@@ -81,6 +87,14 @@ CSSRendererView :: ~CSSRendererView() {
 //	delete mView;
 	printf("Destroyed CSSRendererView\n");
 
+}
+
+void CSSRendererView :: MouseDown(BPoint aPoint) {
+	
+	if (mView) {
+		mView->MouseDown(aPoint);
+	}
+	
 }
 
 void CSSRendererView :: Draw(BRect aRect) {
@@ -116,7 +130,9 @@ void CSSRendererView :: FrameResized(float aWidth, float aHeight) {
 void CSSRendererView :: SetTitle(TDOMString aTitle) {
 	
 	mTitle = aTitle;
-	Window()->SetTitle(mTitle.c_str());
+	if (Window() != NULL) {
+		Window()->SetTitle(mTitle.c_str());
+	}
 
 }
 
@@ -131,3 +147,10 @@ BRect CSSRendererView :: CSSViewSize() {
 	return mCSSViewSize;
 
 }
+
+TDOMString CSSRendererView :: GetDocumentURI() const {
+
+	return mDocument->getDocumentURI();
+
+}
+
