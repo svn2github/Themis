@@ -85,6 +85,7 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 	mColor = aColor;
 	mClickable = false;
 	mLineHeight = 0;
+	mListStyleType = "none";
 	mName = mNode->getNodeName();
 	
 	if (mNode->hasChildNodes()) {
@@ -201,6 +202,13 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 								mColor.blue = (uint8)blueValue->getFloatValue(CSSPrimitiveValue::CSS_NUMBER);
 							}
 						}
+					}
+				}
+				value = style->getPropertyCSSValue("list-style-type");
+				if (value.get()) {
+					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
+					if (primitiveValue.get()) {
+						mListStyleType = primitiveValue->getStringValue();
 					}
 				}
 			}
@@ -333,6 +341,10 @@ void CSSView :: Draw() {
 				mBaseView->SetFont(mFont);
 				mBaseView->DrawString((text.c_str()) + start, end - start + 1, drawPoint);
 			}
+		}
+		else if (mListStyleType == "square") {
+			mBaseView->SetHighColor(mColor);
+			mBaseView->FillRect(mListStyleRect);
 		}
 		
 		unsigned int length = mChildren.size();
@@ -486,6 +498,15 @@ void CSSView :: Layout(BRect aRect,
 			mEndPoint = aStartingPoint;
 			// Assume we don't need any horizontal space. The children will determine the space needed.
 //			mRect.right = mRect.left;
+			// In case we need to draw something before drawing any children, move the children.
+			if (mListStyleType == "square") {
+				mListStyleRect.left = restRect.left + 2;
+				mListStyleRect.right = restRect.left + 7;
+				mListStyleRect.top = restRect.top + 2;
+				mListStyleRect.bottom = restRect.top + 7;
+				restRect.left += 12;
+				mEndPoint.x += 12;
+			}
 			// Layout the children.
 			unsigned int length = mChildren.size();
 			BPoint startingPoint = mEndPoint;

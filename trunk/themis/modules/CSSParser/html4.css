@@ -25,3 +25,5 @@ H2 { font-size: 1.5em;
 	 margin-bottom: 5px}
 H3 { font-size: 1.1em;
 	 margin-bottom: 5px}
+LI { display: block;
+     list-style-type: square}

@@ -88,6 +88,8 @@ class CSSView : public BHandler {
 		string mHref;
 		string mName;
 		rgb_color mColor;
+		string mListStyleType;
+		BRect mListStyleRect;
 		
 		void RetrieveLink();
 	
