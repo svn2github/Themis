@@ -922,7 +922,7 @@ int32 CookieManager::SetCookie(const char *header, const char *request_host, con
 			if( temp != NULL) semicolons++;
 		} while( temp != NULL);
 		segments = semicolons+1;
-		printf("segments: %d\n",segments);
+		//printf("segments: %d\n",segments);
 		attributes = new char *[segments];
 		attributes[0] = trim(strtok(semicolon+1,";"));
 		for( int32 i=1; i<segments; i++)
@@ -1649,7 +1649,7 @@ status_t CookieManager::SaveCookie(cookie_st *cookie) {
 		path.Append(fname.String());
 		ent.SetTo(path.Path());
 		ent.GetRef(&cookie->ref);
-		printf("Cookie will be saved to: %s\n",path.Path());
+		//printf("Cookie will be saved to: %s\n",path.Path());
 		goto SaveCookiePoint1;
 		
 	}

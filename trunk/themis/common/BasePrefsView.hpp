@@ -41,7 +41,9 @@
 // BeOS headers
 #include <View.h>
 #include <Rect.h>
-
+#ifdef HAIKU
+#include <be/interface/Box.h>
+#endif
 // Declarations used
 class BBox;
 
