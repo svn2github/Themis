@@ -238,7 +238,8 @@ void HTMLParser :: ParseDocument(string aURL,
 								 BMessage * aOriginalMessage) {
 	
 	if (CacheRegistered()) {
-		int32 fileToken = mCache->FindObject(mUserToken, aURL.c_str());
+		int32 fileToken = 0;
+		aOriginalMessage->FindInt32("cache_object_token", &fileToken);
 		ssize_t fileSize = mCache->GetObjectSize(mUserToken, fileToken);
 		
 		if (fileSize == 0) {
@@ -248,7 +249,8 @@ void HTMLParser :: ParseDocument(string aURL,
 			// Read the file and parse it.
 			const unsigned int BUFFER_SIZE = 2000;
 			string content = "";
-			char * buffer = new char[BUFFER_SIZE];
+			char * buffer = new char[BUFFER_SIZE + 1];
+			memset(buffer, 0, BUFFER_SIZE + 1);
 			ssize_t bytesRead = 0;
 			int totalBytes = 0;
 			bool foundData = true;
@@ -261,7 +263,7 @@ void HTMLParser :: ParseDocument(string aURL,
 					bytesRead = mCache->Read(mUserToken, fileToken, buffer, BUFFER_SIZE);
 					if (bytesRead > 0) {
 						content += buffer;
-						memset(buffer, 0, BUFFER_SIZE);
+						memset(buffer, 0, BUFFER_SIZE + 1);
 						totalBytes += bytesRead;
 					}
 					else {
