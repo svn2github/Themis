@@ -84,7 +84,7 @@ CSSRendererView :: CSSRendererView(BRect aFrame,
 CSSRendererView :: ~CSSRendererView() {
 
 	printf("Destroying CSSRendererView\n");
-//	delete mView;
+	delete mView;
 	printf("Destroyed CSSRendererView\n");
 
 }
