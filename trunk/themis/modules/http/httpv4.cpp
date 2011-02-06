@@ -584,6 +584,11 @@ uint32 HTTPv4::ConnectionTerminated(Connection *connection)
 						disconnect.AddBool("request_done",true);
 						disconnect.AddBool("secure",current->secure);
 						disconnect.AddBool("aborted",true);
+						if (current->content_type!=NULL)
+						{
+							disconnect.AddString("content-type",current->content_type);
+							disconnect.AddString("mime-type",current->content_type);
+						}
 						Broadcast(MS_TARGET_ALL,&disconnect);
 						current->connection->OwnerRelease();
 						current->connection=NULL;
@@ -602,6 +607,11 @@ uint32 HTTPv4::ConnectionTerminated(Connection *connection)
 						disconnect.AddBool("request_done",true);
 						disconnect.AddBool("secure",current->secure);
 						disconnect.AddBool("aborted",true);
+						if (current->content_type!=NULL)
+						{
+							disconnect.AddString("content-type",current->content_type);
+							disconnect.AddString("mime-type",current->content_type);
+						}
 						Broadcast(MS_TARGET_ALL,&disconnect);
 						
 				//		tcp_manager->DoneWithSession(connection);
@@ -2534,6 +2544,24 @@ void HTTPv4::ProcessHeaderLevel300(http_request_info_st *request, char *buffer, 
 			*/
 			if (CacheSystem!=NULL)
 			{
+				if( request->content_type == NULL )
+				{
+					const char *mime = FindHeader(request,"content-type");
+					if( mime != NULL)
+					{
+						request->content_type = new char[strlen(mime)+1];
+						memset((char*)request->content_type,0,strlen(mime)+1);
+						strncpy((char*)request->content_type,mime,strlen(mime));
+					}
+					else
+					{
+						BMessage *info = CacheSystem->GetInfo(cache_user_token,request->cache_object_token);
+						BString mime = info->FindString("mime-type");
+						request->content_type = new char[mime.Length()+1];
+						memset((char*)request->content_type,0,mime.Length()+1);
+						mime.CopyInto((char*)request->content_type,0,mime.CountChars());
+					}
+				}
 				request->content_length=request->bytes_received=CacheSystem->GetObjectSize(cache_user_token,request->cache_object_token);
 			}
 			DoneWithRequest(request);

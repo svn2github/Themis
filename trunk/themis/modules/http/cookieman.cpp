@@ -143,7 +143,7 @@ CookieManager::~CookieManager() {
 //	printf("~CookieManager()\n");
 	MsgSysUnregister(this);
 	ClearExpiredCookies();
-	SaveAllCookies();
+//	SaveAllCookies();
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
 		if (cookie_head!=NULL) {
@@ -167,7 +167,8 @@ void CookieManager::CheckMIME() {
 //	printf("InitCheck: %ld\n",mime.InitCheck());
 //	printf("MIME Type valid? %s\n",mime.IsValid()?"yes":"no");
 	if (!mime.IsInstalled()) {
-		status_t stat=mime.Install();
+		mime.Install();
+//		status_t stat=mime.Install();
 //		printf("Cookie MIME Type Installed (%s): %ld\n",ThemisCookieFile,stat);
 	}
 	char type[B_MIME_TYPE_LENGTH];
@@ -785,7 +786,7 @@ int32 CookieManager::SetCookie(const char *header, const char *request_host, con
 	URIProcessor *URI = new URIProcessor(request_uri), *parentURI = new URIProcessor(), *pathURI = new URIProcessor();
 	if( request_uri[strlen(request_uri)-1] == '/') parentURI->Set(request_uri);
 	else URI->GetParent(parentURI);
-	const char *a = URI->String(), *b = parentURI->String();
+//	const char *a = URI->String(), *b = parentURI->String();
 	//printf("URI/Parent:\n\t%s\n\t%s\n",a,b);
 	//printf("moving on...\n");
 	const char *known_attributes[]=	{
@@ -806,16 +807,16 @@ int32 CookieManager::SetCookie(const char *header, const char *request_host, con
 	char *header_copy=new char[header_length+1];
 	memset(header_copy,0,header_length+1);
 	strncpy(header_copy,header,header_length);
-	int32 cookie_count=1;
-	int32 comma_count=0;
+	//int32 cookie_count=1;
+	//int32 comma_count=0;
 	char *comma=NULL;
-	char *equal=NULL;
+	//char *equal=NULL;
 	char *temp=NULL,*temp2=NULL, *nvpairs = NULL;
 	int32 distance=0;
-	int32 counter=0;
+	//int32 counter=0;
 	int32 current_time = real_time_clock();
 	bool abort = false;
-	bool found=false;
+	//bool found=false;
 	char **cookie_array=NULL;
 	bool has_attributes = false;
 //	comma=strchr(header_copy,',');
@@ -843,7 +844,7 @@ int32 CookieManager::SetCookie(const char *header, const char *request_host, con
 	if( comma != NULL)
 	{ // we have at least one comma, check out the rest for nv pairs
 		nvpair_counter = 1;
-		for(int32 i=0; i< (strlen(nvpairs)-1); i++)
+		for(uint32 i=0; i< (strlen(nvpairs)-1); i++)
 		{// kick it old school
 			if( nvpairs[i] == ',' && strchr((nvpairs+i),'=') != NULL)
 				nvpair_counter++;
@@ -1060,7 +1061,7 @@ int32 CookieManager::SetCookie(const char *header, const char *request_host, con
 			last_cookie = last_cookie->next;
 	}
 	char *buf = NULL,*eq = NULL;
-	for( int32 i=0; i< nvpair_counter; i++)
+	for( uint32 i=0; i< nvpair_counter; i++)
 	{
 		tlen = strlen(cookie_array[i]);
 		buf = new char[tlen+1];
@@ -1784,7 +1785,7 @@ void CookieManager::LoadAllCookies() {
 		*/
 	}
 	//PrintCookies();
-	printf("%u cookie(s) loaded\n",count);
+	//printf("%u cookie(s) loaded\n",count);
 }
 
 void CookieManager::SaveAllCookies() {
