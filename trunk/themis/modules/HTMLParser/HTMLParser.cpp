@@ -254,13 +254,20 @@ void HTMLParser :: ParseDocument(string aURL,
 			ssize_t bytesRead = 0;
 			int totalBytes = 0;
 			bool foundData = true;
+			bool resetPosition = true;
 			while (foundData) {
 				if (totalBytes > fileSize) {
 					foundData = false;
 					printf("Reading more bytes than possible. Skipping last buffer\n");
 				}
 				else {
-					bytesRead = mCache->Read(mUserToken, fileToken, buffer, BUFFER_SIZE);
+					bytesRead = mCache->Read(mUserToken,
+											 fileToken,
+											 buffer,
+											 BUFFER_SIZE,
+											 resetPosition);
+					// Make sure we are not reading the same part over and over.
+					resetPosition = false;
 					if (bytesRead > 0) {
 						content += buffer;
 						memset(buffer, 0, BUFFER_SIZE + 1);
