@@ -483,13 +483,18 @@ ssize_t cacheman::Write(uint32 usertoken, int32 objecttoken, void *data, size_t 
 	return B_ERROR;
 }
 
-ssize_t cacheman::Read(uint32 usertoken, int32 objecttoken, void *data, size_t size){
+ssize_t cacheman::Read(uint32 usertoken, int32 objecttoken, void *data, size_t size, bool resetReadPoisition, off_t newReadPosition){
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
 	CacheObject *object=FindObject(objecttoken);
 	if (object!=NULL) {
 		if (!object->IsUsedBy(usertoken))
 			object->AddUser(FindUser(usertoken));
+		if( resetReadPoisition )
+		{
+			 CacheUser *user = object->FindUser(usertoken);
+			 if( user != NULL) user->SetReadPosition(newReadPosition);
+		}
 		return object->Read(usertoken,data,size);
 	}
 	}

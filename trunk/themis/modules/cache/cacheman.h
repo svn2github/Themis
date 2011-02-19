@@ -85,7 +85,7 @@ class cacheman: public CachePlug {
 		void ClearCache(uint32 which=TYPE_ALL);
 		virtual BMessage *GetInfo(uint32 usertoken, int32 objecttoken);
 		virtual ssize_t Write(uint32 usertoken, int32 objecttoken, void *data, size_t size);
-		virtual ssize_t Read(uint32 usertoken, int32 objecttoken, void *data, size_t size);
+		virtual ssize_t Read(uint32 usertoken, int32 objecttoken, void *data, size_t size,bool resetReadPosition = false, off_t newReadPosition = 0L);
 		status_t RemoveObject(uint32 usertoken, int32 objecttoken);
 	
 		ssize_t SetLength(uint32 usertoken, int32 objecttoken, size_t length);

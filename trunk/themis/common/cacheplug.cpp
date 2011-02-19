@@ -120,7 +120,7 @@ ssize_t CachePlug::Write(uint32 usertoken, int32 objecttoken, void *data, size_t
 	return 0L;
 }
 
-ssize_t CachePlug::Read(uint32 usertoken, int32 objecttoken, void *data, size_t size){
+ssize_t CachePlug::Read(uint32 usertoken, int32 objecttoken, void *data, size_t size,bool resetReadPosition, off_t newReadPosition){
 	return 0L;
 }
 ssize_t CachePlug::SetLength(uint32 usertoken, int32 objecttoken, size_t length)

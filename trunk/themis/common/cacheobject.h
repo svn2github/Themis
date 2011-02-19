@@ -57,8 +57,6 @@ class CacheObject {
 		int32 id;
 		//! Pointers to the next and previous items in the linked list respectively.
 		CacheObject *next,*prev;
-		//! Finds the user object of a particular id if that user is accessing this object.
-		CacheUser *FindUser(uint32 usertoken);
 		BLocker lock;
 		time_t creation_time;
 		time_t last_access_time;
@@ -70,6 +68,8 @@ class CacheObject {
 		//! The destructor.
 		virtual ~CacheObject();
 		virtual BPositionIO *IOPointer()=0;
+		//! Finds the user object of a particular id if that user is accessing this object.
+		CacheUser *FindUser(uint32 usertoken);
 	
 		//! Determines if this cache object is used by a particular cache user object.
 		virtual bool IsUsedBy(uint32 usertoken);
