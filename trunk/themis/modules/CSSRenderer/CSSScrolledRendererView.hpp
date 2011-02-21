@@ -51,6 +51,7 @@
 // Declarations used
 class CSSRendererView;
 class BScrollView;
+class BMessage;
 
 
 class CSSScrolledRendererView : public BView {
@@ -69,6 +70,7 @@ class CSSScrolledRendererView : public BView {
 								float aHeight);
 		~CSSScrolledRendererView();
 		void FrameResized(float aWidth, float aHeight);
+		void MessageReceived(BMessage * aMessage);
 
 };
 
