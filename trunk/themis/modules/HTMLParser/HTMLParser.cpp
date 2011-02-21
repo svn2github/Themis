@@ -306,7 +306,12 @@ void HTMLParser :: MessageReceived(BMessage * aMessage) {
 			Debug("Request to change parser", PlugID());
 			BString dtdString;
 			aMessage->FindString("DTDFileString", &dtdString);
-			appSettings->ReplaceString(kPrefsActiveDTDPath, dtdString.String());
+			if (appSettings->HasString(kPrefsActiveDTDPath)) {
+				appSettings->ReplaceString(kPrefsActiveDTDPath, dtdString.String());
+			}
+			else {
+				appSettings->AddString(kPrefsActiveDTDPath, dtdString.String());
+			}
 			mActiveDTDPath = dtdString.String();
 			if (mActiveDTDPath != "") {
 				string dtdLoad = "Loading new DTD: ";
