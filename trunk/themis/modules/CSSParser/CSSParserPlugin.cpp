@@ -46,6 +46,7 @@
 #include <Message.h>
 #include <DataIO.h>
 #include <storage/Directory.h>
+#include <storage/Path.h>
 
 // Themis headers
 #include "framework/app.h"
@@ -248,15 +249,39 @@ void CSSParserPlugin :: MessageReceived(BMessage * aMessage) {
 		case CSS_CHANGED_PARSER: {
 			Debug("Request to change base css file", PlugID());
 			if (appSettings != NULL) {
-				const char * path;
+				BString path;
 				appSettings->FindString(kPrefsActiveCSSPath, &path);
-				string cssLoad = "Loading new CSS file: ";
-				cssLoad += path;
-				printf("%s\n", cssLoad.c_str());
-				Debug(cssLoad.c_str(), PlugID());
-				CSSStyleSheetPtr document = mParser->parse(path);
-				mDocuments.push_back(document);
-				NotifyParseFinished(document, "cssdom", aMessage);
+				if (path == NULL) {
+					// No path set, try to find the first css file and set it.
+					BString cssDir;
+					AppSettings->FindString(kPrefsSettingsDirectory, &cssDir);
+					cssDir.Append("/css/");
+							
+					BDirectory dir(cssDir.String());
+					if(dir.InitCheck() != B_OK) {
+						printf("CSS directory (%s) not found!\n", cssDir.String());
+						printf("Setting CSSToUsePath to \"none\"\n");
+						AppSettings->AddString(kPrefsActiveCSSPath, kNoCSSFoundString);
+					}
+					else {
+						BEntry entry;
+						if (dir.GetNextEntry(&entry, false) != B_ENTRY_NOT_FOUND) {
+							BPath cssPath;
+							entry.GetPath(&cssPath);
+							path = cssPath.Path();
+							AppSettings->AddString(kPrefsActiveCSSPath, path);
+						}
+					}
+				}
+
+				if (path.String() != NULL) {
+					string cssLoad = "Loading new CSS file: ";
+					cssLoad += path.String();
+					Debug(cssLoad.c_str(), PlugID());
+					CSSStyleSheetPtr document = mParser->parse(path.String());
+					mDocuments.push_back(document);
+					NotifyParseFinished(document, "cssdom", aMessage);
+				}
 			}
 			break;
 		}
