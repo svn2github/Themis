@@ -41,6 +41,7 @@ class ThemisTabView : public BTabView
 		bool						fake_single_view;
 		
 		TPictureButton*				close_tabview_button;
+		void MessageReceived(BMessage * aMessage);
 		
 	private:
 		// for doubleclick detection on empty tabview-space

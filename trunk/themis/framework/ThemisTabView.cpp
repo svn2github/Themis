@@ -12,6 +12,13 @@
 #include <TranslationUtils.h>
 #include <PopUpMenu.h>
 #include <MenuItem.h>
+#include <Message.h>
+#include <Entry.h>
+#include <Node.h>
+#include <Path.h>
+#include <String.h>
+#include <Messenger.h>
+#include <Window.h>
 
 // Themis headers
 #include "win.h"
@@ -803,6 +810,48 @@ ThemisTabView::SetNormalTabView()
 	}	
 		
 	fake_single_view = false;
+}
+
+void ThemisTabView :: MessageReceived(BMessage * aMessage) {
+	
+	switch (aMessage->what) {
+		case B_SIMPLE_DATA: {
+			// Get the ref that is dropped.
+			entry_ref ref;
+			aMessage->FindRef("refs", &ref);
+			BEntry entry(&ref);
+			BPath path;
+			entry.GetPath(&path);
+			BNode entryNode(&entry);
+			char attributeValue[B_MIME_TYPE_LENGTH];
+			ssize_t attributeSize = entryNode.ReadAttr("BEOS:TYPE", B_STRING_TYPE, 0, attributeValue, sizeof(attributeValue) - 1);
+			if (attributeSize > 0) {
+				BString mimeString = attributeValue;
+				if (mimeString == "application/x-vnd.Be-bookmark") {
+					attributeSize = entryNode.ReadAttr("META:url", B_STRING_TYPE, 0, attributeValue, sizeof(attributeValue) - 1);
+					if (attributeSize > 0) {
+						BMessage message(URL_OPEN);
+						message.AddString("url_to_open", attributeValue);
+						BMessenger messenger(NULL, Window());
+						messenger.SendMessage(&message);
+					}
+				}
+				else if (mimeString == "text/html") {
+					BString filePath = "file://";
+					filePath += path.Path();
+					BMessage message(URL_OPEN);
+					message.AddString("url_to_open", filePath);
+					BMessenger messenger(NULL, Window());
+					messenger.SendMessage(&message);
+				}
+			}
+			break;
+		}
+		default: {
+			BView::MessageReceived(aMessage);
+		}
+	};
+	
 }
 
 /////////////////////////////////////
