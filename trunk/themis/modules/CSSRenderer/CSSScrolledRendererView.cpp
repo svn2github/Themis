@@ -160,6 +160,14 @@ void CSSScrolledRendererView :: MessageReceived(BMessage * aMessage) {
 						messenger.SendMessage(&message);
 					}
 				}
+				else if (mimeString == "text/html") {
+					BString filePath = "file://";
+					filePath += path.Path();
+					BMessage message(URL_OPEN);
+					message.AddString("url_to_open", filePath);
+					BMessenger messenger(NULL, Window());
+					messenger.SendMessage(&message);
+				}
 			}
 			break;
 		}
