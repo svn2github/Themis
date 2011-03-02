@@ -137,7 +137,6 @@ void CSSScrolledRendererView :: FrameResized(float aWidth, float aHeight) {
 
 void CSSScrolledRendererView :: MessageReceived(BMessage * aMessage) {
 	
-	aMessage->PrintToStream();
 	switch (aMessage->what) {
 		case B_SIMPLE_DATA: {
 			// Get the ref that is dropped.
