@@ -449,11 +449,17 @@ void CSSView :: Layout(BRect aRect,
 			
 			// Loop through the text boxes calculated earlier in SplitText and fit them in the rect.
 			// One TextBox is one bit of text (always one word currently).
+			// Variable to check if the last textbox ends with a space, so we can add it at the end.
+			bool endsWithSpace = false;
 			unsigned int length = mTextBoxes.size();
 			for (unsigned int i = 0; i < length; i++) {
 				TextBox box = mTextBoxes[i];
+				endsWithSpace = box.endsWithSpace();
 				// How many pixels wide is the box?
 				boxWidth = box.getPixelWidth();
+				if (box.startsWithSpace()) {
+					boxWidth += mSpaceWidth;
+				}
 				if (lineWidth + boxWidth > viewWidth) {
 					// TextBox doesn't fit on the current line.
 					// Start a new line.
@@ -468,24 +474,24 @@ void CSSView :: Layout(BRect aRect,
 					// Still fits inside the view.
 					// We have to move the rect to the right of the previous text box.
 					rect.left = rect.right;
-					if (rect.left != mRect.left) {
-						// We are not at the start of the line.
-						// Add a space, so this textbox doesn't get drawn right after the previous one.
-						rect.left += mSpaceWidth;
-						lineWidth += mSpaceWidth;
-					}
 				}
 				// The right side of our rect is now moved by the size of the box width.
 				rect.right = rect.left + boxWidth;
+				if (box.startsWithSpace()) {
+					rect.left += mSpaceWidth;
+				}
 				if (rect.right > mRect.right) {
 					mRect.right = rect.right;
 				}
 				// Also adjust the current in use width of the line.
 				lineWidth += boxWidth;
-	//			rect.PrintToStream();
 				// Store the rect for this box.
 				box.setRect(rect);
 				mTextBoxes[i] = box;
+			}
+			// In case the last textbox ends with a space, add a space now.
+			if (endsWithSpace) {
+				rect.right += mSpaceWidth;
 			}
 			// Mark the endpoint of the text in the rect.
 			mEndPoint.Set(rect.right, rect.top);
@@ -582,6 +588,7 @@ void CSSView :: SplitText() {
 	unsigned int start = 0;
 	unsigned int end = 0;
 	bool textFound = false;
+	bool spaceFound = false;
 	char c = '\0';
 	float pixelWidth = 0;
 	for (unsigned int i = 0; i < length; i++) {
@@ -589,10 +596,11 @@ void CSSView :: SplitText() {
 		if ((isspace(c) || iscntrl(c))) {
 			if (textFound) {
 				pixelWidth = mFont->StringWidth(textPointer + start, end - start + 1);
-				TextBox box = TextBox(start, end, pixelWidth);
+				TextBox box = TextBox(start, end, pixelWidth, spaceFound, true);
 				mTextBoxes.push_back(box);
 				textFound = false;
 			}
+			spaceFound = true;
 			start = i;
 			end = i;
 		}
@@ -607,7 +615,7 @@ void CSSView :: SplitText() {
 	
 	if (textFound) {
 		pixelWidth = mFont->StringWidth(textPointer + start, end - start + 1);
-		TextBox box = TextBox(start, end, pixelWidth);
+		TextBox box = TextBox(start, end, pixelWidth, spaceFound);
 		mTextBoxes.push_back(box);
 	}
 

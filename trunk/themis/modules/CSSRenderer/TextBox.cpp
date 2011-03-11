@@ -47,11 +47,17 @@ TextBox :: TextBox(unsigned int aStart, unsigned int aEnd, BRect aRect) {
 
 }
 
-TextBox :: TextBox(unsigned int aStart, unsigned int aEnd, float aPixelWidth) {
+TextBox :: TextBox(unsigned int aStart,
+				   unsigned int aEnd,
+				   float aPixelWidth,
+				   bool aStartWithSpace,
+				   bool aEndWithSpace) {
 
 	mStart = aStart;
 	mEnd = aEnd;
 	mPixelWidth = aPixelWidth;
+	mStartWithSpace = aStartWithSpace;
+	mEndWithSpace = aEndWithSpace;
 
 }
 
@@ -66,7 +72,7 @@ void TextBox :: getRange(unsigned int & aStart, unsigned int & aEnd) {
 
 }
 
-BRect TextBox :: getRect() {
+BRect TextBox :: getRect() const {
 
 	return mRect;
 
@@ -78,8 +84,20 @@ void TextBox :: setRect(BRect aRect) {
 
 }
 
-float TextBox :: getPixelWidth() {
+float TextBox :: getPixelWidth() const {
 	
 	return mPixelWidth;
+
+}
+
+bool TextBox :: startsWithSpace() const {
+	
+	return mStartWithSpace;
+
+}
+
+bool TextBox :: endsWithSpace() const {
+	
+	return mEndWithSpace;
 
 }

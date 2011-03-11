@@ -49,15 +49,23 @@ class TextBox {
 		unsigned int mEnd;
 		BRect mRect;
 		float mPixelWidth;
+		bool mStartWithSpace;
+		bool mEndWithSpace;
 
 	public:
 		TextBox(unsigned int aStart, unsigned int aEnd, BRect aRect);
-		TextBox(unsigned int aStart, unsigned int aEnd, float aPixelWidth);
+		TextBox(unsigned int aStart,
+				unsigned int aEnd,
+				float aPixelWidth,
+				bool aStartWithSpace = false,
+				bool aEndWithSpace = false);
 		~TextBox();
 		void getRange(unsigned int & aStart, unsigned int & aEnd);
-		BRect getRect();
+		BRect getRect() const;
 		void setRect(BRect aRect);
-		float getPixelWidth();
+		float getPixelWidth() const;
+		bool startsWithSpace() const;
+		bool endsWithSpace() const;
 };
 
 #endif
