@@ -320,9 +320,7 @@ void CSSView :: MouseDown(BPoint aPoint) {
 }
 
 void CSSView :: Draw() {
-	
-//	printf("Drawing %s\n", mNode->getNodeName().c_str());
-//	mRect.PrintToStream();
+
 	if (mDisplay) {
 		if (mNode->getNodeType() == TEXT_NODE) {
 			mBaseView->SetHighColor(mColor);
@@ -358,21 +356,15 @@ void CSSView :: Draw() {
 bool CSSView :: Contains(BPoint aPoint) {
 	
 	bool result = false;
-	
-	if (mRect.Contains(aPoint)) {
-		if (mEndPoint.x != 0 && mEndPoint.y != 0) {
-			if (aPoint.y < mRect.top + mEndPoint.y) {
-				result = true;
-			}
-			else if (aPoint.x < mRect.left + mEndPoint.x) {
-				result = true;
-			}
-		}
-		else {
-			result = true;
-		}
+	unsigned int i = 0;
+	unsigned int length = mRects.size();
+	while (i < length && !result) {
+		mRects[i].PrintToStream();
+		result = mRects[i].Contains(aPoint);
+		i++;
+		
 	}
-	
+
 	return result;
 	
 }
@@ -413,7 +405,7 @@ void CSSView :: Layout(BRect aRect,
 //	printf("Doing layout for %s\n", mName.c_str());
 	if (mDisplay) {
 		mRect = aRect;
-		// Always set the top of the rect to the one from the starting point as that definitely correct.
+		// Always set the top of the rect to the one from the starting point as that is definitely correct.
 		mRect.top = aStartingPoint.y;
 		BRect restRect = mRect;
 		if (mNode->getNodeType() == TEXT_NODE) {
@@ -451,6 +443,9 @@ void CSSView :: Layout(BRect aRect,
 			// One TextBox is one bit of text (always one word currently).
 			// Variable to check if the last textbox ends with a space, so we can add it at the end.
 			bool endsWithSpace = false;
+			// Variable to store a container rect, that can contain more than one word,
+			// which can later be used to calculate if a point is inside an area.
+			BRect containerRect = rect;
 			unsigned int length = mTextBoxes.size();
 			for (unsigned int i = 0; i < length; i++) {
 				TextBox box = mTextBoxes[i];
@@ -462,13 +457,20 @@ void CSSView :: Layout(BRect aRect,
 				}
 				if (lineWidth + boxWidth > viewWidth) {
 					// TextBox doesn't fit on the current line.
+					// Store the current container rect if needed
+					if (containerRect.right != containerRect.left) {
+						mRects.push_back(containerRect);
+					}
 					// Start a new line.
 					rect.left = mRect.left;
+					rect.right = rect.left;
 					rect.top += mLineHeight;
 					rect.bottom += mLineHeight;
 					restRect.top += mLineHeight;
 					// Nothing in use yet.
 					lineWidth = 0;
+					// The container rect is the same as the normal rect.
+					containerRect = rect;
 				}
 				else {
 					// Still fits inside the view.
@@ -477,6 +479,7 @@ void CSSView :: Layout(BRect aRect,
 				}
 				// The right side of our rect is now moved by the size of the box width.
 				rect.right = rect.left + boxWidth;
+				containerRect.right = rect.right;
 				if (box.startsWithSpace()) {
 					rect.left += mSpaceWidth;
 				}
@@ -492,6 +495,11 @@ void CSSView :: Layout(BRect aRect,
 			// In case the last textbox ends with a space, add a space now.
 			if (endsWithSpace) {
 				rect.right += mSpaceWidth;
+				containerRect.right = rect.right; 
+			}
+			if (containerRect.right != containerRect.left) {
+				// Still an area that needs to be stored.
+				mRects.push_back(containerRect);
 			}
 			// Mark the endpoint of the text in the rect.
 			mEndPoint.Set(rect.right, rect.top);
@@ -561,6 +569,8 @@ void CSSView :: Layout(BRect aRect,
 				}
 			}
 			mRect.right = maxRight;
+			mRect.bottom = restRect.top;
+			mRects.push_back(mRect);
 		}
 		
 		// Add any margins

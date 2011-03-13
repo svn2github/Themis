@@ -73,6 +73,7 @@ class CSSView : public BHandler {
 		TNodePtr mNode;
 		CSSStyleSheetPtr mStyleSheet;
 		CSSRendererView * mBaseView;
+		vector<BRect> mRects;
 		BRect mRect;
 		BPoint mEndPoint;
 		vector<TextBox> mTextBoxes;
