@@ -95,6 +95,7 @@ class CSSView : public BHandler {
 		rgb_color mColor;
 		string mListStyleType;
 		string mBorderStyle;
+		float mBorderWidth;
 		BRect mListStyleRect;
 		
 		void RetrieveLink();

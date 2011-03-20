@@ -28,9 +28,12 @@ H3 { font-size: 1.1em;
 LI { display: block;
      list-style-type: square}
 TABLE { display: table;
-		border-style: solid }
+		border-style: solid;
+		border-width: 1px; }
 TR { display: table-row;
-	 border-style: solid }
+	 border-style: solid;
+	 border-width: 1px }
 TD { display: table-cell;
 	 border-style: solid;
+	 border-width: 1px
 	 margin-right: 2px }

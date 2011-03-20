@@ -86,6 +86,7 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 	mInheritedFont = true;
 	mMarginBottom = 0;
 	mMarginRight = 0;
+	mBorderWidth = 0;
 	mColor = aColor;
 	mClickable = false;
 	mLineHeight = 0;
@@ -241,6 +242,16 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 						mBorderStyle = primitiveValue->getStringValue();
 					}
 				}
+				value = style->getPropertyCSSValue("border-width");
+				if (value.get()) {
+					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
+					if (primitiveValue.get()) {
+						if (primitiveValue->getPrimitiveType() == CSSPrimitiveValue::CSS_PX) {
+							float floatValue = primitiveValue->getFloatValue(CSSPrimitiveValue::CSS_PX);
+							mBorderWidth = floatValue;
+						}
+					}
+				}
 			}
 		}
 
@@ -376,8 +387,11 @@ void CSSView :: Draw() {
 		}
 		
 		if (mBorderStyle == "solid") {
+			float savedPenSize = mBaseView->PenSize();
+			mBaseView->SetPenSize(mBorderWidth);
 			mBaseView->SetHighColor(mColor);
 			mBaseView->StrokeRect(mRect);
+			mBaseView->SetPenSize(savedPenSize);
 		}
 		
 		unsigned int length = mChildren.size();
@@ -394,7 +408,6 @@ bool CSSView :: Contains(BPoint aPoint) {
 	unsigned int i = 0;
 	unsigned int length = mRects.size();
 	while (i < length && !result) {
-		mRects[i].PrintToStream();
 		result = mRects[i].Contains(aPoint);
 		i++;
 		
@@ -443,6 +456,8 @@ void CSSView :: Layout(BRect aRect,
 		// Always set the top of the rect to the one from the starting point as that is definitely correct.
 		mRect.top = aStartingPoint.y;
 		BRect restRect = mRect;
+		// If we are drawing a border around this element, make sure there is less space for the content.
+		restRect.InsetBy(mBorderWidth, mBorderWidth);
 		if (mNode->getNodeType() == TEXT_NODE) {
 			// Text should normally fit inside the parent.
 			// Store the width of the view, so we know how much fits on one line.
@@ -606,14 +621,12 @@ void CSSView :: Layout(BRect aRect,
 				}
 			}
 			else {
-				printf("Doing layout for table row\n");
 				BRect restRowRect = restRect;
 				float maxBottom = restRowRect.top;
 				for (unsigned int i = 0; i < length; i++) {
 					CSSView * childView = mChildren[i];
 					// Only layout those children that are actually displayed.
 					if (childView->IsDisplayed()) {
-						restRowRect.PrintToStream();
 						// Don't care if the child is a block or not, children will be positioned next to each other.
 						startingPoint = BPoint(restRowRect.left, restRowRect.top);
 						// Do the layout for the child.
