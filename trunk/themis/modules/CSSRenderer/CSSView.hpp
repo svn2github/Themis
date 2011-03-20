@@ -84,12 +84,17 @@ class CSSView : public BHandler {
 		bool mInheritedFont;
 		bool mDisplay;
 		bool mBlock;
+		bool mTable;
+		bool mTableRow;
+		bool mTableCell;
 		float mMarginBottom;
+		float mMarginRight;
 		bool mClickable;
 		string mHref;
 		string mName;
 		rgb_color mColor;
 		string mListStyleType;
+		string mBorderStyle;
 		BRect mListStyleRect;
 		
 		void RetrieveLink();

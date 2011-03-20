@@ -27,3 +27,10 @@ H3 { font-size: 1.1em;
 	 margin-bottom: 5px}
 LI { display: block;
      list-style-type: square}
+TABLE { display: table;
+		border-style: solid }
+TR { display: table-row;
+	 border-style: solid }
+TD { display: table-cell;
+	 border-style: solid;
+	 margin-right: 2px }

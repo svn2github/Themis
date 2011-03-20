@@ -79,9 +79,13 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 	mRect = aRect;
 	mDisplay = true;
 	mBlock = true;
+	mTable = false;
+	mTableRow = false;
+	mTableCell = false;
 	mFont = aFont;
 	mInheritedFont = true;
 	mMarginBottom = 0;
+	mMarginRight = 0;
 	mColor = aColor;
 	mClickable = false;
 	mLineHeight = 0;
@@ -131,6 +135,15 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 					}
 					else if (valueString == "inline") {
 						mBlock = false;
+					}
+					else if (valueString == "table") {
+						mTable = true;
+					}
+					else if (valueString == "table-row") {
+						mTableRow = true;
+					}
+					else if (valueString == "table-cell") {
+						mTableCell = true;
 					}
 				}
 				value = style->getPropertyCSSValue("font-size");
@@ -185,6 +198,16 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 						}
 					}
 				}
+				value = style->getPropertyCSSValue("margin-right");
+				if (value.get()) {
+					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
+					if (primitiveValue.get()) {
+						if (primitiveValue->getPrimitiveType() == CSSPrimitiveValue::CSS_PX) {
+							float floatValue = primitiveValue->getFloatValue(CSSPrimitiveValue::CSS_PX);
+							mMarginRight = floatValue;
+						}
+					}
+				}
 				value = style->getPropertyCSSValue("color");
 				if (value.get()) {
 					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
@@ -209,6 +232,13 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
 					if (primitiveValue.get()) {
 						mListStyleType = primitiveValue->getStringValue();
+					}
+				}
+				value = style->getPropertyCSSValue("border-style");
+				if (value.get()) {
+					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
+					if (primitiveValue.get()) {
+						mBorderStyle = primitiveValue->getStringValue();
 					}
 				}
 			}
@@ -343,6 +373,11 @@ void CSSView :: Draw() {
 		else if (mListStyleType == "square") {
 			mBaseView->SetHighColor(mColor);
 			mBaseView->FillRect(mListStyleRect);
+		}
+		
+		if (mBorderStyle == "solid") {
+			mBaseView->SetHighColor(mColor);
+			mBaseView->StrokeRect(mRect);
 		}
 		
 		unsigned int length = mChildren.size();
@@ -525,58 +560,110 @@ void CSSView :: Layout(BRect aRect,
 			unsigned int length = mChildren.size();
 			BPoint startingPoint = mEndPoint;
 			float maxRight = 0;
-			for (unsigned int i = 0; i < length; i++) {
-				CSSView * childView = mChildren[i];
-				// Only layout those children that are actually displayed.
-				if (childView->IsDisplayed()) {
-					if (childView->IsBlock()) {
-						// Blocks have their own rect, so start at the left of the parent rect and just below the previous block.
-						startingPoint = BPoint(restRect.left, restRect.top);
-					//	previousChildIsBlock = true;
-					//	startingPoint.PrintToStream();
-					}
-					// Do the layout for the child.
-					childView->Layout(restRect, startingPoint);
-					BRect rect2 = childView->Bounds();
-					mEndPoint = childView->GetEndPoint();
-					// Set the top of the remaining rect to the bottom of the child,
-					// because the space above is already taken by the child.
-					restRect.top = rect2.bottom;
-					if (rect2.right > restRect.right) {
-						// The child used more space than was available. We can use that space now as well
-						// for any remaining children.
-						restRect.right = rect2.right;
-						mRect.right = rect2.right;
-					}
-					// What is the maximum horizontal space being taken up by one of the children?
-					if (rect2.right > maxRight) {
-						maxRight = rect2.right;
-					}
-					
-					if (childView->IsBlock()) {
-						// The next child will have to start at the left of the parent rect and just below this block.
-						startingPoint = BPoint(restRect.left, restRect.top);
-					//	previousChildIsBlock = true;
-					//	startingPoint.PrintToStream();
-					}
-					else {
-						// We can start where we left off.
-						startingPoint = mEndPoint;
-					//	previousChildIsBlock = false;
-//						printf("Starting at: ");
-//						mEndPoint.PrintToStream();
+			if (!mTableRow) {
+				for (unsigned int i = 0; i < length; i++) {
+					CSSView * childView = mChildren[i];
+					// Only layout those children that are actually displayed.
+					if (childView->IsDisplayed()) {
+						if (childView->IsBlock()) {
+							// Blocks have their own rect, so start at the left of the parent rect and just below the previous block.
+							startingPoint = BPoint(restRect.left, restRect.top);
+						//	previousChildIsBlock = true;
+						//	startingPoint.PrintToStream();
+						}
+						// Do the layout for the child.
+						childView->Layout(restRect, startingPoint);
+						BRect rect2 = childView->Bounds();
+						mEndPoint = childView->GetEndPoint();
+						// Set the top of the remaining rect to the bottom of the child,
+						// because the space above is already taken by the child.
+						restRect.top = rect2.bottom;
+						if (rect2.right > restRect.right) {
+							// The child used more space than was available. We can use that space now as well
+							// for any remaining children.
+							restRect.right = rect2.right;
+							mRect.right = rect2.right;
+						}
+						// What is the maximum horizontal space being taken up by one of the children?
+						if (rect2.right > maxRight) {
+							maxRight = rect2.right;
+						}
+						
+						if (childView->IsBlock()) {
+							// The next child will have to start at the left of the parent rect and just below this block.
+							startingPoint = BPoint(restRect.left, restRect.top);
+						//	previousChildIsBlock = true;
+						//	startingPoint.PrintToStream();
+						}
+						else {
+							// We can start where we left off.
+							startingPoint = mEndPoint;
+						//	previousChildIsBlock = false;
+	//						printf("Starting at: ");
+	//						mEndPoint.PrintToStream();
+						}
 					}
 				}
 			}
-			mRect.right = maxRight;
+			else {
+				printf("Doing layout for table row\n");
+				BRect restRowRect = restRect;
+				float maxBottom = restRowRect.top;
+				for (unsigned int i = 0; i < length; i++) {
+					CSSView * childView = mChildren[i];
+					// Only layout those children that are actually displayed.
+					if (childView->IsDisplayed()) {
+						restRowRect.PrintToStream();
+						// Don't care if the child is a block or not, children will be positioned next to each other.
+						startingPoint = BPoint(restRowRect.left, restRowRect.top);
+						// Do the layout for the child.
+						childView->Layout(restRowRect, startingPoint);
+						BRect rect2 = childView->Bounds();
+						mEndPoint = childView->GetEndPoint();
+						// Set the top of the remaining rect to the bottom of the child,
+						// because the space above is already taken by the child.
+						restRect.top = rect2.bottom;
+						if (rect2.right > restRect.right) {
+							// The child used more space than was available. We can use that space now as well
+							// for any remaining children.
+							restRect.right = rect2.right;
+							mRect.right = rect2.right;
+							restRowRect.right = rect2.right;
+						}
+						// What is the maximum horizontal space being taken up by one of the children?
+						if (rect2.right > maxRight) {
+							maxRight = rect2.right;
+						}
+						// What is the maximum vertical space being taken up by one of the children?
+						if (rect2.bottom > maxBottom) {
+							maxBottom = rect2.bottom;
+						}
+						// Make sure the next child starts to the right of this one.
+						restRowRect.left = rect2.right;
+					}
+				}
+				if (maxBottom > 0) {
+					// Only set it in case we found something.
+					restRect.top = maxBottom;
+				}
+			}
+			if (maxRight > 0) {
+				// Only set it in case we found something.
+				mRect.right = maxRight;
+			}
+			else {
+				mRect.right = mRect.left;
+			}
 			mRect.bottom = restRect.top;
 			mRects.push_back(mRect);
+//			mRect.PrintToStream();
 		}
 		
 		// Add any margins
-		mEndPoint.Set(mEndPoint.x, mEndPoint.y + mMarginBottom);
+		mEndPoint.Set(mEndPoint.x + mMarginRight, mEndPoint.y + mMarginBottom);
 		
 		mRect.bottom = restRect.top + mMarginBottom;
+		mRect.right += mMarginRight;
 		//mRect.right = restRect.right;
 	}
 	else {
