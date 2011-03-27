@@ -23,7 +23,7 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Original Author & Project Manager: Z3R0 One (z3r0_one@bbnk.dhs.org)
+Original Author & Project Manager: Raymond "Z3R0 One" Rodgers (raymond@badlucksoft.com)
 Project Start Date: October 18, 2000
 */
 #include "connection.h"

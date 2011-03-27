@@ -363,7 +363,7 @@ void CSSView :: MouseDown(BPoint aPoint) {
 void CSSView :: Draw() {
 
 	if (mDisplay) {
-		if (mNode->getNodeType() == TEXT_NODE) {
+		if (mNode != NULL && mNode->getNodeType() == TEXT_NODE) {
 			mBaseView->SetHighColor(mColor);
 			BPoint drawPoint;
 			string text = mNode->getNodeValue();

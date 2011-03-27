@@ -141,7 +141,7 @@ int32 TCPManager::_Manager_Thread() {
 					{
 //						printf("TCP Manager: lock acquired\n");
 						connection=Connection::ConnectionAt(i);
-						if (!Connection::HasConnection(connection))
+						if (connection == NULL || !Connection::HasConnection(connection))
 						{
 							lock.Unlock();
 							snooze(10000);
