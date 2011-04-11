@@ -59,11 +59,11 @@ using namespace std;
 	http://www.w3.org/TR/2000/REC-DOM-Level-2-Style-20001113/stylesheets.html
 */
 
-class StyleSheetList	{
+class StyleSheetList {
 
 	private:
 		/// The list of stylesheets.
-		const vector<StyleSheetPtr> * mStyleSheetList;	
+		const vector<StyleSheetPtr> * mStyleSheetList;
 
 	public:
 		/// Constructor of the StyleSheetList class.
@@ -73,7 +73,7 @@ class StyleSheetList	{
 			
 			@param	aStyleSheetList	The list of stylesheets to store.
 		*/
-		StyleSheetList( const vector<StyleSheetPtr> * aStyleSheetList );
+		StyleSheetList(const vector<StyleSheetPtr> * aStyleSheetList);
 		
 		/// Destructor of the StyleSheetList class.
 		/**
@@ -92,8 +92,8 @@ class StyleSheetList	{
 
 			@param	aIndex	The index at which to get the item.
 		*/
-		StyleSheetPtr item( unsigned long aIndex );
-		
+		StyleSheetPtr item(unsigned long aIndex);
+
 };
 
 #endif
