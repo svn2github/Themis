@@ -30,6 +30,9 @@ LI { display: block;
 TABLE { display: table;
 		border-style: solid;
 		border-width: 1px; }
+TBODY { display: table-row-group;
+		border-style: solid;
+		border-width: 1px; }
 TR { display: table-row;
 	 border-style: solid;
 	 border-width: 1px }

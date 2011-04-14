@@ -46,6 +46,7 @@
 // CSS Renderer headers
 #include "CSSRendererView.hpp"
 #include "CSSView.hpp"
+#include "CSSStyleContainer.hpp"
 
 CSSRendererView :: CSSRendererView(BRect aFrame,
 								   TDocumentPtr aDocument,
@@ -56,7 +57,8 @@ CSSRendererView :: CSSRendererView(BRect aFrame,
 						B_WILL_DRAW | B_FRAME_EVENTS | B_FULL_UPDATE_ON_RESIZE) {
 
 	printf("Creating CSSRendererView\n");
-	mStyleSheet = aStyleSheet;
+	mStyleSheets = new CSSStyleContainer();
+	mStyleSheets->addStyleSheet(aStyleSheet);
 	mDocument = aDocument;
 	BRect rect = Bounds();
 	if (mDocument->hasChildNodes()) {
@@ -65,9 +67,12 @@ CSSRendererView :: CSSRendererView(BRect aFrame,
 		defaultColor.green = 0;
 		defaultColor.blue = 0;
 		
+				
+		TNodePtr root = mDocument->getFirstChild();
+		
 		mView = new CSSView(this,
-							mDocument->getFirstChild(),
-							mStyleSheet,
+							root,
+							mStyleSheets,
 							rect,
 							defaultColor);
 		printf("Doing layout\n");
@@ -85,6 +90,7 @@ CSSRendererView :: ~CSSRendererView() {
 
 	printf("Destroying CSSRendererView\n");
 	delete mView;
+	delete mStyleSheets;
 	printf("Destroyed CSSRendererView\n");
 
 }

@@ -59,8 +59,9 @@
 #include "TextBox.hpp"
 
 // Declarations used
-class CSSRendererView;
 class BFont;
+class CSSRendererView;
+class CSSStyleContainer;
 
 // Namespaces used
 using std::vector;
@@ -71,7 +72,7 @@ class CSSView : public BHandler {
 	private:
 		vector<CSSView *> mChildren;
 		TNodePtr mNode;
-		CSSStyleSheetPtr mStyleSheet;
+		CSSStyleContainer * mStyleSheets;
 		CSSRendererView * mBaseView;
 		vector<BRect> mRects;
 		BRect mRect;
@@ -103,7 +104,7 @@ class CSSView : public BHandler {
 	public:
 		CSSView(CSSRendererView * aBaseView,
 				TNodePtr aNode,
-				CSSStyleSheetPtr aStyleSheet,
+				CSSStyleContainer * aStyleSheets,
 				BRect aRect,
 				rgb_color aColor,
 				BFont * aFont = NULL);
@@ -119,7 +120,7 @@ class CSSView : public BHandler {
 		void Layout(BRect aRect,
 					BPoint aStartingPoint);
 		void SplitText();
-		CSSStyleDeclarationPtr GetComputedStyle(TElementPtr aElement);
+		CSSStyleDeclarationPtr GetComputedStyle(const TElementPtr aElement);
 };
 
 #endif

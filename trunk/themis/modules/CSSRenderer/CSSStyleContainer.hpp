@@ -1,5 +1,5 @@
 /*
-	Copyright (c) 2010 Mark Hellegers. All Rights Reserved.
+	Copyright (c) 2011 Mark Hellegers. All Rights Reserved.
 	
 	Permission is hereby granted, free of charge, to any person
 	obtaining a copy of this software and associated documentation
@@ -25,56 +25,50 @@
 	
 	Original Author: 	Mark Hellegers (mark@firedisk.net)
 	Project Start Date: October 18, 2000
-	Class Start Date: Februari 28, 2010
+	Class Start Date: April 10, 2011
 */
 
-/*	CSSRendererView
-	Renders an HTML file through css
+/*	CSSStyleContainer
+	Contains the CSS Stylesheets for a document
+	and provides a function to compute the style for an element of the document
 	
 	Mark Hellegers (mark@firedisk.net)
-	28-02-2010
+	10-04-2011
 	
 */
 
-#ifndef CSSRENDERERVIEW_HPP
-#define CSSRENDERERVIEW_HPP
+#ifndef CSSSTYLECONTAINER_HPP
+#define CSSSTYLECONTAINER_HPP
 
-// BeOS headers
-#include <View.h>
-#include <Point.h>
+// Standard C++ headers
+#include <vector>
 
 // DOM headers
-#include "DOMSupport.h"
+#include "TElement.h"
 
 // DOM Style headers
 #include "CSSStyleSheet.hpp"
+#include "CSSStyleDeclaration.hpp"
 
-// Declarations used
-class CSSView;
-class CSSStyleContainer;
+// Namespaces used
+using std::vector;
 
-class CSSRendererView : public BView {
+class CSSStyleContainer {
 	
 	private:
-		CSSView * mView;
-		TDOMString mTitle;
-		TDocumentPtr mDocument;
-		BRect mCSSViewSize;
-		CSSStyleContainer * mStyleSheets;
+		vector<CSSStyleSheetPtr> mStyleSheetList;
 	
 	public:
-		CSSRendererView(BRect aFrame,
-						TDocumentPtr aDocument,
-						CSSStyleSheetPtr aStyleSheet);
-		~CSSRendererView();
-		virtual void MouseDown(BPoint aPoint);
-		virtual void Draw(BRect aRect);
-		void AttachedToWindow();
-		virtual void FrameResized(float aWidth, float aHeight);
-		void SetTitle(TDOMString aTitle);
-		TDOMString GetTitle();
-		BRect CSSViewSize();
-		TDOMString GetDocumentURI() const;
+		CSSStyleContainer();
+		~CSSStyleContainer();
+		void addStyleSheet(const CSSStyleSheetPtr aStyleSheet);
+
+		/// A function to compute the style based on the stylesheets in the list.
+		/**
+			This functions computes the style for a given element by looking in the list
+			of stylesheets to see what applies to the element.
+		*/
+		CSSStyleDeclarationPtr getComputedStyle(const TElementPtr aElement);
 };
 
 #endif

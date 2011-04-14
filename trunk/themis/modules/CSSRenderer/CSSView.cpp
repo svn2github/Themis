@@ -61,13 +61,14 @@
 // CSS Renderer headers
 #include "CSSView.hpp"
 #include "CSSRendererView.hpp"
+#include "CSSStyleContainer.hpp"
 
 // Constants used
 const char cSpace = ' ';
 
 CSSView :: CSSView(CSSRendererView * aBaseView,
 				   TNodePtr aNode,
-				   CSSStyleSheetPtr aStyleSheet,
+				   CSSStyleContainer * aStyleSheets,
 				   BRect aRect,
 				   rgb_color aColor,
 				   BFont * aFont)
@@ -75,7 +76,7 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 
 	mBaseView = aBaseView;
 	mNode = aNode;
-	mStyleSheet = aStyleSheet;
+	mStyleSheets = aStyleSheets;
 	mRect = aRect;
 	mDisplay = true;
 	mBlock = true;
@@ -123,7 +124,7 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 					mClickable = true;
 				}
 			}
-			CSSStyleDeclarationPtr style = GetComputedStyle(element);
+			CSSStyleDeclarationPtr style = mStyleSheets->getComputedStyle(element);
 			if (style.get()) {
 				CSSValuePtr value = style->getPropertyCSSValue("display");
 				if (value.get()) {
@@ -137,7 +138,7 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 					else if (valueString == "inline") {
 						mBlock = false;
 					}
-					else if (valueString == "table") {
+					else if ((valueString == "table") || (valueString == "table-row-group")) {
 						mTable = true;
 					}
 					else if (valueString == "table-row") {
@@ -259,7 +260,7 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 			TNodePtr child = children->item(i);
 			CSSView * childView = new CSSView(aBaseView,
 											  child,
-											  mStyleSheet,
+											  mStyleSheets,
 											  mRect,
 											  mColor,
 											  mFont);
@@ -728,48 +729,5 @@ void CSSView :: SplitText() {
 		TextBox box = TextBox(start, end, pixelWidth, spaceFound);
 		mTextBoxes.push_back(box);
 	}
-
-}
-
-CSSStyleDeclarationPtr CSSView :: GetComputedStyle(TElementPtr aElement) {
-
-	CSSStyleDeclarationPtr result;
-	CSSRuleListPtr rules = mStyleSheet->getCSSRules();
-	unsigned long length = rules->getLength();
-	bool found = false;
-	unsigned long i = 0;
-	while (i < length && !found) {
-		CSSRulePtr rule = rules->item(i);
-		switch (rule->getType()) {
-			case CSSRule::STYLE_RULE: {
-				CSSStyleRulePtr styleRule = shared_static_cast<CSSStyleRule>(rule);
-				// Trim trailing spaces before comparing.
-				string styleText = styleRule->getSelectorText();
-				size_t endPos = styleText.find_last_not_of(" ");
-				if (string::npos != endPos) {
-					styleText = styleText.substr(0, endPos + 1);
-				}
-				if (styleText == aElement->getTagName()) {
-					result = styleRule->getStyle();
-					found = true;
-				}
-				break;
-			}
-			default: {
-				break;
-			}
-		}
-		i++;
-	}
-
-/*	
-	if (found) {
-		printf("Found a match for %s\n", aElement->getTagName().c_str());
-	}
-	else {
-		printf("Didn't find a match for %s\n", aElement->getTagName().c_str());
-	}
-*/	
-	return result;
 
 }
