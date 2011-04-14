@@ -100,6 +100,9 @@ class CSSView : public BHandler {
 		BRect mListStyleRect;
 		
 		void RetrieveLink();
+
+	protected:
+		void ApplyStyle(const TElementPtr aElement);
 	
 	public:
 		CSSView(CSSRendererView * aBaseView,

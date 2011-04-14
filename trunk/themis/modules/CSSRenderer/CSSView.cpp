@@ -124,136 +124,7 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 					mClickable = true;
 				}
 			}
-			CSSStyleDeclarationPtr style = mStyleSheets->getComputedStyle(element);
-			if (style.get()) {
-				CSSValuePtr value = style->getPropertyCSSValue("display");
-				if (value.get()) {
-					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
-					TDOMString valueString = primitiveValue->getStringValue();
-//					printf("Display property value: %s\n", valueString.c_str());
-					if (valueString == "none") {
-						mDisplay = false;
-						mRect = BRect(0, 0, 0, 0);
-					}
-					else if (valueString == "inline") {
-						mBlock = false;
-					}
-					else if ((valueString == "table") || (valueString == "table-row-group")) {
-						mTable = true;
-					}
-					else if (valueString == "table-row") {
-						mTableRow = true;
-					}
-					else if (valueString == "table-cell") {
-						mTableCell = true;
-					}
-				}
-				value = style->getPropertyCSSValue("font-size");
-				if (value.get()) {
-					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
-					if (primitiveValue.get()) {
-						if (primitiveValue->getPrimitiveType() == CSSPrimitiveValue::CSS_EMS) {
-							float floatValue = primitiveValue->getFloatValue(CSSPrimitiveValue::CSS_EMS);
-							if (mFont == NULL) {
-								mFont = new BFont(be_plain_font);
-								mInheritedFont = false;
-							}
-							mFont->SetSize(floatValue * mFont->Size());
-						}
-					}
-				}
-				value = style->getPropertyCSSValue("font-style");
-				if (value.get()) {
-					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
-					if (primitiveValue.get()) {
-						TDOMString valueString = primitiveValue->getStringValue();
-						if (valueString == "italic") {
-							if (mFont == NULL) {
-								mFont = new BFont(be_plain_font);
-								mInheritedFont = false;
-							}
-							mFont->SetFace(B_ITALIC_FACE);
-						}
-					}
-				}
-				value = style->getPropertyCSSValue("font-weight");
-				if (value.get()) {
-					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
-					if (primitiveValue.get()) {
-						TDOMString valueString = primitiveValue->getStringValue();
-						if (valueString == "bold") {
-							if (mFont == NULL) {
-								mFont = new BFont(be_plain_font);
-								mInheritedFont = false;
-							}
-							mFont->SetFace(B_BOLD_FACE);
-						}
-					}
-				}
-				value = style->getPropertyCSSValue("margin-bottom");
-				if (value.get()) {
-					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
-					if (primitiveValue.get()) {
-						if (primitiveValue->getPrimitiveType() == CSSPrimitiveValue::CSS_PX) {
-							float floatValue = primitiveValue->getFloatValue(CSSPrimitiveValue::CSS_PX);
-							mMarginBottom = floatValue;
-						}
-					}
-				}
-				value = style->getPropertyCSSValue("margin-right");
-				if (value.get()) {
-					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
-					if (primitiveValue.get()) {
-						if (primitiveValue->getPrimitiveType() == CSSPrimitiveValue::CSS_PX) {
-							float floatValue = primitiveValue->getFloatValue(CSSPrimitiveValue::CSS_PX);
-							mMarginRight = floatValue;
-						}
-					}
-				}
-				value = style->getPropertyCSSValue("color");
-				if (value.get()) {
-					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
-					if (primitiveValue.get()) {
-						if (primitiveValue->getPrimitiveType() == CSSPrimitiveValue::CSS_RGBCOLOR) {
-							RGBColorPtr color = primitiveValue->getRGBColorValue();
-							CSSPrimitiveValuePtr redValue = color->getRed();
-							CSSPrimitiveValuePtr greenValue = color->getGreen();
-							CSSPrimitiveValuePtr blueValue = color->getBlue();
-							if (redValue->getPrimitiveType() == CSSPrimitiveValue::CSS_NUMBER &&
-								greenValue->getPrimitiveType() == CSSPrimitiveValue::CSS_NUMBER &&
-								blueValue->getPrimitiveType() == CSSPrimitiveValue::CSS_NUMBER) {
-								mColor.red = (uint8)redValue->getFloatValue(CSSPrimitiveValue::CSS_NUMBER);
-								mColor.green = (uint8)greenValue->getFloatValue(CSSPrimitiveValue::CSS_NUMBER);
-								mColor.blue = (uint8)blueValue->getFloatValue(CSSPrimitiveValue::CSS_NUMBER);
-							}
-						}
-					}
-				}
-				value = style->getPropertyCSSValue("list-style-type");
-				if (value.get()) {
-					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
-					if (primitiveValue.get()) {
-						mListStyleType = primitiveValue->getStringValue();
-					}
-				}
-				value = style->getPropertyCSSValue("border-style");
-				if (value.get()) {
-					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
-					if (primitiveValue.get()) {
-						mBorderStyle = primitiveValue->getStringValue();
-					}
-				}
-				value = style->getPropertyCSSValue("border-width");
-				if (value.get()) {
-					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
-					if (primitiveValue.get()) {
-						if (primitiveValue->getPrimitiveType() == CSSPrimitiveValue::CSS_PX) {
-							float floatValue = primitiveValue->getFloatValue(CSSPrimitiveValue::CSS_PX);
-							mBorderWidth = floatValue;
-						}
-					}
-				}
-			}
+			ApplyStyle(element);
 		}
 
 		for (unsigned int i = 0; i < length; i++) {
@@ -335,6 +206,137 @@ void CSSView :: RetrieveLink() {
 		messenger.SendMessage(&message);
 	}
 
+}
+
+void CSSView :: ApplyStyle(const TElementPtr aElement) {
+	
+	CSSStyleDeclarationPtr style = mStyleSheets->getComputedStyle(aElement);
+	if (style.get()) {
+		unsigned long length = style->getLength();
+		for (unsigned long i = 0; i < length; i++) {
+			TDOMString propertyName = style->item(i);
+			CSSValuePtr value = style->getPropertyCSSValue(propertyName);
+			if (value.get()) {
+				if (propertyName == "display") {
+					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
+					TDOMString valueString = primitiveValue->getStringValue();
+//					printf("Display property value: %s\n", valueString.c_str());
+					if (valueString == "none") {
+						mDisplay = false;
+						mRect = BRect(0, 0, 0, 0);
+					}
+					else if (valueString == "inline") {
+						mBlock = false;
+					}
+					else if ((valueString == "table") || (valueString == "table-row-group")) {
+						mTable = true;
+					}
+					else if (valueString == "table-row") {
+						mTableRow = true;
+					}
+					else if (valueString == "table-cell") {
+						mTableCell = true;
+					}
+				}
+				else if (propertyName == "font-size") {
+					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
+					if (primitiveValue.get()) {
+						if (primitiveValue->getPrimitiveType() == CSSPrimitiveValue::CSS_EMS) {
+							float floatValue = primitiveValue->getFloatValue(CSSPrimitiveValue::CSS_EMS);
+							if (mFont == NULL) {
+								mFont = new BFont(be_plain_font);
+								mInheritedFont = false;
+							}
+							mFont->SetSize(floatValue * mFont->Size());
+						}
+					}
+				}
+				else if (propertyName == "font-style") {
+					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
+					if (primitiveValue.get()) {
+						TDOMString valueString = primitiveValue->getStringValue();
+						if (valueString == "italic") {
+							if (mFont == NULL) {
+								mFont = new BFont(be_plain_font);
+								mInheritedFont = false;
+							}
+							mFont->SetFace(B_ITALIC_FACE);
+						}
+					}
+				}
+				else if (propertyName == "font-weight") {
+					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
+					if (primitiveValue.get()) {
+						TDOMString valueString = primitiveValue->getStringValue();
+						if (valueString == "bold") {
+							if (mFont == NULL) {
+								mFont = new BFont(be_plain_font);
+								mInheritedFont = false;
+							}
+							mFont->SetFace(B_BOLD_FACE);
+						}
+					}
+				}
+				else if (propertyName == "margin-bottom") {
+					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
+					if (primitiveValue.get()) {
+						if (primitiveValue->getPrimitiveType() == CSSPrimitiveValue::CSS_PX) {
+							float floatValue = primitiveValue->getFloatValue(CSSPrimitiveValue::CSS_PX);
+							mMarginBottom = floatValue;
+						}
+					}
+				}
+				else if (propertyName == "margin-right") {
+					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
+					if (primitiveValue.get()) {
+						if (primitiveValue->getPrimitiveType() == CSSPrimitiveValue::CSS_PX) {
+							float floatValue = primitiveValue->getFloatValue(CSSPrimitiveValue::CSS_PX);
+							mMarginRight = floatValue;
+						}
+					}
+				}
+				else if (propertyName == "color") {
+					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
+					if (primitiveValue.get()) {
+						if (primitiveValue->getPrimitiveType() == CSSPrimitiveValue::CSS_RGBCOLOR) {
+							RGBColorPtr color = primitiveValue->getRGBColorValue();
+							CSSPrimitiveValuePtr redValue = color->getRed();
+							CSSPrimitiveValuePtr greenValue = color->getGreen();
+							CSSPrimitiveValuePtr blueValue = color->getBlue();
+							if (redValue->getPrimitiveType() == CSSPrimitiveValue::CSS_NUMBER &&
+								greenValue->getPrimitiveType() == CSSPrimitiveValue::CSS_NUMBER &&
+								blueValue->getPrimitiveType() == CSSPrimitiveValue::CSS_NUMBER) {
+								mColor.red = (uint8)redValue->getFloatValue(CSSPrimitiveValue::CSS_NUMBER);
+								mColor.green = (uint8)greenValue->getFloatValue(CSSPrimitiveValue::CSS_NUMBER);
+								mColor.blue = (uint8)blueValue->getFloatValue(CSSPrimitiveValue::CSS_NUMBER);
+							}
+						}
+					}
+				}
+				else if (propertyName == "list-style-type") {
+					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
+					if (primitiveValue.get()) {
+						mListStyleType = primitiveValue->getStringValue();
+					}
+				}
+				else if (propertyName == "border-style") {
+					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
+					if (primitiveValue.get()) {
+						mBorderStyle = primitiveValue->getStringValue();
+					}
+				}
+				else if (propertyName == "border-width") {
+					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
+					if (primitiveValue.get()) {
+						if (primitiveValue->getPrimitiveType() == CSSPrimitiveValue::CSS_PX) {
+							float floatValue = primitiveValue->getFloatValue(CSSPrimitiveValue::CSS_PX);
+							mBorderWidth = floatValue;
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 void CSSView :: MouseDown(BPoint aPoint) {
