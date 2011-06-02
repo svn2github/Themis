@@ -35,32 +35,28 @@ Project Start Date: October 18, 2000
 
 class GlobalHistoryItem;
 
-class GlobalHistory
-{
-	public:
-									GlobalHistory(
-										int8 depth,
-										int8 count );
-									~GlobalHistory();
-									
-		void						AddEntry(
-										const char* entry );
-		void						Clear();
-		BList*						GetStrippedList();
-		void						Init(
-										BMessage* datamsg );
-		void						PrintHistory();
-		void						SetDepth(
-										int8 newdepth );
-		
+class GlobalHistory {
+
 	private:
-		bool						CheckDoubleDay(
-										GlobalHistoryItem* checkitem );
-		void						CheckEntryExpiration();
+		int8 fHistoryDepthInDays;
+		int8 fFreeUrlCount;
+		BList * fList;
+
+		bool CheckDoubleDay(GlobalHistoryItem* checkitem);
+		void CheckEntryExpiration();
+
+	public:
+		GlobalHistory(int8 depth,
+					  int8 count);
+		~GlobalHistory();
+									
+		void  AddEntry(const char* entry);
+		void Clear();
+		BList * GetFilteredList(BString & aText);
+		void Init(BMessage* datamsg);
+		void PrintHistory();
+		void SetDepth(int8 newdepth);
 		
-		int8						fHistoryDepthInDays;
-		int8						fFreeUrlCount;
-		BList*						fList;
 };
 
 #endif
@@ -70,25 +66,21 @@ class GlobalHistory
 
 #include <ListItem.h>
 
-class GlobalHistoryItem : public BStringItem
-{
-	public:
-									GlobalHistoryItem(
-										const char* text,
-										time_t time,
-										uint32 level = 0,
-										bool expaned = true );
-		virtual						~GlobalHistoryItem();
-		
-		void						Print();
-		void						SetFree();
-//		void						SetTime(
-//										time_t newtime );
-		time_t						Time();
-
+class GlobalHistoryItem : public BStringItem {
 	private:
-		time_t						fTime;
-		
+		time_t fTime;
+
+	public:
+		GlobalHistoryItem(const char* text,
+						  time_t time,
+						  uint32 level = 0,
+						  bool expaned = true);
+		virtual ~GlobalHistoryItem();
+
+		void Print();
+		void SetFree();
+		time_t Time();
+
 };
 
 #endif

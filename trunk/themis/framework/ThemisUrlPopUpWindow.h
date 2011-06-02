@@ -13,28 +13,28 @@
 #include "ThemisUrlPopUpView.h"
 #include "Window.h"
 
-class ThemisUrlPopUpWindow : public BWindow
-{
-	public:
-									ThemisUrlPopUpWindow( BWindow* parent, BRect frame );
-									
-									~ThemisUrlPopUpWindow();
-									
-		virtual void				MessageReceived( BMessage *msg );
-		
-		void						ListToDisplay( BList* list );
-		void						ResizeToPrefered();
-		void						TruncateUrlStrings();
-		
-		ThemisUrlPopUpView*			urlpopupview;
-		BScrollBar*					vscroll;
-		
+class ThemisUrlPopUpWindow : public BWindow {
+
 	private:
-		BWindow*					parentwindow;
+		BWindow * parentwindow;
 		
-		uint32						lastitem;
-		BList*						url_list;
-		BList*						trunc_list;
+		uint32 lastitem;
+		BList * url_list;
+		BList * trunc_list;
+		BScrollBar * vscroll;
+
+	public:
+		ThemisUrlPopUpWindow(BWindow* aParent, BRect aFrame, BList * aList);
+		~ThemisUrlPopUpWindow();
+									
+		virtual void MessageReceived(BMessage *msg);
+		void ListToDisplay(BList* list);
+		void ResizeToPrefered();
+		void TruncateUrlStrings();
+		bool HasScrollBar() const;
+		
+		ThemisUrlPopUpView * urlpopupview;
+
 };
 
 #endif

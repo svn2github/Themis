@@ -15,26 +15,27 @@
 #include "../common/commondefs.h"
 #include "ThemisUrlPopUpWindow.h"
 
-ThemisUrlPopUpWindow::ThemisUrlPopUpWindow( BWindow* parent, BRect frame )
-	: BWindow(
-			frame,
-			"UrlPopUpWindow",
-			B_NO_BORDER_WINDOW_LOOK,
-			B_FLOATING_APP_WINDOW_FEEL,
-			B_NOT_MOVABLE | B_NOT_CLOSABLE | B_NOT_ZOOMABLE |
-				B_NOT_MINIMIZABLE | B_WILL_ACCEPT_FIRST_CLICK |
-				B_AVOID_FOCUS | B_ASYNCHRONOUS_CONTROLS,
-			B_CURRENT_WORKSPACE )
-{
-	parentwindow = parent;
+ThemisUrlPopUpWindow :: ThemisUrlPopUpWindow(BWindow * aParent,
+											 BRect aFrame,
+											 BList * aList)
+					 : BWindow(aFrame,
+							   "UrlPopUpWindow",
+							   B_NO_BORDER_WINDOW_LOOK,
+							   B_FLOATING_APP_WINDOW_FEEL,
+							   B_NOT_MOVABLE | B_NOT_CLOSABLE | B_NOT_ZOOMABLE |
+							   B_NOT_MINIMIZABLE | B_WILL_ACCEPT_FIRST_CLICK |
+							   B_AVOID_FOCUS | B_ASYNCHRONOUS_CONTROLS,
+							   B_CURRENT_WORKSPACE) {
+
+	parentwindow = aParent;
 	lastitem = 0;
 	vscroll = NULL;
-	url_list = NULL;
-	trunc_list = NULL;
+	url_list = new BList;
+	trunc_list = new BList;
 	
-	urlpopupview = new ThemisUrlPopUpView(
-		Bounds() );
-	AddChild( urlpopupview );
+	urlpopupview = new ThemisUrlPopUpView(Bounds());
+	AddChild(urlpopupview);
+	ListToDisplay(aList);
 }
 
 ThemisUrlPopUpWindow::~ThemisUrlPopUpWindow()
@@ -143,29 +144,38 @@ ThemisUrlPopUpWindow::ListToDisplay( BList* list )
 {
 	//cout << "ThemisUrlPopUpWindow::ListToDisplay()" << endl;
 	
-	if( list != NULL )
-	{
+	if(list != NULL) {
+		// First delete the contents of the old lists.
+		if (url_list != NULL) {
+			int32 length = url_list->CountItems();
+			for (int32 i = 0; i < length; i++) {
+				delete url_list->RemoveItem((int32) 0);
+			}
+		}
+		if (trunc_list != NULL) {
+			int32 length = trunc_list->CountItems();
+			for (int32 i = 0; i < length; i++) {
+				delete trunc_list->RemoveItem((int32) 0);
+			}
+		}		
+
 		// we need the url_list with untruncated strings
-		url_list = new BList( *list );
-		// and the list with truncated urls if urlpopup is
-		// smaller then the urls-length
-		trunc_list = new BList( url_list->CountItems() );
+		url_list->AddList(list);
 		
 		// we need to totally independant but similar BLists
 		// ( copying with the copy-constructor won't do it )
 		int i = 0;
-		BStringItem* item;
-		while( url_list->ItemAt( i ) != NULL )
-		{
-			item = ( BStringItem* )url_list->ItemAt( i );
-			trunc_list->AddItem( new BStringItem( item->Text() ) );
+		BStringItem * item;
+		while (url_list->ItemAt( i ) != NULL) {
+			item = ( BStringItem* )url_list->ItemAt(i);
+			trunc_list->AddItem( new BStringItem(item->Text()));
 			i++;
 		}
 		
-		TruncateUrlStrings();
-		
 		urlpopupview->ulv->MakeEmpty();
-		urlpopupview->ulv->AddList( trunc_list );
+		urlpopupview->ulv->AddList(trunc_list);
+
+		TruncateUrlStrings();
 		
 		ResizeToPrefered(); 
 	}
@@ -245,30 +255,32 @@ ThemisUrlPopUpWindow::ResizeToPrefered()
 	}
 }
 
-void
-ThemisUrlPopUpWindow::TruncateUrlStrings()
-{
+void ThemisUrlPopUpWindow :: TruncateUrlStrings() {
+
 	int i = 0;
 	BStringItem* urlitem = NULL;
 	BStringItem* truncitem = NULL;
-	BString* string = new BString;
+	BString text;
 	
-	while( url_list->ItemAt( i ) != NULL )
-	{
-		urlitem = ( BStringItem* )url_list->ItemAt( i );
-		if( urlitem != NULL );
-			string->SetTo( urlitem->Text() );
+	while (url_list->ItemAt(i) != NULL) {
+		urlitem = (BStringItem *)url_list->ItemAt(i);
+		text.SetTo(urlitem->Text());
 				
 		urlpopupview->TruncateString(
-			string,
+			&text,
 			B_TRUNCATE_END,
-			urlpopupview->ulv->Bounds().right - 10 );
+			urlpopupview->ulv->Bounds().right - 10);
 		
-		truncitem = ( BStringItem* )urlpopupview->ulv->ItemAt( i );
-		if( truncitem != NULL )
-			truncitem->SetText( string->String() );
-					
+		truncitem = (BStringItem *)urlpopupview->ulv->ItemAt(i);
+		if (truncitem != NULL)
+			truncitem->SetText(text.String());
+
 		i++;
 	}
-	delete string;
+}
+
+bool ThemisUrlPopUpWindow :: HasScrollBar() const {
+
+	return (vscroll != NULL);
+
 }

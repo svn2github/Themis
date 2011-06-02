@@ -96,7 +96,7 @@ class Win : public BWindow, public MessageSystem {
 		bool CloseUrlPopUpWindow();
 		uint32 BroadcastTarget();
 		void CreateTabView();
-		void CreateUrlPopUpWindow();
+		void CreateUrlPopUpWindow(BList * aList);
 		void SetLoadingInfo(int doc_progress,
 							const char* status_text);
 		

@@ -217,7 +217,7 @@ void Win :: MessageReceived(BMessage * msg) {
 			// as the urlpopupwindow never gets focus and thus
 			// never get the mouse wheel messages
 			if (urlpopupwindow != NULL) {
-				if (urlpopupwindow->vscroll != NULL) {
+				if (urlpopupwindow->HasScrollBar()) {
 					float value = msg->FindFloat( "be:wheel_delta_y");
 					value *= 10;
 					
@@ -663,7 +663,7 @@ void Win :: CreateTabView() {
 
 }
 
-void Win :: CreateUrlPopUpWindow() {
+void Win :: CreateUrlPopUpWindow(BList * aList) {
 
 	if (urlpopupwindow == NULL) {
 		BRect frame(navview->urlview->Frame());
@@ -673,7 +673,7 @@ void Win :: CreateUrlPopUpWindow() {
 		wframe.top = frame.bottom;
 		wframe.bottom = wframe.top + 30;
 		
-		urlpopupwindow = new ThemisUrlPopUpWindow(this,	wframe);
+		urlpopupwindow = new ThemisUrlPopUpWindow(this,	wframe, aList);
 		urlpopupwindow->Run();
 		urlpopupwindow->Show();
 		
@@ -682,6 +682,11 @@ void Win :: CreateUrlPopUpWindow() {
 		if (CurrentFocus() != NULL)
 			CurrentFocus()->MakeFocus(false);
 	 	navview->urlview->textview->MakeFocus(true);
+	}
+	else {
+		urlpopupwindow->Lock();
+		urlpopupwindow->ListToDisplay(aList);
+		urlpopupwindow->Unlock();
 	}
 
 }
@@ -830,14 +835,7 @@ void Win :: SetQuitConfirmed(bool state) {
 
 void Win :: UrlTypedHandler(bool show_all) {
 	
-	// get the stripped list from GlobalHistory
-	BList * slist = ((App *)be_app)->GetGlobalHistory()->GetStrippedList();
-	// create the matching urls list
-	BList * list = new BList(0);
-	
 	BString typed_url;					// the typed url
-	BString cached_url;					// the cached url
-	BString cached_url_proto("");		// protocol of the cached url
 	
 	if (show_all == true)
 		typed_url.SetTo("");
@@ -846,79 +844,18 @@ void Win :: UrlTypedHandler(bool show_all) {
 		typed_url.ToLower();
 	}
 
-	int32 count = slist->CountItems();
-	
-	for (int32 i = 0; i < count; i++) {
-		GlobalHistoryItem * item = (GlobalHistoryItem *)slist->ItemAt(i);
-		if (item != NULL) {
-			cached_url.SetTo(item->Text());
-					
-			if (typed_url.Length() != 0) {
-				// if the typed url matches beginning of cached url, add it
-				if (strncmp(cached_url.String(), typed_url.String(), typed_url.Length()) == 0) {
-					list->AddItem(new BStringItem(cached_url.String()));
-				}
-				else {
-					// if the urls dont match, take away the protocol of the cached url
-					if (cached_url.FindFirst("://") > 0) {
-						cached_url.MoveInto(cached_url_proto, 0, cached_url.FindFirst("://") + 3);
-					}
-					
-					// if the urls fit now
-					if (strncmp(cached_url.String(), typed_url.String(), typed_url.Length()) == 0) {
-						// add the missing proto again
-						if (cached_url_proto.Length() != 0)
-							cached_url.Prepend(cached_url_proto);
-							
-						list->AddItem(new BStringItem(cached_url.String()));
-					}
-					else {
-						// if they still don't fit, remove 'www.' from cached url
-						if (cached_url.FindFirst("www.") == 0) {
-							cached_url.Remove(0, 4);
-						}
-						
-						// check if they finally fit
-						if (strncmp(cached_url.String(), typed_url.String(), typed_url.Length()) == 0) {
-							// add missing 'www.' and proto
-							cached_url.Prepend("www.");
-							
-							if (cached_url_proto.Length() != 0)
-								cached_url.Prepend(cached_url_proto);
-													
-							list->AddItem(new BStringItem(cached_url.String()));
-						}
-					}
-					cached_url_proto.SetTo("");
-				}
-			}
-			else {
-				list->AddItem(new BStringItem(cached_url.String()));
-			}
-		} // if( item != NULL )
-	}
-	
-	// delete slist ( not needed anymore )
-	for (int32 i = 0; i < count; i++) {
-		GlobalHistoryItem * item = (GlobalHistoryItem *)slist->ItemAt(i);
-		if (item != NULL) {
-			slist->RemoveItem(item);
-			delete item;
-		}
-	}
-	delete slist;
-	
+	// create the matching urls list
+	BList * list = ((App *)be_app)->GetGlobalHistory()->GetFilteredList(typed_url);
+
 	// add the urlpopupwindow if needed
 	if (list->CountItems() > 0) {
-		CreateUrlPopUpWindow();
-		// add the list
-		urlpopupwindow->Lock();
-		urlpopupwindow->ListToDisplay(list);
-		urlpopupwindow->Unlock();
+		CreateUrlPopUpWindow(list);
 	}
 	else {
 		CloseUrlPopUpWindow();
 	}
+
+	delete list;
 
 }
 
