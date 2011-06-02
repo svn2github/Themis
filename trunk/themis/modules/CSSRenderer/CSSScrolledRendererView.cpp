@@ -170,6 +170,11 @@ void CSSScrolledRendererView :: MessageReceived(BMessage * aMessage) {
 			}
 			break;
 		}
+		case B_MOUSE_WHEEL_CHANGED: {
+			float value = aMessage->FindFloat( "be:wheel_delta_y");
+			mView->ScrollBy(0, value * 50);
+			break;
+		}
 		default: {
 			BView::MessageReceived(aMessage);
 		}
