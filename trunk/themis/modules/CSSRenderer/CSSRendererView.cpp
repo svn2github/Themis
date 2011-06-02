@@ -107,7 +107,9 @@ void CSSRendererView :: Draw(BRect aRect) {
 	
 //	printf("Drawing in view\n");
 	FillRect(Bounds(), B_SOLID_LOW);
-	mView->Draw();
+	if (mView) {
+		mView->Draw();
+	}
 	
 }
 
