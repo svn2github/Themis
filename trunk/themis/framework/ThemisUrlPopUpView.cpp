@@ -8,24 +8,26 @@
 #include "../common/commondefs.h"
 #include "ThemisUrlPopUpView.h"
 
-ThemisUrlPopUpView::ThemisUrlPopUpView(
-	BRect frame )
-	: BView(
-		frame,
-		"THEMISURLPOPUPVIEW",
-		B_FOLLOW_ALL,
-		B_WILL_DRAW | B_FULL_UPDATE_ON_RESIZE )
-{
+ThemisUrlPopUpView :: ThemisUrlPopUpView(BRect frame)
+				   : BView(frame,
+						   "THEMISURLPOPUPVIEW",
+						   B_FOLLOW_ALL,
+						   B_WILL_DRAW | B_FULL_UPDATE_ON_RESIZE) {
+
 	BRect rect = Bounds();
 	
-	ulv = new ThemisUrlListView(
-		BRect(
-			rect.left + 19,
-			rect.top + 1,
-			rect.right - 1,
-			rect.bottom - 1 ) );
-	AddChild( ulv );
-	ulv->AddFilter( new ThemisUrlPopUpViewMessageFilter( Window() ) );
+	ulv = new BListView(
+		BRect(rect.left + 19,
+			  rect.top + 1,
+			  rect.right - 1,
+			  rect.bottom - 1),
+		"THEMISURLLISTVIEW",
+		B_SINGLE_SELECTION_LIST,
+		B_FOLLOW_ALL,
+		B_WILL_DRAW | B_FULL_UPDATE_ON_RESIZE);
+	ulv->SetFontSize(10.0);
+	AddChild(ulv);
+	ulv->AddFilter(new ThemisUrlPopUpViewMessageFilter(Window()));
 }
 
 void
@@ -50,55 +52,34 @@ ThemisUrlPopUpView::Draw( BRect updaterect )
 }
 
 /////////////////////////////////////
-// ThemisUrlListView
-/////////////////////////////////////
-
-ThemisUrlListView::ThemisUrlListView(
-	BRect frame )
-	: BListView(
-		frame,
-		"THEMISURLLISTVIEW",
-		B_SINGLE_SELECTION_LIST,
-		B_FOLLOW_ALL,
-		B_WILL_DRAW | B_FULL_UPDATE_ON_RESIZE )
-{
-	SetFontSize( 10.0 );
-}
-
-/////////////////////////////////////
 // ThemisUrlPopUpViewMessageFilter
 /////////////////////////////////////
 
-ThemisUrlPopUpViewMessageFilter::ThemisUrlPopUpViewMessageFilter( BWindow* win )
-	: BMessageFilter( B_ANY_DELIVERY, B_ANY_SOURCE )
-{
-	window = win;
+ThemisUrlPopUpViewMessageFilter :: ThemisUrlPopUpViewMessageFilter(BWindow* win)
+								: BMessageFilter(B_ANY_DELIVERY, B_ANY_SOURCE) {
 	lastbutton = 0;
 }
 
-filter_result
-ThemisUrlPopUpViewMessageFilter::Filter( BMessage *msg, BHandler **target )
-{
-	filter_result result( B_DISPATCH_MESSAGE );
+filter_result ThemisUrlPopUpViewMessageFilter :: Filter(BMessage * msg,
+														BHandler ** target) {
+
+	filter_result result(B_DISPATCH_MESSAGE);
 	
-	switch( msg->what )
-	{
-		case B_MOUSE_DOWN :
-		{
+	switch(msg->what) {
+		case B_MOUSE_DOWN: {
 			int32 buttons, clicks;
-			buttons = msg->FindInt32( "buttons" );
-			clicks = msg->FindInt32( "clicks" );
+			buttons = msg->FindInt32("buttons");
+			clicks = msg->FindInt32("clicks");
 			
-			BMessage* selectmsg = new BMessage( URL_SELECT_MOUSE );
+			BMessage* selectmsg = new BMessage(URL_SELECT_MOUSE);
 			
-			if( buttons == lastbutton && clicks > 1 )
-			{
-				selectmsg->AddBool( "doubleclick", true );
+			if (buttons == lastbutton && clicks > 1) {
+				selectmsg->AddBool("doubleclick", true);
 			}
 			lastbutton = buttons;
 						
-			BMessenger msgr( (*target) );
-			msgr.SendMessage( selectmsg );
+			BMessenger msgr((*target));
+			msgr.SendMessage(selectmsg);
 			
 			delete selectmsg;
 			
@@ -109,5 +90,6 @@ ThemisUrlPopUpViewMessageFilter::Filter( BMessage *msg, BHandler **target )
 		default :
 			break;
 	}
+
 	return result;
 }

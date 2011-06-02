@@ -134,6 +134,13 @@ ThemisUrlPopUpWindow::MessageReceived( BMessage *msg )
 			Unlock();
 			break;
 		}
+		case B_MOUSE_WHEEL_CHANGED: {
+			float value = msg->FindFloat( "be:wheel_delta_y");
+			value *= 10;
+			urlpopupview->ulv->ScrollBy(0, value);
+
+			break;
+		}
 		default :
 			BWindow::MessageReceived( msg );
 	}

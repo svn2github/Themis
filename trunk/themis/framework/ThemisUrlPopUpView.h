@@ -15,33 +15,14 @@
 
 class ThemisUrlListView;
 
-class ThemisUrlPopUpView : public BView
-{
+class ThemisUrlPopUpView : public BView {
+
 	public:
-									ThemisUrlPopUpView(
-										BRect frame );
-													 	 
-		virtual void				Draw( BRect updaterect );
+		ThemisUrlPopUpView(BRect frame);
+
+		virtual void Draw(BRect updaterect);
+		BListView * ulv;
 		
-		ThemisUrlListView*			ulv;
-};
-
-#endif
-
-/////////////////////////////////////
-// ThemisUrlListView
-/////////////////////////////////////
-// its just in here for later customization
-// i did nothing special in here afair :))
-
-#ifndef THEMISURLLISTVIEW
-#define THEMISURLLISTVIEW
-
-class ThemisUrlListView : public BListView
-{
-	public:
-									ThemisUrlListView(
-										BRect frame );
 };
 
 #endif
@@ -53,14 +34,16 @@ class ThemisUrlListView : public BListView
 #ifndef THEMISURLPOPUPVIEWMESSAGEFILTER
 #define THEMISURLPOPUPVIEWMESSAGEFILTER
 
-class ThemisUrlPopUpViewMessageFilter : public BMessageFilter
-{
+class ThemisUrlPopUpViewMessageFilter : public BMessageFilter {
+
+	private:
+		int32 lastbutton;
+
 	public:
-									ThemisUrlPopUpViewMessageFilter( BWindow* win );
-		virtual filter_result		Filter( BMessage *msg, BHandler **target );
+		ThemisUrlPopUpViewMessageFilter(BWindow* win);
+
+		virtual filter_result Filter(BMessage *msg, BHandler **target);
 		
-		BWindow*					window;
-		int32						lastbutton;
 };
 
 #endif

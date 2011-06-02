@@ -218,16 +218,10 @@ void Win :: MessageReceived(BMessage * msg) {
 			// never get the mouse wheel messages
 			if (urlpopupwindow != NULL) {
 				if (urlpopupwindow->HasScrollBar()) {
-					float value = msg->FindFloat( "be:wheel_delta_y");
-					value *= 10;
-					
-					urlpopupwindow->Lock();
-					urlpopupwindow->urlpopupview->ulv->ScrollBy(0, value);
-					urlpopupwindow->Unlock();
+					BMessenger* msgr = new BMessenger(NULL, urlpopupwindow, NULL);
+					msgr->SendMessage(msg);
 				}
 			}
-			// i dunno where the scroll-recognition of the rendered site shall
-			// happen.. if here, then it should go into here later :D
 			break;
 		}
 		case BUTTON_BACK: {
