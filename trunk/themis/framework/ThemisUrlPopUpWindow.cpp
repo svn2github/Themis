@@ -52,6 +52,25 @@ ThemisUrlPopUpWindow::~ThemisUrlPopUpWindow()
 	delete url_list;
 }
 
+void ThemisUrlPopUpWindow :: SetUrlSelection(int aOffset) {
+
+	if (aOffset != 0) {
+		urlpopupview->ulv->Select(urlpopupview->ulv->CurrentSelection() + aOffset);
+		urlpopupview->ulv->ScrollToSelection();
+	}
+
+	UrlItem * item = (UrlItem *)url_list->ItemAt( 
+		urlpopupview->ulv->CurrentSelection());
+
+	if (item) {
+		parentwindow->Lock();
+		((Win *)parentwindow)->GetNavView()->urlview->SetText(item->Text());
+		parentwindow->Unlock();
+	}
+
+}
+
+
 void
 ThemisUrlPopUpWindow::MessageReceived( BMessage *msg )
 {
@@ -60,14 +79,7 @@ ThemisUrlPopUpWindow::MessageReceived( BMessage *msg )
 		case URL_SELECT_MOUSE :
 		{
 			// set the urlview-text
-			//cout << "URL_SELECT_MOUSE" << endl;
-			
-			BStringItem* item = ( BStringItem* )url_list->ItemAt( 
-				urlpopupview->ulv->CurrentSelection() );
-						
-			parentwindow->Lock();
-			((Win*)parentwindow)->GetNavView()->urlview->SetText( item->Text() );
-			parentwindow->Unlock();
+			SetUrlSelection();
 			
 			// doubleclick opens url
 			uint32 clickitem = urlpopupview->ulv->CurrentSelection();
@@ -88,44 +100,12 @@ ThemisUrlPopUpWindow::MessageReceived( BMessage *msg )
 		}
 		case URL_SELECT_NEXT :
 		{
-			//cout << "URL_SELECT_NEXT received" << endl;
-			Lock();
-			urlpopupview->ulv->Select(
-				urlpopupview->ulv->CurrentSelection() + 1 );
-			urlpopupview->ulv->ScrollToSelection();
-			
-			// set the urlview-text
-			BStringItem* item = ( BStringItem* )url_list->ItemAt( 
-				urlpopupview->ulv->CurrentSelection() );
-			if( !item )
-				break;
-			
-			parentwindow->Lock();
-			((Win*)parentwindow)->GetNavView()->urlview->SetText( item->Text() );
-			parentwindow->Unlock();
-			
-			Unlock();				
+			SetUrlSelection(1);
 			break;
 		}
 		case URL_SELECT_PREV :
 		{
-			//cout << "URL_SELECT_PREV received" << endl;
-			Lock();
-			urlpopupview->ulv->Select(
-				urlpopupview->ulv->CurrentSelection() - 1 );
-			urlpopupview->ulv->ScrollToSelection();
-			
-			// set the urlview-text
-			BStringItem* item = ( BStringItem* )url_list->ItemAt( 
-				urlpopupview->ulv->CurrentSelection() );
-			if( !item )
-				break;
-			
-			parentwindow->Lock();
-			((Win*)parentwindow)->GetNavView()->urlview->SetText( item->Text() );
-			parentwindow->Unlock();
-			
-			Unlock();
+			SetUrlSelection(-1);
 			break;
 		}
 		case B_MOUSE_WHEEL_CHANGED: {

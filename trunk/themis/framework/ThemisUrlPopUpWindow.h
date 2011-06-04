@@ -22,6 +22,7 @@ class ThemisUrlPopUpWindow : public BWindow {
 		BList * url_list;
 		BScrollBar * vscroll;
 		ThemisUrlPopUpView * urlpopupview;
+		void SetUrlSelection(int aOffset = 0);
 
 	public:
 		ThemisUrlPopUpWindow(BWindow* aParent, BRect aFrame, BList * aList);
