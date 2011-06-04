@@ -37,6 +37,7 @@ Project Start Date: October 18, 2000
 // Themis headers
 #include "../common/PrefsDefs.h"
 #include "GlobalHistory.h"
+#include "UrlItem.hpp"
 
 GlobalHistory :: GlobalHistory(int8 depth, int8 count) {
 
@@ -342,7 +343,7 @@ BList * GlobalHistory :: GetFilteredList(BString & aText) {
 					}
 				}
 				if (!found) {
-					list->AddItem(new BStringItem(cached_url.String()));
+					list->AddItem(new UrlItem(cached_url.String()));
 				}
 			}
 			matchFound = false;

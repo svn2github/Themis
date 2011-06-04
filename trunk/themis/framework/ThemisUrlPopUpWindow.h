@@ -20,7 +20,6 @@ class ThemisUrlPopUpWindow : public BWindow {
 		
 		uint32 lastitem;
 		BList * url_list;
-		BList * trunc_list;
 		BScrollBar * vscroll;
 		ThemisUrlPopUpView * urlpopupview;
 
@@ -31,7 +30,6 @@ class ThemisUrlPopUpWindow : public BWindow {
 		virtual void MessageReceived(BMessage *msg);
 		void ListToDisplay(BList* list);
 		void ResizeToPrefered();
-		void TruncateUrlStrings();
 		bool HasScrollBar() const;
 		
 

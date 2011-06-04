@@ -86,7 +86,8 @@ FRAMEWORKSOURCES= \
 	framework/SiteHandler.cpp \
 	framework/SiteEntry.cpp \
 	framework/UrlEntry.cpp \
-	framework/date.cpp
+	framework/date.cpp \
+	framework/UrlItem.cpp
 #	framework/UrlHandler.cpp
 COMMONSOURCES= \
 	common/plugclass.cpp \
