@@ -33,6 +33,7 @@
 #include "ThemisUrlPopUpWindow.h"
 #include "../common/PrefsDefs.h"
 #include "ThemisTabView.h"
+#include "TPictureButton.h"
 
 ThemisTabView::ThemisTabView(
 	BRect frame,

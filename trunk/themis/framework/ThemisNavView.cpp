@@ -6,9 +6,6 @@
 #include <Picture.h>
 #include <String.h>
 
-// Standard C++ headers
-#include <iostream>
-
 // Themis headers
 #include "ThemisIcons.h"
 #include "ThemisUrlView.h"
@@ -16,6 +13,7 @@
 #include "win.h"
 #include "../common/commondefs.h"
 #include "ThemisNavView.h"
+#include "TPictureButton.h"
 
 ThemisNavView::ThemisNavView( BRect rect ) :
 	BView( rect, "THEMISNAVVIEW", B_FOLLOW_LEFT_RIGHT, B_WILL_DRAW | B_FULL_UPDATE_ON_RESIZE )

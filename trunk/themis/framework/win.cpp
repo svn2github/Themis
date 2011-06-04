@@ -56,6 +56,7 @@ Project Start Date: October 18, 2000
 #include "../common/commondefs.h"
 #include "../common/PrefsDefs.h"
 #include "GlobalHistory.h"
+#include "TPictureButton.h"
 #include "win.h"
 
 extern plugman *PluginManager;

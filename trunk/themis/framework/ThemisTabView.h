@@ -9,8 +9,8 @@
 
 // C/C++ headers
 
-// myheaders
-#include "TPictureButton.h"
+// Declarations used
+class TPictureButton;
 
 class ThemisTabView : public BTabView
 {

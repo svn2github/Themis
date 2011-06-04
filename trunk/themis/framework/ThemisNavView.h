@@ -8,11 +8,9 @@
 
 // C/C++ headers
 
-// myheaders
-#include "TPictureButton.h"
-
 // Declarations used
 class ThemisUrlView;
+class TPictureButton;
 
 class ThemisNavView : public BView
 {
