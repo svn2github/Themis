@@ -62,6 +62,7 @@ class TPictureButton : public BView
 		void							SetMode(
 											int8 mode,
 											bool forcemode = false );
+		virtual void AttachedToWindow();
 	
 	private:
 		

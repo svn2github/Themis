@@ -197,3 +197,11 @@ TPictureButton::SetMode(
 	
 	Draw( Bounds() );
 }
+
+void TPictureButton :: AttachedToWindow()
+{
+	BView::AttachedToWindow();
+	
+	SetViewColor(B_TRANSPARENT_COLOR);
+	
+}
