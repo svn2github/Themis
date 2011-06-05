@@ -6,27 +6,25 @@
 // BeOS headers
 #include <View.h>
 
-// C/C++ headers
-
 // Declarations used
 class ThemisUrlView;
 class TPictureButton;
 
-class ThemisNavView : public BView
-{
+class ThemisNavView : public BView {
+
+	private:
+		TPictureButton * buttons[7];
+
 	public:
-											ThemisNavView(
-												BRect rect );
-		virtual								~ThemisNavView( void );
-		void								AttachedToWindow( void );
-		void								Draw( BRect updaterect );
-		void								MouseDown( BPoint point );
-		
-		void								CreateInterfaceButtons();
-		
-		ThemisUrlView*						urlview;
-		
-		TPictureButton*						buttons[7];
+		ThemisNavView(BRect rect);
+		virtual ~ThemisNavView();
+		void AttachedToWindow();
+		void Draw(BRect updaterect);
+		void MouseDown(BPoint point);
+		void CreateInterfaceButtons();
+		void SetButtonMode(int aButton, int8 aMode, bool aForceMode = false);
+
+		ThemisUrlView * urlview;
 };
 
 #endif

@@ -56,7 +56,6 @@ Project Start Date: October 18, 2000
 #include "../common/commondefs.h"
 #include "../common/PrefsDefs.h"
 #include "GlobalHistory.h"
-#include "TPictureButton.h"
 #include "win.h"
 
 extern plugman *PluginManager;
@@ -260,7 +259,7 @@ void Win :: MessageReceived(BMessage * msg) {
 			Lock();
 			
 			// if the newtab button is disabled, enable it again
-			navview->buttons[4]->SetMode(0);
+			navview->SetButtonMode(4, 0);
 						
 			uint32 current_tab = 0;
 			uint32 count = tabview->CountTabs();
@@ -308,7 +307,7 @@ void Win :: MessageReceived(BMessage * msg) {
 				
 				if (Bounds().right - width <= 22) {
 					// disable the newtab button
-					navview->buttons[4]->SetMode(3);
+					navview->SetButtonMode(4, 3);
 					break;
 				}
 				// if we won't cover the button, go on...
@@ -491,9 +490,9 @@ void Win :: FrameResized(float width, float height) {
 
 	// enable or disable the newtab button
 	if ((tabview->CountTabs() * tabview->tab_width) <= (Bounds().right - 22))
-		navview->buttons[4]->SetMode(0);
+		navview->SetButtonMode(4, 0);
 	else
-		navview->buttons[4]->SetMode(3);
+		navview->SetButtonMode(4, 3);
 
 	// resize urlpopupwindow
 	if (urlpopupwindow != NULL) {

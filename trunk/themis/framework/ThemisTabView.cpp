@@ -19,6 +19,7 @@
 #include <String.h>
 #include <Messenger.h>
 #include <Window.h>
+#include <Picture.h>
 
 // Themis headers
 #include "win.h"
@@ -362,7 +363,7 @@ ThemisTabView::MouseDown( BPoint point )
 				// if the newtab button is disabled, and no more tabs are
 				// out of range, enable the button
 				if( ( CountTabs() * tab_width ) <= ( Bounds().right - 22 ) )
-					( ( Win* )Window() )->GetNavView()->buttons[4]->SetMode( 0 );
+					( ( Win* )Window() )->GetNavView()->SetButtonMode(4, 0);
 								
 				// calculate new ( bigger ) size of tabs and draw again
 				DynamicTabs( false );
@@ -764,25 +765,25 @@ void ThemisTabView::SetNavButtonsByTabHistory() {
 	if (tab->GetHistory()->GetCurrentPosition() == 0) {
 		if (tab->GetHistory()->GetEntryCount() > 1) {
 //			printf("TABVIEW: enabling back, disabling fwd button if needed.\n");
-			nv->buttons[0]->SetMode(0);
-			nv->buttons[1]->SetMode(3);
+			nv->SetButtonMode(0, 0);
+			nv->SetButtonMode(1, 3);
 		}
 		else {
 //			printf( "TABVIEW: only one ( or no )history item. disabling back and fwd if needed.\n" );
-			nv->buttons[0]->SetMode(3);
-			nv->buttons[1]->SetMode(3);
+			nv->SetButtonMode(0, 3);
+			nv->SetButtonMode(1, 3);
 		}
 	}
 	else {
 		if (tab->GetHistory()->GetCurrentPosition() == (tab->GetHistory()->GetEntryCount() - 1)) {
 //			printf("TABVIEW: at history end. disable back, enable fwd if needed.\n");
-			nv->buttons[0]->SetMode(3);
-			nv->buttons[1]->SetMode(0);
+			nv->SetButtonMode(0, 3);
+			nv->SetButtonMode(1, 0);
 		}
 		else {
 //			printf("TABVIEW: in middle of history. enabling back and fwd if needed.\n");
-			nv->buttons[0]->SetMode(0);
-			nv->buttons[1]->SetMode(0);
+			nv->SetButtonMode(0, 0);
+			nv->SetButtonMode(1, 0);
 		}
 	}
 }
