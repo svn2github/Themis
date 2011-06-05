@@ -61,14 +61,15 @@ class ThemisTabView : public BTabView {
 // Declarations used
 class Win;
 
-class ContainerViewMessageFilter : public BMessageFilter
-{
-	public:
-									ContainerViewMessageFilter( Win* win );
-		virtual filter_result		Filter( BMessage *msg, BHandler **target );
-		
-		Win*						window;
+class ContainerViewMessageFilter : public BMessageFilter {
+
+	private:
+		Win * window;
 	
+	public:
+		ContainerViewMessageFilter(Win * win);
+		virtual filter_result Filter(BMessage * msg, BHandler **target);
+		
 };
 
 #endif

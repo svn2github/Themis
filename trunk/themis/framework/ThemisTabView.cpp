@@ -871,26 +871,24 @@ void ThemisTabView :: MessageReceived(BMessage * aMessage) {
 // ContainerViewMessageFilter
 /////////////////////////////////////
 
-ContainerViewMessageFilter::ContainerViewMessageFilter( Win* win )
-	: BMessageFilter( B_ANY_DELIVERY, B_ANY_SOURCE )
-{
+ContainerViewMessageFilter :: ContainerViewMessageFilter(Win * win)
+						   : BMessageFilter(B_ANY_DELIVERY, B_ANY_SOURCE) {
+
 	window = win;
+
 }
 
-filter_result
-ContainerViewMessageFilter::Filter( BMessage *msg, BHandler **target )
-{
-	filter_result result( B_DISPATCH_MESSAGE );
+filter_result ContainerViewMessageFilter :: Filter(BMessage * msg, BHandler **target) {
+
+	filter_result result(B_DISPATCH_MESSAGE);
 	
-	switch( msg->what )
-	{
-		case B_MOUSE_DOWN :
-		{
+	switch (msg->what) {
+		case B_MOUSE_DOWN: {
 			if (window->CloseUrlPopUpWindow())
 				result = B_SKIP_MESSAGE;
 			break;
 		}
-		default :
+		default:
 			break;
 	}
 	return result;
