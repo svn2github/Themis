@@ -171,7 +171,7 @@ void ThemisTab :: DrawLabel(ThemisTabView* owner, BRect frame) {
 	//cout << "ThemisTab::DrawLabel()" << endl;
 
 	/* calculate truncate_length */
-	float truncate_length = (( ThemisTabView* )owner)->tab_width - 25 - 5;
+	float truncate_length = (( ThemisTabView* )owner)->GetTabWidth() - 25 - 5;
 		
 	/* the frame for the FavIcon */
 	BRect iconframe = frame;

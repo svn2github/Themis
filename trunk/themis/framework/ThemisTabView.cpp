@@ -813,6 +813,18 @@ ThemisTabView::SetNormalTabView()
 	fake_single_view = false;
 }
 
+float ThemisTabView :: GetTabWidth() const {
+
+	return tab_width;
+
+}
+
+void ThemisTabView :: DisableFakeSingleView() {
+
+	fake_single_view = false;
+
+}
+
 void ThemisTabView :: MessageReceived(BMessage * aMessage) {
 	
 	switch (aMessage->what) {

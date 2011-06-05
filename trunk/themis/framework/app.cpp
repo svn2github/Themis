@@ -469,7 +469,7 @@ void App::MessageReceived(BMessage *msg){
 					if( WindowAt( i )->IsActive() == true )
 					{
 						Win* win = ( Win* )WindowAt( i );
-						currenturl.SetTo( win->GetNavView()->urlview->Text() );
+						currenturl.SetTo( win->GetNavView()->GetUrl() );
 						break;
 					}
 				}

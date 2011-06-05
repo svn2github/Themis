@@ -300,7 +300,7 @@ void Win :: MessageReceived(BMessage * msg) {
 		case TAB_ADD: {
 			// dissallow adding of new tabs, if they wouldnt fit in the
 			// window anymore, and disable newtab button
-			if (tabview->tab_width <= 30) {
+			if (tabview->GetTabWidth() <= 30) {
 				// calculate if still one tab would fit and not cover
 				// the closetabview button partially
 				float width = (tabview->CountTabs() + 1) * 25;
@@ -489,7 +489,7 @@ void Win :: FrameResized(float width, float height) {
 	tabview->DynamicTabs(false);
 
 	// enable or disable the newtab button
-	if ((tabview->CountTabs() * tabview->tab_width) <= (Bounds().right - 22))
+	if ((tabview->CountTabs() * tabview->GetTabWidth()) <= (Bounds().right - 22))
 		navview->SetButtonMode(4, 0);
 	else
 		navview->SetButtonMode(4, 3);
@@ -567,7 +567,7 @@ void Win :: AddNewTab(bool hidden) {
 	
 	// needed already here as DynamicTabs would stop if true
 	// but we cannot call SetNormalTabView() here
-	tabview->fake_single_view = false;
+	tabview->DisableFakeSingleView();
 	tabview->DynamicTabs(true);
 	ThemisTab * newtab = new ThemisTab(NULL);
 	tabview->AddTab(NULL, newtab);

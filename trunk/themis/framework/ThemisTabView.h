@@ -12,41 +12,40 @@
 // Declarations used
 class TPictureButton;
 
-class ThemisTabView : public BTabView
-{
-	public:
-									ThemisTabView(
-										BRect frame,
-										const char* name,
-										button_width width,
-										uint32 resizingmode,
-										uint32 flags );
+class ThemisTabView : public BTabView {
 
-		virtual void				AttachedToWindow();
-		virtual void				Draw( BRect updaterect );
-		virtual void				DrawBox( BRect selTabRect );
-		virtual BRect				DrawTabs( void );
-		virtual void				MakeFocus( bool focus );
-		virtual void				MouseDown( BPoint point );
-		virtual void				Select( int32 tabindex );
-		virtual void				SetFocusTab( int32 tab, bool focused );
-		
-		void						CreateCloseTabViewButton();
-		void						DynamicTabs( bool newtab );
-		void						SetFakeSingleView();
-		void						SetNavButtonsByTabHistory();
-		void						SetNormalTabView();
-				
-		float						tab_width;
-		bool						fake_single_view;
-		
-		TPictureButton*				close_tabview_button;
-		void MessageReceived(BMessage * aMessage);
-		
 	private:
 		// for doubleclick detection on empty tabview-space
 		// ( doubleclick opens new tab )
-		uint32						lastbutton;
+		uint32 lastbutton;
+		float tab_width;
+		bool fake_single_view;
+		TPictureButton * close_tabview_button;
+
+	public:
+		ThemisTabView(
+			BRect frame,
+			const char* name,
+			button_width width,
+			uint32 resizingmode,
+			uint32 flags);
+
+		virtual void AttachedToWindow();
+		virtual void Draw(BRect updaterect);
+		virtual void DrawBox(BRect selTabRect);
+		virtual BRect DrawTabs(void);
+		virtual void MakeFocus(bool focus);
+		virtual void MouseDown(BPoint point);
+		virtual void Select(int32 tabindex);
+		virtual void SetFocusTab(int32 tab, bool focused);
+		void CreateCloseTabViewButton();
+		void DynamicTabs(bool newtab);
+		void SetFakeSingleView();
+		void SetNavButtonsByTabHistory();
+		void SetNormalTabView();
+		float GetTabWidth() const;
+		void DisableFakeSingleView();
+		void MessageReceived(BMessage * aMessage);
 
 };
 
