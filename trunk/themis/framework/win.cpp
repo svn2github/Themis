@@ -149,7 +149,7 @@ Win :: Win(BRect frame,
 	// make the urlview the focusview for fast pasting :D
 	if (CurrentFocus() != NULL)
 		CurrentFocus()->MakeFocus(false);
-	navview->urlview->TextView()->MakeFocus(true);
+	navview->SetFocusOnUrlView();
 
 }
 
@@ -348,7 +348,7 @@ void Win :: MessageReceived(BMessage * msg) {
 			if (msg->HasString("url_to_open"))
 				url = msg->FindString("url_to_open");
 			else
-				url = navview->urlview->Text();
+				url = navview->GetUrl();
 
 			// stop, if there is no url, or about:blank
 			if ((url.Length() == 0) || (strcmp(url.String(), kAboutBlankPage) == 0))
@@ -477,7 +477,7 @@ void Win :: FrameMoved(BPoint origin) {
 	BWindow::FrameMoved(origin);
 	
 	if (urlpopupwindow != NULL) {
-		BPoint point(navview->ConvertToScreen(navview->urlview->Frame().LeftBottom()));
+		BPoint point(navview->ConvertToScreen(navview->GetFrameOfUrlView().LeftBottom()));
 		urlpopupwindow->MoveTo(point);
 	}
 
@@ -660,7 +660,7 @@ void Win :: CreateTabView() {
 void Win :: CreateUrlPopUpWindow(BList * aList) {
 
 	if (urlpopupwindow == NULL) {
-		BRect frame(navview->urlview->Frame());
+		BRect frame(navview->GetFrameOfUrlView());
 		frame = navview->ConvertToScreen(frame);
 
 		BRect wframe(frame);
@@ -675,7 +675,7 @@ void Win :: CreateUrlPopUpWindow(BList * aList) {
 		// the urlpopup wouldnt be navigable by keyb
 		if (CurrentFocus() != NULL)
 			CurrentFocus()->MakeFocus(false);
-	 	navview->urlview->textview->MakeFocus(true);
+	 	navview->SetFocusOnUrlView();
 	}
 	else {
 		urlpopupwindow->Lock();
@@ -834,7 +834,7 @@ void Win :: UrlTypedHandler(bool show_all) {
 	if (show_all == true)
 		typed_url.SetTo("");
 	else {
-		typed_url.SetTo(navview->urlview->Text());
+		typed_url.SetTo(navview->GetUrl());
 		typed_url.ToLower();
 	}
 

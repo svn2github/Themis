@@ -64,7 +64,7 @@ void ThemisUrlPopUpWindow :: SetUrlSelection(int aOffset) {
 
 	if (item) {
 		parentwindow->Lock();
-		((Win *)parentwindow)->GetNavView()->urlview->SetText(item->Text());
+		((Win *)parentwindow)->GetNavView()->SetUrl(item->Text());
 		parentwindow->Unlock();
 	}
 
@@ -157,7 +157,7 @@ ThemisUrlPopUpWindow::ResizeToPrefered()
 	
 	float difference = parent_bottom_cts.y - new_popup_bottom_cts.y - 20;
 	
-	float urlview_width = ((Win*)parentwindow)->GetNavView()->urlview->Bounds().right;
+	float urlview_width = ((Win*)parentwindow)->GetNavView()->GetBoundsOfUrlView().right;
 	
 	if( difference < 0 )
 	{

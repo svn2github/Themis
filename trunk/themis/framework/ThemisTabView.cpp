@@ -291,7 +291,7 @@ ThemisTabView::MouseDown( BPoint point )
 			{
 				if( Window()->CurrentFocus() != NULL )
 					Window()->CurrentFocus()->MakeFocus( false );
-				( ( Win* )Window() )->GetNavView()->urlview->TextView()->MakeFocus( true );
+				( ( Win* )Window() )->GetNavView()->SetFocusOnUrlView();
 			}
 			break;
 		}
@@ -450,8 +450,7 @@ ThemisTabView::Select( int32 tabindex )
 
 		win->SetTitle( wtitle.String() );
 		tab->SetLabel( ttitle.String() );
-		win->GetNavView()->urlview->SetText( url.String() );
-		win->GetNavView()->urlview->SetFavIcon( tab->GetFavIcon() );
+		win->GetNavView()->SetUrl(url.String(), tab->GetFavIcon());
 		win->SetLoadingInfo(lprog, stext.String());
 			
 	}

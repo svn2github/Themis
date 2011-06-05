@@ -243,3 +243,34 @@ void ThemisNavView :: SetButtonMode(int aButton,
 	buttons[aButton]->SetMode(aMode, aForceMode);
 
 }
+
+const char * ThemisNavView :: GetUrl() const {
+
+	return urlview->Text();
+
+}
+
+void ThemisNavView :: SetFocusOnUrlView() {
+
+	urlview->TextView()->MakeFocus(true);
+
+}
+
+BRect ThemisNavView :: GetFrameOfUrlView() const {
+
+	return urlview->Frame();
+
+}
+
+BRect ThemisNavView :: GetBoundsOfUrlView() const {
+
+	return urlview->Bounds();
+
+}
+
+void ThemisNavView :: SetUrl(const char * aUrl, BBitmap * aFavIcon) {
+
+	urlview->SetText(aUrl);
+	urlview->SetFavIcon(aFavIcon);
+
+}
