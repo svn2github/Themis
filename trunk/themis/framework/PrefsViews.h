@@ -9,7 +9,6 @@
 
 // BeOS headers
 #include <View.h>
-#include <String.h>
 
 // Themis headers
 #include "BasePrefsView.hpp"
