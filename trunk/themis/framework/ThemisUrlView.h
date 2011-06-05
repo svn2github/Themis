@@ -37,10 +37,10 @@ class ThemisUrlView : public BView
 		void						SetFavIcon( BBitmap* fav );
 		virtual void				SetText( const char* newtext );
 		
-		ThemisUrlTextView*			textview;
 	
 	private:	
 		BBitmap*					fav_icon;
+		ThemisUrlTextView*			textview;
 };
 
 #endif
