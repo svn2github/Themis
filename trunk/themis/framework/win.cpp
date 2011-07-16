@@ -48,7 +48,6 @@ Project Start Date: October 18, 2000
 #include "SiteHandler.h"
 #include "SiteEntry.h"
 #include "UrlEntry.h"
-#include "ThemisUrlView.h"
 #include "ThemisNavView.h"
 #include "ThemisStatusView.h"
 #include "ThemisTabView.h"
@@ -217,10 +216,8 @@ void Win :: MessageReceived(BMessage * msg) {
 			// as the urlpopupwindow never gets focus and thus
 			// never get the mouse wheel messages
 			if (urlpopupwindow != NULL) {
-				if (urlpopupwindow->HasScrollBar()) {
-					BMessenger* msgr = new BMessenger(NULL, urlpopupwindow, NULL);
-					msgr->SendMessage(msg);
-				}
+				BMessenger* msgr = new BMessenger(NULL, urlpopupwindow, NULL);
+				msgr->SendMessage(msg);
 			}
 			break;
 		}
@@ -665,7 +662,7 @@ void Win :: CreateUrlPopUpWindow(BList * aList) {
 
 		BRect wframe(frame);
 		wframe.top = frame.bottom;
-		wframe.bottom = wframe.top + 30;
+		wframe.bottom = wframe.top + 130;
 		
 		urlpopupwindow = new ThemisUrlPopUpWindow(this,	wframe, aList);
 		urlpopupwindow->Run();

@@ -4,9 +4,13 @@
 #include <iostream>
 #include <string>
 
+// BeOS headers
+#include <interface/ScrollBar.h>
+
 // Themis headers
 #include "../common/commondefs.h"
 #include "ThemisUrlPopUpView.h"
+#include "UrlItem.hpp"
 
 ThemisUrlPopUpView :: ThemisUrlPopUpView(BRect frame)
 				   : BView(frame,
@@ -17,7 +21,7 @@ ThemisUrlPopUpView :: ThemisUrlPopUpView(BRect frame)
 	BRect rect = Bounds();
 	
 	ulv = new BListView(
-		BRect(rect.left + 19,
+		BRect(rect.left + 1,
 			  rect.top + 1,
 			  rect.right - 1,
 			  rect.bottom - 1),
@@ -28,6 +32,7 @@ ThemisUrlPopUpView :: ThemisUrlPopUpView(BRect frame)
 	ulv->SetFontSize(10.0);
 	AddChild(ulv);
 	ulv->AddFilter(new ThemisUrlPopUpViewMessageFilter(Window()));
+	mScrollBar = NULL;
 }
 
 void
@@ -49,6 +54,80 @@ ThemisUrlPopUpView::Draw( BRect updaterect )
 	FillRect( updaterect, B_SOLID_HIGH );
 	
 	SetHighColor( hi );
+}
+
+const char * ThemisUrlPopUpView :: SetUrlSelection(int aOffset) {
+	
+	if (aOffset != 0) {
+		ulv->Select(ulv->CurrentSelection() + aOffset);
+		ulv->ScrollToSelection();
+	}
+
+	UrlItem * item = (UrlItem *)ulv->ItemAt(ulv->CurrentSelection());
+	
+	return item->Text();
+	
+}
+
+int32 ThemisUrlPopUpView :: CurrentSelection() {
+	
+	return ulv->CurrentSelection();
+	
+}
+
+void ThemisUrlPopUpView :: MakeEmpty() {
+	
+	ulv->MakeEmpty();
+	
+}
+
+void ThemisUrlPopUpView :: AddList(BList * aList) {
+	
+	ulv->AddList(aList);
+
+}
+
+UrlItem * ThemisUrlPopUpView :: FirstItem() {
+	
+	return (UrlItem *) ulv->FirstItem();
+	
+}
+
+int32 ThemisUrlPopUpView :: CountItems() {
+	
+	return ulv->CountItems();
+	
+}
+
+void ThemisUrlPopUpView :: SetScrollBarRange(float aMin, float aMax) {
+
+	if (!mScrollBar) {
+		BRect scrollRect = Bounds();
+		scrollRect.left = scrollRect.right - B_V_SCROLL_BAR_WIDTH;
+		mScrollBar = new BScrollBar(
+			scrollRect,
+			"UrlScrollBar",
+			ulv,
+			aMin,
+			aMax,
+			B_VERTICAL);
+		AddChild(mScrollBar);
+		ulv->ResizeBy(-B_V_SCROLL_BAR_WIDTH - 1, 0);
+	}
+	else {
+		mScrollBar->SetRange(aMin, aMax);
+	}
+
+}
+
+void ThemisUrlPopUpView :: RemoveScrollBar() {
+
+	if (mScrollBar) {
+		RemoveChild(mScrollBar);
+		mScrollBar = NULL;
+		ulv->ResizeBy(B_V_SCROLL_BAR_WIDTH + 1, 0);
+	}
+
 }
 
 /////////////////////////////////////

@@ -4,25 +4,26 @@
 #define _THEMISURLPOPUPWINDOW_H_
 
 // BeOS headers
-#include "Window.h"
-#include <ScrollBar.h>
+#include <Window.h>
 
-// C/C++ headers
-
-// myheaders
-#include "ThemisUrlPopUpView.h"
-#include "Window.h"
+// Declarations used
+class BScrollBar;
+class BList;
+class ThemisUrlPopUpView;
 
 class ThemisUrlPopUpWindow : public BWindow {
 
 	private:
 		BWindow * parentwindow;
+		ThemisUrlPopUpView * mUrlListView;
+		BList * mUrlList;
+		int32 mMaxHeight;
+		float mItemHeight;
+		
 		
 		uint32 lastitem;
-		BList * url_list;
-		BScrollBar * vscroll;
-		ThemisUrlPopUpView * urlpopupview;
 		void SetUrlSelection(int aOffset = 0);
+		void EmptyUrlList();
 
 	public:
 		ThemisUrlPopUpWindow(BWindow* aParent, BRect aFrame, BList * aList);
@@ -31,8 +32,6 @@ class ThemisUrlPopUpWindow : public BWindow {
 		virtual void MessageReceived(BMessage *msg);
 		void ListToDisplay(BList* list);
 		void ResizeToPrefered();
-		bool HasScrollBar() const;
-		
 
 };
 

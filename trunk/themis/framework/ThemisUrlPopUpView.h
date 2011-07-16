@@ -9,20 +9,28 @@
 #include <MessageFilter.h>
 #include <GraphicsDefs.h>
 
-// C/C++ headers
-
-// myheaders
-
-class ThemisUrlListView;
+// Declarations used
+class UrlItem;
+class BScrollBar;
 
 class ThemisUrlPopUpView : public BView {
+
+	private:
+		BListView * ulv;
+		BScrollBar * mScrollBar;
 
 	public:
 		ThemisUrlPopUpView(BRect frame);
 
 		virtual void Draw(BRect updaterect);
-		BListView * ulv;
-		
+		const char * SetUrlSelection(int aOffset);
+		int32 CurrentSelection();
+		void MakeEmpty();
+		void AddList(BList * aList);
+		UrlItem * FirstItem();
+		int32 CountItems();
+		void SetScrollBarRange(float aMin, float aMax);
+		void RemoveScrollBar();
 };
 
 #endif

@@ -47,7 +47,6 @@ Project Start Date: October 18, 2000
 #include "PrefsWin.h"
 #include "ThemisTab.h"
 #include "SiteHandler.h"
-#include "ThemisUrlView.h"
 #include "ThemisNavView.h"
 #include "app.h"
 

@@ -32,16 +32,22 @@
 #define URLITEM_HPP
 
 // BeOS headers
-#include <ListItem.h>
+#include <be/interface/ListItem.h>
+#include <be/support/String.h>
 
-class UrlItem : public BStringItem {
+class UrlItem : public BListItem {
 
+	private:
+		BString mUrl;
+	
 	public:
 		UrlItem(const char * aUrl);
 		
 		virtual void DrawItem(BView * aOwner,
 							  BRect aFrame,
 							  bool aComplete = false);
+		void SetText(const char * aText);
+		const char * Text();
 
 
 };

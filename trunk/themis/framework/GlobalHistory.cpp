@@ -334,7 +334,7 @@ BList * GlobalHistory :: GetFilteredList(BString & aText) {
 				
 				int32 j = 0;
 				while (j < count2 && !found) {
-					BStringItem * storedUrl = (BStringItem *)list->ItemAt(j);
+					UrlItem * storedUrl = (UrlItem *)list->ItemAt(j);
 					if (strcmp(cached_url.String(), storedUrl->Text()) == 0) {
 						found = true;
 					}

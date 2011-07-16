@@ -1,12 +1,7 @@
 /* ThemisUrlPopUpWindow.cpp */
 
-// BeOS headers
-
 // Standard C headers
 #include <stdio.h>
-
-// Standard C++ headers
-#include <iostream>
 
 // Themis headers
 #include "ThemisUrlView.h"
@@ -14,6 +9,7 @@
 #include "win.h"
 #include "../common/commondefs.h"
 #include "ThemisUrlPopUpWindow.h"
+#include "ThemisUrlPopUpView.h"
 #include "UrlItem.hpp"
 
 ThemisUrlPopUpWindow :: ThemisUrlPopUpWindow(BWindow * aParent,
@@ -30,67 +26,66 @@ ThemisUrlPopUpWindow :: ThemisUrlPopUpWindow(BWindow * aParent,
 
 	parentwindow = aParent;
 	lastitem = 0;
-	vscroll = NULL;
-	url_list = new BList;
+	mUrlList = new BList();
 	
-	urlpopupview = new ThemisUrlPopUpView(Bounds());
-	AddChild(urlpopupview);
+	mMaxHeight = (int32) Bounds().bottom;
+	mItemHeight = 0;
+	mUrlListView = new ThemisUrlPopUpView(
+		Bounds());
+	mUrlListView->SetFontSize(10.0);
 	ListToDisplay(aList);
+
+	AddChild(mUrlListView);
 }
 
-ThemisUrlPopUpWindow::~ThemisUrlPopUpWindow()
-{
-	UrlItem * item = NULL;
+ThemisUrlPopUpWindow::~ThemisUrlPopUpWindow() {
 	
-	int32 length = url_list->CountItems();
-	for( int32 i = 0; i < length; i++ )
-	{
-		item = (UrlItem *)url_list->RemoveItem((int32)0);
-		delete item;
-	}
-	
-	delete url_list;
+	EmptyUrlList();
+	delete mUrlList;
+
 }
 
 void ThemisUrlPopUpWindow :: SetUrlSelection(int aOffset) {
 
-	if (aOffset != 0) {
-		urlpopupview->ulv->Select(urlpopupview->ulv->CurrentSelection() + aOffset);
-		urlpopupview->ulv->ScrollToSelection();
-	}
 
-	UrlItem * item = (UrlItem *)url_list->ItemAt( 
-		urlpopupview->ulv->CurrentSelection());
+	const char * urlText = mUrlListView->SetUrlSelection(aOffset);
 
-	if (item) {
+	if (urlText) {
 		parentwindow->Lock();
-		((Win *)parentwindow)->GetNavView()->SetUrl(item->Text());
+		((Win *)parentwindow)->GetNavView()->SetUrl(urlText);
 		parentwindow->Unlock();
 	}
 
 }
 
+void ThemisUrlPopUpWindow :: EmptyUrlList() {
 
-void
-ThemisUrlPopUpWindow::MessageReceived( BMessage *msg )
-{
-	switch( msg->what )
-	{
-		case URL_SELECT_MOUSE :
-		{
+	UrlItem * item = NULL;
+	
+	int32 length = mUrlList->CountItems();
+	
+	for (int32 i = 0; i < length; i++) {
+		item = (UrlItem *)mUrlList->RemoveItem((int32)0);
+		delete item;
+	}
+	
+}
+
+
+void ThemisUrlPopUpWindow :: MessageReceived(BMessage *msg) {
+
+	switch (msg->what) {
+		case URL_SELECT_MOUSE: {
 			// set the urlview-text
 			SetUrlSelection();
 			
 			// doubleclick opens url
-			uint32 clickitem = urlpopupview->ulv->CurrentSelection();
-			if( msg->HasBool( "doubleclick" ) )
-			{
-				if( msg->FindBool( "doubleclick" ) == true )
-				{
-					if( clickitem == lastitem )
-					{
-						BMessenger msgr( NULL, parentwindow, NULL );
-						msgr.SendMessage( new BMessage( URL_OPEN ) );
+			uint32 clickitem = mUrlListView->CurrentSelection();
+			if (msg->HasBool( "doubleclick" )) {
+				if (msg->FindBool("doubleclick") == true) {
+					if (clickitem == lastitem) {
+						BMessenger msgr(NULL, parentwindow, NULL);
+						msgr.SendMessage(new BMessage(URL_OPEN));
 					}
 				}
 			}
@@ -98,122 +93,74 @@ ThemisUrlPopUpWindow::MessageReceived( BMessage *msg )
 			
 			break;
 		}
-		case URL_SELECT_NEXT :
-		{
+		case URL_SELECT_NEXT: {
 			SetUrlSelection(1);
 			break;
 		}
-		case URL_SELECT_PREV :
-		{
+		case URL_SELECT_PREV: {
 			SetUrlSelection(-1);
 			break;
 		}
 		case B_MOUSE_WHEEL_CHANGED: {
 			float value = msg->FindFloat( "be:wheel_delta_y");
 			value *= 10;
-			urlpopupview->ulv->ScrollBy(0, value);
+			mUrlListView->ScrollBy(0, value);
 
 			break;
 		}
-		default :
-			BWindow::MessageReceived( msg );
+		default:
+			BWindow::MessageReceived(msg);
 	}
 }
 
 void ThemisUrlPopUpWindow :: ListToDisplay(BList * list) {
 
 	if (list != NULL) {
-		// First delete the contents of the old lists.
-		int32 length = url_list->CountItems();
-		for (int32 i = 0; i < length; i++) {
-			delete url_list->RemoveItem((int32) 0);
-		}
+		mUrlListView->MakeEmpty();
+		EmptyUrlList();
+		mUrlList->AddList(list);
+		mUrlListView->AddList(mUrlList);
 		
-		// we need to totally independant but similar BLists
-		// ( copying with the copy-constructor won't do it )
-		url_list->AddList(list);
-		
-		urlpopupview->ulv->MakeEmpty();
-		urlpopupview->ulv->AddList(url_list);
-
-		ResizeToPrefered(); 
+		ResizeToPrefered();
 	}
 }
 
-void
-ThemisUrlPopUpWindow::ResizeToPrefered()
-{
-	BPoint parent_bottom = parentwindow->Bounds().RightBottom();
-	BPoint parent_bottom_cts = parentwindow->ConvertToScreen( parent_bottom );
-	
-	float itemheight = urlpopupview->ulv->ItemAt( 0 )->Height();
-	int32 count = urlpopupview->ulv->CountItems();
-	
-	float newheight = ( itemheight * count ) + ( 1.9 * count ) + 1;
-		
-	BPoint new_popup_bottom;
-	new_popup_bottom.y = newheight;
-	BPoint new_popup_bottom_cts = ConvertToScreen( new_popup_bottom );
-	
-	float difference = parent_bottom_cts.y - new_popup_bottom_cts.y - 20;
-	
+void ThemisUrlPopUpWindow :: ResizeToPrefered() {
+
+	parentwindow->Lock();
 	float urlview_width = ((Win*)parentwindow)->GetNavView()->GetBoundsOfUrlView().right;
+	parentwindow->Unlock();
 	
-	if( difference < 0 )
-	{
-		// the urlpopup would reach over the parentwindows bottom
-		
-		new_popup_bottom.y -= -difference;
-		ResizeTo( urlview_width, new_popup_bottom.y );
-		
-		if( vscroll == NULL )
-		{
-			urlpopupview->ResizeTo(
-				urlpopupview->Bounds().right - B_V_SCROLL_BAR_WIDTH,
-				urlpopupview->Bounds().bottom );
-							
-			BRect bounds = Bounds();
-		
-			vscroll = new BScrollBar(
-				BRect(
-					bounds.right - B_V_SCROLL_BAR_WIDTH,
-					bounds.top,
-					bounds.right,
-					bounds.bottom ),
-				"URLPOPUPVSCROLLBAR",
-				urlpopupview->ulv,
-				0,
-				newheight - urlpopupview->ulv->Bounds().bottom,
-				B_VERTICAL );
-			AddChild( vscroll );
-		}
-		else
-		{
-			vscroll->SetRange(
-				0,
-				newheight - urlpopupview->ulv->Bounds().bottom );
-		}
-	}
-	else
-	{
-		// the urlpopup fits into the parentwindow
-		
-		ResizeTo( urlview_width, new_popup_bottom.y );
-				
-		if( vscroll != NULL )
-		{
-			RemoveChild( vscroll );
-			vscroll = NULL;
+	// Calculate the total height of the items to see if we should shrink the list view.
+	if (mItemHeight == 0) {
+		// Only calculate the height once. It won't change.
+		mItemHeight = mUrlListView->FirstItem()->Height();
+		if (mItemHeight == 0) {
+			// Happens sometimes and I don't know why. Get the lineheight as an approximation.
+			font_height height;
+			mUrlListView->GetFontHeight(&height);
+			mItemHeight = height.ascent + height.descent + height.leading;
 			
-			urlpopupview->ResizeTo(
-				urlpopupview->Bounds().right + B_V_SCROLL_BAR_WIDTH,
-				urlpopupview->Bounds().bottom );
 		}
 	}
-}
-
-bool ThemisUrlPopUpWindow :: HasScrollBar() const {
-
-	return (vscroll != NULL);
-
+	
+	int32 count = mUrlListView->CountItems();
+	
+	int32 listHeight = (int32) ((mItemHeight * count) + (1.9 * count) + 1);
+	if (listHeight > mMaxHeight) {
+		mUrlListView->SetScrollBarRange(0, listHeight - mUrlListView->Bounds().bottom);
+		listHeight = mMaxHeight;
+	}
+	else {
+		mUrlListView->RemoveScrollBar();
+	}
+	
+	// Only resize if needed
+	BRect rect = Bounds();
+	int32 width = (int32) rect.Width();
+	int32 height = (int32) rect.Height();
+	if ((width != urlview_width) || (height != listHeight)) {
+		ResizeTo(urlview_width, listHeight);
+	}
+	
 }

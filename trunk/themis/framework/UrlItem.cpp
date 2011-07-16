@@ -33,17 +33,20 @@
 	
 */
 
+#include <stdio.h>
+
 // BeOS headers
-#include "be/interface/GraphicsDefs.h"
-#include "be/interface/InterfaceDefs.h"
-#include "be/interface/View.h"
-#include "be/support/String.h"
+#include <be/interface/GraphicsDefs.h>
+#include <be/interface/InterfaceDefs.h>
+#include <be/interface/View.h>
 
 // Themis headers
 #include "UrlItem.hpp"
 
 UrlItem :: UrlItem(const char * aUrl)
-		: BStringItem(aUrl) {
+		: BListItem() {
+
+	mUrl = BString(aUrl);
 
 }
 
@@ -65,13 +68,26 @@ void UrlItem :: DrawItem(BView * aOwner,
 
 	color = ui_color(B_MENU_ITEM_TEXT_COLOR);
 	aOwner->SetHighColor(color);
-	BString url(Text());
+	BString url = mUrl;
+/*
 	aOwner->TruncateString(
 		&url,
 		B_TRUNCATE_END,
-		aFrame.right - 10);
-	
-	aOwner->MovePenTo(aFrame.left + 4, aFrame.bottom - 2);
+		aFrame.right - 29);
+*/
+	aOwner->MovePenTo(aFrame.left + 4 + 19, aFrame.bottom - 2);
 	aOwner->DrawString(url.String());
+
+}
+
+void UrlItem :: SetText(const char * aText) {
+	
+	mUrl.SetTo(aText);
+	
+}
+
+const char * UrlItem :: Text() {
+	
+	return mUrl.String();
 
 }
