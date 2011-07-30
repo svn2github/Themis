@@ -189,19 +189,21 @@ status_t CSSRenderer :: ReceiveBroadcast(BMessage * aMessage) {
 									int width = 0;
 									int height = 0;
 									site->GetSize(width, height);
+									int32 urlId = 0;
+									aMessage->FindInt32("url_id", &urlId);
 									CSSScrolledRendererView * view =
 										new CSSScrolledRendererView(document,
 																	stylesheet,
 																	width,
-																	height);
+																	height,
+																	siteId,
+																	urlId);
 									/* Get an unique ID from the app for the DOM entry */
 									int32 viewId = ((App *)be_app)->GetNewID();
 									BaseEntry * entry = new BaseEntry(viewId);
 									entry->set("render_view", (void *) view);
 									((App *)be_app)->GetSiteHandler()->AddEntry(entry, siteId, domEntry->getId());
 								
-									int32 urlId = 0;
-									aMessage->FindInt32("url_id", &urlId);
 									//Do the Broadcasting to give the view to the UI
 									BMessage *message = new BMessage(SH_RENDER_FINISHED);
 									message->AddInt32("command", COMMAND_INFO);

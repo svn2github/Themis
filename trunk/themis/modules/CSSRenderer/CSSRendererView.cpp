@@ -50,7 +50,9 @@
 
 CSSRendererView :: CSSRendererView(BRect aFrame,
 								   TDocumentPtr aDocument,
-								   CSSStyleSheetPtr aStyleSheet)
+								   CSSStyleSheetPtr aStyleSheet,
+								   int32 aSiteId,
+								   int32 aUrlId)
 				: BView(aFrame,
 						"CSSRendererView",
 						B_FOLLOW_ALL_SIDES,
@@ -74,6 +76,8 @@ CSSRendererView :: CSSRendererView(BRect aFrame,
 							root,
 							mStyleSheets,
 							rect,
+							aSiteId,
+							aUrlId,
 							defaultColor);
 		printf("Doing layout\n");
 		mView->Layout(rect, BPoint(rect.left, rect.top));
@@ -125,6 +129,7 @@ void CSSRendererView :: AttachedToWindow() {
 	}
 	Window()->SetTitle(title.c_str());
 	SetViewColor(B_TRANSPARENT_COLOR);
+//	mView->RetrieveResources();
 
 }
 

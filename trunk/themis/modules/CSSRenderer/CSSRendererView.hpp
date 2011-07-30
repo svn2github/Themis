@@ -65,7 +65,9 @@ class CSSRendererView : public BView {
 	public:
 		CSSRendererView(BRect aFrame,
 						TDocumentPtr aDocument,
-						CSSStyleSheetPtr aStyleSheet);
+						CSSStyleSheetPtr aStyleSheet,
+						int32 aSiteId,
+						int32 aUrlId);
 		~CSSRendererView();
 		virtual void MouseDown(BPoint aPoint);
 		virtual void Draw(BRect aRect);

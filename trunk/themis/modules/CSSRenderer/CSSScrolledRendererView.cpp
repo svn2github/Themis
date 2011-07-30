@@ -60,7 +60,9 @@
 CSSScrolledRendererView :: CSSScrolledRendererView(TDocumentPtr aDocument,
 												   CSSStyleSheetPtr aStyleSheet,
 												   float aWidth,
-												   float aHeight)
+												   float aHeight,
+												   int32 aSiteId,
+												   int32 aUrlId)
 				  		: BView(BRect(0, 0, aWidth, aHeight),
 							"CSSScrolledRendererView",
 							B_FOLLOW_ALL_SIDES,
@@ -73,7 +75,7 @@ CSSScrolledRendererView :: CSSScrolledRendererView(TDocumentPtr aDocument,
 	BRect rect = Bounds();
 	rect.bottom -= B_H_SCROLL_BAR_HEIGHT;
 	rect.right -= B_V_SCROLL_BAR_WIDTH;
-	mView = new CSSRendererView(rect, mDocument, mStyleSheet);
+	mView = new CSSRendererView(rect, mDocument, mStyleSheet, aSiteId, aUrlId);
 	mScrollView = new BScrollView("CSS Scroll view",
 								  mView,
 								  B_FOLLOW_ALL_SIDES,

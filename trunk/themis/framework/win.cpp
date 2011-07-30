@@ -350,44 +350,67 @@ void Win :: MessageReceived(BMessage * msg) {
 			// stop, if there is no url, or about:blank
 			if ((url.Length() == 0) || (strcmp(url.String(), kAboutBlankPage) == 0))
 				break;
-			
-			uint32 selection = tabview->Selection();
-			/* Get an unique ID from the app for the site entry*/
-			int32 siteId = ((App *)be_app)->GetNewID();
-			SiteEntry * siteEntry = new SiteEntry(siteId, url.String());
-			/* Get an unique ID from the app for the url entry */
-			int32 urlId = ((App *)be_app)->GetNewID();
-			UrlEntry * urlEntry = new UrlEntry(urlId, url.String());
-			siteEntry->addEntry(urlEntry);
-			((App *)be_app)->GetSiteHandler()->AddEntry(siteEntry);
 
-			ThemisTab * tab = NULL;
-			if (msg->HasInt32("tab_to_open_in")) {
-				int32 index = msg->FindInt32("tab_to_open_in");
-				tab = (ThemisTab *) tabview->TabAt(index);
+			int32 siteId = 0;
+			msg->FindInt32("site_id", &siteId);
+			int32 urlId = 0;
+			msg->FindInt32("url_id", &urlId);
+			
+			bool visible;
+			if (msg->HasBool("visible")) {
+				msg->FindBool("visible", &visible);
 			}
 			else {
-				tab = (ThemisTab *) tabview->TabAt(selection);
+				visible = true;
 			}
-			tab->SetSiteID(siteId);
-			// add history entry for tab
-			if(msg->HasBool("no_history_add") == false)
-				tab->GetHistory()->AddEntry(url.String());
-			BRect rect = tabview->Bounds();
-			siteEntry->SetSize(rect.Width() - 2, rect.Height() - 2);
-			
-			/* add url to global history
-			 * ( You ask, why I am also adding the url on RELOAD, and not only on URL_OPEN?
-			 *   Simple. Imagine a browser being open for longer then GlobalHistoryDepthInDays.
-			 *   The url would be deleted after this period of days. If the user would then reload
-			 *   the page, it would not be saved in the history. If he closes the browser, his url
-			 *   would be lost. Ok, this is somewhat unlikely, but could happen. ) 
-			*/
-			((App *)be_app)->GetGlobalHistory()->AddEntry(url.String());
+
+			uint32 selection = 0;			
+			if (visible) {
+				selection = tabview->Selection();
+				/* Get an unique ID from the app for the site entry*/
+				siteId = ((App *)be_app)->GetNewID();
+				SiteEntry * siteEntry = new SiteEntry(siteId, url.String());
+				/* Get an unique ID from the app for the url entry */
+				urlId = ((App *)be_app)->GetNewID();
+				UrlEntry * urlEntry = new UrlEntry(urlId, url.String());
+				siteEntry->addEntry(urlEntry);
+				((App *)be_app)->GetSiteHandler()->AddEntry(siteEntry);
+	
+				ThemisTab * tab = NULL;
+				if (msg->HasInt32("tab_to_open_in")) {
+					int32 index = msg->FindInt32("tab_to_open_in");
+					tab = (ThemisTab *) tabview->TabAt(index);
+				}
+				else {
+					tab = (ThemisTab *) tabview->TabAt(selection);
+				}
+				tab->SetSiteID(siteId);
+				// add history entry for tab
+				if(msg->HasBool("no_history_add") == false)
+					tab->GetHistory()->AddEntry(url.String());
+				BRect rect = tabview->Bounds();
+				siteEntry->SetSize(rect.Width() - 2, rect.Height() - 2);
+				
+				/* add url to global history
+				 * ( You ask, why I am also adding the url on RELOAD, and not only on URL_OPEN?
+				 *   Simple. Imagine a browser being open for longer then GlobalHistoryDepthInDays.
+				 *   The url would be deleted after this period of days. If the user would then reload
+				 *   the page, it would not be saved in the history. If he closes the browser, his url
+				 *   would be lost. Ok, this is somewhat unlikely, but could happen. ) 
+				*/
+				((App *)be_app)->GetGlobalHistory()->AddEntry(url.String());
+			}
+			else {
+				urlId = ((App *)be_app)->GetNewID();
+				UrlEntry * urlEntry = new UrlEntry(urlId, url.String());
+				SiteEntry * siteEntry = ((App *)be_app)->GetSiteHandler()->GetEntry(siteId);
+				siteEntry->addEntry(urlEntry);
+			}
 			
 			// I don't want to destroy anything working right now. So let's just
 			// get something new in.
 			
+			printf("Url to load: %s\n", url.String());
 			BMessage * load = new BMessage(SH_RETRIEVE_START);
 			load->AddInt32("command", COMMAND_RETRIEVE);
 			load->AddInt32("site_id", siteId);
@@ -404,11 +427,12 @@ void Win :: MessageReceived(BMessage * msg) {
 			 * Otherwise we wouldn't see any URL in UrlView during load.
 			 * Sad, but true.
 			 */
-						
-			if (msg->FindBool("hidden") == true)
-				tabview->DrawTabs();
-			else
-				tabview->Select(selection);
+			if (visible) {
+				if (msg->FindBool("hidden") == true)
+					tabview->DrawTabs();
+				else
+					tabview->Select(selection);
+			}
 
 			break;
 		}

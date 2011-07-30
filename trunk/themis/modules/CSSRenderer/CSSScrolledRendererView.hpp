@@ -67,7 +67,9 @@ class CSSScrolledRendererView : public BView {
 		CSSScrolledRendererView(TDocumentPtr aDocument,
 								CSSStyleSheetPtr aStyleSheet,
 								float aWidth,
-								float aHeight);
+								float aHeight,
+								int32 aSiteId,
+								int32 aUrlId);
 		~CSSScrolledRendererView();
 		void FrameResized(float aWidth, float aHeight);
 		void MessageReceived(BMessage * aMessage);

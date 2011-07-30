@@ -47,6 +47,7 @@
 #include <Handler.h>
 #include <Rect.h>
 #include <Point.h>
+#include <be/interface/GraphicsDefs.h>
 
 // DOM headers
 #include "DOMSupport.h"
@@ -98,8 +99,10 @@ class CSSView : public BHandler {
 		string mBorderStyle;
 		float mBorderWidth;
 		BRect mListStyleRect;
+		int32 mSiteId;
+		int32 mUrlId;
 		
-		void RetrieveLink();
+		void RetrieveLink(bool aVisible = true);
 
 	protected:
 		void ApplyStyle(const TElementPtr aElement);
@@ -109,6 +112,8 @@ class CSSView : public BHandler {
 				TNodePtr aNode,
 				CSSStyleContainer * aStyleSheets,
 				BRect aRect,
+				int32 aSiteId,
+				int32 aUrlId,
 				rgb_color aColor,
 				BFont * aFont = NULL);
 		~CSSView();
@@ -120,10 +125,10 @@ class CSSView : public BHandler {
 		bool IsClickable();
 		BRect Bounds();
 		BPoint GetEndPoint();
-		void Layout(BRect aRect,
-					BPoint aStartingPoint);
+		virtual void Layout(BRect aRect,
+							BPoint aStartingPoint);
 		void SplitText();
-		CSSStyleDeclarationPtr GetComputedStyle(const TElementPtr aElement);
+		void RetrieveResources();
 };
 
 #endif

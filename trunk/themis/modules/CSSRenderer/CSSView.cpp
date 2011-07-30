@@ -70,6 +70,8 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 				   TNodePtr aNode,
 				   CSSStyleContainer * aStyleSheets,
 				   BRect aRect,
+				   int32 aSiteId,
+				   int32 aUrlId,
 				   rgb_color aColor,
 				   BFont * aFont)
 		: BHandler("CSSView") {
@@ -78,6 +80,8 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 	mNode = aNode;
 	mStyleSheets = aStyleSheets;
 	mRect = aRect;
+	mSiteId = aSiteId;
+	mUrlId = aUrlId;
 	mDisplay = true;
 	mBlock = true;
 	mTable = false;
@@ -117,7 +121,7 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 		}
 		else if (mNode->getNodeType() == ELEMENT_NODE) {
 			TElementPtr element = shared_static_cast<TElement>(mNode);
-			if (mNode->getNodeName() == "A") {
+			if (mName == "A") {
 				// Only A can have a href for a hyperlink, so it is hardcoded here.
 				if (element->hasAttribute("HREF")) {
 					mHref = element->getAttribute("HREF");
@@ -133,6 +137,8 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 											  child,
 											  mStyleSheets,
 											  mRect,
+											  mSiteId,
+											  mUrlId,
 											  mColor,
 											  mFont);
 			mChildren.push_back(childView);
@@ -152,6 +158,15 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 
 		SplitText();
 	}
+	else if (mNode->getNodeType() == ELEMENT_NODE) {
+		TElementPtr element = shared_static_cast<TElement>(mNode);
+		if (mName == "IMG") {
+			// Images have the image source in the src attribute.
+			if (element->hasAttribute("SRC")) {
+				mHref = element->getAttribute("SRC");
+			}
+		}
+	}
 
 }
 
@@ -170,7 +185,7 @@ CSSView :: ~CSSView() {
 
 }
 
-void CSSView :: RetrieveLink() {
+void CSSView :: RetrieveLink(bool aVisible) {
 
 	if (mHref.size() > 0) {
 		// Send a message to the window.
@@ -201,7 +216,10 @@ void CSSView :: RetrieveLink() {
 		}
 		urlString += mHref;
 		BMessage message(URL_OPEN);
+		message.AddInt32("site_id", mSiteId);
+		message.AddInt32("url_id", mUrlId);
 		message.AddString("url_to_open", urlString.c_str());
+		message.AddBool("visible", aVisible);
 		BMessenger messenger(NULL, mBaseView->Window());
 		messenger.SendMessage(&message);
 	}
@@ -732,4 +750,21 @@ void CSSView :: SplitText() {
 		mTextBoxes.push_back(box);
 	}
 
+}
+
+void CSSView :: RetrieveResources() {
+	
+//	printf("Retrieving resources in %s with href %s\n", mName.c_str(), mHref.c_str());
+	if (mHref != "" && !mClickable) {
+		// Some resource that must be loaded.
+		printf("Retrieving %s\n", mHref.c_str());
+		RetrieveLink(false);
+	}
+
+	unsigned int length = mChildren.size();
+	for (unsigned int i = 0; i < length; i++) {
+		CSSView * childView = mChildren[i];
+		childView->RetrieveResources();
+	}
+	
 }
