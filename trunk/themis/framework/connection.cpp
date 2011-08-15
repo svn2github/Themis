@@ -89,8 +89,8 @@ Connection *Connection::ConnectionAt(int32 which) {
 }
 int32 Connection::CountConnections() {
 	int32 count=0;
-	BAutolock alock(ListLock);
-	if (alock.IsLocked())
+	//BAutolock alock(ListLock);
+	//if (alock.IsLocked())
 		if (ConnectionList!=NULL)
 			count=ConnectionList->CountItems();
 	return count;
@@ -452,17 +452,19 @@ bool Connection::IsDataWaiting() {
 	if (lock.LockWithTimeout(10000)==B_OK) {
 		if (socket_id>=0) {
 			struct timeval tv;
-			tv.tv_sec=2;
-			tv.tv_usec=0;
+			tv.tv_sec=0;//2;
+			tv.tv_usec=50000;
 			struct fd_set fds;
 			FD_ZERO(&fds);
 			FD_SET(socket_id,&fds);
 			int32 err=select(socket_id+1,&fds,NULL,NULL,&tv);
-			if (err<=0) {
+			if (err<0) {
+				//printf("IsDataWaiting socket error\n");
 				lock.Unlock();
 				return false;
 			}
 			waiting_data=FD_ISSET(socket_id,&fds);
+			printf("IsDataWaiting: %s\n",(waiting_data ? "yes":"no"));
 		}
 		lock.Unlock();
 	}
@@ -744,8 +746,8 @@ off_t Connection::Send(void *data, off_t size) {
 }
 int32 Connection::IsInUse() {
 	int32 isinuse=0;
-	BAutolock alock(lock);
-	if (alock.IsLocked())
+	//BAutolock alock(lock);
+	//if (alock.IsLocked())
 		isinuse=in_use;
 	return isinuse;
 }
@@ -788,8 +790,8 @@ void Connection::RetrieveData() {
 //	fflush(stdout);
 //	BAutolock alock(lock);
 		if (lock.LockWithTimeout(15000)==B_OK) {
-		int16 size=10240;
-		int16 bytes=0;
+		int32 size=1048576;
+		int32 bytes=0;
 		unsigned char *data=new unsigned char[size];
 			if (!IsInUse())
 			{
@@ -898,7 +900,7 @@ void Connection::RetrieveData() {
 		data=NULL;
 		lock.Unlock();
 		}
-//		printf("Connection::Retrieve() is done.\n");
+		printf("Connection::Retrieve() is done.\n");
 }
 int32 Connection::LastUsed(){
 	return lastusedtime;

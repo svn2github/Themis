@@ -35,6 +35,7 @@ Project Start Date: October 18, 2000
 #include <ctype.h>
 #include <Autolock.h>
 #include <String.h>
+#include <string.h>
 
 #define PlugIDdef 'http'
 #define PlugNamedef "Network (http)"
@@ -322,7 +323,7 @@ void HTTPv4::Heartbeat(void)
 				if (build_request_thid!=0)
 					wait_for_thread(build_request_thid,&status);
 				build_request_thid=spawn_thread(BuildRequest_th,"http - build request", B_LOW_PRIORITY,bri);
-//				printf("HTTPv4 (Heartbeat):\tbuild request thread id %ld\n",build_request_thid);
+				printf("HTTPv4 (Heartbeat):\tbuild request thread id %ld\n",build_request_thid);
 				
 				resume_thread(build_request_thid);
 				wait_for_thread(build_request_thid,&status);
@@ -480,7 +481,8 @@ uint32 HTTPv4::ConnectionEstablished(Connection *connection)
 		return STATUS_NOTIFICATION_FAILED;
 	if (connection->NotifiedConnect())
 		return STATUS_NOTIFICATION_SUCCESSFUL;
-	request_lock.Lock();
+	BAutolock alock(&request_lock);
+//	request_lock.Lock();
 //	printf("HTTPv4 Connection established! %p\n",connection);
 	http_request_info_st *current=http_request_list;
 	while(current!=NULL)
@@ -503,7 +505,7 @@ uint32 HTTPv4::ConnectionEstablished(Connection *connection)
 		}
 		current=current->next;
 	}
-	request_lock.Unlock();
+//	request_lock.Unlock();
 	return STATUS_NOTIFICATION_SUCCESSFUL;
 }
 
@@ -631,8 +633,14 @@ uint32 HTTPv4::DataIsWaiting(Connection *connection)
 {
 	if (_terminate_)
 		return STATUS_NOTIFICATION_FAILED;
+		printf("\n\tHTTPv4::DataIsWaiting\n");
 	if (request_lock.LockWithTimeout(10000)==B_OK)
 	{
+	unsigned char *buffer=(unsigned char*)malloc(BUFFER_SIZE);
+	off_t bytes_received=0L,data_size=0L;
+	off_t buffer_size=BUFFER_SIZE;
+	memset(buffer,0,BUFFER_SIZE);//we do an initial wipe of memory just to start things off fresh
+		printf("\nrequest lock achieved\n");
 		if (connection->DataSize()>0)
 		{
 			http_request_info_st *current=http_request_list;
@@ -640,17 +648,44 @@ uint32 HTTPv4::DataIsWaiting(Connection *connection)
 			{
 				if (current->connection==connection)
 				{
-//					printf("Data is waiting for %s (s: %ld u: %ld ; %Ld bytes)\n",current->url,current->site_id,current->url_id,current->connection->DataSize());
+					printf("Data is waiting for %s (s: %ld u: %ld ; %Ld bytes)\n",current->url,current->site_id,current->url_id,current->connection->DataSize());
 					if ((current->internal_status&STATUS_RESPONSE_RECEIVED_FROM_SERVER)==0)
 						current->internal_status|=STATUS_RESPONSE_RECEIVED_FROM_SERVER;
 					if ((current->internal_status&STATUS_RECEIVING_DATA)==0)
 						current->internal_status|=STATUS_RECEIVING_DATA;
+					int32 data_size = current->connection->DataSize();
+					if( data_size > 0)
+					{
+							if(data_size > buffer_size)
+							{
+								buffer = (unsigned char*) realloc(buffer,data_size);
+								memset(buffer,0,data_size);
+								buffer_size = data_size;
+							}
+							else
+							{
+								if((data_size < BUFFER_SIZE) && (buffer_size > BUFFER_SIZE))
+								{
+									buffer = (unsigned char*) realloc(buffer, BUFFER_SIZE);
+									memset(buffer,0,BUFFER_SIZE);
+									buffer_size = BUFFER_SIZE;
+								}
+								else
+									memset(buffer,0,buffer_size);
+							}
+							bytes_received = current->connection->Receive(buffer,buffer_size);
+							ProcessData(current,buffer,bytes_received);
+							current->internal_status ^= STATUS_RECEIVING_DATA;
+					}
 					break;
 				}
 				current=current->next;
 			}
 		}
+		memset(buffer,0,BUFFER_SIZE);
+		free(buffer);
 		request_lock.Unlock();
+		printf("\nrequest_lock released\n");
 	return STATUS_NOTIFICATION_SUCCESSFUL;
 	}
 	return STATUS_NOTIFICATION_FAILED;
@@ -805,15 +840,18 @@ status_t HTTPv4::ReceiveBroadcast(BMessage *msg)
 					bri->url=new char[strlen(url)+1];
 					memset((char*)bri->url,0,strlen(url)+1);
 					strcpy((char*)bri->url,url);
-					if (build_request_thid==0)
+					build_request_thid = find_thread("http - build request");
+					printf("build_request_thid: %d\n",build_request_thid);
+					if (build_request_thid==B_NAME_NOT_FOUND && request_build_lock.IsLocked() == false )
 					{
 						build_request_thid=spawn_thread(BuildRequest_th,"http - build request", B_LOW_PRIORITY,bri);
-//						printf("HTTPv4:\tbuild request thread id %ld\n",build_request_thid);
+						printf("HTTPv4:\tbuild request thread id %ld\n",build_request_thid);
 						resume_thread(build_request_thid);
 						wait_for_thread(build_request_thid,&status);
 						build_request_thid=0;
-//						printf("HTTPv4 (RB): build request thread completed\n");
+						printf("HTTPv4 (RB): build request thread completed\n");
 					} else {
+						
 						//add it to a queue, and check that periodically in the heartbeat to see if we have anything we need to process.
 						request_queue->AddItem(bri);
 					}
@@ -1011,10 +1049,10 @@ void HTTPv4::BuildRequest(build_request_st *bri)
 	//bri = build request info
 	HTTPv4 *http=bri->http;
 //	status_t status=B_ERROR;
-//	printf("HTTPv4:\tBuild request for url: %s\n",bri->url);
-	http->request_lock.Lock();
+	printf("HTTPv4:\tBuild request for url: %s\n",bri->url);
+//	http->request_lock.Lock();
 	http_request_info_st *current_item=NULL,*new_item=new http_request_info_st;
-	http->request_lock.Unlock();
+//	http->request_lock.Unlock();
 	new_item->url=bri->url;
 	new_item->site_id=bri->site_id;
 	new_item->url_id=bri->url_id;
@@ -1511,6 +1549,7 @@ void HTTPv4::layer_manager(HTTPv4 *http)
 					}//Request has been built but server connection hasn't been established begin
 					if ((current->internal_status&STATUS_CONNECTED_TO_SERVER)!=0)
 					{//we are connected to the server, so process here begin
+					/*TEST Ray 8/15/2011
 						if ((current->internal_status&STATUS_RECEIVING_DATA)!=0)
 						{//we have received data that needs to be processed begin
 							//we don't have to make sure the memory is clear here
@@ -1548,11 +1587,11 @@ void HTTPv4::layer_manager(HTTPv4 *http)
 										current->internal_status^=STATUS_RECEIVING_DATA;
 									/*
 										special case; we want to receive data as quickly as possible.
-									*/
+									* /
 									previous=current;
 									current=current->next;
 									http->request_lock.Unlock();
-									snooze(10000);
+									//snooze(10000);
 									continue;
 								} else
 								{
@@ -1566,6 +1605,7 @@ void HTTPv4::layer_manager(HTTPv4 *http)
 					//					printf("DataSize() returned size %Ld\n",data_size);
 	
 								}
+								
 							}
 						}//we have received data that needs to be processed end
 						else
@@ -1573,6 +1613,7 @@ void HTTPv4::layer_manager(HTTPv4 *http)
 							if ((current->internal_status&STATUS_PROCESSING_TIMED_OUT)!=0)
 									ProcessChunkedData(current);
 						}
+							TEST Ray 8/15/2011*/						
 					}//we are connected to the server, so process here end
 					//process current http request end
 					current=current->next;
@@ -1671,7 +1712,9 @@ void HTTPv4::ProcessData(http_request_info_st *request, unsigned char *buffer, i
 					printf("HTTPv4: Unknown HTTP response code: %d - %s\n",request->http_status_code,request->http_status_message);
 					
 				}
+				printf("\nDone processing headers; moving on to ProcessData2\n");
 			ProcessData2(request,(unsigned char*)(end_of_header+4),length-((end_of_header+4)-(char*)buffer));
+			printf("\nDone with ProcessData2 (post header)\n");
 		} else
 		{
 			request->internal_status|=STATUS_HEADERS_STARTED;//we have more headers to receive and process
@@ -1766,7 +1809,9 @@ void HTTPv4::ProcessData(http_request_info_st *request, unsigned char *buffer, i
 //				printf("header length: %ld\n" ,((end_of_header+4)-(char*)data)+orig_head_len);
 //				printf("length received: %ld\n",length);
 //				printf("difference: %ld\n",length-((end_of_header+4)-(char*)data)+orig_head_len);
+				printf("\nDone processing headers (2), moving on to ProcessData2\n");
 				ProcessData2(request,(unsigned char*)(end_of_header+4),length-((end_of_header+4)-(char*)data)+orig_head_len);
+				printf("\nDone with ProcessData2 (2)\n");
 			}
 
 		} else
@@ -1774,7 +1819,9 @@ void HTTPv4::ProcessData(http_request_info_st *request, unsigned char *buffer, i
 		//if headers have been completed, process data
 			if (((request->internal_status&STATUS_HEADERS_STARTED)!=0) && ((request->internal_status&STATUS_HEADERS_COMPLETED)!=0))
 			{
+				printf("\nAbout to ProcessData2\n");
 				ProcessData2(request,buffer,length);
+				printf("\nDone with ProcessData2\n");
 			}
 		}		
 	}

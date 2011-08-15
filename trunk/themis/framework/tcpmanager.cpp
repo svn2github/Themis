@@ -144,7 +144,7 @@ int32 TCPManager::_Manager_Thread() {
 						if (connection == NULL || !Connection::HasConnection(connection))
 						{
 							lock.Unlock();
-							snooze(10000);
+							//snooze(10000);
 							continue;
 						}
 						if (connection->IsConnected())
@@ -162,7 +162,9 @@ int32 TCPManager::_Manager_Thread() {
 									{
 										connection->RetrieveData();
 										if (connection->owner!=NULL)
+										{
 											connection->owner->DataIsWaiting(connection);
+										}
 									}
 								}
 							} else
@@ -202,11 +204,11 @@ int32 TCPManager::_Manager_Thread() {
 						}
 						lock.Unlock();
 					}
-					snooze(10000);
+				//	snooze(10000);
 				}
 				
 			}
-			snooze(25000);
+			//snooze(25000);
 //			release_sem(process_sem_2);
 //		}
 			
@@ -220,8 +222,8 @@ int32 TCPManager::_Manager_Thread() {
 Connection *TCPManager::CreateConnection(NetworkableObject *net_obj,const char *host,uint16 port,bool secure,bool asynch) {
 	//printf("CreateConnection begun\n");
 	Connection *connection=NULL;
-	BAutolock alock(lock);
-	if (alock.IsLocked()) {
+//	BAutolock alock(lock);
+//	if (alock.IsLocked()) {
 		int32 connections=0;
 		Connection *target_connection=NULL;
 		connections=Connection::CountConnections();
@@ -251,7 +253,7 @@ Connection *TCPManager::CreateConnection(NetworkableObject *net_obj,const char *
 			sessions_created++;
 		}
 		
-	}
+//	}
 	//printf("CreateConnection is done: %p\n",connection);
 	return connection;
 }

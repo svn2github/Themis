@@ -129,7 +129,7 @@ void CSSRendererView :: AttachedToWindow() {
 	}
 	Window()->SetTitle(title.c_str());
 	SetViewColor(B_TRANSPARENT_COLOR);
-//	mView->RetrieveResources();
+	mView->RetrieveResources();
 
 }
 
