@@ -78,7 +78,6 @@ Win :: Win(BRect frame,
 	SetSizeLimits(300, Screen.Frame().right, 200, Screen.Frame().bottom);
 
 	protocol=0;
-	startup=true;
 	urlpopupwindow = NULL;
 	fNextWindow = NULL;
 	fOldFrame = Frame();
@@ -471,11 +470,6 @@ uint32 Win :: BroadcastTarget() {
 }
 
 void Win :: WindowActivated(bool active) {
-
-	if (startup) {
-		startup = false;
-		printf("WindowActivated\n");
-	}
 
 	if(active == false) {
 		CloseUrlPopUpWindow();
