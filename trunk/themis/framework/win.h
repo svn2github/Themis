@@ -54,7 +54,6 @@ This is the main browser window.
 class Win : public BWindow, public MessageSystem {
 
 	private:
-		uint32 protocol;
   		Win * fNextWindow;
   		BRect fOldFrame;
   		bool fMaximized;

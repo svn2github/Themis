@@ -77,7 +77,6 @@ Win :: Win(BRect frame,
 	BScreen Screen;
 	SetSizeLimits(300, Screen.Frame().right, 200, Screen.Frame().bottom);
 
-	protocol=0;
 	urlpopupwindow = NULL;
 	fNextWindow = NULL;
 	fOldFrame = Frame();
