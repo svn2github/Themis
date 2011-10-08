@@ -15,7 +15,6 @@
 
 // Themis headers
 #include "app.h"
-#include "win.h"
 #include "commondefs.h"
 #include "plugclass.h"
 #include "GlobalHistory.h"
@@ -304,23 +303,8 @@ void PrefsWin :: MessageReceived(BMessage* msg) {
 			}
 			else {
 				/* tell all windows to update their tab history depths */
-				Win* win = ((App*)be_app)->FirstWindow();
-			
-				if(win == NULL) {
-					printf("PREFS: First Window not valid anymore!\n");
-					break;
-				}	
-			
-				BMessenger* msgr = new BMessenger(NULL, win, NULL);
-				msgr->SendMessage(RE_INIT_TABHISTORY);
-			
-				while(win->NextWindow() != NULL) {
-					win = win->NextWindow();
-					delete msgr;
-					msgr = new BMessenger(NULL, win, NULL);
-					msgr->SendMessage(RE_INIT_TABHISTORY);
-				}
-				delete msgr;
+				/* use the app to do this*/
+				be_app_messenger.SendMessage(RE_INIT_TABHISTORY);
 			}
 			
 			break;

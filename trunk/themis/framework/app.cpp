@@ -279,6 +279,17 @@ void App::MessageReceived(BMessage *msg){
 			
 			break;
 		}
+		case RE_INIT_TABHISTORY :
+		{
+			Win * win = FirstWindow();
+		
+			while (win != NULL) {
+				BMessenger msgr(NULL, win, NULL);
+				msgr.SendMessage(RE_INIT_TABHISTORY);
+				win = win->NextWindow();
+			}
+			break;
+		}
 		case PREFSWIN_CLOSE :
 		{
 			printf( "APP PREFSWIN_CLOSE\n" );
