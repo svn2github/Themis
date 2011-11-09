@@ -133,8 +133,8 @@ bool Connection::NotifiedDisconnect(){
 	return notified;
 }
 void Connection::NotifyDisconnect() {
-//	BAutolock alock(lock);
-//	if (alock.IsLocked()) {
+	BAutolock alock(lock);
+	if (alock.IsLocked()) {
 		if (owner!=NULL) {
 			if (notified_disconnect==0)
 			{
@@ -144,7 +144,7 @@ void Connection::NotifyDisconnect() {
 					atomic_add(&notified_disconnect,1);
 			}
 		}
-//	}
+	}
 	
 }
 

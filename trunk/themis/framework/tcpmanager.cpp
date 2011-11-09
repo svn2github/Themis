@@ -122,7 +122,7 @@ void TCPManager::AlarmHandler(int signum) {
 int32 TCPManager::_Manager_Thread() {
 //	set_alarm(25000,B_PERIODIC_ALARM);
 	Connection *connection;
-	int32 connect_count;
+	int32 connect_count = 0;
 	int32 current_time;
 //	int32 last_used;
 	
@@ -131,14 +131,14 @@ int32 TCPManager::_Manager_Thread() {
 	while(!_quitter_) {
 //		if (acquire_sem(process_sem_1)==B_OK) {
 //			printf("processing\n");
-			connect_count=Connection::CountConnections();
-			
-			if (connect_count>0) {
-				current_time=real_time_clock();
-				for (int32 i=0; i<connect_count; i++) {
+			if (lock.LockWithTimeout(25000)==B_OK)
+			{
+				connect_count=Connection::CountConnections();
+				
+				if (connect_count>0) {
+					current_time=real_time_clock();
+					for (int32 i=0; i<connect_count; i++) {
 					
-					if (lock.LockWithTimeout(25000)==B_OK)
-					{
 //						printf("TCP Manager: lock acquired\n");
 						connection=Connection::ConnectionAt(i);
 						if (connection != NULL && Connection::HasConnection(connection)) {
@@ -155,6 +155,12 @@ int32 TCPManager::_Manager_Thread() {
 												connection->owner->DataIsWaiting(connection);
 											}
 										}
+										else if ((connection->LastUsed()!=0) && ((current_time-connection->LastUsed())>=time_out)) {
+			//								if (connection->owner!=NULL)
+			//									connection->owner->DestroyingConnectionObject(connection);
+											connection->TimeOut();
+											Disconnect(connection);
+										}
 									}
 								} else {
 									if (connection->IsDataWaiting()) {
@@ -163,12 +169,12 @@ int32 TCPManager::_Manager_Thread() {
 										connection->RetrieveData();
 										connection->lastusedtime=lastused;
 									}
-								}
-								if ((connection->LastUsed()!=0) && ((current_time-connection->LastUsed())>=time_out)) {
-	//								if (connection->owner!=NULL)
-	//									connection->owner->DestroyingConnectionObject(connection);
-									connection->TimeOut();
-									Disconnect(connection);
+									else if ((connection->LastUsed()!=0) && ((current_time-connection->LastUsed())>=time_out)) {
+		//								if (connection->owner!=NULL)
+		//									connection->owner->DestroyingConnectionObject(connection);
+										connection->TimeOut();
+										Disconnect(connection);
+									}
 								}
 							} else {
 								if (!connection->NotifiedDisconnect()) {
@@ -185,13 +191,16 @@ int32 TCPManager::_Manager_Thread() {
 								}
 							}
 						}
-						lock.Unlock();
 					}
 				//	snooze(10000);
 				}
-				
+				lock.Unlock();
 			}
 			else {
+				connect_count = 0;
+			}
+			
+			if (connect_count == 0) {
 				// No connections, so take it easy before we check again for connections.
 				// Otherwise we create a busy loop.
 				snooze(25000);
