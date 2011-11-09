@@ -141,64 +141,47 @@ int32 TCPManager::_Manager_Thread() {
 					{
 //						printf("TCP Manager: lock acquired\n");
 						connection=Connection::ConnectionAt(i);
-						if (connection == NULL || !Connection::HasConnection(connection))
-						{
-							lock.Unlock();
-							//snooze(10000);
-							continue;
-						}
-						if (connection->IsConnected())
-						{
-							if (connection->IsInUse())
-							{
-								if (!connection->NotifiedConnect())
-								{
-									if (!connection->already_connected)
-										connection->ConnectionEstablished();
-									connection->NotifyConnect();
-								} else
-								{
-									if (connection->IsDataWaiting())
-									{
-										connection->RetrieveData();
-										if (connection->owner!=NULL)
-										{
-											connection->owner->DataIsWaiting(connection);
+						if (connection != NULL && Connection::HasConnection(connection)) {
+							if (connection->IsConnected()) {
+								if (connection->IsInUse()) {
+									if (!connection->NotifiedConnect()) {
+										if (!connection->already_connected)
+											connection->ConnectionEstablished();
+										connection->NotifyConnect();
+									} else {
+										if (connection->IsDataWaiting()) {
+											connection->RetrieveData();
+											if (connection->owner!=NULL) {
+												connection->owner->DataIsWaiting(connection);
+											}
 										}
 									}
+								} else {
+									if (connection->IsDataWaiting()) {
+	//									printf("TCP Manager: data is waiting on unused connection; receiving and flushing data\n");
+										int32 lastused=connection->LastUsed();
+										connection->RetrieveData();
+										connection->lastusedtime=lastused;
+									}
 								}
-							} else
-							{
-								if (connection->IsDataWaiting())
-								{
-//									printf("TCP Manager: data is waiting on unused connection; receiving and flushing data\n");
-									int32 lastused=connection->LastUsed();
-									connection->RetrieveData();
-									connection->lastusedtime=lastused;
-								}
-							}
-							if ((connection->LastUsed()!=0) && ((current_time-connection->LastUsed())>=time_out))
-							{
-//								if (connection->owner!=NULL)
-//									connection->owner->DestroyingConnectionObject(connection);
-								connection->TimeOut();
-								Disconnect(connection);
-							}
-						} else
-						{
-							if (!connection->NotifiedDisconnect())
-							{
-								connection->NotifyDisconnect();
-//								Disconnect(connection);
-							}
-							else
-							{
-								if ((connection->LastUsed()!=0) && ((current_time-connection->LastUsed())>=time_out))
-								{
-//									if (connection->owner!=NULL)
-//										connection->owner->DestroyingConnectionObject(connection);
+								if ((connection->LastUsed()!=0) && ((current_time-connection->LastUsed())>=time_out)) {
+	//								if (connection->owner!=NULL)
+	//									connection->owner->DestroyingConnectionObject(connection);
 									connection->TimeOut();
 									Disconnect(connection);
+								}
+							} else {
+								if (!connection->NotifiedDisconnect()) {
+									connection->NotifyDisconnect();
+	//								Disconnect(connection);
+								}
+								else {
+									if ((connection->LastUsed()!=0) && ((current_time-connection->LastUsed())>=time_out)) {
+	//									if (connection->owner!=NULL)
+	//										connection->owner->DestroyingConnectionObject(connection);
+										connection->TimeOut();
+										Disconnect(connection);
+									}
 								}
 							}
 						}
@@ -208,7 +191,11 @@ int32 TCPManager::_Manager_Thread() {
 				}
 				
 			}
-			//snooze(25000);
+			else {
+				// No connections, so take it easy before we check again for connections.
+				// Otherwise we create a busy loop.
+				snooze(25000);
+			}
 //			release_sem(process_sem_2);
 //		}
 			
