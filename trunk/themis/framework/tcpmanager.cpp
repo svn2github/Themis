@@ -125,6 +125,7 @@ int32 TCPManager::_Manager_Thread() {
 	int32 connect_count = 0;
 	int32 current_time;
 //	int32 last_used;
+	bool actionTaken = false; // When no action has been taken in a run of the while loop, snooze to prevent a busy loop.
 	
 	int32 time_out=DEFAULT_TIMEOUT;
 	
@@ -148,18 +149,24 @@ int32 TCPManager::_Manager_Thread() {
 										if (!connection->already_connected)
 											connection->ConnectionEstablished();
 										connection->NotifyConnect();
+										actionTaken = true;
 									} else {
 										if (connection->IsDataWaiting()) {
 											connection->RetrieveData();
-											if (connection->owner!=NULL) {
+											if (connection->owner!=NULL && connection->DataSize() > 0) {
 												connection->owner->DataIsWaiting(connection);
+												actionTaken = true;
+											}
+											else if ((connection->LastUsed()!=0) && ((current_time-connection->LastUsed())>=time_out)) {
+												connection->TimeOut();
+												Disconnect(connection);
+												actionTaken = true;
 											}
 										}
 										else if ((connection->LastUsed()!=0) && ((current_time-connection->LastUsed())>=time_out)) {
-			//								if (connection->owner!=NULL)
-			//									connection->owner->DestroyingConnectionObject(connection);
 											connection->TimeOut();
 											Disconnect(connection);
+											actionTaken = true;
 										}
 									}
 								} else {
@@ -168,25 +175,25 @@ int32 TCPManager::_Manager_Thread() {
 										int32 lastused=connection->LastUsed();
 										connection->RetrieveData();
 										connection->lastusedtime=lastused;
+										actionTaken = true;
 									}
 									else if ((connection->LastUsed()!=0) && ((current_time-connection->LastUsed())>=time_out)) {
-		//								if (connection->owner!=NULL)
-		//									connection->owner->DestroyingConnectionObject(connection);
 										connection->TimeOut();
 										Disconnect(connection);
+										actionTaken = true;
 									}
 								}
 							} else {
 								if (!connection->NotifiedDisconnect()) {
 									connection->NotifyDisconnect();
 	//								Disconnect(connection);
+									actionTaken = true;
 								}
 								else {
 									if ((connection->LastUsed()!=0) && ((current_time-connection->LastUsed())>=time_out)) {
-	//									if (connection->owner!=NULL)
-	//										connection->owner->DestroyingConnectionObject(connection);
 										connection->TimeOut();
 										Disconnect(connection);
+										actionTaken = true;
 									}
 								}
 							}
@@ -200,11 +207,12 @@ int32 TCPManager::_Manager_Thread() {
 				connect_count = 0;
 			}
 			
-			if (connect_count == 0) {
-				// No connections, so take it easy before we check again for connections.
+			if (!actionTaken) {
+				// Nothing done, so take it easy before we check again for connections.
 				// Otherwise we create a busy loop.
 				snooze(25000);
 			}
+			actionTaken = false;
 //			release_sem(process_sem_2);
 //		}
 			
