@@ -38,5 +38,5 @@ TR { display: table-row;
 	 border-width: 1px }
 TD { display: table-cell;
 	 border-style: solid;
-	 border-width: 1px
+	 border-width: 1px;
 	 margin-right: 2px }
