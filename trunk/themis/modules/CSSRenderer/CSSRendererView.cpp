@@ -47,6 +47,11 @@
 #include "CSSRendererView.hpp"
 #include "CSSView.hpp"
 #include "CSSStyleContainer.hpp"
+#include "InlineDisplayView.hpp"
+#include "BlockDisplayView.hpp"
+
+// DOM Style headers
+#include "CSSPrimitiveValue.hpp"
 
 CSSRendererView :: CSSRendererView(BRect aFrame,
 								   TDocumentPtr aDocument,
@@ -63,6 +68,7 @@ CSSRendererView :: CSSRendererView(BRect aFrame,
 	mStyleSheets->addStyleSheet(aStyleSheet);
 	mDocument = aDocument;
 	BRect rect = Bounds();
+
 	if (mDocument->hasChildNodes()) {
 		rgb_color defaultColor;
 		defaultColor.red = 0;
@@ -71,14 +77,62 @@ CSSRendererView :: CSSRendererView(BRect aFrame,
 		
 				
 		TNodePtr root = mDocument->getFirstChild();
+		TElementPtr element = shared_static_cast<TElement>(root);
 		
-		mView = new CSSView(this,
-							root,
-							mStyleSheets,
-							rect,
-							aSiteId,
-							aUrlId,
-							defaultColor);
+		printf("Getting style of %s\n", element->getTagName().c_str());
+		CSSStyleDeclarationPtr style = mStyleSheets->getComputedStyle(element);
+		if (style.get() == NULL) {
+			// No style defined. Assume it is a block.
+			printf("Defaulting to block!!!\n");
+			mView = new BlockDisplayView(this,
+										 root,
+										 mStyleSheets,
+										 style,
+										 rect,
+										 aSiteId,
+										 aUrlId,
+										 defaultColor);
+		}
+		else {
+			CSSValuePtr value = style->getPropertyCSSValue("display");
+			CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
+			TDOMString valueString = primitiveValue->getStringValue();
+	//		printf("Display property value: %s\n", valueString.c_str());
+			if (valueString == "inline") {
+				printf("Inline!!!\n");
+				mView = new InlineDisplayView(this,
+											  root,
+											  mStyleSheets,
+											  style,
+											  rect,
+											  aSiteId,
+											  aUrlId,
+											  defaultColor);
+			}
+			else if ((valueString == "table") || (valueString == "table-row-group")) {
+				// Nothing yet
+			}
+			else if (valueString == "table-row") {
+				// Nothing yet
+				
+			}
+			else if (valueString == "table-cell") {
+				// Nothing yet
+			}
+			else {
+				// The default is a block element
+				printf("Defaulting to block!!!\n");
+				mView = new BlockDisplayView(this,
+											 root,
+											 mStyleSheets,
+											 style,
+											 rect,
+											 aSiteId,
+											 aUrlId,
+											 defaultColor);
+			}
+		}
+		
 		printf("Doing layout\n");
 		mView->Layout(rect, BPoint(rect.left, rect.top));
 		printf("Layout done\n");
@@ -129,7 +183,9 @@ void CSSRendererView :: AttachedToWindow() {
 	}
 	Window()->SetTitle(title.c_str());
 	SetViewColor(B_TRANSPARENT_COLOR);
-	mView->RetrieveResources();
+	if (mView) {
+		mView->RetrieveResources();
+	}
 
 }
 

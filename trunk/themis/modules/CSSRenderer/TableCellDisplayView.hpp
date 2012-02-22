@@ -1,5 +1,5 @@
 /*
-	Copyright (c) 2010 Mark Hellegers. All Rights Reserved.
+	Copyright (c) 2012 Mark Hellegers. All Rights Reserved.
 	
 	Permission is hereby granted, free of charge, to any person
 	obtaining a copy of this software and associated documentation
@@ -25,19 +25,19 @@
 	
 	Original Author: 	Mark Hellegers (mark@firedisk.net)
 	Project Start Date: October 18, 2000
-	Class Start Date: Februari 28, 2010
+	Class Start Date: Februari 23, 2012
 */
 
-/*	CSSView
-	Renders part of a document with css
+/*	TableCellDisplayView
+	Renders css table-cell display elements
 	
 	Mark Hellegers (mark@firedisk.net)
-	28-02-2010
+	23-02-2012
 	
 */
 
-#ifndef CSSVIEW_HPP
-#define CSSVIEW_HPP
+#ifndef TABLECELLDISPLAYVIEW_HPP
+#define TABLECELLDISPLAYVIEW_HPP
 
 // Standard C++ headers
 #include <vector>
@@ -47,7 +47,6 @@
 #include <Handler.h>
 #include <Rect.h>
 #include <Point.h>
-#include <be/interface/GraphicsDefs.h>
 
 // DOM headers
 #include "DOMSupport.h"
@@ -57,6 +56,7 @@
 #include "CSSStyleDeclaration.hpp"
 
 // CSSRenderer headers
+#include "CSSView.hpp"
 #include "TextBox.hpp"
 
 // Declarations used
@@ -68,70 +68,21 @@ class CSSStyleContainer;
 using std::vector;
 using std::string;
 
-class CSSView : public BHandler {
-	
-	private:
-		vector<CSSView *> mChildren;
-		TNodePtr mNode;
-		CSSStyleContainer * mStyleSheets;
-		CSSRendererView * mBaseView;
-		vector<BRect> mRects;
-		BRect mRect;
-		BPoint mEndPoint;
-		vector<TextBox> mTextBoxes;
-		float mLineHeight;
-		float mBottomMargin;
-		float mSpaceWidth;
-		BFont * mFont;
-		bool mInheritedFont;
-		float mMarginBottom;
-		float mMarginRight;
-		bool mClickable;
-		string mHref;
-		string mName;
-		rgb_color mColor;
-		string mListStyleType;
-		string mBorderStyle;
-		float mBorderWidth;
-		BRect mListStyleRect;
-		int32 mSiteId;
-		int32 mUrlId;
-		
-		void RetrieveLink(bool aVisible = true);
-
-	protected:
-		bool mDisplay;
-		bool mBlock;
-		bool mTable;
-		bool mTableRow;
-		bool mTableCell;
-
-		void ApplyStyle(const TElementPtr aElement,
-						const CSSStyleDeclarationPtr aStyle);
+class TableCellDisplayView : public CSSView {
 	
 	public:
-		CSSView(CSSRendererView * aBaseView,
-				TNodePtr aNode,
-				CSSStyleContainer * aStyleSheets,
-				CSSStyleDeclarationPtr aStyle,
-				BRect aRect,
-				int32 aSiteId,
-				int32 aUrlId,
-				rgb_color aColor,
-				BFont * aFont = NULL);
-		~CSSView();
-		virtual void MouseDown(BPoint aPoint);
-		void Draw();
-		bool Contains(BPoint aPoint);
-		bool IsDisplayed();
-		bool IsBlock();
-		bool IsClickable();
-		BRect Bounds();
-		BPoint GetEndPoint();
+		TableCellDisplayView(CSSRendererView * aBaseView,
+							 TNodePtr aNode,
+							 CSSStyleContainer * aStyleSheets,
+							 CSSStyleDeclarationPtr aStyle,
+							 BRect aRect,
+							 int32 aSiteId,
+							 int32 aUrlId,
+							 rgb_color aColor,
+							 BFont * aFont = NULL);
+		~TableCellDisplayView();
 		virtual void Layout(BRect aRect,
 							BPoint aStartingPoint);
-		void SplitText();
-		void RetrieveResources();
 };
 
 #endif

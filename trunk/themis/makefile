@@ -233,7 +233,13 @@ CSSRENDERERSOURCES= \
 	CSSRenderer/CSSScrolledRendererView.cpp \
 	CSSRenderer/CSSView.cpp \
 	CSSRenderer/TextBox.cpp \
-	CSSRenderer/CSSStyleContainer.cpp
+	CSSRenderer/CSSStyleContainer.cpp \
+	CSSRenderer/InlineDisplayView.cpp \
+	CSSRenderer/BlockDisplayView.cpp \
+	CSSRenderer/TableDisplayView.cpp \
+	CSSRenderer/TableRowDisplayView.cpp \
+	CSSRenderer/TableCellDisplayView.cpp \
+	CSSRenderer/NoneDisplayView.cpp
 
 #make install directories as necessary
 ifeq "$(shell if [ -d $(BASE_ADDON_INSTALL_DIR) ] ; then echo 1 ; else mkdir -p $(BASE_ADDON_INSTALL_DIR) ; echo 0 ; fi)" "0"

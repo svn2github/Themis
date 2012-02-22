@@ -62,6 +62,12 @@
 #include "CSSView.hpp"
 #include "CSSRendererView.hpp"
 #include "CSSStyleContainer.hpp"
+#include "InlineDisplayView.hpp"
+#include "BlockDisplayView.hpp"
+#include "TableDisplayView.hpp"
+#include "TableRowDisplayView.hpp"
+#include "TableCellDisplayView.hpp"
+#include "NoneDisplayView.hpp"
 
 // Constants used
 const char cSpace = ' ';
@@ -69,6 +75,7 @@ const char cSpace = ' ';
 CSSView :: CSSView(CSSRendererView * aBaseView,
 				   TNodePtr aNode,
 				   CSSStyleContainer * aStyleSheets,
+				   CSSStyleDeclarationPtr aStyle,
 				   BRect aRect,
 				   int32 aSiteId,
 				   int32 aUrlId,
@@ -82,11 +89,6 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 	mRect = aRect;
 	mSiteId = aSiteId;
 	mUrlId = aUrlId;
-	mDisplay = true;
-	mBlock = true;
-	mTable = false;
-	mTableRow = false;
-	mTableCell = false;
 	mFont = aFont;
 	mInheritedFont = true;
 	mMarginBottom = 0;
@@ -102,8 +104,8 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 		TNodeListPtr children = mNode->getChildNodes();
 		unsigned int length = children->getLength();
      	if ((mNode->getNodeType() == ELEMENT_NODE) &&
-				 (mNode->getNodeName() == "TITLE") &&
-				 (length > 0)) {
+			(mNode->getNodeName() == "TITLE") &&
+			(length > 0)) {
 			printf("Found TITLE node\n");
 			TNodePtr textChild = children->item(0);
 			TDOMString titleText = textChild->getNodeValue();
@@ -128,20 +130,108 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 					mClickable = true;
 				}
 			}
-			ApplyStyle(element);
+			ApplyStyle(element, aStyle);
 		}
 
 		for (unsigned int i = 0; i < length; i++) {
 			TNodePtr child = children->item(i);
-			CSSView * childView = new CSSView(aBaseView,
-											  child,
-											  mStyleSheets,
-											  mRect,
-											  mSiteId,
-											  mUrlId,
-											  mColor,
-											  mFont);
-			mChildren.push_back(childView);
+			if (child->getNodeType() == ELEMENT_NODE) {
+				TElementPtr element = shared_static_cast<TElement>(child);
+				CSSStyleDeclarationPtr style = mStyleSheets->getComputedStyle(element);
+				if (style.get()) {
+					CSSValuePtr value = style->getPropertyCSSValue("display");
+					// Default to block in case it doesn't exist.
+					TDOMString valueString = "block";
+					if (value.get()) {
+						CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
+						valueString = primitiveValue->getStringValue();
+					}
+			//		printf("Display property value: %s\n", valueString.c_str());
+					CSSView * childView = NULL;
+					if (valueString == "inline") {
+						childView = new InlineDisplayView(aBaseView,
+														  child,
+														  mStyleSheets,
+														  style,
+														  mRect,
+														  mSiteId,
+														  mUrlId,
+														  mColor,
+														  mFont);
+					}
+					else if ((valueString == "table") || (valueString == "table-row-group")) {
+						childView = new TableDisplayView(aBaseView,
+														 child,
+														 mStyleSheets,
+														 style,
+														 mRect,
+														 mSiteId,
+														 mUrlId,
+														 mColor,
+														 mFont);
+					}
+					else if (valueString == "table-row") {
+						childView = new TableRowDisplayView(aBaseView,
+															child,
+															mStyleSheets,
+															style,
+															mRect,
+															mSiteId,
+															mUrlId,
+															mColor,
+															mFont);
+					}
+					else if (valueString == "table-cell") {
+						childView = new TableCellDisplayView(aBaseView,
+															 child,
+															 mStyleSheets,
+															 style,
+															 mRect,
+															 mSiteId,
+															 mUrlId,
+															 mColor,
+															 mFont);
+					}
+					else if (valueString == "none") {
+						childView = new NoneDisplayView(aBaseView,
+														child,
+														mStyleSheets,
+														style,
+														mRect,
+														mSiteId,
+														mUrlId,
+														mColor,
+														mFont);
+					}
+					else {
+						// The default is a block element
+						childView = new BlockDisplayView(aBaseView,
+														 child,
+														 mStyleSheets,
+														 style,
+														 mRect,
+														 mSiteId,
+														 mUrlId,
+														 mColor,
+														 mFont);
+					}
+					mChildren.push_back(childView);
+				}
+			}
+			else if (child->getNodeType() == TEXT_NODE) {
+				// Quick fix. Take a look at what would be elegant.
+				CSSStyleDeclarationPtr style;
+				CSSView * childView = new CSSView(aBaseView,
+												  child,
+												  mStyleSheets,
+												  style,
+												  mRect,
+												  mSiteId,
+												  mUrlId,
+												  mColor,
+												  mFont);
+				mChildren.push_back(childView);
+			}
 		}
 	}
 	else if (mNode->getNodeType() == TEXT_NODE) {
@@ -155,7 +245,7 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 		mBottomMargin = height.descent;
 		mSpaceWidth = mFont->StringWidth(&cSpace, 1);
 		mBlock = false;
-
+		mDisplay = true;
 		SplitText();
 	}
 	else if (mNode->getNodeType() == ELEMENT_NODE) {
@@ -226,37 +316,16 @@ void CSSView :: RetrieveLink(bool aVisible) {
 
 }
 
-void CSSView :: ApplyStyle(const TElementPtr aElement) {
+void CSSView :: ApplyStyle(const TElementPtr aElement,
+						   const CSSStyleDeclarationPtr aStyle) {
 	
-	CSSStyleDeclarationPtr style = mStyleSheets->getComputedStyle(aElement);
-	if (style.get()) {
-		unsigned long length = style->getLength();
+	if (aStyle.get()) {
+		unsigned long length = aStyle->getLength();
 		for (unsigned long i = 0; i < length; i++) {
-			TDOMString propertyName = style->item(i);
-			CSSValuePtr value = style->getPropertyCSSValue(propertyName);
+			TDOMString propertyName = aStyle->item(i);
+			CSSValuePtr value = aStyle->getPropertyCSSValue(propertyName);
 			if (value.get()) {
-				if (propertyName == "display") {
-					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
-					TDOMString valueString = primitiveValue->getStringValue();
-//					printf("Display property value: %s\n", valueString.c_str());
-					if (valueString == "none") {
-						mDisplay = false;
-						mRect = BRect(0, 0, 0, 0);
-					}
-					else if (valueString == "inline") {
-						mBlock = false;
-					}
-					else if ((valueString == "table") || (valueString == "table-row-group")) {
-						mTable = true;
-					}
-					else if (valueString == "table-row") {
-						mTableRow = true;
-					}
-					else if (valueString == "table-cell") {
-						mTableCell = true;
-					}
-				}
-				else if (propertyName == "font-size") {
+				if (propertyName == "font-size") {
 					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
 					if (primitiveValue.get()) {
 						if (primitiveValue->getPrimitiveType() == CSSPrimitiveValue::CSS_EMS) {
@@ -396,7 +465,7 @@ void CSSView :: Draw() {
 				unsigned int end = 0;
 				box.getRange(start, end);
 				BRect rect = box.getRect();
-	//			printf("Drawing string: %s for %u at %f and %f\n", (text.c_str()) + start, end - start, rect.left, rect.top);
+				//printf("Drawing string: %s for %u at %f and %f\n", (text.c_str()) + start, end - start + 1, rect.left, rect.top + mLineHeight - mBottomMargin);
 				drawPoint.Set(rect.left, rect.top + mLineHeight - mBottomMargin);
 				mBaseView->SetFont(mFont);
 				mBaseView->DrawString((text.c_str()) + start, end - start + 1, drawPoint);
@@ -414,13 +483,11 @@ void CSSView :: Draw() {
 			mBaseView->StrokeRect(mRect);
 			mBaseView->SetPenSize(savedPenSize);
 		}
-		
 		unsigned int length = mChildren.size();
 		for (unsigned int i = 0; i < length; i++) {
 			mChildren[i]->Draw();
 		}
 	}
-
 }
 
 bool CSSView :: Contains(BPoint aPoint) {

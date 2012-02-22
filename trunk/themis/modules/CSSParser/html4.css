@@ -2,6 +2,9 @@
 	Simple CSS stylesheet used to display html.
 */
 
+HTML { display: block }
+BODY { display: block }
+DIV { display: block }
 B { display: inline;
 	font-weight: bold }
 A { display: inline;
