@@ -60,9 +60,6 @@ InlineDisplayView :: InlineDisplayView(CSSRendererView * aBaseView,
 
 	mDisplay = true;
 	mBlock = false;
-	mTable = false;
-	mTableRow = false;
-	mTableCell = false;
 
 }
 

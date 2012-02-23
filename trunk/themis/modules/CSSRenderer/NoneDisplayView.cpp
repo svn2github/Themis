@@ -60,9 +60,6 @@ NoneDisplayView :: NoneDisplayView(CSSRendererView * aBaseView,
 
 	mDisplay = false;
 	mBlock = false;
-	mTable = false;
-	mTableRow = false;
-	mTableCell = false;
 
 }
 

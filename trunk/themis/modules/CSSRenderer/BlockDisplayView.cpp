@@ -60,9 +60,6 @@ BlockDisplayView :: BlockDisplayView(CSSRendererView * aBaseView,
 
 	mDisplay = true;
 	mBlock = true;
-	mTable = false;
-	mTableRow = false;
-	mTableCell = false;
 
 }
 

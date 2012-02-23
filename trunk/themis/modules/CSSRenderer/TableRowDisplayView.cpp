@@ -60,9 +60,6 @@ TableRowDisplayView :: TableRowDisplayView(CSSRendererView * aBaseView,
 
 	mDisplay = true;
 	mBlock = false;
-	mTable = false;
-	mTableRow = true;
-	mTableCell = false;
 
 }
 
@@ -73,6 +70,85 @@ TableRowDisplayView :: ~TableRowDisplayView() {
 void TableRowDisplayView :: Layout(BRect aRect,
 								   BPoint aStartingPoint) {
 
-	CSSView::Layout(aRect, aStartingPoint);
+	mRect = aRect;
+	// Always set the top of the rect to the one from the starting point as that is definitely correct.
+	mRect.top = aStartingPoint.y;
+	BRect restRect = mRect;
+	// If we are drawing a border around this element, make sure there is less space for the content.
+	restRect.InsetBy(mBorderWidth, mBorderWidth);
+	// Set the endpoint to the starting point, as that is the minimum endpoint
+	mEndPoint = aStartingPoint;
+	// Assume we don't need any horizontal space. The children will determine the space needed.
+//	mRect.right = mRect.left;
+	// In case we need to draw something before drawing any children, move the children.
+	if (mListStyleType == "square") {
+		mListStyleRect.left = restRect.left + 2;
+		mListStyleRect.right = restRect.left + 7;
+		mListStyleRect.top = restRect.top + 2;
+		mListStyleRect.bottom = restRect.top + 7;
+		restRect.left += 12;
+		mEndPoint.x += 12;
+	}
+	// Layout the children.
+	unsigned int length = mChildren.size();
+	BPoint startingPoint = mEndPoint;
+	float maxRight = 0;
+
+	BRect restRowRect = restRect;
+	float maxBottom = restRowRect.top;
+	for (unsigned int i = 0; i < length; i++) {
+		CSSView * childView = mChildren[i];
+		// Only layout those children that are actually displayed.
+		if (childView->IsDisplayed()) {
+			// Don't care if the child is a block or not, children will be positioned next to each other.
+			startingPoint = BPoint(restRowRect.left, restRowRect.top);
+			// Do the layout for the child.
+			childView->Layout(restRowRect, startingPoint);
+			BRect rect2 = childView->Bounds();
+			mEndPoint = childView->GetEndPoint();
+			// Set the top of the remaining rect to the bottom of the child,
+			// because the space above is already taken by the child.
+			restRect.top = rect2.bottom;
+			if (rect2.right > restRect.right) {
+				// The child used more space than was available. We can use that space now as well
+				// for any remaining children.
+				restRect.right = rect2.right;
+				mRect.right = rect2.right;
+				restRowRect.right = rect2.right;
+			}
+			// What is the maximum horizontal space being taken up by one of the children?
+			if (rect2.right > maxRight) {
+				maxRight = rect2.right;
+			}
+			// What is the maximum vertical space being taken up by one of the children?
+			if (rect2.bottom > maxBottom) {
+				maxBottom = rect2.bottom;
+			}
+			// Make sure the next child starts to the right of this one.
+			restRowRect.left = rect2.right;
+		}
+	}
+	if (maxBottom > 0) {
+		// Only set it in case we found something.
+		restRect.top = maxBottom;
+	}
+
+	if (maxRight > 0) {
+		// Only set it in case we found something.
+		mRect.right = maxRight;
+	}
+	else {
+		mRect.right = mRect.left;
+	}
+	mRect.bottom = restRect.top;
+	mRects.push_back(mRect);
+//	mRect.PrintToStream();
+
+	// Add any margins
+	mEndPoint.Set(mEndPoint.x + mMarginRight, mEndPoint.y + mMarginBottom);
+	
+	mRect.bottom = restRect.top + mMarginBottom;
+	mRect.right += mMarginRight;
+	//mRect.right = restRect.right;
 
 }

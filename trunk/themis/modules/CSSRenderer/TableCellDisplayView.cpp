@@ -60,9 +60,6 @@ TableCellDisplayView :: TableCellDisplayView(CSSRendererView * aBaseView,
 
 	mDisplay = true;
 	mBlock = false;
-	mTable = false;
-	mTableRow = false;
-	mTableCell = true;
 
 }
 

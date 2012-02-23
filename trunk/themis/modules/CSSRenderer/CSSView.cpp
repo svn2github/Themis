@@ -663,89 +663,47 @@ void CSSView :: Layout(BRect aRect,
 			unsigned int length = mChildren.size();
 			BPoint startingPoint = mEndPoint;
 			float maxRight = 0;
-			if (!mTableRow) {
-				for (unsigned int i = 0; i < length; i++) {
-					CSSView * childView = mChildren[i];
-					// Only layout those children that are actually displayed.
-					if (childView->IsDisplayed()) {
-						if (childView->IsBlock()) {
-							// Blocks have their own rect, so start at the left of the parent rect and just below the previous block.
-							startingPoint = BPoint(restRect.left, restRect.top);
-						//	previousChildIsBlock = true;
-						//	startingPoint.PrintToStream();
-						}
-						// Do the layout for the child.
-						childView->Layout(restRect, startingPoint);
-						BRect rect2 = childView->Bounds();
-						mEndPoint = childView->GetEndPoint();
-						// Set the top of the remaining rect to the bottom of the child,
-						// because the space above is already taken by the child.
-						restRect.top = rect2.bottom;
-						if (rect2.right > restRect.right) {
-							// The child used more space than was available. We can use that space now as well
-							// for any remaining children.
-							restRect.right = rect2.right;
-							mRect.right = rect2.right;
-						}
-						// What is the maximum horizontal space being taken up by one of the children?
-						if (rect2.right > maxRight) {
-							maxRight = rect2.right;
-						}
-						
-						if (childView->IsBlock()) {
-							// The next child will have to start at the left of the parent rect and just below this block.
-							startingPoint = BPoint(restRect.left, restRect.top);
-						//	previousChildIsBlock = true;
-						//	startingPoint.PrintToStream();
-						}
-						else {
-							// We can start where we left off.
-							startingPoint = mEndPoint;
-						//	previousChildIsBlock = false;
-	//						printf("Starting at: ");
-	//						mEndPoint.PrintToStream();
-						}
+			for (unsigned int i = 0; i < length; i++) {
+				CSSView * childView = mChildren[i];
+				// Only layout those children that are actually displayed.
+				if (childView->IsDisplayed()) {
+					if (childView->IsBlock()) {
+						// Blocks have their own rect, so start at the left of the parent rect and just below the previous block.
+						startingPoint = BPoint(restRect.left, restRect.top);
+					//	previousChildIsBlock = true;
+					//	startingPoint.PrintToStream();
 					}
-				}
-			}
-			else {
-				BRect restRowRect = restRect;
-				float maxBottom = restRowRect.top;
-				for (unsigned int i = 0; i < length; i++) {
-					CSSView * childView = mChildren[i];
-					// Only layout those children that are actually displayed.
-					if (childView->IsDisplayed()) {
-						// Don't care if the child is a block or not, children will be positioned next to each other.
-						startingPoint = BPoint(restRowRect.left, restRowRect.top);
-						// Do the layout for the child.
-						childView->Layout(restRowRect, startingPoint);
-						BRect rect2 = childView->Bounds();
-						mEndPoint = childView->GetEndPoint();
-						// Set the top of the remaining rect to the bottom of the child,
-						// because the space above is already taken by the child.
-						restRect.top = rect2.bottom;
-						if (rect2.right > restRect.right) {
-							// The child used more space than was available. We can use that space now as well
-							// for any remaining children.
-							restRect.right = rect2.right;
-							mRect.right = rect2.right;
-							restRowRect.right = rect2.right;
-						}
-						// What is the maximum horizontal space being taken up by one of the children?
-						if (rect2.right > maxRight) {
-							maxRight = rect2.right;
-						}
-						// What is the maximum vertical space being taken up by one of the children?
-						if (rect2.bottom > maxBottom) {
-							maxBottom = rect2.bottom;
-						}
-						// Make sure the next child starts to the right of this one.
-						restRowRect.left = rect2.right;
+					// Do the layout for the child.
+					childView->Layout(restRect, startingPoint);
+					BRect rect2 = childView->Bounds();
+					mEndPoint = childView->GetEndPoint();
+					// Set the top of the remaining rect to the bottom of the child,
+					// because the space above is already taken by the child.
+					restRect.top = rect2.bottom;
+					if (rect2.right > restRect.right) {
+						// The child used more space than was available. We can use that space now as well
+						// for any remaining children.
+						restRect.right = rect2.right;
+						mRect.right = rect2.right;
 					}
-				}
-				if (maxBottom > 0) {
-					// Only set it in case we found something.
-					restRect.top = maxBottom;
+					// What is the maximum horizontal space being taken up by one of the children?
+					if (rect2.right > maxRight) {
+						maxRight = rect2.right;
+					}
+					
+					if (childView->IsBlock()) {
+						// The next child will have to start at the left of the parent rect and just below this block.
+						startingPoint = BPoint(restRect.left, restRect.top);
+					//	previousChildIsBlock = true;
+					//	startingPoint.PrintToStream();
+					}
+					else {
+						// We can start where we left off.
+						startingPoint = mEndPoint;
+					//	previousChildIsBlock = false;
+//						printf("Starting at: ");
+//						mEndPoint.PrintToStream();
+					}
 				}
 			}
 			if (maxRight > 0) {

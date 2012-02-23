@@ -59,10 +59,7 @@ TableDisplayView :: TableDisplayView(CSSRendererView * aBaseView,
 				 		   aFont) {
 
 	mDisplay = true;
-	mBlock = false;
-	mTable = true;
-	mTableRow = false;
-	mTableCell = false;
+	mBlock = true;
 
 }
 

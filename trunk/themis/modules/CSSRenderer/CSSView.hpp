@@ -71,40 +71,37 @@ using std::string;
 class CSSView : public BHandler {
 	
 	private:
-		vector<CSSView *> mChildren;
 		TNodePtr mNode;
 		CSSStyleContainer * mStyleSheets;
 		CSSRendererView * mBaseView;
-		vector<BRect> mRects;
-		BRect mRect;
-		BPoint mEndPoint;
 		vector<TextBox> mTextBoxes;
 		float mLineHeight;
 		float mBottomMargin;
 		float mSpaceWidth;
 		BFont * mFont;
 		bool mInheritedFont;
-		float mMarginBottom;
-		float mMarginRight;
 		bool mClickable;
 		string mHref;
 		string mName;
 		rgb_color mColor;
-		string mListStyleType;
 		string mBorderStyle;
-		float mBorderWidth;
-		BRect mListStyleRect;
 		int32 mSiteId;
 		int32 mUrlId;
 		
 		void RetrieveLink(bool aVisible = true);
 
 	protected:
+		vector<CSSView *> mChildren;
+		vector<BRect> mRects;
+		BRect mRect;
+		BPoint mEndPoint;
+		float mBorderWidth;
+		float mMarginBottom;
+		float mMarginRight;
+		BRect mListStyleRect;
+		string mListStyleType;
 		bool mDisplay;
 		bool mBlock;
-		bool mTable;
-		bool mTableRow;
-		bool mTableCell;
 
 		void ApplyStyle(const TElementPtr aElement,
 						const CSSStyleDeclarationPtr aStyle);
