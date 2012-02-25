@@ -145,10 +145,10 @@ void TableRowDisplayView :: Layout(BRect aRect,
 //	mRect.PrintToStream();
 
 	// Add any margins
-	mEndPoint.Set(mEndPoint.x + mMarginRight, mEndPoint.y + mMarginBottom);
 	
 	mRect.bottom = restRect.top + mMarginBottom;
 	mRect.right += mMarginRight;
+	mEndPoint.Set(mRect.right, mRect.bottom);
 	//mRect.right = restRect.right;
 
 }
