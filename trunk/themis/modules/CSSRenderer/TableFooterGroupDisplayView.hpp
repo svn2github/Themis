@@ -25,19 +25,19 @@
 	
 	Original Author: 	Mark Hellegers (mark@firedisk.net)
 	Project Start Date: October 18, 2000
-	Class Start Date: Februari 23, 2012
+	Class Start Date: Februari 25, 2012
 */
 
-/*	TableDisplayView
-	Renders css table display elements
+/*	TableFooterroupDisplayView
+	Renders css table-footer-group display elements
 	
 	Mark Hellegers (mark@firedisk.net)
-	23-02-2012
+	25-02-2012
 	
 */
 
-#ifndef TABLEDISPLAYVIEW_HPP
-#define TABLEDISPLAYVIEW_HPP
+#ifndef TABLEFOOTERGROUPDISPLAYVIEW_HPP
+#define TABLEFOOTERGROUPDISPLAYVIEW_HPP
 
 // Standard C++ headers
 #include <vector>
@@ -56,7 +56,7 @@
 #include "CSSStyleDeclaration.hpp"
 
 // CSSRenderer headers
-#include "CSSView.hpp"
+#include "TableGroupDisplayView.hpp"
 #include "TextBox.hpp"
 
 // Declarations used
@@ -68,24 +68,20 @@ class CSSStyleContainer;
 using std::vector;
 using std::string;
 
-class TableDisplayView : public CSSView {
-	
-	private:
-		void LayoutChildren(
-			BRect aRect,
-			BPoint aStartingPoint);
+class TableFooterGroupDisplayView : public TableGroupDisplayView {
 	
 	public:
-		TableDisplayView(CSSRendererView * aBaseView,
-						 TNodePtr aNode,
-						 CSSStyleContainer * aStyleSheets,
-						 CSSStyleDeclarationPtr aStyle,
-						 BRect aRect,
-						 int32 aSiteId,
-						 int32 aUrlId,
-						 rgb_color aColor,
-						 BFont * aFont = NULL);
-		~TableDisplayView();
+		TableFooterGroupDisplayView(
+			CSSRendererView * aBaseView,
+			TNodePtr aNode,
+			CSSStyleContainer * aStyleSheets,
+			CSSStyleDeclarationPtr aStyle,
+			BRect aRect,
+			int32 aSiteId,
+			int32 aUrlId,
+			rgb_color aColor,
+			BFont * aFont = NULL);
+		~TableFooterGroupDisplayView();
 		virtual void Layout(
 			BRect aRect,
 			BPoint aStartingPoint);

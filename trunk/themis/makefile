@@ -239,6 +239,10 @@ CSSRENDERERSOURCES= \
 	CSSRenderer/TableDisplayView.cpp \
 	CSSRenderer/TableRowDisplayView.cpp \
 	CSSRenderer/TableCellDisplayView.cpp \
+	CSSRenderer/TableGroupDisplayView.cpp \
+	CSSRenderer/TableFooterGroupDisplayView.cpp \
+	CSSRenderer/TableHeaderGroupDisplayView.cpp \
+	CSSRenderer/TableRowGroupDisplayView.cpp \
 	CSSRenderer/NoneDisplayView.cpp
 
 #make install directories as necessary

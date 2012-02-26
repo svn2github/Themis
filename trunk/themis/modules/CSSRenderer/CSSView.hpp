@@ -102,6 +102,7 @@ class CSSView : public BHandler {
 		string mListStyleType;
 		bool mDisplay;
 		bool mBlock;
+		float mRequestedWidth;
 
 		void ApplyStyle(const TElementPtr aElement,
 						const CSSStyleDeclarationPtr aStyle);
@@ -129,6 +130,10 @@ class CSSView : public BHandler {
 							BPoint aStartingPoint);
 		void SplitText();
 		void RetrieveResources();
+		void SetWidth(float aRequestedWidth);
+		float GetChildWidth(unsigned int aIndex);
+		void SetChildWidth(float aWidth, unsigned int aIndex);
+		unsigned int GetLength() const;
 };
 
 #endif

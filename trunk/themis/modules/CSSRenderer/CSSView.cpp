@@ -65,6 +65,9 @@
 #include "InlineDisplayView.hpp"
 #include "BlockDisplayView.hpp"
 #include "TableDisplayView.hpp"
+#include "TableRowGroupDisplayView.hpp"
+#include "TableHeaderGroupDisplayView.hpp"
+#include "TableFooterGroupDisplayView.hpp"
 #include "TableRowDisplayView.hpp"
 #include "TableCellDisplayView.hpp"
 #include "NoneDisplayView.hpp"
@@ -136,18 +139,18 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 		for (unsigned int i = 0; i < length; i++) {
 			TNodePtr child = children->item(i);
 			if (child->getNodeType() == ELEMENT_NODE) {
+				CSSView * childView = NULL;
 				TElementPtr element = shared_static_cast<TElement>(child);
 				CSSStyleDeclarationPtr style = mStyleSheets->getComputedStyle(element);
 				if (style.get()) {
 					CSSValuePtr value = style->getPropertyCSSValue("display");
-					// Default to block in case it doesn't exist.
-					TDOMString valueString = "block";
+					// Default to inline in case it doesn't exist.
+					TDOMString valueString = "inline";
 					if (value.get()) {
 						CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
 						valueString = primitiveValue->getStringValue();
 					}
 			//		printf("Display property value: %s\n", valueString.c_str());
-					CSSView * childView = NULL;
 					if (valueString == "inline") {
 						childView = new InlineDisplayView(aBaseView,
 														  child,
@@ -159,7 +162,19 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 														  mColor,
 														  mFont);
 					}
-					else if ((valueString == "table") || (valueString == "table-row-group")) {
+					else if (valueString == "block") {
+						childView = new BlockDisplayView(
+							aBaseView,
+							child,
+							mStyleSheets,
+							style,
+							mRect,
+							mSiteId,
+							mUrlId,
+							mColor,
+							mFont);
+					}
+					else if (valueString == "table") {
 						childView = new TableDisplayView(aBaseView,
 														 child,
 														 mStyleSheets,
@@ -169,6 +184,42 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 														 mUrlId,
 														 mColor,
 														 mFont);
+					}
+					else if (valueString == "table-row-group") {
+						childView = new TableRowGroupDisplayView(
+							aBaseView,
+							child,
+							mStyleSheets,
+							style,
+							mRect,
+							mSiteId,
+							mUrlId,
+							mColor,
+							mFont);
+					}
+					else if (valueString == "table-header-group") {
+						childView = new TableHeaderGroupDisplayView(
+							aBaseView,
+							child,
+							mStyleSheets,
+							style,
+							mRect,
+							mSiteId,
+							mUrlId,
+							mColor,
+							mFont);
+					}
+					else if (valueString == "table-footer-group") {
+						childView = new TableFooterGroupDisplayView(
+							aBaseView,
+							child,
+							mStyleSheets,
+							style,
+							mRect,
+							mSiteId,
+							mUrlId,
+							mColor,
+							mFont);
 					}
 					else if (valueString == "table-row") {
 						childView = new TableRowDisplayView(aBaseView,
@@ -204,19 +255,32 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 														mFont);
 					}
 					else {
-						// The default is a block element
-						childView = new BlockDisplayView(aBaseView,
-														 child,
-														 mStyleSheets,
-														 style,
-														 mRect,
-														 mSiteId,
-														 mUrlId,
-														 mColor,
-														 mFont);
+						// The default is an inline element
+						printf("Currently unsupported display type: %s. Defaulting to inline...\n", valueString.c_str());
+						childView = new InlineDisplayView(aBaseView,
+							child,
+							mStyleSheets,
+							style,
+							mRect,
+							mSiteId,
+							mUrlId,
+							mColor,
+							mFont);
 					}
-					mChildren.push_back(childView);
 				}
+				else {
+					printf("No style specified for %s. Defaulting to inline...\n", element->getTagName().c_str());
+					childView = new InlineDisplayView(aBaseView,
+						child,
+						mStyleSheets,
+						style,
+						mRect,
+						mSiteId,
+						mUrlId,
+						mColor,
+						mFont);
+				}
+				mChildren.push_back(childView);
 			}
 			else if (child->getNodeType() == TEXT_NODE) {
 				// Quick fix. Take a look at what would be elegant.
@@ -792,4 +856,38 @@ void CSSView :: RetrieveResources() {
 		childView->RetrieveResources();
 	}
 	
+}
+
+void CSSView :: SetWidth(float aWidth) {
+	
+	mRequestedWidth = aWidth;
+	
+}
+
+float CSSView :: GetChildWidth(unsigned int aIndex) {
+
+	float result = 0;
+
+	if (aIndex < mChildren.size()) {
+		CSSView * childView = mChildren[aIndex];
+		result = childView->Bounds().Width();
+	}
+
+	return result;
+
+}
+
+void CSSView :: SetChildWidth(float aWidth, unsigned int aIndex) {
+
+	if (aIndex < mChildren.size()) {
+		CSSView * childView = mChildren[aIndex];
+		childView->SetWidth(aWidth);
+	}
+
+}
+
+unsigned int CSSView :: GetLength() const {
+	
+	return mChildren.size();
+
 }

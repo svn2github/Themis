@@ -25,19 +25,19 @@
 	
 	Original Author: 	Mark Hellegers (mark@firedisk.net)
 	Project Start Date: October 18, 2000
-	Class Start Date: Februari 23, 2012
+	Class Start Date: Februari 26, 2012
 */
 
-/*	TableDisplayView
-	Renders css table display elements
+/*	TableGroupDisplayView
+	Base class for the *-row-group display elements
 	
 	Mark Hellegers (mark@firedisk.net)
-	23-02-2012
+	26-02-2012
 	
 */
 
-#ifndef TABLEDISPLAYVIEW_HPP
-#define TABLEDISPLAYVIEW_HPP
+#ifndef TABLEGROUPDISPLAYVIEW_HPP
+#define TABLEGROUPDISPLAYVIEW_HPP
 
 // Standard C++ headers
 #include <vector>
@@ -68,27 +68,29 @@ class CSSStyleContainer;
 using std::vector;
 using std::string;
 
-class TableDisplayView : public CSSView {
+class TableGroupDisplayView : public CSSView {
 	
 	private:
-		void LayoutChildren(
-			BRect aRect,
-			BPoint aStartingPoint);
+		vector<float> mColWidths;
 	
 	public:
-		TableDisplayView(CSSRendererView * aBaseView,
-						 TNodePtr aNode,
-						 CSSStyleContainer * aStyleSheets,
-						 CSSStyleDeclarationPtr aStyle,
-						 BRect aRect,
-						 int32 aSiteId,
-						 int32 aUrlId,
-						 rgb_color aColor,
-						 BFont * aFont = NULL);
-		~TableDisplayView();
+		TableGroupDisplayView(
+			CSSRendererView * aBaseView,
+			TNodePtr aNode,
+			CSSStyleContainer * aStyleSheets,
+			CSSStyleDeclarationPtr aStyle,
+			BRect aRect,
+			int32 aSiteId,
+			int32 aUrlId,
+			rgb_color aColor,
+			BFont * aFont = NULL);
+		~TableGroupDisplayView();
 		virtual void Layout(
 			BRect aRect,
 			BPoint aStartingPoint);
+		float GetColWidth(unsigned int aIndex);
+		void SetColWidth(float aWidth, unsigned int aIndex);
+		unsigned int GetColLength() const;
 };
 
 #endif

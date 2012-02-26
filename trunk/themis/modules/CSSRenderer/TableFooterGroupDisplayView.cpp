@@ -25,70 +25,54 @@
 	
 	Original Author: 	Mark Hellegers (mark@firedisk.net)
 	Project Start Date: October 18, 2000
-	Class Start Date: Februari 23, 2012
+	Class Start Date: Februari 25, 2012
 */
 
-/*	TableDisplayView
-	Renders css table display elements
-	
-	Mark Hellegers (mark@firedisk.net)
-	23-02-2012
+/*	TableFooterGroupDisplayView implementation
+	See TableFooterGroupDisplayView.hpp for more information
 	
 */
 
-#ifndef TABLEDISPLAYVIEW_HPP
-#define TABLEDISPLAYVIEW_HPP
+// Standard C headers
+#include <stdio.h>
 
-// Standard C++ headers
-#include <vector>
-#include <string>
+// CSS Renderer headers
+#include "TableFooterGroupDisplayView.hpp"
 
-// BeOS headers
-#include <Handler.h>
-#include <Rect.h>
-#include <Point.h>
+TableFooterGroupDisplayView :: TableFooterGroupDisplayView(
+	CSSRendererView * aBaseView,
+	TNodePtr aNode,
+	CSSStyleContainer * aStyleSheets,
+	CSSStyleDeclarationPtr aStyle,
+	BRect aRect,
+	int32 aSiteId,
+	int32 aUrlId,
+	rgb_color aColor,
+	BFont * aFont)
+	: TableGroupDisplayView(
+		aBaseView,
+		aNode,
+		aStyleSheets,
+		aStyle,
+		aRect,
+		aSiteId,
+		aUrlId,
+		aColor,
+		aFont) {
 
-// DOM headers
-#include "DOMSupport.h"
+	mDisplay = true;
+	mBlock = false;
 
-// DOM Style headers
-#include "CSSStyleSheet.hpp"
-#include "CSSStyleDeclaration.hpp"
+}
 
-// CSSRenderer headers
-#include "CSSView.hpp"
-#include "TextBox.hpp"
+TableFooterGroupDisplayView :: ~TableFooterGroupDisplayView() {
 
-// Declarations used
-class BFont;
-class CSSRendererView;
-class CSSStyleContainer;
+}
 
-// Namespaces used
-using std::vector;
-using std::string;
+void TableFooterGroupDisplayView :: Layout(
+	BRect aRect,
+	BPoint aStartingPoint) {
 
-class TableDisplayView : public CSSView {
-	
-	private:
-		void LayoutChildren(
-			BRect aRect,
-			BPoint aStartingPoint);
-	
-	public:
-		TableDisplayView(CSSRendererView * aBaseView,
-						 TNodePtr aNode,
-						 CSSStyleContainer * aStyleSheets,
-						 CSSStyleDeclarationPtr aStyle,
-						 BRect aRect,
-						 int32 aSiteId,
-						 int32 aUrlId,
-						 rgb_color aColor,
-						 BFont * aFont = NULL);
-		~TableDisplayView();
-		virtual void Layout(
-			BRect aRect,
-			BPoint aStartingPoint);
-};
+	TableGroupDisplayView::Layout(aRect, aStartingPoint);
 
-#endif
+}

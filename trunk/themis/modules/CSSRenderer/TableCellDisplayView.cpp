@@ -60,6 +60,7 @@ TableCellDisplayView :: TableCellDisplayView(CSSRendererView * aBaseView,
 
 	mDisplay = true;
 	mBlock = false;
+	mRequestedWidth = -1;
 
 }
 
@@ -71,5 +72,10 @@ void TableCellDisplayView :: Layout(BRect aRect,
 									BPoint aStartingPoint) {
 
 	CSSView::Layout(aRect, aStartingPoint);
+
+	if (mRequestedWidth > -1) {
+		mRect.right = mRect.left + mRequestedWidth;
+		mEndPoint.x = mRect.right;
+	}
 
 }
