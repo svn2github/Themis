@@ -24,15 +24,20 @@ META { display: none }
 LINK { display: none }
 TITLE { display: none }
 HEAD { display: none }
-P { margin-bottom: 5px }
+P { display: block;
+	margin-bottom: 5px }
 CENTER { display: block }
-H1 { font-size: 2.5em;
+H1 { display: block;
+	 font-size: 2.5em;
 	 margin-bottom: 5px}
-H2 { font-size: 2em;
+H2 { display: block;
+	 font-size: 2em;
 	 margin-bottom: 5px}
-H3 { font-size: 1.5em;
+H3 { display: block;
+	 font-size: 1.5em;
 	 margin-bottom: 5px}
-H4 { font-size: 1.1em;
+H4 { display: block;
+	 font-size: 1.1em;
 	 margin-bottom: 5px}
 UL { display: block }
 OL { display: block }
