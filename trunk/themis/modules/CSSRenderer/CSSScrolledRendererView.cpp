@@ -173,8 +173,27 @@ void CSSScrolledRendererView :: MessageReceived(BMessage * aMessage) {
 			break;
 		}
 		case B_MOUSE_WHEEL_CHANGED: {
-			float value = aMessage->FindFloat( "be:wheel_delta_y");
-			mView->ScrollBy(0, value * 50);
+			float wheelValue = aMessage->FindFloat( "be:wheel_delta_y");
+			// We multiply it by 50 to make the scrolling usable.
+			float scrollValue = wheelValue * 50;
+			// Before we scroll, we check if we are still within the limits.
+			BScrollBar * bar = mScrollView->ScrollBar(B_VERTICAL);
+			float min = 0;
+			float max = 0;
+			bar->GetRange(&min, &max);
+			float value = bar->Value();
+			if (scrollValue + value > max) {
+				// Adjust it, so it fits.
+				scrollValue = max - value;
+			}
+			else if (scrollValue + value < min) {
+				// Adjust it, so it fits.
+				scrollValue = min - value;
+			}
+			if (scrollValue != 0) {
+				// Only scroll when it has any effect.
+				mView->ScrollBy(0, scrollValue);
+			}
 			break;
 		}
 		default: {
