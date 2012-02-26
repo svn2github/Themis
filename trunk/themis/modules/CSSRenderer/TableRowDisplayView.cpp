@@ -70,6 +70,7 @@ TableRowDisplayView :: ~TableRowDisplayView() {
 void TableRowDisplayView :: Layout(BRect aRect,
 								   BPoint aStartingPoint) {
 
+	mRects.clear();
 	mRect = aRect;
 	// Always set the top of the rect to the one from the starting point as that is definitely correct.
 	mRect.top = aStartingPoint.y;
@@ -106,9 +107,6 @@ void TableRowDisplayView :: Layout(BRect aRect,
 			childView->Layout(restRowRect, startingPoint);
 			BRect rect2 = childView->Bounds();
 			mEndPoint = childView->GetEndPoint();
-			// Set the top of the remaining rect to the bottom of the child,
-			// because the space above is already taken by the child.
-			restRect.top = rect2.bottom;
 			if (rect2.right > restRect.right) {
 				// The child used more space than was available. We can use that space now as well
 				// for any remaining children.
@@ -141,14 +139,14 @@ void TableRowDisplayView :: Layout(BRect aRect,
 		mRect.right = mRect.left;
 	}
 	mRect.bottom = restRect.top;
-	mRects.push_back(mRect);
 //	mRect.PrintToStream();
 
 	// Add any margins
 	
-	mRect.bottom = restRect.top + mMarginBottom;
+	mRect.bottom += mMarginBottom;
 	mRect.right += mMarginRight;
 	mEndPoint.Set(mRect.right, mRect.bottom);
 	//mRect.right = restRect.right;
+	mRects.push_back(mRect);
 
 }

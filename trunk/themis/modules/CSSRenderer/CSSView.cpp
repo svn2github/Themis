@@ -102,6 +102,7 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 	mLineHeight = 0;
 	mListStyleType = "none";
 	mName = mNode->getNodeName();
+	mRequestedWidth = -1;
 	
 	if (mNode->hasChildNodes()) {
 		TNodeListPtr children = mNode->getChildNodes();
@@ -603,8 +604,13 @@ void CSSView :: Layout(BRect aRect,
 					   BPoint aStartingPoint) {
 
 //	printf("Doing layout for %s\n", mName.c_str());
+	mRects.clear();
 	if (mDisplay) {
 		mRect = aRect;
+		// Enforce the requested width if set
+		if (mRequestedWidth > -1) {
+			mRect.right = mRect.left + mRequestedWidth;
+		}
 		// Always set the top of the rect to the one from the starting point as that is definitely correct.
 		mRect.top = aStartingPoint.y;
 		BRect restRect = mRect;
@@ -657,6 +663,7 @@ void CSSView :: Layout(BRect aRect,
 				if (box.startsWithSpace()) {
 					boxWidth += mSpaceWidth;
 				}
+				//printf("Linewidth: %f, boxwidth: %f, viewWidth: %f\n", lineWidth, boxWidth, viewWidth);
 				if (lineWidth + boxWidth > viewWidth) {
 					// TextBox doesn't fit on the current line.
 					// Store the current container rect if needed
@@ -705,6 +712,7 @@ void CSSView :: Layout(BRect aRect,
 			}
 			// Mark the endpoint of the text in the rect.
 			mEndPoint.Set(rect.right, rect.top);
+			mRect.bottom = rect.top + mLineHeight;
 //			printf("Set endpoint for text node to: ");
 //			mEndPoint.PrintToStream();
 		}
@@ -785,7 +793,7 @@ void CSSView :: Layout(BRect aRect,
 		// Add any margins
 		mEndPoint.Set(mEndPoint.x + mMarginRight, mEndPoint.y + mMarginBottom);
 		
-		mRect.bottom = restRect.top + mMarginBottom;
+		mRect.bottom += mMarginBottom;
 		mRect.right += mMarginRight;
 		//mRect.right = restRect.right;
 	}
