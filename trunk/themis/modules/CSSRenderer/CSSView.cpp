@@ -751,7 +751,9 @@ void CSSView :: Layout(BRect aRect,
 					mEndPoint = childView->GetEndPoint();
 					// Set the top of the remaining rect to the bottom of the child,
 					// because the space above is already taken by the child.
-					restRect.top = rect2.bottom;
+					if (restRect.top < rect2.bottom) {
+						restRect.top = rect2.bottom;
+					}
 					if (rect2.right > restRect.right) {
 						// The child used more space than was available. We can use that space now as well
 						// for any remaining children.
