@@ -141,8 +141,26 @@ void TableRowDisplayView :: Layout(BRect aRect,
 	mRect.bottom = restRect.top;
 //	mRect.PrintToStream();
 
-	// Add any margins
+	// Calculating the cell heights.
+	float maxHeight = 0;
+	float childHeight = 0;
+	for (unsigned int i = 0; i < length; i++) {
+		CSSView * childView = mChildren[i];
+		BRect childRect = childView->Bounds();
+		childHeight = childRect.Height();
+		if (maxHeight < childHeight) {
+			maxHeight = childHeight;
+		}
+	}
 	
+	// Only setting them to the max height.
+	// Counting on the row group parent to force a recalculation of the layout for now.
+	for (unsigned int i = 0; i < length; i++) {
+		CSSView * childView = mChildren[i];
+		childView->SetHeight(maxHeight);
+	}
+
+	// Add any margins
 	mRect.bottom += mMarginBottom;
 	mRect.right += mMarginRight;
 	mEndPoint.Set(mRect.right, mRect.bottom);

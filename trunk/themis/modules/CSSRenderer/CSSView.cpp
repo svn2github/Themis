@@ -103,6 +103,7 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 	mListStyleType = "none";
 	mName = mNode->getNodeName();
 	mRequestedWidth = -1;
+	mRequestedHeight = -1;
 	
 	if (mNode->hasChildNodes()) {
 		TNodeListPtr children = mNode->getChildNodes();
@@ -791,6 +792,11 @@ void CSSView :: Layout(BRect aRect,
 			mRects.push_back(mRect);
 //			mRect.PrintToStream();
 		}
+
+		// Enforce the requested height if set
+		if (mRequestedHeight > -1) {
+			mRect.bottom = mRect.top + mRequestedHeight;
+		}
 		
 		// Add any margins
 		mEndPoint.Set(mEndPoint.x + mMarginRight, mEndPoint.y + mMarginBottom);
@@ -871,6 +877,12 @@ void CSSView :: RetrieveResources() {
 void CSSView :: SetWidth(float aWidth) {
 	
 	mRequestedWidth = aWidth;
+	
+}
+
+void CSSView :: SetHeight(float aHeight) {
+	
+	mRequestedHeight = aHeight;
 	
 }
 
