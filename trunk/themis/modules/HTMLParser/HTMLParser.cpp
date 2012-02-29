@@ -4,6 +4,7 @@
 
 // Standard C headers
 #include <stdio.h>
+#include <ctype.h>
 
 // Standard C++ headers
 #include <fstream>
@@ -192,7 +193,7 @@ bool HTMLParser :: IsDocumentSupported(BMessage * aMessage) {
 				mimeTypeFound = false;
 			}
 			else {
-				mimeTypeString += mimeType[i];
+				mimeTypeString += tolower(mimeType[i]);
 			}
 			i++;
 		}
