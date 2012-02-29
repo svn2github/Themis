@@ -849,7 +849,7 @@ void ThemisTabView :: MessageReceived(BMessage * aMessage) {
 						messenger.SendMessage(&message);
 					}
 				}
-				else if (mimeString == "text/html") {
+				else if (mimeString.ToLower() == "text/html") {
 					BString filePath = "file://";
 					filePath += path.Path();
 					BMessage message(URL_OPEN);
