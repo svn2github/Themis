@@ -14,11 +14,14 @@ I { display: inline;
 U { display: inline }
 EM { display: inline;
 	 font-style: italic }
+BR { display: inline }
+IMG { display: inline }
 FONT { display: inline }
 SPAN { display: inline }
 STRONG { display: inline }
 CODE { display: inline }
 SCRIPT { display: none }
+NOSCRIPT { display: none }
 STYLE { display: none }
 META { display: none }
 LINK { display: none }
