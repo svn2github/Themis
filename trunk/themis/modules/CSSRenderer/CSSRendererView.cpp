@@ -64,6 +64,8 @@ CSSRendererView :: CSSRendererView(BRect aFrame,
 						B_WILL_DRAW | B_FRAME_EVENTS | B_FULL_UPDATE_ON_RESIZE) {
 
 	printf("Creating CSSRendererView\n");
+
+	clock_t start = clock();
 	mStyleSheets = new CSSStyleContainer();
 	mStyleSheets->addStyleSheet(aStyleSheet);
 	mDocument = aDocument;
@@ -142,6 +144,8 @@ CSSRendererView :: CSSRendererView(BRect aFrame,
 	else {
 		mView = NULL;
 	}
+	clock_t end = clock();
+	printf("Time taken for creating the CSS view: %f\n", (double)(end - start)/CLOCKS_PER_SEC);
 }
 
 CSSRendererView :: ~CSSRendererView() {
