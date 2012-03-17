@@ -18,7 +18,8 @@ BR { display: inline }
 IMG { display: inline }
 FONT { display: inline }
 SPAN { display: inline }
-STRONG { display: inline }
+STRONG { display: inline;
+		 font-weight: bold }
 CODE { display: inline }
 SCRIPT { display: none }
 NOSCRIPT { display: none }
