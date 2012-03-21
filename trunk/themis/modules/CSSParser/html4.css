@@ -20,7 +20,13 @@ FONT { display: inline }
 SPAN { display: inline }
 STRONG { display: inline;
 		 font-weight: bold }
+STRIKE { display: inline}
+S { display: inline}
 CODE { display: inline }
+TT { display: inline;
+     font-family: monospace}
+PRE { display: inline;
+      font-family: monospace}
 SCRIPT { display: none }
 NOSCRIPT { display: none }
 STYLE { display: none }

@@ -487,6 +487,18 @@ void CSSView :: ApplyStyle(const TElementPtr aElement,
 						}
 					}
 				}
+				else if (propertyName == "font-family") {
+					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
+					if (primitiveValue.get()) {
+						TDOMString valueString = primitiveValue->getStringValue();
+						if (valueString == "monospace") {
+							if (mFont == NULL) {
+								mFont = new BFont(be_fixed_font);
+								mInheritedFont = false;
+							}
+						}
+					}
+				}
 			}
 		}
 	}
