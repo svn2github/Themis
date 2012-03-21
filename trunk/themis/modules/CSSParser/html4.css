@@ -36,6 +36,8 @@ TITLE { display: none }
 HEAD { display: none }
 P { display: block;
 	margin-bottom: 5px }
+BLOCKQUOTE { display: block;
+			 margin-left: 10px }
 CENTER { display: block }
 H1 { display: block;
 	 font-size: 2.5em;

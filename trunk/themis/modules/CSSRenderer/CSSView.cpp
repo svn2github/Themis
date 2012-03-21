@@ -96,6 +96,7 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 	mInheritedFont = true;
 	mMarginBottom = 0;
 	mMarginRight = 0;
+	mMarginLeft = 0;
 	mBorderWidth = 0;
 	mColor = aColor;
 	mClickable = false;
@@ -448,6 +449,15 @@ void CSSView :: ApplyStyle(const TElementPtr aElement,
 						}
 					}
 				}
+				else if (propertyName == "margin-left") {
+					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
+					if (primitiveValue.get()) {
+						if (primitiveValue->getPrimitiveType() == CSSPrimitiveValue::CSS_PX) {
+							float floatValue = primitiveValue->getFloatValue(CSSPrimitiveValue::CSS_PX);
+							mMarginLeft = floatValue;
+						}
+					}
+				}
 				else if (propertyName == "color") {
 					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
 					if (primitiveValue.get()) {
@@ -620,6 +630,7 @@ void CSSView :: Layout(BRect aRect,
 	mRects.clear();
 	if (mDisplay) {
 		mRect = aRect;
+		mRect.left += mMarginLeft;
 		// Enforce the requested width if set
 		if (mRequestedWidth > -1) {
 			mRect.right = mRect.left + mRequestedWidth;

@@ -98,6 +98,7 @@ class CSSView : public BHandler {
 		float mBorderWidth;
 		float mMarginBottom;
 		float mMarginRight;
+		float mMarginLeft;
 		BRect mListStyleRect;
 		string mListStyleType;
 		bool mDisplay;
