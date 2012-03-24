@@ -47,7 +47,8 @@ BlockDisplayView :: BlockDisplayView(CSSRendererView * aBaseView,
 									 int32 aSiteId,
 									 int32 aUrlId,
 									 rgb_color aColor,
-								 	 BFont * aFont)
+								 	 BFont * aFont,
+									 WhiteSpaceType aWhiteSpace)
 				 : CSSView(aBaseView,
 				 		   aNode,
 				 		   aStyleSheets,
@@ -56,7 +57,8 @@ BlockDisplayView :: BlockDisplayView(CSSRendererView * aBaseView,
 				 		   aSiteId,
 				 		   aUrlId,
 				 		   aColor,
-				 		   aFont) {
+				 		   aFont,
+				 		   aWhiteSpace) {
 
 	mDisplay = true;
 	mBlock = true;

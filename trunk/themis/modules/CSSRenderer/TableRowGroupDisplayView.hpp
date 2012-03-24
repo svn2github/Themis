@@ -80,7 +80,8 @@ class TableRowGroupDisplayView : public TableGroupDisplayView {
 			int32 aSiteId,
 			int32 aUrlId,
 			rgb_color aColor,
-			BFont * aFont = NULL);
+			BFont * aFont = NULL,
+			WhiteSpaceType aWhiteSpace = NORMAL);
 		~TableRowGroupDisplayView();
 		virtual void Layout(
 			BRect aRect,

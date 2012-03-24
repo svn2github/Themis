@@ -26,7 +26,8 @@ CODE { display: inline }
 TT { display: inline;
      font-family: monospace}
 PRE { display: inline;
-      font-family: monospace}
+      font-family: monospace;
+      white-space: pre}
 SCRIPT { display: none }
 NOSCRIPT { display: none }
 STYLE { display: none }

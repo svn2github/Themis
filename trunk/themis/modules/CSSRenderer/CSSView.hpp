@@ -68,6 +68,13 @@ class CSSStyleContainer;
 using std::vector;
 using std::string;
 
+enum WhiteSpaceType {
+	NORMAL = 1,
+	PRE,
+	NOWRAP,
+	INHERIT
+};
+
 class CSSView : public BHandler {
 	
 	private:
@@ -87,6 +94,7 @@ class CSSView : public BHandler {
 		string mBorderStyle;
 		int32 mSiteId;
 		int32 mUrlId;
+		WhiteSpaceType mWhiteSpace;
 		
 		void RetrieveLink(bool aVisible = true);
 
@@ -118,7 +126,8 @@ class CSSView : public BHandler {
 				int32 aSiteId,
 				int32 aUrlId,
 				rgb_color aColor,
-				BFont * aFont = NULL);
+				BFont * aFont = NULL,
+				WhiteSpaceType aWhiteSpace = NORMAL);
 		~CSSView();
 		virtual void MouseDown(BPoint aPoint);
 		void Draw();

@@ -79,7 +79,8 @@ class BlockDisplayView : public CSSView {
 						 int32 aSiteId,
 						 int32 aUrlId,
 						 rgb_color aColor,
-						 BFont * aFont = NULL);
+						 BFont * aFont = NULL,
+						 WhiteSpaceType aWhiteSpace = NORMAL);
 		~BlockDisplayView();
 		virtual void Layout(BRect aRect,
 							BPoint aStartingPoint);

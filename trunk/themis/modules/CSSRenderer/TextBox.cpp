@@ -51,13 +51,15 @@ TextBox :: TextBox(unsigned int aStart,
 				   unsigned int aEnd,
 				   float aPixelWidth,
 				   bool aStartWithSpace,
-				   bool aEndWithSpace) {
+				   bool aEndWithSpace,
+				   bool aEmptyBox) {
 
 	mStart = aStart;
 	mEnd = aEnd;
 	mPixelWidth = aPixelWidth;
 	mStartWithSpace = aStartWithSpace;
 	mEndWithSpace = aEndWithSpace;
+	mEmptyBox = aEmptyBox;
 
 }
 
@@ -99,5 +101,11 @@ bool TextBox :: startsWithSpace() const {
 bool TextBox :: endsWithSpace() const {
 	
 	return mEndWithSpace;
+
+}
+
+bool TextBox :: emptyBox() const {
+	
+	return mEmptyBox;
 
 }

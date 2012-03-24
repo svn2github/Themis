@@ -51,6 +51,7 @@ class TextBox {
 		float mPixelWidth;
 		bool mStartWithSpace;
 		bool mEndWithSpace;
+		bool mEmptyBox;
 
 	public:
 		TextBox(unsigned int aStart, unsigned int aEnd, BRect aRect);
@@ -58,7 +59,8 @@ class TextBox {
 				unsigned int aEnd,
 				float aPixelWidth,
 				bool aStartWithSpace = false,
-				bool aEndWithSpace = false);
+				bool aEndWithSpace = false,
+				bool aEmptyBox = false);
 		~TextBox();
 		void getRange(unsigned int & aStart, unsigned int & aEnd);
 		BRect getRect() const;
@@ -66,6 +68,7 @@ class TextBox {
 		float getPixelWidth() const;
 		bool startsWithSpace() const;
 		bool endsWithSpace() const;
+		bool emptyBox() const;
 };
 
 #endif

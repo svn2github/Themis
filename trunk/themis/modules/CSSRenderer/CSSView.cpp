@@ -83,7 +83,8 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 				   int32 aSiteId,
 				   int32 aUrlId,
 				   rgb_color aColor,
-				   BFont * aFont)
+				   BFont * aFont,
+				   WhiteSpaceType aWhiteSpace)
 		: BHandler("CSSView") {
 
 	mBaseView = aBaseView;
@@ -105,6 +106,7 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 	mName = mNode->getNodeName();
 	mRequestedWidth = -1;
 	mRequestedHeight = -1;
+	mWhiteSpace = aWhiteSpace;
 	
 	if (mNode->hasChildNodes()) {
 		TNodeListPtr children = mNode->getChildNodes();
@@ -155,15 +157,17 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 					}
 			//		printf("Display property value: %s\n", valueString.c_str());
 					if (valueString == "inline") {
-						childView = new InlineDisplayView(aBaseView,
-														  child,
-														  mStyleSheets,
-														  style,
-														  mRect,
-														  mSiteId,
-														  mUrlId,
-														  mColor,
-														  mFont);
+						childView = new InlineDisplayView(
+							aBaseView,
+							child,
+							mStyleSheets,
+							style,
+							mRect,
+							mSiteId,
+							mUrlId,
+							mColor,
+							mFont,
+							mWhiteSpace);
 					}
 					else if (valueString == "block") {
 						childView = new BlockDisplayView(
@@ -175,18 +179,21 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 							mSiteId,
 							mUrlId,
 							mColor,
-							mFont);
+							mFont,
+							mWhiteSpace);
 					}
 					else if (valueString == "table") {
-						childView = new TableDisplayView(aBaseView,
-														 child,
-														 mStyleSheets,
-														 style,
-														 mRect,
-														 mSiteId,
-														 mUrlId,
-														 mColor,
-														 mFont);
+						childView = new TableDisplayView(
+							aBaseView,
+							child,
+							mStyleSheets,
+							style,
+							mRect,
+							mSiteId,
+							mUrlId,
+							mColor,
+							mFont,
+							mWhiteSpace);
 					}
 					else if (valueString == "table-row-group") {
 						childView = new TableRowGroupDisplayView(
@@ -198,7 +205,8 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 							mSiteId,
 							mUrlId,
 							mColor,
-							mFont);
+							mFont,
+							mWhiteSpace);
 					}
 					else if (valueString == "table-header-group") {
 						childView = new TableHeaderGroupDisplayView(
@@ -210,7 +218,8 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 							mSiteId,
 							mUrlId,
 							mColor,
-							mFont);
+							mFont,
+							mWhiteSpace);
 					}
 					else if (valueString == "table-footer-group") {
 						childView = new TableFooterGroupDisplayView(
@@ -222,40 +231,47 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 							mSiteId,
 							mUrlId,
 							mColor,
-							mFont);
+							mFont,
+							mWhiteSpace);
 					}
 					else if (valueString == "table-row") {
-						childView = new TableRowDisplayView(aBaseView,
-															child,
-															mStyleSheets,
-															style,
-															mRect,
-															mSiteId,
-															mUrlId,
-															mColor,
-															mFont);
+						childView = new TableRowDisplayView(
+							aBaseView,
+							child,
+							mStyleSheets,
+							style,
+							mRect,
+							mSiteId,
+							mUrlId,
+							mColor,
+							mFont,
+							mWhiteSpace);
 					}
 					else if (valueString == "table-cell") {
-						childView = new TableCellDisplayView(aBaseView,
-															 child,
-															 mStyleSheets,
-															 style,
-															 mRect,
-															 mSiteId,
-															 mUrlId,
-															 mColor,
-															 mFont);
+						childView = new TableCellDisplayView(
+							aBaseView,
+							child,
+							mStyleSheets,
+							style,
+							mRect,
+							mSiteId,
+							mUrlId,
+							mColor,
+							mFont,
+							mWhiteSpace);
 					}
 					else if (valueString == "none") {
-						childView = new NoneDisplayView(aBaseView,
-														child,
-														mStyleSheets,
-														style,
-														mRect,
-														mSiteId,
-														mUrlId,
-														mColor,
-														mFont);
+						childView = new NoneDisplayView(
+							aBaseView,
+							child,
+							mStyleSheets,
+							style,
+							mRect,
+							mSiteId,
+							mUrlId,
+							mColor,
+							mFont,
+							mWhiteSpace);
 					}
 					else {
 						// The default is an inline element
@@ -268,7 +284,8 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 							mSiteId,
 							mUrlId,
 							mColor,
-							mFont);
+							mFont,
+							mWhiteSpace);
 					}
 				}
 				else {
@@ -281,22 +298,25 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 						mSiteId,
 						mUrlId,
 						mColor,
-						mFont);
+						mFont,
+						mWhiteSpace);
 				}
 				mChildren.push_back(childView);
 			}
 			else if (child->getNodeType() == TEXT_NODE) {
 				// Quick fix. Take a look at what would be elegant.
 				CSSStyleDeclarationPtr style;
-				CSSView * childView = new CSSView(aBaseView,
-												  child,
-												  mStyleSheets,
-												  style,
-												  mRect,
-												  mSiteId,
-												  mUrlId,
-												  mColor,
-												  mFont);
+				CSSView * childView = new CSSView(
+					aBaseView,
+					child,
+					mStyleSheets,
+					style,
+					mRect,
+					mSiteId,
+					mUrlId,
+					mColor,
+					mFont,
+					mWhiteSpace);
 				mChildren.push_back(childView);
 			}
 		}
@@ -509,6 +529,15 @@ void CSSView :: ApplyStyle(const TElementPtr aElement,
 						}
 					}
 				}
+				else if (propertyName == "white-space") {
+					CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
+					if (primitiveValue.get()) {
+						TDOMString valueString = primitiveValue->getStringValue();
+						if (valueString == "pre") {
+							mWhiteSpace = PRE;
+						}
+					}
+				}
 			}
 		}
 	}
@@ -552,11 +581,14 @@ void CSSView :: Draw() {
 				unsigned int start = 0;
 				unsigned int end = 0;
 				box.getRange(start, end);
-				BRect rect = box.getRect();
-				//printf("Drawing string: %s for %u at %f and %f\n", (text.c_str()) + start, end - start + 1, rect.left, rect.top + mLineHeight - mBottomMargin);
-				drawPoint.Set(rect.left, rect.top + mLineHeight - mBottomMargin);
-				mBaseView->SetFont(mFont);
-				mBaseView->DrawString((text.c_str()) + start, end - start + 1, drawPoint);
+				// Draw the string, but only when there is something to draw.
+				if (!box.emptyBox()) {
+					BRect rect = box.getRect();
+					//printf("Drawing string: %s for %u at %f and %f\n", (text.c_str()) + start, end - start + 1, rect.left, rect.top + mLineHeight - mBottomMargin);
+					drawPoint.Set(rect.left, rect.top + mLineHeight - mBottomMargin);
+					mBaseView->SetFont(mFont);
+					mBaseView->DrawString((text.c_str()) + start, end - start + 1, drawPoint);
+				}
 			}
 		}
 		else if (mListStyleType == "square") {
@@ -688,7 +720,7 @@ void CSSView :: Layout(BRect aRect,
 					boxWidth += mSpaceWidth;
 				}
 				//printf("Linewidth: %f, boxwidth: %f, viewWidth: %f\n", lineWidth, boxWidth, viewWidth);
-				if (lineWidth + boxWidth > viewWidth) {
+				if ((lineWidth + boxWidth > viewWidth) || mWhiteSpace == PRE) {
 					// TextBox doesn't fit on the current line.
 					// Store the current container rect if needed
 					if (containerRect.right != containerRect.left) {
@@ -840,42 +872,71 @@ void CSSView :: Layout(BRect aRect,
 
 void CSSView :: SplitText() {
 	
-	// Split the text into words
 	TDOMString text = mNode->getNodeValue();
 	const char * textPointer = text.c_str();
 	unsigned int length = text.size();
 	unsigned int start = 0;
 	unsigned int end = 0;
 	bool textFound = false;
-	bool spaceFound = false;
 	char c = '\0';
 	float pixelWidth = 0;
-	for (unsigned int i = 0; i < length; i++) {
-		c = text[i];
-		if ((isspace(c) || iscntrl(c))) {
-			if (textFound) {
+
+	if (mWhiteSpace == PRE) {
+		// Only split the text at a linebreak
+		for (unsigned int i = 0; i < length; i++) {
+			c = text[i];
+			if (c == '\n') {
 				pixelWidth = mFont->StringWidth(textPointer + start, end - start + 1);
-				TextBox box = TextBox(start, end, pixelWidth, spaceFound, true);
+				TextBox box = TextBox(start, end, pixelWidth, false, false, !textFound);
 				mTextBoxes.push_back(box);
 				textFound = false;
-			}
-			spaceFound = true;
-			start = i;
-			end = i;
-		}
-		else {
-			if (!textFound) {
 				start = i;
-				textFound = true;
 			}
-			end = i;
+			else {
+				if (!textFound) {
+					start = i;
+					textFound = true;
+				}
+				end = i;
+			}
+		}
+
+		if (textFound) {
+			pixelWidth = mFont->StringWidth(textPointer + start, end - start + 1);
+			TextBox box = TextBox(start, end, pixelWidth, false, false);
+			mTextBoxes.push_back(box);
 		}
 	}
+	else {
+		// Split the text into words
+		bool spaceFound = false;
+		for (unsigned int i = 0; i < length; i++) {
+			c = text[i];
+			if ((isspace(c) || iscntrl(c))) {
+				if (textFound) {
+					pixelWidth = mFont->StringWidth(textPointer + start, end - start + 1);
+					TextBox box = TextBox(start, end, pixelWidth, spaceFound, true);
+					mTextBoxes.push_back(box);
+					textFound = false;
+				}
+				spaceFound = true;
+				start = i;
+				end = i;
+			}
+			else {
+				if (!textFound) {
+					start = i;
+					textFound = true;
+				}
+				end = i;
+			}
+		}
 	
-	if (textFound) {
-		pixelWidth = mFont->StringWidth(textPointer + start, end - start + 1);
-		TextBox box = TextBox(start, end, pixelWidth, spaceFound);
-		mTextBoxes.push_back(box);
+		if (textFound) {
+			pixelWidth = mFont->StringWidth(textPointer + start, end - start + 1);
+			TextBox box = TextBox(start, end, pixelWidth, spaceFound);
+			mTextBoxes.push_back(box);
+		}
 	}
 
 }

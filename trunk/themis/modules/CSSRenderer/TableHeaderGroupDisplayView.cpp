@@ -48,7 +48,8 @@ TableHeaderGroupDisplayView :: TableHeaderGroupDisplayView(
 	int32 aSiteId,
 	int32 aUrlId,
 	rgb_color aColor,
-	BFont * aFont)
+	BFont * aFont,
+	WhiteSpaceType aWhiteSpace)
 	: TableGroupDisplayView(
 		aBaseView,
 		aNode,
@@ -58,7 +59,8 @@ TableHeaderGroupDisplayView :: TableHeaderGroupDisplayView(
 		aSiteId,
 		aUrlId,
 		aColor,
-		aFont) {
+		aFont,
+		aWhiteSpace) {
 
 	mDisplay = true;
 	mBlock = false;
