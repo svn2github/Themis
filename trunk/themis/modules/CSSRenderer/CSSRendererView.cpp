@@ -188,6 +188,7 @@ void CSSRendererView :: AttachedToWindow() {
 	Window()->SetTitle(title.c_str());
 	SetViewColor(B_TRANSPARENT_COLOR);
 	if (mView) {
+		mView->AttachedToWindow();
 		mView->RetrieveResources();
 	}
 

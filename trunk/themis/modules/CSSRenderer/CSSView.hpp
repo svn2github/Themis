@@ -78,17 +78,12 @@ enum WhiteSpaceType {
 class CSSView : public BHandler {
 	
 	private:
-		TNodePtr mNode;
 		CSSStyleContainer * mStyleSheets;
-		CSSRendererView * mBaseView;
 		vector<TextBox> mTextBoxes;
 		float mLineHeight;
 		float mBottomMargin;
 		float mSpaceWidth;
-		BFont * mFont;
-		bool mInheritedFont;
 		bool mClickable;
-		string mHref;
 		string mName;
 		rgb_color mColor;
 		string mBorderStyle;
@@ -96,9 +91,11 @@ class CSSView : public BHandler {
 		int32 mUrlId;
 		WhiteSpaceType mWhiteSpace;
 		
-		void RetrieveLink(bool aVisible = true);
-
 	protected:
+		TNodePtr mNode;
+		CSSRendererView * mBaseView;
+		BFont * mFont;
+		bool mInheritedFont;
 		vector<CSSView *> mChildren;
 		vector<BRect> mRects;
 		BRect mRect;
@@ -113,7 +110,22 @@ class CSSView : public BHandler {
 		bool mBlock;
 		float mRequestedWidth;
 		float mRequestedHeight;
+		string mHref;
+		BHandler * mForm;
 
+		void RetrieveLink(bool aVisible = true);
+		void CreateChildren(
+			CSSRendererView * aBaseView,
+			TNodePtr aNode,
+			CSSStyleContainer * aStyleSheets,
+			CSSStyleDeclarationPtr aStyle,
+			BRect aRect,
+			int32 aSiteId,
+			int32 aUrlId,
+			rgb_color aColor,
+			BFont * aFont = NULL,
+			WhiteSpaceType aWhiteSpace = NORMAL,
+			BHandler * aForm = NULL);
 		void ApplyStyle(const TElementPtr aElement,
 						const CSSStyleDeclarationPtr aStyle);
 	
@@ -127,7 +139,8 @@ class CSSView : public BHandler {
 				int32 aUrlId,
 				rgb_color aColor,
 				BFont * aFont = NULL,
-				WhiteSpaceType aWhiteSpace = NORMAL);
+				WhiteSpaceType aWhiteSpace = NORMAL,
+				BHandler * aForm = NULL);
 		~CSSView();
 		virtual void MouseDown(BPoint aPoint);
 		void Draw();
@@ -137,8 +150,10 @@ class CSSView : public BHandler {
 		bool IsClickable();
 		BRect Bounds();
 		BPoint GetEndPoint();
-		virtual void Layout(BRect aRect,
-							BPoint aStartingPoint);
+		virtual void Layout(
+			BRect aRect,
+			BPoint aStartingPoint);
+		virtual void AttachedToWindow();
 		void SplitText();
 		void RetrieveResources();
 		void SetWidth(float aWidth);

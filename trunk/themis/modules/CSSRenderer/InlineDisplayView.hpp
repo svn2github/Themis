@@ -80,7 +80,8 @@ class InlineDisplayView : public CSSView {
 						 int32 aUrlId,
 						 rgb_color aColor,
 						 BFont * aFont = NULL,
-						 WhiteSpaceType aWhiteSpace = NORMAL);
+						 WhiteSpaceType aWhiteSpace = NORMAL,
+						 BHandler * aForm = NULL);
 		~InlineDisplayView();
 		virtual void Layout(BRect aRect,
 							BPoint aStartingPoint);

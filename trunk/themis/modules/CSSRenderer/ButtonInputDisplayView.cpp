@@ -25,21 +25,31 @@
 	
 	Original Author: 	Mark Hellegers (mark@firedisk.net)
 	Project Start Date: October 18, 2000
-	Class Start Date: Februari 25, 2012
+	Class Start Date: March 24, 2012
 */
 
-/*	TableHeaderGroupDisplayView implementation
-	See TableHeaderGroupDisplayView.hpp for more information
+/*	ButtonInputDisplayView implementation
+	See ButtonInputDisplayView.hpp for more information
 	
 */
 
 // Standard C headers
 #include <stdio.h>
 
-// CSS Renderer headers
-#include "TableHeaderGroupDisplayView.hpp"
+// BeOS headers
+#include <Button.h>
+#include <Window.h>
 
-TableHeaderGroupDisplayView :: TableHeaderGroupDisplayView(
+// DOM headers
+#include "TNode.h"
+#include "TElement.h"
+
+// CSS Renderer headers
+#include "ButtonInputDisplayView.hpp"
+#include "CSSRendererView.hpp"
+#include "FormDisplayView.hpp"
+
+ButtonInputDisplayView :: ButtonInputDisplayView(
 	CSSRendererView * aBaseView,
 	TNodePtr aNode,
 	CSSStyleContainer * aStyleSheets,
@@ -51,7 +61,7 @@ TableHeaderGroupDisplayView :: TableHeaderGroupDisplayView(
 	BFont * aFont,
 	WhiteSpaceType aWhiteSpace,
 	BHandler * aForm)
-	: TableGroupDisplayView(
+	: CSSView(
 		aBaseView,
 		aNode,
 		aStyleSheets,
@@ -66,6 +76,7 @@ TableHeaderGroupDisplayView :: TableHeaderGroupDisplayView(
 
 	mDisplay = true;
 	mBlock = false;
+	mButton = NULL;
 
 	CreateChildren(
 		aBaseView,
@@ -82,14 +93,52 @@ TableHeaderGroupDisplayView :: TableHeaderGroupDisplayView(
 
 }
 
-TableHeaderGroupDisplayView :: ~TableHeaderGroupDisplayView() {
+ButtonInputDisplayView :: ~ButtonInputDisplayView() {
+
+	delete mButton;
 
 }
 
-void TableHeaderGroupDisplayView :: Layout(
+void ButtonInputDisplayView :: Layout(
 	BRect aRect,
 	BPoint aStartingPoint) {
 
-	TableGroupDisplayView::Layout(aRect, aStartingPoint);
+	if (mButton) {
+		mButton->MoveTo(aStartingPoint);
+	}
+	else {
+		TElementPtr element = shared_static_cast<TElement>(mNode);
+		string buttonLabel = "";
+		if (element->hasAttribute("VALUE")) {
+			buttonLabel = element->getAttribute("VALUE");
+		}
+		string buttonName = "";
+		if (element->hasAttribute("NAME")) {
+			buttonName = element->getAttribute("NAME");
+		}
+		
+		BPoint rightBottom(aStartingPoint.x, aStartingPoint.y);
+		BRect buttonRect(aStartingPoint, rightBottom);
+		BMessage * message = new BMessage(INPUT_BUTTON_CLICKED);
+		message->AddString("name", buttonName.c_str());
+		message->AddString("value", buttonLabel.c_str());
+		mButton =
+			new BButton(
+				buttonRect,
+				"ThemisButton",
+				buttonLabel.c_str(),
+				message);
+		mButton->ResizeToPreferred();
+		mRect = mButton->Frame();
+		mEndPoint = mRect.RightTop();
+		mBaseView->AddChild(mButton);
+	}
+
+}
+
+void ButtonInputDisplayView :: AttachedToWindow() {
+
+	CSSView::AttachedToWindow();
+	mButton->SetTarget(mForm);
 
 }

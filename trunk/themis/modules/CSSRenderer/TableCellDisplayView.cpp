@@ -48,7 +48,8 @@ TableCellDisplayView :: TableCellDisplayView(CSSRendererView * aBaseView,
 											 int32 aUrlId,
 											 rgb_color aColor,
 								 			 BFont * aFont,
-											 WhiteSpaceType aWhiteSpace)
+											 WhiteSpaceType aWhiteSpace,
+											 BHandler * aForm)
 				 	  : CSSView(aBaseView,
 				 				aNode,
 					 			aStyleSheets,
@@ -58,11 +59,25 @@ TableCellDisplayView :: TableCellDisplayView(CSSRendererView * aBaseView,
 				 				aUrlId,
 				 				aColor,
 				 				aFont,
-				 				aWhiteSpace) {
+				 				aWhiteSpace,
+				 				aForm) {
 
 	mDisplay = true;
 	mBlock = false;
 	mRequestedWidth = -1;
+
+	CreateChildren(
+		aBaseView,
+		aNode,
+		aStyleSheets,
+		aStyle,
+		aRect,
+		aSiteId,
+		aUrlId,
+		aColor,
+		aFont,
+		aWhiteSpace,
+		aForm);
 
 }
 

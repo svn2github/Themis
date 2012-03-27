@@ -25,21 +25,31 @@
 	
 	Original Author: 	Mark Hellegers (mark@firedisk.net)
 	Project Start Date: October 18, 2000
-	Class Start Date: Februari 25, 2012
+	Class Start Date: March 25, 2012
 */
 
-/*	TableHeaderGroupDisplayView implementation
-	See TableHeaderGroupDisplayView.hpp for more information
+/*	FormDisplayView implementation
+	See FormDisplayView.hpp for more information
 	
 */
 
 // Standard C headers
 #include <stdio.h>
 
-// CSS Renderer headers
-#include "TableHeaderGroupDisplayView.hpp"
+// BeOS headers
+#include <Message.h>
+#include <String.h>
 
-TableHeaderGroupDisplayView :: TableHeaderGroupDisplayView(
+// DOM headers
+#include "TNode.h"
+#include "TElement.h"
+
+// CSS Renderer headers
+#include "FormDisplayView.hpp"
+#include "CSSRendererView.hpp"
+#include "InputDisplayView.hpp"
+
+FormDisplayView :: FormDisplayView(
 	CSSRendererView * aBaseView,
 	TNodePtr aNode,
 	CSSStyleContainer * aStyleSheets,
@@ -51,7 +61,7 @@ TableHeaderGroupDisplayView :: TableHeaderGroupDisplayView(
 	BFont * aFont,
 	WhiteSpaceType aWhiteSpace,
 	BHandler * aForm)
-	: TableGroupDisplayView(
+	: CSSView(
 		aBaseView,
 		aNode,
 		aStyleSheets,
@@ -62,7 +72,7 @@ TableHeaderGroupDisplayView :: TableHeaderGroupDisplayView(
 		aColor,
 		aFont,
 		aWhiteSpace,
-		aForm) {
+		this) {
 
 	mDisplay = true;
 	mBlock = false;
@@ -82,14 +92,60 @@ TableHeaderGroupDisplayView :: TableHeaderGroupDisplayView(
 
 }
 
-TableHeaderGroupDisplayView :: ~TableHeaderGroupDisplayView() {
+FormDisplayView :: ~FormDisplayView() {
 
 }
 
-void TableHeaderGroupDisplayView :: Layout(
+void FormDisplayView :: MessageReceived(BMessage * aMessage) {
+
+	switch(aMessage->what) {
+		case INPUT_BUTTON_CLICKED: {
+			aMessage->PrintToStream();
+			BString formAction = "";
+			TElementPtr element = shared_static_cast<TElement>(mNode);
+			if (element->hasAttribute("ACTION")) {
+				formAction = element->getAttribute("ACTION").c_str();
+				BString name = "";
+				BString value = "";
+				aMessage->FindString("name", &name);
+				aMessage->FindString("value", &value);
+				name.ReplaceAll(" ", "+");
+				value.ReplaceAll(" ", "+");
+				formAction += "?";
+				formAction += name;
+				formAction += "=";
+				formAction += value;
+				unsigned int length = mInputChildren.size();
+				for (unsigned int i = 0; i < length; i++) {
+					formAction += "&";
+					formAction += mInputChildren[i]->GetName().c_str();
+					formAction += "=";
+					formAction += mInputChildren[i]->GetValue().c_str();
+				}
+				printf("URL: %s\n", formAction.String());
+				mHref = formAction.String();
+				RetrieveLink();
+				
+			}
+			break;
+		}
+		default: {
+			CSSView::MessageReceived(aMessage);
+		}
+	}
+	
+}
+
+void FormDisplayView :: Layout(
 	BRect aRect,
 	BPoint aStartingPoint) {
 
-	TableGroupDisplayView::Layout(aRect, aStartingPoint);
+	CSSView::Layout(aRect, aStartingPoint);
 
+}
+
+void FormDisplayView :: AddInputChild(InputDisplayView * aView) {
+	
+	mInputChildren.push_back(aView);
+	
 }

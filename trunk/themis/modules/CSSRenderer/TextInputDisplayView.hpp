@@ -25,19 +25,19 @@
 	
 	Original Author: 	Mark Hellegers (mark@firedisk.net)
 	Project Start Date: October 18, 2000
-	Class Start Date: Februari 23, 2012
+	Class Start Date: March 25, 2012
 */
 
-/*	TableCellDisplayView
-	Renders css table-cell display elements
+/*	TextInputDisplayView
+	Renders text input elements
 	
 	Mark Hellegers (mark@firedisk.net)
-	23-02-2012
+	25-03-2012
 	
 */
 
-#ifndef TABLECELLDISPLAYVIEW_HPP
-#define TABLECELLDISPLAYVIEW_HPP
+#ifndef TEXTINPUTDISPLAYVIEW_HPP
+#define TEXTINPUTDISPLAYVIEW_HPP
 
 // Standard C++ headers
 #include <vector>
@@ -56,35 +56,42 @@
 #include "CSSStyleDeclaration.hpp"
 
 // CSSRenderer headers
-#include "CSSView.hpp"
+#include "InputDisplayView.hpp"
 #include "TextBox.hpp"
 
 // Declarations used
 class BFont;
 class CSSRendererView;
 class CSSStyleContainer;
+class BTextControl;
 
 // Namespaces used
 using std::vector;
 using std::string;
 
-class TableCellDisplayView : public CSSView {
+class TextInputDisplayView : public InputDisplayView {
+
+	private:
+		BTextControl * mTextInput;
 	
 	public:
-		TableCellDisplayView(CSSRendererView * aBaseView,
-							 TNodePtr aNode,
-							 CSSStyleContainer * aStyleSheets,
-							 CSSStyleDeclarationPtr aStyle,
-							 BRect aRect,
-							 int32 aSiteId,
-							 int32 aUrlId,
-							 rgb_color aColor,
-							 BFont * aFont = NULL,
-							 WhiteSpaceType aWhiteSpace = NORMAL,
-							 BHandler * aForm = NULL);
-		~TableCellDisplayView();
-		virtual void Layout(BRect aRect,
-							BPoint aStartingPoint);
+		TextInputDisplayView(
+			CSSRendererView * aBaseView,
+			TNodePtr aNode,
+			CSSStyleContainer * aStyleSheets,
+			CSSStyleDeclarationPtr aStyle,
+			BRect aRect,
+			int32 aSiteId,
+			int32 aUrlId,
+			rgb_color aColor,
+			BFont * aFont = NULL,
+			WhiteSpaceType aWhiteSpace = NORMAL,
+			BHandler * aForm = NULL);
+		~TextInputDisplayView();
+		virtual void Layout(
+			BRect aRect,
+			BPoint aStartingPoint);
+		virtual string GetValue() const;
 };
 
 #endif

@@ -25,19 +25,19 @@
 	
 	Original Author: 	Mark Hellegers (mark@firedisk.net)
 	Project Start Date: October 18, 2000
-	Class Start Date: Februari 23, 2012
+	Class Start Date: March 25, 2012
 */
 
-/*	TableCellDisplayView
-	Renders css table-cell display elements
+/*	ButtonDisplayView
+	Renders button elements
 	
 	Mark Hellegers (mark@firedisk.net)
-	23-02-2012
+	25-03-2012
 	
 */
 
-#ifndef TABLECELLDISPLAYVIEW_HPP
-#define TABLECELLDISPLAYVIEW_HPP
+#ifndef FORMDISPLAYVIEW_HPP
+#define FORMDISPLAYVIEW_HPP
 
 // Standard C++ headers
 #include <vector>
@@ -63,28 +63,40 @@
 class BFont;
 class CSSRendererView;
 class CSSStyleContainer;
+class InputDisplayView;
 
 // Namespaces used
 using std::vector;
 using std::string;
 
-class TableCellDisplayView : public CSSView {
-	
+// Constants used
+#define INPUT_BUTTON_CLICKED 'ibcl'
+
+class FormDisplayView : public CSSView {
+
+	private:
+		vector<InputDisplayView *> mInputChildren;
+
 	public:
-		TableCellDisplayView(CSSRendererView * aBaseView,
-							 TNodePtr aNode,
-							 CSSStyleContainer * aStyleSheets,
-							 CSSStyleDeclarationPtr aStyle,
-							 BRect aRect,
-							 int32 aSiteId,
-							 int32 aUrlId,
-							 rgb_color aColor,
-							 BFont * aFont = NULL,
-							 WhiteSpaceType aWhiteSpace = NORMAL,
-							 BHandler * aForm = NULL);
-		~TableCellDisplayView();
-		virtual void Layout(BRect aRect,
-							BPoint aStartingPoint);
+		FormDisplayView(
+			CSSRendererView * aBaseView,
+			TNodePtr aNode,
+			CSSStyleContainer * aStyleSheets,
+			CSSStyleDeclarationPtr aStyle,
+			BRect aRect,
+			int32 aSiteId,
+			int32 aUrlId,
+			rgb_color aColor,
+			BFont * aFont = NULL,
+			WhiteSpaceType aWhiteSpace = NORMAL,
+			BHandler * aForm = NULL);
+		~FormDisplayView();
+		virtual void MessageReceived(BMessage * aMessage);
+			
+		virtual void Layout(
+			BRect aRect,
+			BPoint aStartingPoint);
+		void AddInputChild(InputDisplayView * aView);
 };
 
 #endif

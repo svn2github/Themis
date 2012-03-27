@@ -25,66 +25,73 @@
 	
 	Original Author: 	Mark Hellegers (mark@firedisk.net)
 	Project Start Date: October 18, 2000
-	Class Start Date: Februari 23, 2012
+	Class Start Date: March 27, 2012
 */
 
-/*	TableCellDisplayView
-	Renders css table-cell display elements
-	
-	Mark Hellegers (mark@firedisk.net)
-	23-02-2012
+/*	InputDisplayView implementation
+	See InputDisplayView.hpp for more information
 	
 */
 
-#ifndef TABLECELLDISPLAYVIEW_HPP
-#define TABLECELLDISPLAYVIEW_HPP
-
-// Standard C++ headers
-#include <vector>
-#include <string>
-
-// BeOS headers
-#include <Handler.h>
-#include <Rect.h>
-#include <Point.h>
+// Standard C headers
+#include <stdio.h>
 
 // DOM headers
-#include "DOMSupport.h"
+#include "TNode.h"
+#include "TElement.h"
 
-// DOM Style headers
-#include "CSSStyleSheet.hpp"
-#include "CSSStyleDeclaration.hpp"
+// CSS Renderer headers
+#include "InputDisplayView.hpp"
+#include "CSSRendererView.hpp"
+#include "FormDisplayView.hpp"
 
-// CSSRenderer headers
-#include "CSSView.hpp"
-#include "TextBox.hpp"
+InputDisplayView :: InputDisplayView(
+	CSSRendererView * aBaseView,
+	TNodePtr aNode,
+	CSSStyleContainer * aStyleSheets,
+	CSSStyleDeclarationPtr aStyle,
+	BRect aRect,
+	int32 aSiteId,
+	int32 aUrlId,
+	rgb_color aColor,
+	BFont * aFont,
+	WhiteSpaceType aWhiteSpace,
+	BHandler * aForm)
+	: CSSView(
+		aBaseView,
+		aNode,
+		aStyleSheets,
+		aStyle,
+		aRect,
+		aSiteId,
+		aUrlId,
+		aColor,
+		aFont,
+		aWhiteSpace,
+		aForm) {
 
-// Declarations used
-class BFont;
-class CSSRendererView;
-class CSSStyleContainer;
+}
 
-// Namespaces used
-using std::vector;
-using std::string;
+InputDisplayView :: ~InputDisplayView() {
 
-class TableCellDisplayView : public CSSView {
+}
+
+void InputDisplayView :: Layout(
+	BRect aRect,
+	BPoint aStartingPoint) {
+
+	CSSView::Layout(aRect, aStartingPoint);
+
+}
+
+string InputDisplayView :: GetName() const {
 	
-	public:
-		TableCellDisplayView(CSSRendererView * aBaseView,
-							 TNodePtr aNode,
-							 CSSStyleContainer * aStyleSheets,
-							 CSSStyleDeclarationPtr aStyle,
-							 BRect aRect,
-							 int32 aSiteId,
-							 int32 aUrlId,
-							 rgb_color aColor,
-							 BFont * aFont = NULL,
-							 WhiteSpaceType aWhiteSpace = NORMAL,
-							 BHandler * aForm = NULL);
-		~TableCellDisplayView();
-		virtual void Layout(BRect aRect,
-							BPoint aStartingPoint);
-};
+	return mInputName;
+	
+}
 
-#endif
+string InputDisplayView :: GetValue() const {
+	
+	return "";
+	
+}

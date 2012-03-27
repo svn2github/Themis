@@ -85,7 +85,8 @@ class TableDisplayView : public CSSView {
 						 int32 aUrlId,
 						 rgb_color aColor,
 						 BFont * aFont = NULL,
-						 WhiteSpaceType aWhiteSpace = NORMAL);
+						 WhiteSpaceType aWhiteSpace = NORMAL,
+						 BHandler * aForm = NULL);
 		~TableDisplayView();
 		virtual void Layout(
 			BRect aRect,

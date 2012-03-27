@@ -49,7 +49,8 @@ TableFooterGroupDisplayView :: TableFooterGroupDisplayView(
 	int32 aUrlId,
 	rgb_color aColor,
 	BFont * aFont,
-	WhiteSpaceType aWhiteSpace)
+	WhiteSpaceType aWhiteSpace,
+	BHandler * aForm)
 	: TableGroupDisplayView(
 		aBaseView,
 		aNode,
@@ -60,10 +61,24 @@ TableFooterGroupDisplayView :: TableFooterGroupDisplayView(
 		aUrlId,
 		aColor,
 		aFont,
-		aWhiteSpace) {
+		aWhiteSpace,
+		aForm) {
 
 	mDisplay = true;
 	mBlock = false;
+
+	CreateChildren(
+		aBaseView,
+		aNode,
+		aStyleSheets,
+		aStyle,
+		aRect,
+		aSiteId,
+		aUrlId,
+		aColor,
+		aFont,
+		aWhiteSpace,
+		aForm);
 
 }
 

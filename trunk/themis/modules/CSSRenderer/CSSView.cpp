@@ -71,6 +71,10 @@
 #include "TableRowDisplayView.hpp"
 #include "TableCellDisplayView.hpp"
 #include "NoneDisplayView.hpp"
+#include "ButtonInputDisplayView.hpp"
+#include "TextInputDisplayView.hpp"
+#include "FormDisplayView.hpp"
+#include "HiddenInputDisplayView.hpp"
 
 // Constants used
 const char cSpace = ' ';
@@ -84,7 +88,8 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 				   int32 aUrlId,
 				   rgb_color aColor,
 				   BFont * aFont,
-				   WhiteSpaceType aWhiteSpace)
+				   WhiteSpaceType aWhiteSpace,
+				   BHandler * aForm)
 		: BHandler("CSSView") {
 
 	mBaseView = aBaseView;
@@ -107,219 +112,24 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 	mRequestedWidth = -1;
 	mRequestedHeight = -1;
 	mWhiteSpace = aWhiteSpace;
-	
-	if (mNode->hasChildNodes()) {
-		TNodeListPtr children = mNode->getChildNodes();
-		unsigned int length = children->getLength();
-     	if ((mNode->getNodeType() == ELEMENT_NODE) &&
-			(mNode->getNodeName() == "TITLE") &&
-			(length > 0)) {
-			printf("Found TITLE node\n");
-			TNodePtr textChild = children->item(0);
-			TDOMString titleText = textChild->getNodeValue();
-			TDOMString strippedTitle = "";
-			unsigned int titleLength = titleText.size();
-			for (unsigned int i = 0; i < titleLength; i++) {
-				if (!iscntrl(titleText[i])) {
-					strippedTitle += titleText[i];
-				}
-			}
-			if (strippedTitle != "") {
-				printf("Setting title of window to: %s\n", strippedTitle.c_str());
-				aBaseView->SetTitle(strippedTitle);
-			}
-		}
-		else if (mNode->getNodeType() == ELEMENT_NODE) {
-			TElementPtr element = shared_static_cast<TElement>(mNode);
-			if (mName == "A") {
-				// Only A can have a href for a hyperlink, so it is hardcoded here.
-				if (element->hasAttribute("HREF")) {
-					mHref = element->getAttribute("HREF");
-					mClickable = true;
-				}
-			}
-			ApplyStyle(element, aStyle);
-		}
+	mForm = aForm;
 
-		for (unsigned int i = 0; i < length; i++) {
-			TNodePtr child = children->item(i);
-			if (child->getNodeType() == ELEMENT_NODE) {
-				CSSView * childView = NULL;
-				TElementPtr element = shared_static_cast<TElement>(child);
-				CSSStyleDeclarationPtr style = mStyleSheets->getComputedStyle(element);
-				if (style.get()) {
-					CSSValuePtr value = style->getPropertyCSSValue("display");
-					// Default to inline in case it doesn't exist.
-					TDOMString valueString = "inline";
-					if (value.get()) {
-						CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
-						valueString = primitiveValue->getStringValue();
-					}
-			//		printf("Display property value: %s\n", valueString.c_str());
-					if (valueString == "inline") {
-						childView = new InlineDisplayView(
-							aBaseView,
-							child,
-							mStyleSheets,
-							style,
-							mRect,
-							mSiteId,
-							mUrlId,
-							mColor,
-							mFont,
-							mWhiteSpace);
-					}
-					else if (valueString == "block") {
-						childView = new BlockDisplayView(
-							aBaseView,
-							child,
-							mStyleSheets,
-							style,
-							mRect,
-							mSiteId,
-							mUrlId,
-							mColor,
-							mFont,
-							mWhiteSpace);
-					}
-					else if (valueString == "table") {
-						childView = new TableDisplayView(
-							aBaseView,
-							child,
-							mStyleSheets,
-							style,
-							mRect,
-							mSiteId,
-							mUrlId,
-							mColor,
-							mFont,
-							mWhiteSpace);
-					}
-					else if (valueString == "table-row-group") {
-						childView = new TableRowGroupDisplayView(
-							aBaseView,
-							child,
-							mStyleSheets,
-							style,
-							mRect,
-							mSiteId,
-							mUrlId,
-							mColor,
-							mFont,
-							mWhiteSpace);
-					}
-					else if (valueString == "table-header-group") {
-						childView = new TableHeaderGroupDisplayView(
-							aBaseView,
-							child,
-							mStyleSheets,
-							style,
-							mRect,
-							mSiteId,
-							mUrlId,
-							mColor,
-							mFont,
-							mWhiteSpace);
-					}
-					else if (valueString == "table-footer-group") {
-						childView = new TableFooterGroupDisplayView(
-							aBaseView,
-							child,
-							mStyleSheets,
-							style,
-							mRect,
-							mSiteId,
-							mUrlId,
-							mColor,
-							mFont,
-							mWhiteSpace);
-					}
-					else if (valueString == "table-row") {
-						childView = new TableRowDisplayView(
-							aBaseView,
-							child,
-							mStyleSheets,
-							style,
-							mRect,
-							mSiteId,
-							mUrlId,
-							mColor,
-							mFont,
-							mWhiteSpace);
-					}
-					else if (valueString == "table-cell") {
-						childView = new TableCellDisplayView(
-							aBaseView,
-							child,
-							mStyleSheets,
-							style,
-							mRect,
-							mSiteId,
-							mUrlId,
-							mColor,
-							mFont,
-							mWhiteSpace);
-					}
-					else if (valueString == "none") {
-						childView = new NoneDisplayView(
-							aBaseView,
-							child,
-							mStyleSheets,
-							style,
-							mRect,
-							mSiteId,
-							mUrlId,
-							mColor,
-							mFont,
-							mWhiteSpace);
-					}
-					else {
-						// The default is an inline element
-						printf("Currently unsupported display type: %s. Defaulting to inline...\n", valueString.c_str());
-						childView = new InlineDisplayView(aBaseView,
-							child,
-							mStyleSheets,
-							style,
-							mRect,
-							mSiteId,
-							mUrlId,
-							mColor,
-							mFont,
-							mWhiteSpace);
-					}
-				}
-				else {
-					printf("No style specified for %s. Defaulting to inline...\n", element->getTagName().c_str());
-					childView = new InlineDisplayView(aBaseView,
-						child,
-						mStyleSheets,
-						style,
-						mRect,
-						mSiteId,
-						mUrlId,
-						mColor,
-						mFont,
-						mWhiteSpace);
-				}
-				mChildren.push_back(childView);
-			}
-			else if (child->getNodeType() == TEXT_NODE) {
-				// Quick fix. Take a look at what would be elegant.
-				CSSStyleDeclarationPtr style;
-				CSSView * childView = new CSSView(
-					aBaseView,
-					child,
-					mStyleSheets,
-					style,
-					mRect,
-					mSiteId,
-					mUrlId,
-					mColor,
-					mFont,
-					mWhiteSpace);
-				mChildren.push_back(childView);
+	if (mNode->getNodeType() == ELEMENT_NODE) {
+		TElementPtr element = shared_static_cast<TElement>(mNode);
+		if (mName == "A") {
+			// Only A can have a href for a hyperlink, so it is hardcoded here.
+			if (element->hasAttribute("HREF")) {
+				mHref = element->getAttribute("HREF");
+				mClickable = true;
 			}
 		}
+		else if (mName == "IMG") {
+			// Images have the image source in the src attribute.
+			if (element->hasAttribute("SRC")) {
+				mHref = element->getAttribute("SRC");
+			}
+		}
+		ApplyStyle(element, aStyle);
 	}
 	else if (mNode->getNodeType() == TEXT_NODE) {
 		if (mFont == NULL) {
@@ -335,16 +145,7 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 		mDisplay = true;
 		SplitText();
 	}
-	else if (mNode->getNodeType() == ELEMENT_NODE) {
-		TElementPtr element = shared_static_cast<TElement>(mNode);
-		if (mName == "IMG") {
-			// Images have the image source in the src attribute.
-			if (element->hasAttribute("SRC")) {
-				mHref = element->getAttribute("SRC");
-			}
-		}
-	}
-
+	
 }
 
 CSSView :: ~CSSView() {
@@ -364,12 +165,14 @@ CSSView :: ~CSSView() {
 
 void CSSView :: RetrieveLink(bool aVisible) {
 
+	// FIXME. Look at http://en.wikipedia.org/wiki/URI_scheme for the general syntax.
+	// This is not taken into account with the code below.
 	if (mHref.size() > 0) {
 		// Send a message to the window.
 		// The window will do all the actual work of requesting a new page.
 		string urlString = "";
 		unsigned int position = mHref.find("://");
-		if (position == string::npos) {
+		if (position == string::npos || mHref[0] == '/') {
 			urlString = mBaseView->GetDocumentURI();
 			if (mHref[0] == '/') {
 				// Get past the :// in the base uri, so we can find the right /
@@ -399,6 +202,316 @@ void CSSView :: RetrieveLink(bool aVisible) {
 		message.AddBool("visible", aVisible);
 		BMessenger messenger(NULL, mBaseView->Window());
 		messenger.SendMessage(&message);
+	}
+
+}
+
+void CSSView :: CreateChildren(
+	CSSRendererView * aBaseView,
+	TNodePtr aNode,
+	CSSStyleContainer * aStyleSheets,
+	CSSStyleDeclarationPtr aStyle,
+	BRect aRect,
+	int32 aSiteId,
+	int32 aUrlId,
+	rgb_color aColor,
+	BFont * aFont = NULL,
+	WhiteSpaceType aWhiteSpace = NORMAL,
+	BHandler * aForm = NULL) {
+
+	if (mNode->hasChildNodes()) {
+		TNodeListPtr children = mNode->getChildNodes();
+		unsigned int length = children->getLength();
+
+     	if ((mNode->getNodeType() == ELEMENT_NODE) &&
+			(mNode->getNodeName() == "TITLE") &&
+			(length > 0)) {
+			printf("Found TITLE node\n");
+			TNodePtr textChild = children->item(0);
+			TDOMString titleText = textChild->getNodeValue();
+			TDOMString strippedTitle = "";
+			unsigned int titleLength = titleText.size();
+			for (unsigned int i = 0; i < titleLength; i++) {
+				if (!iscntrl(titleText[i])) {
+					strippedTitle += titleText[i];
+				}
+			}
+			if (strippedTitle != "") {
+				printf("Setting title of window to: %s\n", strippedTitle.c_str());
+				aBaseView->SetTitle(strippedTitle);
+			}
+		}
+
+		for (unsigned int i = 0; i < length; i++) {
+			TNodePtr child = children->item(i);
+			if (child->getNodeType() == ELEMENT_NODE) {
+				CSSView * childView = NULL;
+				TElementPtr element = shared_static_cast<TElement>(child);
+				CSSStyleDeclarationPtr style = mStyleSheets->getComputedStyle(element);
+				if (child->getNodeName() == "INPUT") {
+					if (element->hasAttribute("TYPE")) {
+						string inputType = element->getAttribute("TYPE");
+						if (inputType == "text" || inputType == "") {
+							childView = new TextInputDisplayView(
+								aBaseView,
+								child,
+								mStyleSheets,
+								style,
+								mRect,
+								mSiteId,
+								mUrlId,
+								mColor,
+								mFont,
+								mWhiteSpace,
+								mForm);
+						}
+						else if (inputType == "submit") {
+							childView = new ButtonInputDisplayView(
+								aBaseView,
+								child,
+								mStyleSheets,
+								style,
+								mRect,
+								mSiteId,
+								mUrlId,
+								mColor,
+								mFont,
+								mWhiteSpace,
+								mForm);
+						}
+						else if (inputType == "hidden") {
+							childView = new HiddenInputDisplayView(
+								aBaseView,
+								child,
+								mStyleSheets,
+								style,
+								mRect,
+								mSiteId,
+								mUrlId,
+								mColor,
+								mFont,
+								mWhiteSpace,
+								mForm);
+						}
+					}
+					else {
+						// Default is text
+						childView = new TextInputDisplayView(
+							aBaseView,
+							child,
+							mStyleSheets,
+							style,
+							mRect,
+							mSiteId,
+							mUrlId,
+							mColor,
+							mFont,
+							mWhiteSpace,
+							mForm);
+					}
+				}
+				else if (child->getNodeName() == "FORM") {
+					childView = new FormDisplayView(
+						aBaseView,
+						child,
+						mStyleSheets,
+						style,
+						mRect,
+						mSiteId,
+						mUrlId,
+						mColor,
+						mFont,
+						mWhiteSpace,
+						NULL);
+				}
+				if (childView == NULL) {
+					// No input element found.
+					if (style.get()) {
+						CSSValuePtr value = style->getPropertyCSSValue("display");
+						// Default to inline in case it doesn't exist.
+						TDOMString valueString = "inline";
+						if (value.get()) {
+							CSSPrimitiveValuePtr primitiveValue = shared_static_cast<CSSPrimitiveValue>(value);
+							valueString = primitiveValue->getStringValue();
+						}
+				//		printf("Display property value: %s\n", valueString.c_str());
+						if (valueString == "inline") {
+							childView = new InlineDisplayView(
+								aBaseView,
+								child,
+								mStyleSheets,
+								style,
+								mRect,
+								mSiteId,
+								mUrlId,
+								mColor,
+								mFont,
+								mWhiteSpace,
+								mForm);
+						}
+						else if (valueString == "block") {
+							childView = new BlockDisplayView(
+								aBaseView,
+								child,
+								mStyleSheets,
+								style,
+								mRect,
+								mSiteId,
+								mUrlId,
+								mColor,
+								mFont,
+								mWhiteSpace,
+								mForm);
+						}
+						else if (valueString == "table") {
+							childView = new TableDisplayView(
+								aBaseView,
+								child,
+								mStyleSheets,
+								style,
+								mRect,
+								mSiteId,
+								mUrlId,
+								mColor,
+								mFont,
+								mWhiteSpace,
+								mForm);
+						}
+						else if (valueString == "table-row-group") {
+							childView = new TableRowGroupDisplayView(
+								aBaseView,
+								child,
+								mStyleSheets,
+								style,
+								mRect,
+								mSiteId,
+								mUrlId,
+								mColor,
+								mFont,
+								mWhiteSpace,
+								mForm);
+						}
+						else if (valueString == "table-header-group") {
+							childView = new TableHeaderGroupDisplayView(
+								aBaseView,
+								child,
+								mStyleSheets,
+								style,
+								mRect,
+								mSiteId,
+								mUrlId,
+								mColor,
+								mFont,
+								mWhiteSpace,
+								mForm);
+						}
+						else if (valueString == "table-footer-group") {
+							childView = new TableFooterGroupDisplayView(
+								aBaseView,
+								child,
+								mStyleSheets,
+								style,
+								mRect,
+								mSiteId,
+								mUrlId,
+								mColor,
+								mFont,
+								mWhiteSpace,
+								mForm);
+						}
+						else if (valueString == "table-row") {
+							childView = new TableRowDisplayView(
+								aBaseView,
+								child,
+								mStyleSheets,
+								style,
+								mRect,
+								mSiteId,
+								mUrlId,
+								mColor,
+								mFont,
+								mWhiteSpace,
+								mForm);
+						}
+						else if (valueString == "table-cell") {
+							childView = new TableCellDisplayView(
+								aBaseView,
+								child,
+								mStyleSheets,
+								style,
+								mRect,
+								mSiteId,
+								mUrlId,
+								mColor,
+								mFont,
+								mWhiteSpace,
+								mForm);
+						}
+						else if (valueString == "none") {
+							childView = new NoneDisplayView(
+								aBaseView,
+								child,
+								mStyleSheets,
+								style,
+								mRect,
+								mSiteId,
+								mUrlId,
+								mColor,
+								mFont,
+								mWhiteSpace,
+								mForm);
+						}
+						else {
+							// The default is an inline element
+							printf("Currently unsupported display type: %s. Defaulting to inline...\n", valueString.c_str());
+							childView = new InlineDisplayView(aBaseView,
+								child,
+								mStyleSheets,
+								style,
+								mRect,
+								mSiteId,
+								mUrlId,
+								mColor,
+								mFont,
+								mWhiteSpace,
+								mForm);
+						}
+					}
+					else {
+						printf("No style specified for %s. Defaulting to inline...\n", element->getTagName().c_str());
+						childView = new InlineDisplayView(aBaseView,
+							child,
+							mStyleSheets,
+							style,
+							mRect,
+							mSiteId,
+							mUrlId,
+							mColor,
+							mFont,
+							mWhiteSpace,
+							mForm);
+					}
+				}
+				mChildren.push_back(childView);
+			}
+			else if (child->getNodeType() == TEXT_NODE) {
+				// Quick fix. Take a look at what would be elegant.
+				CSSStyleDeclarationPtr style;
+				CSSView * childView = new CSSView(
+					aBaseView,
+					child,
+					mStyleSheets,
+					style,
+					mRect,
+					mSiteId,
+					mUrlId,
+					mColor,
+					mFont,
+					mWhiteSpace,
+					mForm);
+				mChildren.push_back(childView);
+			}
+		}
 	}
 
 }
@@ -655,8 +768,9 @@ BPoint CSSView :: GetEndPoint() {
 
 }
 
-void CSSView :: Layout(BRect aRect,
-					   BPoint aStartingPoint) {
+void CSSView :: Layout(
+	BRect aRect,
+	BPoint aStartingPoint) {
 
 //	printf("Doing layout for %s\n", mName.c_str());
 	mRects.clear();
@@ -870,6 +984,21 @@ void CSSView :: Layout(BRect aRect,
 
 }
 
+void CSSView :: AttachedToWindow() {
+
+	if (!Looper()) {
+		mBaseView->Window()->LockLooper();
+		mBaseView->Window()->AddHandler(this);
+		mBaseView->Window()->UnlockLooper();
+	}
+
+	unsigned int length = mChildren.size();
+	for (unsigned int i = 0; i < length; i++) {
+		mChildren[i]->AttachedToWindow();
+	}
+
+}
+
 void CSSView :: SplitText() {
 	
 	TDOMString text = mNode->getNodeValue();
@@ -942,7 +1071,7 @@ void CSSView :: SplitText() {
 }
 
 void CSSView :: RetrieveResources() {
-	
+
 //	printf("Retrieving resources in %s with href %s\n", mName.c_str(), mHref.c_str());
 	if (mHref != "" && !mClickable) {
 		// Some resource that must be loaded.

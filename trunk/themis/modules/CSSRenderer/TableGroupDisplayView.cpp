@@ -49,7 +49,8 @@ TableGroupDisplayView :: TableGroupDisplayView(
 	int32 aUrlId,
 	rgb_color aColor,
 	BFont * aFont,
-	WhiteSpaceType aWhiteSpace)
+	WhiteSpaceType aWhiteSpace,
+	BHandler * aForm)
 	: CSSView(
 		aBaseView,
 		aNode,
@@ -60,7 +61,8 @@ TableGroupDisplayView :: TableGroupDisplayView(
 		aUrlId,
 		aColor,
 		aFont,
-		aWhiteSpace) {
+		aWhiteSpace,
+		aForm) {
 
 	mDisplay = true;
 	mBlock = false;

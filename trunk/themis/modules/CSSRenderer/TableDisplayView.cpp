@@ -49,7 +49,8 @@ TableDisplayView :: TableDisplayView(CSSRendererView * aBaseView,
 									 int32 aUrlId,
 									 rgb_color aColor,
 								 	 BFont * aFont,
-									 WhiteSpaceType aWhiteSpace)
+									 WhiteSpaceType aWhiteSpace,
+									 BHandler * aForm)
 				 : CSSView(aBaseView,
 				 		   aNode,
 				 		   aStyleSheets,
@@ -59,10 +60,24 @@ TableDisplayView :: TableDisplayView(CSSRendererView * aBaseView,
 				 		   aUrlId,
 				 		   aColor,
 				 		   aFont,
-				 		   aWhiteSpace) {
+				 		   aWhiteSpace,
+				 		   aForm) {
 
 	mDisplay = true;
 	mBlock = true;
+
+	CreateChildren(
+		aBaseView,
+		aNode,
+		aStyleSheets,
+		aStyle,
+		aRect,
+		aSiteId,
+		aUrlId,
+		aColor,
+		aFont,
+		aWhiteSpace,
+		aForm);
 
 }
 

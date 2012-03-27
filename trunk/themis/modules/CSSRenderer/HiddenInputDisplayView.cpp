@@ -1,5 +1,5 @@
 /*
-	Copyright (c) 2011 Mark Hellegers. All Rights Reserved.
+	Copyright (c) 2012 Mark Hellegers. All Rights Reserved.
 	
 	Permission is hereby granted, free of charge, to any person
 	obtaining a copy of this software and associated documentation
@@ -25,44 +25,52 @@
 	
 	Original Author: 	Mark Hellegers (mark@firedisk.net)
 	Project Start Date: October 18, 2000
-	Class Start Date: November 28, 2011
+	Class Start Date: March 27, 2012
 */
 
-/*	InlineDisplayView implementation
-	See InlineDisplayView.hpp for more information
+/*	InputDisplayView implementation
+	See InputDisplayView.hpp for more information
 	
 */
 
 // Standard C headers
 #include <stdio.h>
 
+// DOM headers
+#include "TNode.h"
+#include "TElement.h"
+
 // CSS Renderer headers
-#include "InlineDisplayView.hpp"
+#include "HiddenInputDisplayView.hpp"
+#include "CSSRendererView.hpp"
+#include "FormDisplayView.hpp"
 
-InlineDisplayView :: InlineDisplayView(CSSRendererView * aBaseView,
-									   TNodePtr aNode,
-									   CSSStyleContainer * aStyleSheets,
-									   CSSStyleDeclarationPtr aStyle,
-									   BRect aRect,
-									   int32 aSiteId,
-									   int32 aUrlId,
-									   rgb_color aColor,
-								 	   BFont * aFont,
-									   WhiteSpaceType aWhiteSpace = NORMAL,
-									   BHandler * aForm)
-				  : CSSView(aBaseView,
-				 			aNode,
-				 			aStyleSheets,
-				 			aStyle,
-				 			aRect,
-				 			aSiteId,
-				 			aUrlId,
-				 			aColor,
-				 			aFont,
-				 			aWhiteSpace,
-				 			aForm) {
+HiddenInputDisplayView :: HiddenInputDisplayView(
+	CSSRendererView * aBaseView,
+	TNodePtr aNode,
+	CSSStyleContainer * aStyleSheets,
+	CSSStyleDeclarationPtr aStyle,
+	BRect aRect,
+	int32 aSiteId,
+	int32 aUrlId,
+	rgb_color aColor,
+	BFont * aFont,
+	WhiteSpaceType aWhiteSpace,
+	BHandler * aForm)
+	: InputDisplayView(
+		aBaseView,
+		aNode,
+		aStyleSheets,
+		aStyle,
+		aRect,
+		aSiteId,
+		aUrlId,
+		aColor,
+		aFont,
+		aWhiteSpace,
+		aForm) {
 
-	mDisplay = true;
+	mDisplay = false;
 	mBlock = false;
 
 	CreateChildren(
@@ -78,15 +86,39 @@ InlineDisplayView :: InlineDisplayView(CSSRendererView * aBaseView,
 		aWhiteSpace,
 		aForm);
 
+	if (aForm) {
+		FormDisplayView * formView = dynamic_cast<FormDisplayView *> (aForm);
+		formView->AddInputChild(this);
+	}
+
+	TElementPtr element = shared_static_cast<TElement>(mNode);
+	if (element->hasAttribute("NAME")) {
+		mInputName = element->getAttribute("NAME");
+	}
+
 }
 
-InlineDisplayView :: ~InlineDisplayView() {
+HiddenInputDisplayView :: ~HiddenInputDisplayView() {
 
 }
 
-void InlineDisplayView :: Layout(BRect aRect,
-								 BPoint aStartingPoint) {
+void HiddenInputDisplayView :: Layout(
+	BRect aRect,
+	BPoint aStartingPoint) {
 
 	CSSView::Layout(aRect, aStartingPoint);
 
+}
+
+string HiddenInputDisplayView :: GetValue() const {
+	
+	string result = "";
+	
+	TElementPtr element = shared_static_cast<TElement>(mNode);
+	if (element->hasAttribute("VALUE")) {
+		result = element->getAttribute("VALUE");
+	}
+
+	return result;
+	
 }
