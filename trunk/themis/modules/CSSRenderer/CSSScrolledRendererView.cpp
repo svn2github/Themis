@@ -131,10 +131,88 @@ void CSSScrolledRendererView :: SetScrollbars() {
 	}
 }
 
+float CSSScrolledRendererView :: GetActualScrollValue(
+	orientation aDirection,
+	float aInputValue) const {
+
+	float result = 0;
+	BScrollBar * bar = mScrollView->ScrollBar(aDirection);
+	float min = 0;
+	float max = 0;
+	bar->GetRange(&min, &max);
+	float value = bar->Value();
+	if (aInputValue + value > max) {
+		// Adjust it, so it fits.
+		result = max - value;
+	}
+	else if (aInputValue + value < min) {
+		// Adjust it, so it fits.
+		result = min - value;
+	}
+	else {
+		result = aInputValue;
+	}
+	
+	return result;
+
+}
+
+
+void CSSScrolledRendererView :: Scroll(
+	float aHorizontal,
+	float aVertical) {
+
+	// Before we scroll, we check if we are still within the limits.
+	float vertical = GetActualScrollValue(B_VERTICAL, aVertical);
+	float horizontal = GetActualScrollValue(B_HORIZONTAL, aHorizontal);
+	
+	if (vertical != 0 || horizontal != 0) {
+		// Only scroll when it has any effect.
+		mView->ScrollBy(horizontal, vertical);
+	}
+
+}
+
 void CSSScrolledRendererView :: FrameResized(float aWidth, float aHeight) {
 
 	SetScrollbars();
 	
+}
+
+void CSSScrolledRendererView :: KeyDown(const char * aBytes, int32 aNumBytes) {
+	
+	switch (aBytes[0]) {
+		case B_PAGE_UP: {
+			BRect frame = Bounds();
+			Scroll(0, -(frame.Height() - B_H_SCROLL_BAR_HEIGHT - 5));
+			break;
+		}
+		case B_PAGE_DOWN: {
+			BRect frame = Bounds();
+			Scroll(0, frame.Height() - B_H_SCROLL_BAR_HEIGHT - 5);
+			break;
+		}
+		case B_UP_ARROW: {
+			Scroll(0, -20);
+			break;
+		}
+		case B_DOWN_ARROW: {
+			Scroll(0, 20);
+			break;
+		}
+		case B_LEFT_ARROW: {
+			Scroll(-20, 0);
+			break;
+		}
+		case B_RIGHT_ARROW: {
+			Scroll(20, 0);
+			break;
+		}
+		default: {
+			BView::KeyDown(aBytes, aNumBytes);
+		}
+	}
+
 }
 
 void CSSScrolledRendererView :: MessageReceived(BMessage * aMessage) {
@@ -176,24 +254,7 @@ void CSSScrolledRendererView :: MessageReceived(BMessage * aMessage) {
 			float wheelValue = aMessage->FindFloat( "be:wheel_delta_y");
 			// We multiply it by 50 to make the scrolling usable.
 			float scrollValue = wheelValue * 50;
-			// Before we scroll, we check if we are still within the limits.
-			BScrollBar * bar = mScrollView->ScrollBar(B_VERTICAL);
-			float min = 0;
-			float max = 0;
-			bar->GetRange(&min, &max);
-			float value = bar->Value();
-			if (scrollValue + value > max) {
-				// Adjust it, so it fits.
-				scrollValue = max - value;
-			}
-			else if (scrollValue + value < min) {
-				// Adjust it, so it fits.
-				scrollValue = min - value;
-			}
-			if (scrollValue != 0) {
-				// Only scroll when it has any effect.
-				mView->ScrollBy(0, scrollValue);
-			}
+			Scroll(0, scrollValue);
 			break;
 		}
 		default: {

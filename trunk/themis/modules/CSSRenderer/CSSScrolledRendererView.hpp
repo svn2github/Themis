@@ -41,6 +41,7 @@
 
 // BeOS headers
 #include <View.h>
+#include <InterfaceDefs.h>
 
 // DOM headers
 #include "DOMSupport.h"
@@ -62,6 +63,12 @@ class CSSScrolledRendererView : public BView {
 		CSSStyleSheetPtr mStyleSheet;
 		TDocumentPtr mDocument;
 		void SetScrollbars();
+		float GetActualScrollValue(
+			orientation aDirection,
+			float aInputValue) const;
+		void Scroll(
+			float aHorizontal,
+			float aVertical);
 	
 	public:
 		CSSScrolledRendererView(TDocumentPtr aDocument,
@@ -72,6 +79,7 @@ class CSSScrolledRendererView : public BView {
 								int32 aUrlId);
 		~CSSScrolledRendererView();
 		void FrameResized(float aWidth, float aHeight);
+		virtual void KeyDown(const char * aBytes, int32 aNumBytes);
 		void MessageReceived(BMessage * aMessage);
 
 };
