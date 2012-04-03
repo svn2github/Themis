@@ -189,7 +189,7 @@ status_t FileProtocol :: ReceiveBroadcast(BMessage * message) {
 									fileMessage->AddInt32("url_id", url_id);
 									fileMessage->AddInt32("command", COMMAND_INFO);
 									fileMessage->AddBool("request_done", true);
-									fileMessage->AddString("url", fileLocation.c_str());
+									fileMessage->AddString("url", url);
 									fileMessage->AddInt32("cache_object_token", objectToken);
 									fileMessage->AddInt64("bytes_received", cache->GetObjectSize(userToken,objectToken));
 									fileMessage->AddString("mime-type", mimeType);
