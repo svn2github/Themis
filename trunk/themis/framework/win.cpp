@@ -420,18 +420,9 @@ void Win :: MessageReceived(BMessage * msg) {
 			Broadcast(MS_TARGET_PROTOCOL, load);
 			delete load;
 
-			/*
-			 * Trigger this after the UrlHandler knows about the URL.
-			 * Otherwise we wouldn't see any URL in UrlView during load.
-			 * Sad, but true.
-			 */
 			if (visible) {
-				if (msg->FindBool("hidden") == true)
-					tabview->DrawTabs();
-				else
-					tabview->Select(selection);
+				navview->SetUrl(url.String());
 			}
-
 			break;
 		}
 		case URL_TYPED: {
