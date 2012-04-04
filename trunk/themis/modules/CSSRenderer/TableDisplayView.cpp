@@ -39,6 +39,7 @@
 // CSS Renderer headers
 #include "TableDisplayView.hpp"
 #include "TableGroupDisplayView.hpp"
+#include "TableRowDisplayView.hpp"
 
 TableDisplayView :: TableDisplayView(CSSRendererView * aBaseView,
 									 TNodePtr aNode,
@@ -172,6 +173,20 @@ void TableDisplayView :: Layout(BRect aRect,
 				}
 			}
 		}
+		else {
+			TableRowDisplayView * childRowView = dynamic_cast<TableRowDisplayView *> (childView);
+			if (childRowView) {
+				unsigned int childLength = childRowView->GetLength();
+				for (unsigned int j = 0; j < childLength; j++) {
+					if (j >= widths.size()) {
+						widths.push_back(childRowView->GetChildWidth(j));
+					}
+					else if (childRowView->GetChildWidth(j) > widths[j]) {
+						widths[j] = childRowView->GetChildWidth(j);
+					}
+				}
+			}
+		}
 	}
 
 	for (unsigned int i = 0; i < length; i++) {
@@ -181,6 +196,15 @@ void TableDisplayView :: Layout(BRect aRect,
 			unsigned int childLength = childGroupView->GetColLength();
 			for (unsigned int j = 0; j < childLength; j++) {
 				childGroupView->SetColWidth(widths[j], j);
+			}
+		}
+		else {
+			TableRowDisplayView * childRowView = dynamic_cast<TableRowDisplayView *> (childView);
+			if (childRowView) {
+				unsigned int childLength = childRowView->GetLength();
+				for (unsigned int j = 0; j < childLength; j++) {
+					childRowView->SetChildWidth(widths[j], j);
+				}
 			}
 		}
 	}
