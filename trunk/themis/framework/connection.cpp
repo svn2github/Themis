@@ -464,7 +464,7 @@ bool Connection::IsDataWaiting() {
 				return false;
 			}
 			waiting_data=FD_ISSET(socket_id,&fds);
-			printf("IsDataWaiting: %s\n",(waiting_data ? "yes":"no"));
+			//printf("IsDataWaiting: %s\n",(waiting_data ? "yes":"no"));
 		}
 		lock.Unlock();
 	}
@@ -900,7 +900,7 @@ void Connection::RetrieveData() {
 		data=NULL;
 		lock.Unlock();
 		}
-		printf("Connection::Retrieve() is done.\n");
+	//	printf("Connection::Retrieve() is done.\n");
 }
 int32 Connection::LastUsed(){
 	return lastusedtime;
