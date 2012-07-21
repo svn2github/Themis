@@ -140,7 +140,129 @@ void FormDisplayView :: Layout(
 	BRect aRect,
 	BPoint aStartingPoint) {
 
-	CSSView::Layout(aRect, aStartingPoint);
+	mRects.clear();
+	if (mDisplay) {
+		float maxRight = 0;
+		float maxBottom = 0;
+		mRect = aRect;
+		// Always set the top and left of the rect to the one from the starting point
+		// as that is definitely correct.
+		mRect.top = aStartingPoint.y;
+		mRect.left = aStartingPoint.x;
+		BRect restRect = aRect;
+		// Add the left margin.
+		mRect.left += mMarginLeft;
+		// Set the endpoint to the starting point, as that is the minimum endpoint
+		mEndPoint = aStartingPoint;
+		// Enforce the requested width if set
+		if (mRequestedWidth > -1) {
+			mRect.right = mRect.left + mRequestedWidth;
+			maxRight = mRect.right;
+			if (maxRight > restRect.right) {
+				restRect.right = maxRight;
+			}
+			mEndPoint.x = mRect.right + 1;
+		}
+		// Enforce the requested height if set
+		if (mRequestedHeight > -1) {
+			mRect.bottom = mRect.top + mRequestedHeight;
+			maxBottom = mRect.bottom;
+			if (maxBottom > restRect.bottom) {
+				restRect.bottom = maxBottom;
+			}
+		}
+		// If we are drawing a border around this element, make sure there is less space for the content.
+		restRect.InsetBy(mBorderWidth, mBorderWidth);
+		//mEndPoint.Set(restRect.left, restRect.top);
+		// In case we need to draw something before drawing any children, move the children.
+		if (mListStyleType == "square") {
+			mListStyleRect.left = restRect.left + 2;
+			mListStyleRect.right = restRect.left + 7;
+			mListStyleRect.top = restRect.top + 2;
+			mListStyleRect.bottom = restRect.top + 7;
+			restRect.left += 12;
+			mEndPoint.x += 12;
+			maxRight = mListStyleRect.right;
+			maxBottom = mListStyleRect.bottom;
+		}
+		
+		// Layout the children.
+		unsigned int length = mChildren.size();
+		BPoint startingPoint = mEndPoint;
+		for (unsigned int i = 0; i < length; i++) {
+			CSSView * childView = mChildren[i];
+			// Only layout those children that are actually displayed.
+			if (childView->IsDisplayed()) {
+				// Do the layout for the child.
+				childView->Layout(restRect, startingPoint);
+				BRect rect2 = childView->Bounds();
+				mEndPoint = childView->GetEndPoint();
+				// Set the top of the remaining rect to the endpoint of the child,
+				// because the space above is already taken by the child.
+				if (restRect.top < mEndPoint.y) {
+					restRect.top = mEndPoint.y;
+				}
+				if (rect2.right > restRect.right) {
+					// The child used more space than was available. We can use that space now as well
+					// for any remaining children.
+					restRect.right = rect2.right;
+					mRect.right = rect2.right;
+				}
+				// What is the maximum horizontal space being taken up by one of the children?
+				if (rect2.right > maxRight) {
+					maxRight = rect2.right;
+				}
+				// What is the maximum vertical space being taken up by one of the children?
+				if (rect2.bottom > maxBottom) {
+					maxBottom = rect2.bottom;
+				}
+				// We can start where we left off.
+				startingPoint = mEndPoint;
+				//	previousChildIsBlock = false;
+//				printf("Starting at: ");
+//				mEndPoint.PrintToStream();
+			}
+		}
+		if (maxRight > 0) {
+			if ((mRequestedWidth == -1) || (mRect.left + mRequestedWidth < maxRight)) {
+				// Only set it in case we found something
+				// and it is larger than the requested width.
+				mRect.right = maxRight;
+				//mEndPoint.x = maxRight;
+			}
+		}
+		else {
+			mRect.right = aStartingPoint.x;
+			mEndPoint.x = aStartingPoint.x;
+		}
+
+		if (maxBottom > 0) {
+			if ((mRequestedHeight == -1) ||
+				(mRect.top + mRequestedHeight < maxBottom)) {
+				// Only set it in case we found something
+				// and it is larger than the requested width.
+				mRect.bottom = maxBottom;
+			}
+		}
+		else {
+			mRect.bottom = aStartingPoint.y;
+			mEndPoint.y = aStartingPoint.y;
+		}
+//			mRect.PrintToStream();
+
+		// Add any margins
+		mEndPoint.Set(mEndPoint.x + mMarginRight, mEndPoint.y + mMarginBottom);
+		
+		mRect.bottom += mMarginBottom;
+		mRect.right += mMarginRight;
+
+		//mRect.right = restRect.right;
+		mRects.push_back(mRect);
+	}
+	else {
+		// Only in case we are the first element, otherwise this is never called.
+		mRect = BRect(0, 0, 0, 0);
+	}
 
 }
 

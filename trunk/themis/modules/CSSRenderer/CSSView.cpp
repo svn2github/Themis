@@ -36,11 +36,16 @@
 // Standard C headers
 #include <stdio.h>
 
+// Standard C++ headers
+#include <string>
+
 // BeOS headers
 #include <Font.h>
 #include <Point.h>
 #include <Window.h>
 #include <Messenger.h>
+#include <TranslationUtils.h>
+#include <Bitmap.h>
 
 // DOM headers
 #include "TNode.h"
@@ -75,6 +80,9 @@
 #include "TextInputDisplayView.hpp"
 #include "FormDisplayView.hpp"
 #include "HiddenInputDisplayView.hpp"
+
+// Namespaces used
+using std::string;
 
 // Constants used
 const char cSpace = ' ';
@@ -113,6 +121,7 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 	mRequestedHeight = -1;
 	mWhiteSpace = aWhiteSpace;
 	mForm = aForm;
+	mImage = NULL;
 
 	if (mNode->getNodeType() == ELEMENT_NODE) {
 		TElementPtr element = shared_static_cast<TElement>(mNode);
@@ -127,6 +136,12 @@ CSSView :: CSSView(CSSRendererView * aBaseView,
 			// Images have the image source in the src attribute.
 			if (element->hasAttribute("SRC")) {
 				mHref = element->getAttribute("SRC");
+			}
+			if (element->hasAttribute("WIDTH")) {
+				mRequestedWidth = atoi(element->getAttribute("WIDTH").c_str());
+			}
+			if (element->hasAttribute("HEIGHT")) {
+				mRequestedHeight = atoi(element->getAttribute("HEIGHT").c_str());
 			}
 		}
 		ApplyStyle(element, aStyle);
@@ -163,18 +178,17 @@ CSSView :: ~CSSView() {
 
 }
 
-void CSSView :: RetrieveLink(bool aVisible) {
+string CSSView :: ConstructURL(string aUrl) {
 
 	// FIXME. Look at http://en.wikipedia.org/wiki/URI_scheme for the general syntax.
 	// This is not taken into account with the code below.
-	if (mHref.size() > 0) {
-		// Send a message to the window.
-		// The window will do all the actual work of requesting a new page.
-		string urlString = "";
-		unsigned int position = mHref.find("://");
-		if (position == string::npos || mHref[0] == '/') {
+	string urlString = "";
+	if (aUrl.size() > 0) {
+		unsigned int position = aUrl.find("://");
+		if (position == string::npos || aUrl[0] == '/') {
 			urlString = mBaseView->GetDocumentURI();
-			if (mHref[0] == '/') {
+			printf("Document URI: %s\n", urlString.c_str());
+			if (aUrl[0] == '/') {
 				// Get past the :// in the base uri, so we can find the right /
 				position = urlString.find("://");
 				if (position != string::npos) {
@@ -194,7 +208,21 @@ void CSSView :: RetrieveLink(bool aVisible) {
 				urlString = urlString.substr(0, position + 1);
 			}
 		}
-		urlString += mHref;
+		urlString += aUrl;
+	}
+
+	return urlString;
+
+}
+
+void CSSView :: RetrieveLink(bool aVisible) {
+
+	// FIXME. Look at http://en.wikipedia.org/wiki/URI_scheme for the general syntax.
+	// This is not taken into account with the code below.
+	string urlString = ConstructURL(mHref);
+	if (urlString.size() > 0) {
+		// Send a message to the window.
+		// The window will do all the actual work of requesting a new page.
 		BMessage message(URL_OPEN);
 		message.AddInt32("site_id", mSiteId);
 		message.AddInt32("url_id", mUrlId);
@@ -720,6 +748,23 @@ void CSSView :: Draw() {
 		for (unsigned int i = 0; i < length; i++) {
 			mChildren[i]->Draw();
 		}
+		
+		// Quick hack to test image loading
+		if ((mName == "IMG") && (mHref != "")) {
+			if (!mImage) {
+				string urlString = ConstructURL(mHref);
+				printf("Attempting to draw img: %s\n", urlString.c_str());
+				string protocolString(urlString.substr(0, 7));
+				string fileLocation(urlString.substr(7, urlString.size() - 7));
+				if (!protocolString.compare("file://")) {
+					printf("File protocol found. Getting bitmap of %s\n", fileLocation.c_str());
+					mImage = BTranslationUtils::GetBitmapFile(fileLocation.c_str());
+				}
+			}
+			if (mImage) {
+				mBaseView->DrawBitmap(mImage, mRect.LeftTop());
+			}
+		}
 	}
 }
 
@@ -773,6 +818,11 @@ void CSSView :: Layout(
 	BPoint aStartingPoint) {
 
 //	printf("Doing layout for %s\n", mName.c_str());
+	if (mName == "IMG") {
+		printf("Starting with rect and startingpoint for image\n");
+		aRect.PrintToStream();
+		aStartingPoint.PrintToStream();
+	}
 	mRects.clear();
 	if (mDisplay) {
 		mRect = aRect;
@@ -886,85 +936,11 @@ void CSSView :: Layout(
 //			printf("Set endpoint for text node to: ");
 //			mEndPoint.PrintToStream();
 		}
-		else {
-			//mEndPoint.Set(restRect.left, restRect.top);
-			// Set the endpoint to the starting point, as that is the minimum endpoint
-			mEndPoint = aStartingPoint;
-			// Assume we don't need any horizontal space. The children will determine the space needed.
-//			mRect.right = mRect.left;
-			// In case we need to draw something before drawing any children, move the children.
-			if (mListStyleType == "square") {
-				mListStyleRect.left = restRect.left + 2;
-				mListStyleRect.right = restRect.left + 7;
-				mListStyleRect.top = restRect.top + 2;
-				mListStyleRect.bottom = restRect.top + 7;
-				restRect.left += 12;
-				mEndPoint.x += 12;
-			}
-			// Layout the children.
-			unsigned int length = mChildren.size();
-			BPoint startingPoint = mEndPoint;
-			float maxRight = 0;
-			for (unsigned int i = 0; i < length; i++) {
-				CSSView * childView = mChildren[i];
-				// Only layout those children that are actually displayed.
-				if (childView->IsDisplayed()) {
-					if (childView->IsBlock()) {
-						// Blocks have their own rect, so start at the left of the parent rect and just below the previous block.
-						startingPoint = BPoint(restRect.left, restRect.top);
-					//	previousChildIsBlock = true;
-					//	startingPoint.PrintToStream();
-					}
-					// Do the layout for the child.
-					childView->Layout(restRect, startingPoint);
-					BRect rect2 = childView->Bounds();
-					mEndPoint = childView->GetEndPoint();
-					// Set the top of the remaining rect to the bottom of the child,
-					// because the space above is already taken by the child.
-					if (restRect.top < rect2.bottom) {
-						restRect.top = rect2.bottom;
-					}
-					if (rect2.right > restRect.right) {
-						// The child used more space than was available. We can use that space now as well
-						// for any remaining children.
-						restRect.right = rect2.right;
-						mRect.right = rect2.right;
-					}
-					// What is the maximum horizontal space being taken up by one of the children?
-					if (rect2.right > maxRight) {
-						maxRight = rect2.right;
-					}
-					
-					if (childView->IsBlock()) {
-						// The next child will have to start at the left of the parent rect and just below this block.
-						startingPoint = BPoint(restRect.left, restRect.top);
-					//	previousChildIsBlock = true;
-					//	startingPoint.PrintToStream();
-					}
-					else {
-						// We can start where we left off.
-						startingPoint = mEndPoint;
-					//	previousChildIsBlock = false;
-//						printf("Starting at: ");
-//						mEndPoint.PrintToStream();
-					}
-				}
-			}
-			if (maxRight > 0) {
-				// Only set it in case we found something.
-				mRect.right = maxRight;
-			}
-			else {
-				mRect.right = mRect.left;
-			}
-			mRect.bottom = restRect.top;
-			mRects.push_back(mRect);
-//			mRect.PrintToStream();
-		}
 
 		// Enforce the requested height if set
 		if (mRequestedHeight > -1) {
 			mRect.bottom = mRect.top + mRequestedHeight;
+			//mEndPoint.y = mRect.bottom;
 		}
 		
 		// Add any margins
@@ -977,6 +953,12 @@ void CSSView :: Layout(
 	else {
 		// Only in case we are the first element, otherwise this is never called.
 		mRect = BRect(0, 0, 0, 0);
+	}
+
+	if (mName == "IMG") {
+		printf("Ending with rect and startingpoint for image\n");
+		mRect.PrintToStream();
+		mEndPoint.PrintToStream();
 	}
 	
 //	printf("Layout done for %s\n", mName.c_str());

@@ -61,6 +61,7 @@
 
 // Declarations used
 class BFont;
+class BBitmap;
 class CSSRendererView;
 class CSSStyleContainer;
 
@@ -84,14 +85,15 @@ class CSSView : public BHandler {
 		float mBottomMargin;
 		float mSpaceWidth;
 		bool mClickable;
-		string mName;
 		rgb_color mColor;
 		string mBorderStyle;
 		int32 mSiteId;
 		int32 mUrlId;
 		WhiteSpaceType mWhiteSpace;
+		BBitmap * mImage;
 		
 	protected:
+		string mName;
 		TNodePtr mNode;
 		CSSRendererView * mBaseView;
 		BFont * mFont;
@@ -113,6 +115,7 @@ class CSSView : public BHandler {
 		string mHref;
 		BHandler * mForm;
 
+		string ConstructURL(string aUrl);
 		void RetrieveLink(bool aVisible = true);
 		void CreateChildren(
 			CSSRendererView * aBaseView,
