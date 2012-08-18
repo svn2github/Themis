@@ -784,7 +784,7 @@ $(BASE_ADDONS_OBJECT_DIR)CSSViewer/%.o: $(BASE_ADDON_SOURCE_DIR)CSSViewer/%.cpp 
 cssraddon: framework $(BASE_ADDON_INSTALL_DIR)css_renderer.so domlib domstylelib
 $(BASE_ADDON_INSTALL_DIR)css_renderer.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(CSSRENDERERSOURCES),$(BASE_ADDONS_OBJECT_DIR)CSSRenderer/$(notdir $(file:.cpp=.o)))
 	@echo "Linking CSS Renderer add-on" 
-	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)css_renderer.so $(foreach file,$(notdir $(CSSRENDERERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)CSSRenderer/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=css_renderer.so -L ./ -L $(BELIBRARIES) -L$(BASE_APP_LIB_INSTALL_DIR)  -lbe -lroot -ldomstyle -ldom -lstdc++.r4 _APP_
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)css_renderer.so $(foreach file,$(notdir $(CSSRENDERERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)CSSRenderer/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=css_renderer.so -L ./ -L $(BELIBRARIES) -L$(BASE_APP_LIB_INSTALL_DIR)  -lbe -lroot -ltranslation -ldomstyle -ldom -lstdc++.r4 _APP_
 	@echo "CSS Renderer add-on is now linked. Doing mimeset."
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)css_renderer.so
 	@echo "CSS Renderer plug-in compiled and linked successfully."
