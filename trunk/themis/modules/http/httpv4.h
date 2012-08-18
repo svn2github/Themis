@@ -34,7 +34,6 @@ Project Start Date: October 18, 2000
 #include "tcpmanager.h"
 #include "connection.h"
 #include "smt.h"
-#include "plugman.h"
 #include <string.h>
 #include <kernel/OS.h>
 #include <List.h>

@@ -31,26 +31,30 @@ Project Start Date: October 18, 2000
 //! The plug-in manager version.
 #define PlugManVersion 3.0
 
-#include <Application.h>
+// Standard C++ headers
+#include <map>
+#include <string>
+#include <utility>
+
+// BeOS headers
 #include <Looper.h>
-#include <File.h>
 #include <Entry.h>
-#include <Window.h>
-#include <Message.h>
-#include <MessageRunner.h>
-#include <Messenger.h>
-#include <Locker.h>
-#include "plugstruct.h"
-#include "plugclass.h"
-#include "msgsystem.h"
-class tcplayer;
+
+// Declarations of BeOS classes
+class BMessage;
+class BMessenger;
+class BMessageRunner;
+
+// Declarations of Themis classes
 class PlugClass;
+class MessageDaemon;
 /*!
 
 This class is responsible for loading and unloading plug-ins, and routing "broadcast" messages between
 plug-ins and application components.
 */
-class plugman: public BLooper, public MessageSystem {
+class plugman : public BLooper {
+
 	private:
 		//! The directory from which Themis was started.
 		entry_ref startup_dir_ref;
@@ -62,47 +66,34 @@ class plugman: public BLooper, public MessageSystem {
 	//	struct stat sad_stat,uad_stat;
 		//! The initialization BMessage that is sent to plug-ins when loaded.
 		BMessage *InitInfo;
+		//! This is the messenger used to send heartbeat messages
+		BMessenger * mHeartBeatMessenger;
 		//! This triggers the heartbeat messages that are sent to plug-ins that require it.
-		BMessageRunner *Heartbeat_mr;
-		//! This keeps track of how many plug-ins require the heartbeat message.
-		volatile int32 heartcount;
-		plugst *head, *tail;
-		//! Add a plug-in structure to the internal linked list.
-		void AddPlug(plugst *plug);
-		BLocker *Locker;
-		volatile int32 _quitting_;
-		sem_id quit_sem;
-	public:
-		plugman(entry_ref &appdirref);
-		~plugman();
-		bool QuitRequested();
-		uint32 BroadcastTarget();
-		status_t BroadcastReply(BMessage *msg);
-		status_t ReceiveBroadcast(BMessage *msg);
+		BMessageRunner * mHeartBeatMessageRunner;
+		
+		map<string, pair<image_id, PlugClass *> > mPlugins;
+		
+		void LoadPlugin(BEntry & aEntry);
+		void LoadDirectory(const char * aDirectory);
+
+		void UnloadPlugin(image_id aId, PlugClass * aPlugin);
+		void UnloadPlugin(const char * aPath);
 		//! Unload all plug-ins currently in memory.
 		/*!
-		\param clean
-		When this parameter is true, as it is by default, the plug-in linked list is destroyed while unloading
-		the plug-ins. Otherwise, the plug-ins are unloaded, but can be easily and quickly reloaded when/if needed.
 		
 		This function unloads all the plug-ins currently in memory.
 		*/
-		status_t UnloadAllPlugins(bool clean=true);
-		//! Unload a specific plug-in from memory.
-		status_t UnloadPlugin(uint32 which,bool clean=false);
-		BWindow *Window;
+		void UnloadAllPlugins();
+		
+		void SendHeartBeat();
+
+	public:
+		plugman(entry_ref &appdirref, BMessage * aInitInfo);
+		~plugman();
+		bool QuitRequested();
 		//! Locates a particular plug-in.
-		PlugClass *FindPlugin(uint32);
-		//! Locates a particular plug-in via its on disk node_ref.
-		void *FindPlugin(node_ref &nref);
+		PlugClass *FindPlugin(uint32 aPlugId);
 		void MessageReceived(BMessage *msg);
-		//! Broadcasts a message to one or more plug-ins, and potentially some application portions.
-//		status_t Broadcast(int32 source,int32 targets,BMessage *msg);
-		//! Builds a linked list of add-ons that are in the various add-on directories.
-		void BuildRoster(bool clean=true);
-		//! Loads a specific plug-in into memory.
-		status_t LoadPlugin(uint32 which);
-		void BroadcastFinished();
 		BMessage *GetPluginList();
 	
 };

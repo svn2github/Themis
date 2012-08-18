@@ -33,7 +33,6 @@ Project Start Date: October 18, 2000
 #include <Application.h>
 
 // Themis headers
-#include "msgsystem.h"
 #include "tcpmanager.h"
 
 // Declarations used
@@ -54,7 +53,7 @@ This is the heart of the entire application.
 
 extern BMessage* AppSettings;
 
-class App : public BApplication, public MessageSystem {
+class App : public BApplication {
 
 	private:
 		//! Checks settings for missing items, and adds defaults if required.
@@ -91,10 +90,6 @@ class App : public BApplication, public MessageSystem {
 		//! Handles arguments passed to the application.
 		void ArgvReceived(int32 argc,
 						  char ** argv);
-		//! Messagesystem method to answer a broadcast to its sender.
-		status_t BroadcastReply(BMessage* msg);
-		//! Messagesystem method which returns an identifier.
-		uint32 BroadcastTarget();
 		//! Returns a pointer to the first window.
 		Win * FirstWindow();
 		//! Returns a pointer to the GlobalHistory object.
@@ -115,8 +110,6 @@ class App : public BApplication, public MessageSystem {
 		bool QuitRequested();
 		//! Hook function which is triggered when the application is ready.
 		void ReadyToRun();
-		//! Messagesystem method to handle broadcasts.
-		status_t ReceiveBroadcast(BMessage * msg);
 		//! Hook to handle B_REFS_RECEIVED messages.
 		void RefsReceived(BMessage * refs);
 		//! Saves the settings to disk.

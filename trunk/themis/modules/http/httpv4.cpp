@@ -30,6 +30,7 @@ Project Start Date: October 18, 2000
 #include "cookieman.h"
 #include "cacheplug.h"
 #include "commondefs.h"
+#include "plugman.h"
 #include <stdio.h>
 #include <Path.h>
 #include <ctype.h>

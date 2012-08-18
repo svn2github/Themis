@@ -14,7 +14,6 @@
 #include "plugman.h"
 #include "ThemisIcons.h"
 #include "../common/commondefs.h"
-#include "../common/cacheplug.h"
 #include "../common/BaseEntry.hpp"
 #include "UrlEntry.h"
 #include "SiteEntry.h"
@@ -27,15 +26,11 @@ SiteHandler :: SiteHandler()
 
 	// register myself with the message system
 	MsgSysRegister( this );
-	fCacheUserToken = 0;
 	fLocker = new BLocker();
 
 }
 
 SiteHandler :: ~SiteHandler() {
-
-	if (fCacheUserToken != 0)
-		fCachePlug->Unregister(fCacheUserToken);
 
 	MsgSysUnregister(this);
 
@@ -48,17 +43,6 @@ SiteHandler :: ~SiteHandler() {
 
 	delete fLocker;
 }
-
-void SiteHandler :: BroadcastFinished() {
-
-}
-
-status_t SiteHandler :: BroadcastReply(BMessage * msg) {
-
-	return B_OK;
-
-}
-
 
 uint32 SiteHandler :: BroadcastTarget() {
 
@@ -196,36 +180,6 @@ const char * SiteHandler :: GetUrlFor(int32 id) {
 
 	fLocker->Unlock();	
 	return entry->GetUrl();
-
-}
-
-status_t SiteHandler :: ReceiveBroadcast(BMessage* msg) {
-
-	int32 command = 0;
-	msg->FindInt32("command", &command);
-	
-	switch(command) {
-		case COMMAND_INFO: {
-			switch(msg->what) {
-				case PlugInLoaded: {
-					int32 plugid = 0;
-					msg->FindInt32("plugid", &plugid);
-					
-					if (plugid == CachePlugin) {
-						// register with the cache system
-						fCachePlug = (CachePlug *)PluginManager->FindPlugin(CachePlugin);
-						if (fCachePlug != NULL) {
-							fCacheUserToken = fCachePlug->Register(MS_TARGET_SITEHANDLER);
-						}
-					}
-					break;					
-				}
-			}
-			break;
-		}
-	}
-
-	return B_OK;
 
 }
 

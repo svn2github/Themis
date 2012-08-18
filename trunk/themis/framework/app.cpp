@@ -58,7 +58,7 @@ BMessage *AppSettings;
 
 App::App(
 	const char* appsig )
-	: BApplication( appsig ), MessageSystem("Themis App Object")
+	: BApplication( appsig )
 {
 	fQR_called = 0;
 	fAboutWin = NULL;
@@ -70,8 +70,7 @@ App::App(
 	TCPMan=new TCPManager;
 	TCPMan->Start();
 
-	fMessageDaemon=new MessageDaemon();
-	MsgSysRegister(this);
+	fMessageDaemon = new MessageDaemon();
 
 	AppSettings=new BMessage;
 	LoadSettings();
@@ -83,7 +82,10 @@ App::App(
 	ent->GetParent(ent);
 	ent->GetRef(&appdirref);
 	delete ent;
-	PluginManager=new plugman(appdirref);
+	BMessage *msg=new BMessage(AddInitInfo);
+	msg->AddPointer("tcp_manager", TCPMan);
+	msg->AddPointer("settings_message_ptr", &AppSettings);
+	PluginManager=new plugman(appdirref, msg);
 
 	// init the GlobalHistory, and fill it with the settings data (if available)
 	printf( "APP Getting GlobalHistoryData\n" );
@@ -116,19 +118,6 @@ App::App(
 		AppSettings->ReplaceRect( kPrefsMainWindowRect, r );
 	}
 	fFirstWindow = new Win(r,"Themis",B_DOCUMENT_WINDOW,B_ASYNCHRONOUS_CONTROLS,B_CURRENT_WORKSPACE);
-	PluginManager->Window=fFirstWindow;
-	BMessenger *msgr=new BMessenger(PluginManager,NULL,NULL);
-	BMessage *msg=new BMessage(AddInitInfo);
-	msg->AddPointer("tcp_manager",TCPMan);
-	msg->AddPointer("settings_message_ptr",&AppSettings);
-	{
-		BMessage reply;	
-		msgr->SendMessage(msg,&reply);
-		if (reply.what==(uint32)B_ERROR)
-			printf("Problem setting plug-in initialization info.\n");
-	}
-	delete msgr;
-	delete msg;
 }
 
 App::~App(){
@@ -137,7 +126,6 @@ App::~App(){
 	if( fLocker )
 		delete fLocker;
 	
-	MsgSysUnregister(this);
 	if (!fQR_called)
 		QuitRequested();
 	// delete GlobalHistory before AppSettings gets deleted
@@ -150,8 +138,8 @@ App::~App(){
 		delete AppSettings;
 		AppSettings=NULL;
 	}
-	printf("~app end\n");
 	delete fMessageDaemon;
+	printf("~app end\n");
 }
 
 void App::AboutRequested()
@@ -163,23 +151,6 @@ void App::AboutRequested()
 	}
 }
 
-uint32 App::BroadcastTarget() 
-{
-//	printf("App\n");
-	return MS_TARGET_APPLICATION;
-}
-
-status_t App::ReceiveBroadcast(BMessage *msg) 
-{
-//	printf("App::ReceiveBroadcast\n");
-	return B_OK;
-}
-
-status_t App::BroadcastReply(BMessage *msg)
-{
-	return B_OK;
-}
-
 void App::Pulse() 
 {
 }
@@ -188,9 +159,6 @@ bool App::QuitRequested(){
 	
 	printf( "App::QuitRequested()\n" );
 	printf("Message System Members:\n");
-	int32 msgmem=CountMembers();
-	for (int32 i=0; i<msgmem; i++)
-		printf("\t%s\n",(GetMember(i))->MsgSysObjectName());
 	SetPulseRate(0);
 	atomic_add(&fQR_called,1);
 	status_t stat;
@@ -542,7 +510,6 @@ void App::ReadyToRun(){
 
 	fSiteHandler = new SiteHandler();
 
-	PluginManager->BuildRoster(true);
 	fFirstWindow->Show();
 	//SetPulseRate(2000000);
 	

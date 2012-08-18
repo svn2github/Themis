@@ -35,6 +35,8 @@ Project Start Date: October 18, 2000
 #include "authtypebasic.h"
 #include "authtypedigest.h"
 
+class tcplayer;
+
 extern HTTPv4 *HTTP;
 
 #ifndef NEWNET

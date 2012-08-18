@@ -53,6 +53,10 @@ MessageSystem::MessageSystem(const char *msg_sys_name)
 	_ms_receiver_quit_=0;
 	_msg_receiver_running_=0;
 	_msg_receiver_thread_=0;
+
+	if (!MS_MQueue) {
+		MS_MQueue=new BMessageQueue();
+	}
 	
 //	_msg_receiver_thread_=spawn_thread(MS_Start_Thread,MS_Name,B_LOW_PRIORITY,this);
 //	resume_thread(_msg_receiver_thread_);
