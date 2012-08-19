@@ -28,38 +28,32 @@ Project Start Date: October 18, 2000
 */
 #ifndef _themis_about_view_
 #define _themis_about_view_
+
+// BeOS headers
 #include <View.h>
-#include <Box.h>
-#include <ListView.h>
-#include <ScrollView.h>
-#include <Button.h>
-#include <List.h>
 
-#define AboutThemisApplication 0x1
-#define AboutThemisSSL 0x3
-#define AboutThemisDOM 0x2
-#define AboutThemisPlugIn 0x4
-struct about_items_st {
-	BStringItem *listitem;
-	void *pointer;
-	uint32 type;
-	about_items_st(){
-		type=0;
-		listitem=NULL;
-		pointer=NULL;
-	}
-};
+// Declarations of BeOS classes
+class BBox;
+class BListView;
+class BButton;
+class BScrollView;
+class BStringItem;
 
-class aboutview:public BView {
+class aboutview : public BView {
+
 	private:
 		BButton *OkB;
 		BScrollView *scroll;
-		BListView *listv;
+		BListView *mListView;
 		BBox *outerbox;
 		BBox *innerbox;
-		bool firstrun;
+
+		BView * CreateSimpleAboutView(
+			BRect aRect,
+			const char * aName,
+			const char * aText);
+
 	public:
-		BList *items;
 		aboutview(BRect frame, const char *name, uint32 resizem, uint32 flags);
 		~aboutview();
 		void MessageReceived(BMessage *msg);
