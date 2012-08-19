@@ -24,7 +24,6 @@
 // Themis headers
 #include "win.h"
 #include "commondefs.h"
-#include "plugclass.h"
 #include "ThemisTab.h"
 #include "ThemisNavView.h"	// ThemisPictureButton
 #include "app.h"

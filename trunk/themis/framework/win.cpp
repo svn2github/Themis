@@ -39,10 +39,10 @@ Project Start Date: October 18, 2000
 #include <TranslationKit.h>
 #include <be/storage/FindDirectory.h>
 #include <be/storage/Path.h>
+#include <MenuBar.h>
 
 // Themis headers
 #include "app.h"
-#include "protocol_plugin.h"
 #include "ThemisIcons.h"
 #include "ThemisTab.h"
 #include "SiteHandler.h"
@@ -57,7 +57,6 @@ Project Start Date: October 18, 2000
 #include "GlobalHistory.h"
 #include "win.h"
 
-extern plugman *PluginManager;
 extern BMessage *AppSettings;
 
 Win :: Win(BRect frame,
@@ -198,15 +197,6 @@ void Win :: MessageReceived(BMessage * msg) {
 		}
 		case B_QUIT_REQUESTED: {
 			PostMessage(B_QUIT_REQUESTED);
-			break;
-		}
-		case PlugInLoaded: {
-			PlugClass * pobj = NULL;
-			msg->FindPointer("plugin", (void**)&pobj);
-			if (pobj != NULL) {
-				pobj->Window = this;
-				pobj->AddMenuItems(optionsmenu);
-			}
 			break;
 		}
 		case B_MOUSE_WHEEL_CHANGED: {

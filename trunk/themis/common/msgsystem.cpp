@@ -26,12 +26,19 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Original Author & Project Manager: Z3R0 One (z3r0_one@users.sourceforge.net)
 Project Start Date: October 18, 2000
 */
-#include "msgsystem.h"
-#include "plugclass.h"
-#include <Autolock.h>
+
+// Standard C headers
 #include <stdio.h>
+
+// BeOS headers
+#include <Autolock.h>
 #include <OS.h>
 #include <String.h>
+
+// Themis headers
+#include "msgsystem.h"
+#include "commondefs.h"
+
 volatile int32 MessageSystem::broadcast_target_count=0;
 MessageSystem::msgsysclient_st *MessageSystem::MsgSysClients=NULL;
 BMessageQueue *MessageSystem::MS_MQueue=NULL;

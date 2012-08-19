@@ -31,9 +31,19 @@ Project Start Date: October 18, 2000
 Include *both* plugclass.h *and* plugclass.cpp in your plugin!
 */
 
+// Standard C headers
+#include <stdio.h>
+
+// BeOS headers
+#include <Message.h>
+#include <Menu.h>
+#include <View.h>
+#include <Looper.h>
+#include <Handler.h>
+
+// Themis headers
 #include "plugclass.h"
 #include "plugman.h"
-#include <stdio.h>
 /*
  The strtoval function takes the first four characters of a string, and converts them to
 a 32-bit integer value. This value, when viewed properly, will represent an integer version
@@ -72,19 +82,15 @@ URL information, and a number of pointers to objects which they might need.
 PlugClass::PlugClass(BMessage *info,const char *msg_sys_name) :MessageSystem(msg_sys_name) {
 	MsgSysRegister(this);
 	InitInfo=info;
-	thread=0;
-	Window=NULL;
 	PlugMan=NULL;
 	uses_heartbeat=false;
 	if (InitInfo!=NULL) {
 		if (InitInfo->HasPointer("plug_manager"))
 			InitInfo->FindPointer("plug_manager",(void**)&PlugMan);
 	}
-	Lock=new BLocker(true);
 }
 
 PlugClass::~PlugClass() {
-	delete Lock;
 	MsgSysUnregister(this);
 }
 
@@ -102,23 +108,6 @@ char *PlugClass::PlugName(){
 
 float PlugClass::PlugVersion(){
 	return 0.0;
-}
-
-bool PlugClass::NeedsThread(){
-	return false;
-}
-
-int32 PlugClass::SpawnThread(BMessage *info){
-	//See Be Book Documentation on thread creation.
-	return 0;
-}
-
-int32 PlugClass::StartThread(){
-	return (resume_thread(thread));
-}
-
-thread_id PlugClass::Thread(){
-	return thread;
 }
 
 void PlugClass::Stop(){
@@ -168,14 +157,6 @@ BView *PlugClass::Parent(){
 	return NULL;
 }
 
-entry_ref PlugClass::SetRef(entry_ref nuref){
-	plug_ref=nuref;
-	return plug_ref;
-}
-
-entry_ref PlugClass::Ref(){
-	return plug_ref;
-}
 /*
 These functions signal the plug-in that it's either safe to add or remove menu items from
 the menu passed as a parameter.

@@ -207,6 +207,127 @@ const rgb_color kColorTheme = { 255, 200, 0, 255 };
 #define HTTP_DELETE_REQUEST		'dele'
 #define HTTP_HEAD_REQUEST		'head'
 
+//commands that can be sent to the plug-ins
+/*
+	Exact behavior of a command depends on the type of plug-in the message is sent to.
+	Notes follow each command.
+	Commands are sent in the included message (the sub-BMessage) in a int32 field
+	called command. 
+*/
+
+#define COMMAND_RETRIEVE 0x100
+/*
+	Protocols:	This will trigger the protocol to look for a URL string in the BMessage.
+				If there is no specific URL listed, the protocol then looks for host,
+				port, and path to try to accomplish its mission.
+	Cache:		This command will tell the cache plug-in(s) to look for a file that
+				matches the URL (or host, port, and path) contained in the message,
+				and create a reference variable to the file/object. All relevant
+				information available to the cache should be sent as part of the response.
+*/
+#define COMMAND_STORE 0x101
+/*
+	Protocols:	This will trigger the protocol to send data to the enclosed URL.
+				If the protocol supports more than one sending method, then
+				the message should also include a "STORE_METHOD" string to specify
+				the actual method to be used by the protocol. Variables and/or data
+				to be sent should have their names stored in the "VARIABLES" string.
+				Be sure to include a length variable for any pointers:
+				An unsigned char pointer might be stored in the message as follows:
+						msg->AddString("VARIABLES","buffer");
+						msg->AddPointer("buffer",buff);
+						msg->AddInt32("buffer",buff_len);
+	Cache:		The cache plug-ins should only receive a store command from a protocol
+				plug-in. Depending on whether the protocol needs disk or RAM storage,
+				the cache should create a record of the data being sent by the protocol
+				for retrieval.All relevant information should be sent as part of the
+				message.
+*/
+#define COMMAND_SEND 0x102
+/*
+	Protocols:	This should be just a raw send by the protocol. This might be something
+				as simple as a notification message, or uploading a file.
+*/
+#define COMMAND_CLEAR 0x103
+/*
+	Protocols:	This should close any and all open requests, and delete/free all
+				transaction records, unless a specific URL is indicated. If a specific
+				URL is indicated, only requests for that URL should be cleared.
+	Cache:		This should clear the cache. If a particular URL is specified, then only
+				the records for that URL should be cleared.
+	Parsers:	The parser's buffers should be emptied and cleared.
+	Handlers:	The handler's buffers should be emptied and cleared.
+	Scripts:	The script handler should empty its buffers, contexts, etc, and clear them.
+*/
+#define COMMAND_UPDATE 0x104
+/*
+	Cache:		This should only be called by a protocol. There is new information to be
+				recorded about the specied URL. All relevant information should be sent
+				as part of the message.
+	Parsers:	Should update their buffers with the information sent.
+	Handlers:	Should first clear their buffers, and then use the information sent.
+				This is different from parsing as a parser knows specifics about the
+				data, where as a handler (more or less) just displays the data.
+	Scripts:	Should update their buffers with the information sent.
+*/
+#define COMMAND_PROCESS 0x105
+/*
+	Parsers:	Should handle the sent data appropriately.
+	Handlers:	Should display the data sent appropriately.
+	Scripts:	Should process the data appropriately.
+*/
+#define COMMAND_INFO 0x106
+/*
+	This command can be sent by any part of the application and any part that receives
+	it should behave according to its own function. This message can be ignored, though
+	it probably won't always be.
+*/
+#define COMMAND_INFO_REQUEST 0x107
+/*
+	This command is a request for information by some part of the application and should
+	not be ignored. Responders should look for a "ReplyTo" Int32 target in the BMessage it
+	receives, and Broadcast a reply back to that target.
+
+	This command should always be replied to with a COMMAND_INFO command.
+*/
+#define COMMAND_ASSUME_RESPONSIBILITY 0x108
+/*
+	This command means that the sender of the message will assume responsibility for
+	the payload of the original message. In other words, it should be sent as a reply
+	to a broadcast message, such as when a file is transferred by a protocol, a handler
+	will assume control over the request's existance. The originator of this
+	sequence of events should receive a "Owner" in the message that assumes responsibility.
+	It should then only release the resource at termination of the application/plug-in,
+	or upon COMMAND_RELEASE_RESOURCE. "Owner" should be the 32 bit integer PlugID value
+	of the plug-in. The DOM, Window, and View should return their Type()/TARGET_* values.
+	If the DOM, Window, or View should be set as the owner (unlikely), then the
+	receiver of the broadcast should use its stored pointer(s) to these objects.
+*/
+#define COMMAND_RELEASE_RESOURCE 0x109
+/*
+	This command tells a resource controller, to delete the resource item specified.
+	Typically, there should be a URL specified in the BMessage to refer to the specific
+	item. By default, the resource controller should assume this message means delete
+	everything in memory regarding the specified resource. If the message contains
+	a boolean value "save-resource", all of the resource should be released, except the
+	actual pointer to the resource. If the message contains a boolean value "all", it should
+	release all resources at its disposal, with the possible exception of the resource pointers.
+	(This last part should only be done if "save-resource" is also specified.)
+
+	For example, the HTTP protocol receives a COMMAND_RELEASE_RESOURCE message. It should
+	delete the appropriate request structure and data container object for the specified
+	URL. If no URL is specified, but a boolean value of "all" is present and true, then
+	the HTTP layer should clear all of its requests. If "save-resource" is specified and
+	true, then only the structure data regarding the target URL(s) is deleted, the 
+	data container objects are not.
+
+			**** NOTE ****
+
+	Be aware that using the "save-resource" function can result in a memory leak if
+	the data containers are not later deleted by the object sending the COMMAND_RELEASE_RESOURCE
+	message.
+*/
+
 //union int32torgb
 //{
 //	int32 value;
