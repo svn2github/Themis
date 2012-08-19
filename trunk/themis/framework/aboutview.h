@@ -37,7 +37,6 @@ class BBox;
 class BListView;
 class BButton;
 class BScrollView;
-class BStringItem;
 
 class aboutview : public BView {
 

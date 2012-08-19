@@ -1,6 +1,7 @@
 // BeOS headers
 #include <ScrollView.h>
 #include <String.h>
+#include <TextView.h>
 
 // Themis headers
 #include "appdefines.h"
