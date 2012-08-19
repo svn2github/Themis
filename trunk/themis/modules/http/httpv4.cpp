@@ -638,7 +638,7 @@ uint32 HTTPv4::DataIsWaiting(Connection *connection)
 	if (request_lock.LockWithTimeout(10000)==B_OK)
 	{
 	unsigned char *buffer=(unsigned char*)malloc(BUFFER_SIZE);
-	off_t bytes_received=0L,data_size=0L;
+	off_t bytes_received=0L/*,data_size=0L*/;
 	off_t buffer_size=BUFFER_SIZE;
 	memset(buffer,0,BUFFER_SIZE);//we do an initial wipe of memory just to start things off fresh
 		printf("\nrequest lock achieved\n");
@@ -842,7 +842,7 @@ status_t HTTPv4::ReceiveBroadcast(BMessage *msg)
 					memset((char*)bri->url,0,strlen(url)+1);
 					strcpy((char*)bri->url,url);
 					build_request_thid = find_thread("http - build request");
-					printf("build_request_thid: %d\n",build_request_thid);
+					printf("build_request_thid: %li\n",build_request_thid);
 					if (build_request_thid==B_NAME_NOT_FOUND && request_build_lock.IsLocked() == false )
 					{
 						build_request_thid=spawn_thread(BuildRequest_th,"http - build request", B_LOW_PRIORITY,bri);
@@ -1457,8 +1457,10 @@ void HTTPv4::layer_manager(HTTPv4 *http)
 {
 	http_request_info_st *current=NULL,*previous=NULL, *next=NULL;
 	unsigned char *buffer=(unsigned char*)malloc(BUFFER_SIZE);
+/*
 	off_t bytes_received=0L,data_size=0L;
 	off_t buffer_size=BUFFER_SIZE;
+*/
 	memset(buffer,0,BUFFER_SIZE);//we do an initial wipe of memory just to start things off fresh
 	while(http->_terminate_==0)
 	{
@@ -1586,9 +1588,8 @@ void HTTPv4::layer_manager(HTTPv4 *http)
 //									printf("layer manager is done processing data\n");
 								//	if (bytes_received>=data_size)
 										current->internal_status^=STATUS_RECEIVING_DATA;
-									/*
-										special case; we want to receive data as quickly as possible.
-									* /
+									
+									//	special case; we want to receive data as quickly as possible.
 									previous=current;
 									current=current->next;
 									http->request_lock.Unlock();
