@@ -131,6 +131,7 @@ class PlugClass: public MessageSystem {
 		//!This is a reference to the Plug-in Manager. 
 		plugman *PlugMan;
 		volatile int32 Cancel;
+		bool uses_heartbeat;
 
 	public:
 		//!PlugClass constructor.
@@ -226,7 +227,6 @@ class PlugClass: public MessageSystem {
 		virtual void AddMenuItems(BMenu *menu);//this is a signal for plug-ins to add any menus or items
 		virtual void RemoveMenuItems();
 		
-		bool uses_heartbeat;
 		virtual void Heartbeat();
 		virtual bool RequiresHeartbeat();
 
