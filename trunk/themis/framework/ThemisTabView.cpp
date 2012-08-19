@@ -4,12 +4,10 @@
 #include <stdio.h>
 #include <math.h>
 
-// Standard C++ headers
-#include <iostream>
-
 // BeOS headers
 #include <GraphicsDefs.h>
 #include <TranslationUtils.h>
+#include <View.h>
 #include <PopUpMenu.h>
 #include <MenuItem.h>
 #include <Message.h>
@@ -20,6 +18,7 @@
 #include <Messenger.h>
 #include <Window.h>
 #include <Picture.h>
+#include <Bitmap.h>
 
 // Themis headers
 #include "win.h"
@@ -34,6 +33,7 @@
 #include "../common/PrefsDefs.h"
 #include "ThemisTabView.h"
 #include "TPictureButton.h"
+#include "TabHistory.h"
 
 ThemisTabView::ThemisTabView(
 	BRect frame,

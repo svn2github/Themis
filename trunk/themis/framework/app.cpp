@@ -48,6 +48,8 @@ Project Start Date: October 18, 2000
 #include "ThemisTab.h"
 #include "SiteHandler.h"
 #include "ThemisNavView.h"
+#include "ThemisTabView.h"
+#include "TabHistory.h"
 #include "app.h"
 
 // Namespaces used

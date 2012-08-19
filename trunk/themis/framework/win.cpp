@@ -55,6 +55,7 @@ Project Start Date: October 18, 2000
 #include "../common/commondefs.h"
 #include "../common/PrefsDefs.h"
 #include "GlobalHistory.h"
+#include "TabHistory.h"
 #include "win.h"
 
 extern BMessage *AppSettings;

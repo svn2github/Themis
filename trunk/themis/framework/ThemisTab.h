@@ -4,15 +4,16 @@
 #define _THEMISTAB_H_
 
 // BeOS headers
-#include <Bitmap.h>
 #include <TabView.h>
-#include <View.h>
 
-// C/C++ headers
+// Declarations of BeOS classes
+class BBitmap;
+class BString;
+class BView;
 
-// myheaders
-#include "ThemisTabView.h"
-#include "TabHistory.h"
+// Declarations of Themis classes
+class ThemisTabView;
+class TabHistory;
 
 class ThemisTab : public BTab {
 

@@ -19,6 +19,7 @@
 #include "commondefs.h"
 #include "ThemisIcons.h"
 #include "ThemisTabView.h"
+#include "TabHistory.h"
 #include "ThemisTab.h"
 
 ThemisTab :: ThemisTab(BView* view)
