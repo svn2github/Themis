@@ -229,3 +229,9 @@ void ThemisTab :: SetSiteID(int32 id) {
 
 	fSiteID = id;
 }
+
+void ThemisTab :: AddHistoryEntry(const char * aEntry) {
+
+	fHistory->AddEntry(aEntry);
+
+}

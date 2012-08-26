@@ -366,7 +366,7 @@ void plugman :: MessageReceived(BMessage *msg) {
 #ifdef DEBUG
 						printf("Other opcode. Message:\n");
 #endif
-						msg->PrintToStream();
+//						msg->PrintToStream();
 					}
 					
 				}

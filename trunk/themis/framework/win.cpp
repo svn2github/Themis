@@ -55,7 +55,6 @@ Project Start Date: October 18, 2000
 #include "../common/commondefs.h"
 #include "../common/PrefsDefs.h"
 #include "GlobalHistory.h"
-#include "TabHistory.h"
 #include "win.h"
 
 extern BMessage *AppSettings;
@@ -172,6 +171,53 @@ void Win :: SendUrlOpenMessage(const char * aUrl, bool aAddToHistory) {
 
 }
 
+void Win :: CloseOtherTabs(uint32 aTabIndex, bool aCloseLastTab) {
+
+	// this function is used for the tab-pop-up-menu function
+	// "Close other Tabs" and also for the closetabview_button
+	
+	// if the newtab button is disabled, enable it again
+	navview->SetButtonMode(4, 0);
+				
+	uint32 currentTab = aTabIndex;
+	uint32 count = tabview->CountTabs();
+	
+	while (count > 1) {
+		if (count - 1 > currentTab) {
+			tabview->RemoveTab(count - 1);
+		}
+		else {
+			currentTab -= 1;
+			tabview->RemoveTab(currentTab);
+		}
+		tabview->DynamicTabs(false);
+		count = tabview->CountTabs();
+	}
+	
+	// used by the closetabview button
+	if (aCloseLastTab) {
+		tabview->SetFakeSingleView();
+	}
+
+}
+
+void Win :: ClearHistory() {
+	
+	tabview->ClearHistory();
+
+}
+
+void Win :: ReInitTabHistory() {
+
+	/* update the tabs history depth */
+	int8 depth;
+	AppSettings->FindInt8(kPrefsTabHistoryDepth, &depth);
+	tabview->SetHistoryDepth(depth);
+	/* and update the nav buttons states */
+	tabview->SetNavButtonsByTabHistory();
+
+}
+
 bool Win :: QuitRequested() {
 
  	if (fQuitConfirmed == false) {
@@ -212,7 +258,7 @@ void Win :: MessageReceived(BMessage * msg) {
 		}
 		case BUTTON_BACK: {
 			const char * previous = NULL;
-			previous = ((ThemisTab *)tabview->TabAt(tabview->Selection()))->GetHistory()->GetPreviousEntry();
+			previous = tabview->GetPreviousHistoryEntry();
 			if (previous != NULL) {
 				SendUrlOpenMessage(previous, false);
 			}
@@ -220,7 +266,7 @@ void Win :: MessageReceived(BMessage * msg) {
 		}
 		case BUTTON_FORWARD: {
 			const char * next = NULL;
-			next = ((ThemisTab *)tabview->TabAt(tabview->Selection()))->GetHistory()->GetNextEntry();
+			next = tabview->GetNextHistoryEntry();
 			if (next != NULL) {
 				SendUrlOpenMessage(next, false);
 			}
@@ -240,39 +286,21 @@ void Win :: MessageReceived(BMessage * msg) {
 			break;
 		}
 		case CLOSE_OTHER_TABS: {
-			// this function is used for the tab-pop-up-menu function
-			// "Close other Tabs" and also for the closetabview_button
-			Lock();
-			
-			// if the newtab button is disabled, enable it again
-			navview->SetButtonMode(4, 0);
-						
-			uint32 current_tab = 0;
-			uint32 count = tabview->CountTabs();
-			
-			if (msg->HasInt32("tabindex"))
-				current_tab = msg->FindInt32("tabindex");
-			else
-				current_tab = tabview->Selection();
-			
-			while (count > 1) {
-				if (count - 1 > current_tab) {
-					tabview->RemoveTab(count - 1);
-				}
-				else {
-					current_tab = current_tab - 1;
-					tabview->RemoveTab(current_tab);
-				}
-				tabview->DynamicTabs(false);
-				count = tabview->CountTabs();
+			uint32 currentTab = 0;
+			if (msg->HasInt32("tabindex")) {
+				currentTab = msg->FindInt32("tabindex");
+			}
+			else {
+				currentTab = tabview->Selection();
 			}
 
-			// used by the closetabview button
-			if (msg->HasBool("close_last_tab"))
-				if(msg->FindBool("close_last_tab") == true)
-					tabview->SetFakeSingleView();
-
-			Unlock();
+			bool closeLastTab = false;
+			if (msg->HasBool("close_last_tab")) {
+				closeLastTab = msg->FindBool("close_last_tab");
+			}
+			
+			CloseOtherTabs(currentTab, closeLastTab);
+			
 			break;
 		}
 		case CLOSE_URLPOPUP: {
@@ -281,6 +309,10 @@ void Win :: MessageReceived(BMessage * msg) {
 		}
 		case RE_INIT_TABHISTORY: {
 			ReInitTabHistory();
+			break;
+		}
+		case CLEAR_TG_HISTORY: {
+			ClearHistory();
 			break;
 		}
 		case TAB_ADD: {
@@ -376,7 +408,7 @@ void Win :: MessageReceived(BMessage * msg) {
 				tab->SetSiteID(siteId);
 				// add history entry for tab
 				if(msg->HasBool("no_history_add") == false)
-					tab->GetHistory()->AddEntry(url.String());
+					tab->AddHistoryEntry(url.String());
 				BRect rect = tabview->Bounds();
 				siteEntry->SetSize(rect.Width() - 2, rect.Height() - 2);
 				
@@ -433,7 +465,24 @@ void Win :: MessageReceived(BMessage * msg) {
 			break;
 		}
 		case WINDOW_NEW: {
-			// resend the message to the app
+			// resend the message to the app, but first figure out which url to send along.
+			int8 urlSetting;
+			AppSettings->FindInt8(kPrefsNewWindowStartPage, &urlSetting);
+			switch (urlSetting) {
+				case 0: { // blank, do nothing
+					break;	
+				}
+				case 1: { // homepage
+					BString url;
+					AppSettings->FindString(kPrefsHomePage, &url);
+					msg->AddString("url_to_open", url.String());
+					break;
+				}
+				case 2 : { // current windows page
+					msg->AddString( "url_to_open", navview->GetUrl());
+					break;
+				}
+			}
 			be_app_messenger.SendMessage(msg);
 			break;
 		}
@@ -795,19 +844,6 @@ Win * Win :: NextWindow() {
 	else {
 		return NULL;
 	}
-
-}
-
-void Win :: ReInitTabHistory() {
-
-	/* update the tabs history depth */
-	int8 depth;
-	AppSettings->FindInt8(kPrefsTabHistoryDepth, &depth);
-	for (int32 i = 0; i < tabview->CountTabs(); i++)
-		((ThemisTab *)tabview->TabAt(i))->GetHistory()->SetDepth(depth);
-
-	/* and update the nav buttons states */
-	tabview->SetNavButtonsByTabHistory();
 
 }
 

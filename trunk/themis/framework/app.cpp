@@ -45,11 +45,7 @@ Project Start Date: October 18, 2000
 #include "win.h"
 #include "PrefsDefs.h"
 #include "PrefsWin.h"
-#include "ThemisTab.h"
 #include "SiteHandler.h"
-#include "ThemisNavView.h"
-#include "ThemisTabView.h"
-#include "TabHistory.h"
 #include "app.h"
 
 // Namespaces used
@@ -67,7 +63,6 @@ App::App(
 	fPrefsWin = NULL;
 	fIDCounter = 0;
 	fSiteHandler = NULL;
-	fLocker = new BLocker();
 	
 	TCPMan=new TCPManager;
 	TCPMan->Start();
@@ -125,9 +120,6 @@ App::App(
 App::~App(){
 	printf("app destructor\n");
 	
-	if( fLocker )
-		delete fLocker;
-	
 	if (!fQR_called)
 		QuitRequested();
 	// delete GlobalHistory before AppSettings gets deleted
@@ -144,24 +136,59 @@ App::~App(){
 	printf("~app end\n");
 }
 
-void App::AboutRequested()
-{
-	if (fAboutWin==NULL) {
-		fAboutWin=new aboutwin(BRect(200,200,800,500),"About Themis",B_TITLED_WINDOW,B_ASYNCHRONOUS_CONTROLS|B_NOT_MINIMIZABLE);
-	} else {
-		fAboutWin->Activate(true);
+void App :: OpenPrefsWindow() {
+
+	if (fPrefsWin == NULL) {
+		BPoint leftTop;
+		AppSettings->FindPoint(kPrefsPrefWindowPoint, &leftTop);
+		BPoint rightBottom = leftTop;
+		rightBottom.x = leftTop.x + kPrefsWinWidth;
+		rightBottom.y = leftTop.y + kPrefsWinHeight;
+		BRect rect(leftTop, rightBottom);
+		/* check for out of bounds */
+		BScreen screen;
+		if (!screen.Frame().Contains(rect)) {
+			rect.OffsetTo(200, 200);
+		}
+		fPrefsWin = new PrefsWin(
+			rect,
+			PluginManager->GetPluginList());
+	}
+	else {
+		fPrefsWin->Activate(true);
 	}
 }
 
-void App::Pulse() 
+Win * App :: FirstWindow() {
+
+	return fFirstWindow;
+
+}
+
+void App :: SetFirstWindow(Win* newfirst) {
+
+	fFirstWindow = newfirst;
+
+}
+
+void App::AboutRequested()
 {
+	if (fAboutWin == NULL) {
+		fAboutWin =
+			new aboutwin(
+				BRect(200, 200, 800, 500),
+				"About Themis",
+				B_TITLED_WINDOW,
+				B_ASYNCHRONOUS_CONTROLS | B_NOT_MINIMIZABLE);
+	} else {
+		fAboutWin->Activate(true);
+	}
 }
 
 bool App::QuitRequested(){
 	
 	printf( "App::QuitRequested()\n" );
 	printf("Message System Members:\n");
-	SetPulseRate(0);
 	atomic_add(&fQR_called,1);
 	status_t stat;
 	Win* w=NULL;
@@ -210,16 +237,12 @@ bool App::QuitRequested(){
 }
 
 void App::MessageReceived(BMessage *msg){
-	switch(msg->what){
+
+	switch (msg->what) {
 		case ABOUTWIN_CLOSE :
 		{
 			printf( "APP ABOUTWIN_CLOSE\n" );
 			fAboutWin = NULL;
-			break;
-		}
-		case B_QUIT_REQUESTED :
-		{
-			printf( "APP B_QUIT_REQUESTED\n" );
 			break;
 		}
 		case CLEAR_TG_HISTORY :
@@ -230,22 +253,12 @@ void App::MessageReceived(BMessage *msg){
 			
 			// tell every tab of every window to clear
 			Win* win = FirstWindow();
-			
-			if( win == NULL )
-				break;
-			
-			do
-			{
-				win->Lock();
-				for( int32 i = 0; i < win->GetTabView()->CountTabs(); i++ )
-					( ( ThemisTab* )win->GetTabView()->TabAt( i ) )->GetHistory()->Clear();
-				win->GetTabView()->SetNavButtonsByTabHistory();
-				
-				win->Unlock();
+
+			while (win != NULL) {
+				BMessenger msgr(NULL, win, NULL);
+				msgr.SendMessage(CLEAR_TG_HISTORY);
 				win = win->NextWindow();
-			}
-			while( win != NULL );
-			
+			};
 			
 			break;
 		}
@@ -270,28 +283,7 @@ void App::MessageReceived(BMessage *msg){
 		case PREFSWIN_SHOW :
 		{
 			printf( "PREFSWIN_SHOW\n" );
-			if( fPrefsWin == NULL)
-			{
-				BPoint point;
-				AppSettings->FindPoint( kPrefsPrefWindowPoint, &point );
-				BRect rect;
-				rect.left = point.x;
-				rect.top = point.y;
-				rect.right = rect.left + kPrefsWinWidth;
-				rect.bottom = rect.top + kPrefsWinHeight;
-				/* check for out of bounds */
-				BScreen screen;
-				if( !screen.Frame().Contains( rect ) )
-				{
-					rect.OffsetTo(	200, 200 );
-				}
-				fPrefsWin = new PrefsWin(
-					rect,
-					PluginManager->GetPluginList());
-			}
-			else
-				fPrefsWin->Activate(true);
-				
+			OpenPrefsWindow();
 			break;
 		}
 		case SAVE_APP_SETTINGS :
@@ -388,110 +380,65 @@ void App::MessageReceived(BMessage *msg){
 			// find the last win
 			printf( "finding last window\n" );
 			Win* lastwin = FirstWindow();
-			while( lastwin->NextWindow() != NULL )
-			{
+			while (lastwin->NextWindow() != NULL) {
 				lastwin = lastwin->NextWindow();
 			}
 			
-			if( lastwin != NULL )
-				printf( "found lastwin\n" );
-			else
-			{
-				printf( "lastwin not found; aborting!\n" );
-				break;
-			}
-									
-			BRect r = lastwin->Frame();
-			r.OffsetBySelf( 20.0, 20.0 );
-			
-			float minw = 0.0, minh = 0.0, maxw = 0.0, maxh = 0.0;
-			FirstWindow()->GetSizeLimits( &minw, &maxw, &minh, &maxh );
-			
-			r.PrintToStream();
-					
-			// outside screen?
-			BScreen screen;
-			screen.Frame().PrintToStream();
-			bool usingsettingsrect = false;
-			if( r.right > screen.Frame().right - 30 )
-			{
-				// check if we can resize it smaller, but that its still above its minimum size
-				if( minw < ( r.right - r.left ) )
-					r.right = screen.Frame().right - 30;
-				else
-				{
-					printf( "width: using settings rect\n" );
-					AppSettings->FindRect( kPrefsMainWindowRect, &r );
-					usingsettingsrect = true;
-				}
-			}
-			if( usingsettingsrect == false )
-			{
-				if( r.bottom > screen.Frame().bottom - 30 )
-				{
-					if( minh < ( r.bottom - r.top ) )
-						r.bottom = screen.Frame().bottom - 30;
-					else
-						AppSettings->FindRect( kPrefsMainWindowRect, &r );
-				}
-			}
+			if (lastwin != NULL) {
+				BRect r = lastwin->Frame();
+				r.OffsetBySelf( 20.0, 20.0 );
 				
-			Win* newwin = new Win(r,"Themis",B_DOCUMENT_WINDOW,B_ASYNCHRONOUS_CONTROLS,B_CURRENT_WORKSPACE);
-			
-			lastwin->SetNextWindow( newwin );			
-			
-			if( lastwin->NextWindow() != NULL )
-			{
-				// get the current windows url ( for case 2 )
-				BString currenturl;
-				for( int32 i = 0; i < GetMainWindowCount(); i++ )
-				{
-					if( WindowAt( i )->IsActive() == true )
-					{
-						Win* win = ( Win* )WindowAt( i );
-						currenturl.SetTo( win->GetNavView()->GetUrl() );
-						break;
-					}
-				}
-								
-				printf( "current url: %s\n", currenturl.String() );
+				float minw = 0.0, minh = 0.0, maxw = 0.0, maxh = 0.0;
+				FirstWindow()->GetSizeLimits( &minw, &maxw, &minh, &maxh );
 				
-				printf( "successfully added new win; showing now\n" );
-				lastwin->NextWindow()->Show();
-				
-				// open with blank, home or current page
-				int8 val;
-				AppSettings->FindInt8( kPrefsNewWindowStartPage, &val );
-				printf( "VALUE: %d\n", val );
-				switch( val )
-				{
-					case 0 : break;	// blank, do nothing
-					case 1 : // homepage
-					{
-						BMessenger msgr( FirstWindow() );
-						BMessage* homepage = new BMessage( URL_OPEN );
-						BString string;
-						AppSettings->FindString( kPrefsHomePage, &string );
-						homepage->AddString( "url_to_open", string.String() );
-						msgr.SendMessage( homepage );
-						delete homepage;
-						break;
-					}
-					case 2 : // current windows page
-					{
-						BMessenger msgr( lastwin->NextWindow() );
-						BMessage* currentpage = new BMessage( URL_OPEN );
-						currentpage->AddString( "url_to_open", currenturl.String() );
-						msgr.SendMessage( currentpage );
-						delete currentpage;						
-						break;
-					}
-				}
-				
-			}
-			else
-				printf( "not successfully added window\n" );
+				r.PrintToStream();
 						
+				// outside screen?
+				BScreen screen;
+				screen.Frame().PrintToStream();
+				bool usingsettingsrect = false;
+				if( r.right > screen.Frame().right - 30 )
+				{
+					// check if we can resize it smaller, but that its still above its minimum size
+					if( minw < ( r.right - r.left ) )
+						r.right = screen.Frame().right - 30;
+					else
+					{
+						printf( "width: using settings rect\n" );
+						AppSettings->FindRect( kPrefsMainWindowRect, &r );
+						usingsettingsrect = true;
+					}
+				}
+				if( usingsettingsrect == false )
+				{
+					if( r.bottom > screen.Frame().bottom - 30 )
+					{
+						if( minh < ( r.bottom - r.top ) )
+							r.bottom = screen.Frame().bottom - 30;
+						else
+							AppSettings->FindRect( kPrefsMainWindowRect, &r );
+					}
+				}
+					
+				Win* newwin = new Win(
+					r,
+					"Themis",
+					B_DOCUMENT_WINDOW,
+					B_ASYNCHRONOUS_CONTROLS,
+					B_CURRENT_WORKSPACE);
+				
+				lastwin->SetNextWindow( newwin );			
+	
+				newwin->Show();
+				BString url;
+				if (msg->HasString("url_to_open")) {
+					msg->FindString("url_to_open", &url);
+					BMessenger msgr(newwin);
+					BMessage urlOpenMessage(URL_OPEN);
+					urlOpenMessage.AddString("url_to_open", url.String());
+					msgr.SendMessage(&urlOpenMessage);
+				}
+			}
 			break;
 		}
 		default:{
@@ -513,7 +460,6 @@ void App::ReadyToRun(){
 	fSiteHandler = new SiteHandler();
 
 	fFirstWindow->Show();
-	//SetPulseRate(2000000);
 	
 	// if we have a homepage specified in prefs
 	BMessenger msgr( FirstWindow() );
@@ -664,12 +610,6 @@ App::GetSiteHandler()
 		return NULL;
 }
 
-Win*
-App::FirstWindow()
-{
-	return fFirstWindow;
-}
-
 status_t
 App::LoadSettings()
 {
@@ -774,10 +714,4 @@ status_t App::SaveSettings() {
 		return ret;
 	}
 	return B_ERROR;
-}
-
-void
-App::SetFirstWindow( Win* newfirst )
-{
-	fFirstWindow = newfirst;
 }

@@ -866,6 +866,33 @@ void ThemisTabView :: MessageReceived(BMessage * aMessage) {
 	
 }
 
+const char * ThemisTabView :: GetPreviousHistoryEntry() {
+	
+	return ((ThemisTab *)TabAt(Selection()))->GetHistory()->GetPreviousEntry();	
+
+}
+
+const char * ThemisTabView :: GetNextHistoryEntry() {
+
+	return ((ThemisTab *)TabAt(Selection()))->GetHistory()->GetNextEntry();	
+
+}
+
+void ThemisTabView :: SetHistoryDepth(int8 aDepth) {
+
+	for (int32 i = 0; i < CountTabs(); i++) {
+		((ThemisTab *)TabAt(i))->GetHistory()->SetDepth(aDepth);
+	}
+
+}
+
+void ThemisTabView :: ClearHistory() {
+
+	for (int32 i = 0; i < CountTabs(); i++) {
+		((ThemisTab *)TabAt(i))->GetHistory()->Clear();
+	}
+}
+
 /////////////////////////////////////
 // ContainerViewMessageFilter
 /////////////////////////////////////

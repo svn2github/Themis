@@ -68,6 +68,9 @@ class Win : public BWindow, public MessageSystem {
 		BBitmap * bitmaps[10];
 		
 		void SendUrlOpenMessage(const char * aUrl, bool aAddToHistory = true);
+		void CloseOtherTabs(uint32 aTabIndex, bool aCloseLastTab);
+		void ClearHistory();
+		void ReInitTabHistory();
 
 	public:
 		Win(BRect frame,
@@ -104,7 +107,6 @@ class Win : public BWindow, public MessageSystem {
 		void LoadInterfaceGraphics();
 		Win * NextWindow();
 		status_t ReceiveBroadcast(BMessage * message);
-		void ReInitTabHistory();
 		void SetNextWindow(Win * nextwin);
 		void SetQuitConfirmed(bool state);
 		void UrlTypedHandler(bool show_all);

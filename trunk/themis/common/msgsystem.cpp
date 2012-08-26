@@ -404,7 +404,7 @@ status_t MessageSystem::ReceiveBroadcast(BMessage *msg)
 //			msg=_message_queue->NextMessage();
 			
 //			printf("%p has received this message:\n",this);
-			msg->PrintToStream();
+//			msg->PrintToStream();
 //			delete msg;
 			
 //		}
@@ -413,7 +413,7 @@ status_t MessageSystem::ReceiveBroadcast(BMessage *msg)
 }
 status_t MessageSystem::BroadcastReply(BMessage *msg)
 {
-	msg->PrintToStream();
+//	msg->PrintToStream();
 	return B_OK;
 }
 void MessageSystem::MsgSysUnregister(MessageSystem *target){

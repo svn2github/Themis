@@ -56,16 +56,12 @@ extern BMessage* AppSettings;
 class App : public BApplication {
 
 	private:
-		//! Checks settings for missing items, and adds defaults if required.
-		void CheckSettings(char * settings_path = NULL);
 		//! The About window.
 		aboutwin * fAboutWin;
 		//! The first window in a possible sequence of windows.
 		Win * fFirstWindow;
 		//! The GlobalHistory object.
 		GlobalHistory * fGlobalHistory;
-		//! A BLocker object for locking purposes.
-		BLocker * fLocker;
 		//! The MessageDaemon object.
 		MessageDaemon * fMessageDaemon;
 		//! The Preferences window.
@@ -78,6 +74,14 @@ class App : public BApplication {
 		SiteHandler * fSiteHandler;
 		//! A pointer to the new network system.
 		_Themis_Networking_::TCPManager * TCPMan;
+		//! Checks settings for missing items, and adds defaults if required.
+		void CheckSettings(char * settings_path = NULL);
+		//! Opens the preferences window
+		void OpenPrefsWindow();
+		//! Returns a pointer to the first window.
+		Win * FirstWindow();
+		//! Used to change the pointer to the first win, whenever it is closed.
+		void SetFirstWindow(Win * newfirst);
 
 	public:
 		//! Application object constructor.
@@ -90,8 +94,6 @@ class App : public BApplication {
 		//! Handles arguments passed to the application.
 		void ArgvReceived(int32 argc,
 						  char ** argv);
-		//! Returns a pointer to the first window.
-		Win * FirstWindow();
 		//! Returns a pointer to the GlobalHistory object.
 		GlobalHistory * GetGlobalHistory();
 		//! Returns the count of _browser_ windows we currently have.
@@ -104,8 +106,6 @@ class App : public BApplication {
 		status_t LoadSettings();
 		//! General Be-style message handling.
 		void MessageReceived(BMessage * msg);
-		//! Hook function vor B_PULSE messages.
-		void Pulse();
 		//! Handles the quit request.
 		bool QuitRequested();
 		//! Hook function which is triggered when the application is ready.
@@ -114,8 +114,6 @@ class App : public BApplication {
 		void RefsReceived(BMessage * refs);
 		//! Saves the settings to disk.
 		status_t SaveSettings();
-		//! Used to change the pointer to the first win, whenever it is closed.
-		void SetFirstWindow(Win * newfirst);
 
 };
 

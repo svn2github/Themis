@@ -46,6 +46,10 @@ class ThemisTabView : public BTabView {
 		float GetTabWidth() const;
 		void DisableFakeSingleView();
 		void MessageReceived(BMessage * aMessage);
+		const char * GetPreviousHistoryEntry();
+		const char * GetNextHistoryEntry();
+		void SetHistoryDepth(int8 aDepth);
+		void ClearHistory();
 
 };
 

@@ -39,6 +39,7 @@ class ThemisTab : public BTab {
 		void SetFavIcon(BBitmap* bmp);
 		void SetLabel(const char* label);
 		void SetSiteID(int32 id);
+		void AddHistoryEntry(const char * aEntry);
 		
 };
 
