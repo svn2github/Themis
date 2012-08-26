@@ -71,6 +71,7 @@ class Win : public BWindow, public MessageSystem {
 		void CloseOtherTabs(uint32 aTabIndex, bool aCloseLastTab);
 		void ClearHistory();
 		void ReInitTabHistory();
+		void SetUrl(const char * aUrl, BBitmap * aFavIcon = NULL);
 
 	public:
 		Win(BRect frame,
@@ -91,7 +92,6 @@ class Win : public BWindow, public MessageSystem {
 		void Zoom(BPoint origin, float width, float height);
 		void AddNewTab(bool hidden);
 		ThemisTabView * GetTabView() const;
-		ThemisNavView * GetNavView() const;
 		ThemisUrlPopUpWindow * GetUrlPopUpWindow() const;
 		BBitmap * GetBitmap(unsigned int aIndex = 0) const;
 		bool CloseUrlPopUpWindow();
@@ -110,6 +110,10 @@ class Win : public BWindow, public MessageSystem {
 		void SetNextWindow(Win * nextwin);
 		void SetQuitConfirmed(bool state);
 		void UrlTypedHandler(bool show_all);
+		void SetNavButtonsStatus();
+		void EnableNewTabButton();
+		void SetFocusOnUrlView();
+		BRect GetBoundsOfUrlView() const;
 						
 };
 

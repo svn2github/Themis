@@ -290,7 +290,7 @@ ThemisTabView::MouseDown( BPoint point )
 			{
 				if( Window()->CurrentFocus() != NULL )
 					Window()->CurrentFocus()->MakeFocus( false );
-				( ( Win* )Window() )->GetNavView()->SetFocusOnUrlView();
+				( ( Win* )Window() )->SetFocusOnUrlView();
 			}
 			break;
 		}
@@ -362,7 +362,7 @@ ThemisTabView::MouseDown( BPoint point )
 				// if the newtab button is disabled, and no more tabs are
 				// out of range, enable the button
 				if( ( CountTabs() * tab_width ) <= ( Bounds().right - 22 ) )
-					( ( Win* )Window() )->GetNavView()->SetButtonMode(4, 0);
+					( ( Win* )Window() )->EnableNewTabButton();
 								
 				// calculate new ( bigger ) size of tabs and draw again
 				DynamicTabs( false );
@@ -449,7 +449,13 @@ ThemisTabView::Select( int32 tabindex )
 
 		win->SetTitle( wtitle.String() );
 		tab->SetLabel( ttitle.String() );
-		win->GetNavView()->SetUrl(url.String(), tab->GetFavIcon());
+		
+		BMessenger messenger(win);
+		BMessage message(SET_NAV_URL);
+		message.AddString("url", url.String());
+		message.AddPointer("fav_icon", tab->GetFavIcon());
+		messenger.SendMessage(&message);
+		
 		win->SetLoadingInfo(lprog, stext.String());
 			
 	}
@@ -561,7 +567,8 @@ ThemisTabView::Select( int32 tabindex )
 	BTabView::Select( tabindex );
 	
 	// as the methods name says, set the nav buttons according the tabs history
-	SetNavButtonsByTabHistory();
+	Win* win = ( Win* )Window();
+	win->SetNavButtonsStatus();
 }
 
 void
@@ -751,41 +758,6 @@ ThemisTabView::SetFakeSingleView()
 	fake_single_view = true;
 }
 
-void ThemisTabView::SetNavButtonsByTabHistory() {
-//	printf( "ThemisTabView::SetNavButtonsByTabHistory()\n" );
-	ThemisTab* tab = (ThemisTab*)TabAt(Selection());
-	
-	ThemisNavView* nv = ((Win*)Window())->GetNavView();
-	
-//	printf("CurrentPosition: %d\n", tab->GetHistory()->GetCurrentPosition());
-	tab->GetHistory()->PrintHistory();
-	
-	if (tab->GetHistory()->GetCurrentPosition() == 0) {
-		if (tab->GetHistory()->GetEntryCount() > 1) {
-//			printf("TABVIEW: enabling back, disabling fwd button if needed.\n");
-			nv->SetButtonMode(0, 0);
-			nv->SetButtonMode(1, 3);
-		}
-		else {
-//			printf( "TABVIEW: only one ( or no )history item. disabling back and fwd if needed.\n" );
-			nv->SetButtonMode(0, 3);
-			nv->SetButtonMode(1, 3);
-		}
-	}
-	else {
-		if (tab->GetHistory()->GetCurrentPosition() == (tab->GetHistory()->GetEntryCount() - 1)) {
-//			printf("TABVIEW: at history end. disable back, enable fwd if needed.\n");
-			nv->SetButtonMode(0, 3);
-			nv->SetButtonMode(1, 0);
-		}
-		else {
-//			printf("TABVIEW: in middle of history. enabling back and fwd if needed.\n");
-			nv->SetButtonMode(0, 0);
-			nv->SetButtonMode(1, 0);
-		}
-	}
-}
-
 void
 ThemisTabView::SetNormalTabView()
 {
@@ -891,6 +863,44 @@ void ThemisTabView :: ClearHistory() {
 	for (int32 i = 0; i < CountTabs(); i++) {
 		((ThemisTab *)TabAt(i))->GetHistory()->Clear();
 	}
+}
+
+bool ThemisTabView :: CurrentAtBackOfHistory() const {
+
+	bool result = false;
+
+	ThemisTab* tab = (ThemisTab*)TabAt(Selection());
+	
+	if ((tab->GetHistory()->GetCurrentPosition() == 0) &&
+		(tab->GetHistory()->GetEntryCount() > 1)) {
+		result = true;
+	}
+
+	return result;
+
+}
+
+bool ThemisTabView :: CurrentAtEndOfHistory() const {
+
+	bool result = false;
+
+	ThemisTab* tab = (ThemisTab*)TabAt(Selection());
+	
+	if ((tab->GetHistory()->GetCurrentPosition() != 0) &&
+		(tab->GetHistory()->GetCurrentPosition() == (tab->GetHistory()->GetEntryCount() - 1))) {
+		result = true;
+	}
+
+	return result;
+
+}
+
+int32 ThemisTabView :: GetHistoryCount() const {
+
+	ThemisTab* tab = (ThemisTab*)TabAt(Selection());
+	
+	return tab->GetHistory()->GetEntryCount();
+	
 }
 
 /////////////////////////////////////

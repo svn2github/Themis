@@ -150,6 +150,7 @@ to allow interoperability in some parts of the application.
 #define URL_SELECT_PREV			'ursp'
 #define WINDOW_CLOSE			'winc'
 #define WINDOW_NEW				'winn'
+#define SET_NAV_URL				'snvu'
 
 // UrlHandler message constants
 //#define UH_DOC_CLOSED			'udcl'	// sent by tab to UH (removes UrlEntry)

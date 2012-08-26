@@ -51,9 +51,10 @@ void ThemisUrlPopUpWindow :: SetUrlSelection(int aOffset) {
 	const char * urlText = mUrlListView->SetUrlSelection(aOffset);
 
 	if (urlText) {
-		parentwindow->Lock();
-		((Win *)parentwindow)->GetNavView()->SetUrl(urlText);
-		parentwindow->Unlock();
+		BMessenger messenger(parentwindow);
+		BMessage message(SET_NAV_URL);
+		message.AddString("url", urlText);
+		messenger.SendMessage(&message);
 	}
 
 }
@@ -128,7 +129,7 @@ void ThemisUrlPopUpWindow :: ListToDisplay(BList * list) {
 void ThemisUrlPopUpWindow :: ResizeToPrefered() {
 
 	parentwindow->Lock();
-	float urlview_width = ((Win*)parentwindow)->GetNavView()->GetBoundsOfUrlView().right;
+	float urlview_width = ((Win*)parentwindow)->GetBoundsOfUrlView().right;
 	parentwindow->Unlock();
 	
 	// Calculate the total height of the items to see if we should shrink the list view.

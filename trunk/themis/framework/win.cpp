@@ -214,7 +214,13 @@ void Win :: ReInitTabHistory() {
 	AppSettings->FindInt8(kPrefsTabHistoryDepth, &depth);
 	tabview->SetHistoryDepth(depth);
 	/* and update the nav buttons states */
-	tabview->SetNavButtonsByTabHistory();
+	SetNavButtonsStatus();
+
+}
+
+void Win :: SetUrl(const char * aUrl, BBitmap * aFavIcon) {
+	
+	navview->SetUrl(aUrl, aFavIcon);
 
 }
 
@@ -270,9 +276,8 @@ void Win :: MessageReceived(BMessage * msg) {
 			if (next != NULL) {
 				SendUrlOpenMessage(next, false);
 			}
-			else
-			{
-				tabview->SetNavButtonsByTabHistory();	// needed to disable the fwd button
+			else {
+				navview->SetButtonMode(1, 3); // Disable the forward button
 			}
 			break;
 		}
@@ -486,6 +491,18 @@ void Win :: MessageReceived(BMessage * msg) {
 			be_app_messenger.SendMessage(msg);
 			break;
 		}
+		case SET_NAV_URL: {
+			BString url;
+			msg->FindString("url", &url);
+			BBitmap * icon = NULL;
+			if (msg->HasPointer("fav_icon")) {
+				void * pointer;
+				msg->FindPointer("fav_icon", &pointer);
+				icon = (BBitmap *) pointer;
+			}
+			SetUrl(url.String(), icon);
+			break;
+		}
 		default: {
 			BWindow::MessageReceived(msg);
 			break;
@@ -633,12 +650,6 @@ ThemisTabView * Win :: GetTabView() const {
 	
 	return tabview;
 	
-}
-
-ThemisNavView * Win :: GetNavView() const {
-
-	return navview;
-
 }
 
 ThemisUrlPopUpWindow * Win :: GetUrlPopUpWindow() const {
@@ -1014,4 +1025,47 @@ status_t Win :: ReceiveBroadcast(BMessage * message) {
 
 	return B_OK;
 
+}
+
+void Win :: SetNavButtonsStatus() {
+	
+	if (tabview->CurrentAtBackOfHistory()) {
+		// Enable back button. Disable forward button
+		navview->SetButtonMode(0, 0);
+		navview->SetButtonMode(1, 3);
+	}
+	else if (tabview->CurrentAtEndOfHistory()) {
+		// Disable back button, Enable forward button
+		navview->SetButtonMode(0, 3);
+		navview->SetButtonMode(1, 0);
+	}
+	else if (tabview->GetHistoryCount() > 1) {
+		// We are somewhere in the middle. Enable both the back and forward buttons.
+		navview->SetButtonMode(0, 0);
+		navview->SetButtonMode(1, 0);
+	}
+	else {
+		// No history or only one item. Disable both the back and forward buttons.
+		navview->SetButtonMode(0, 3);
+		navview->SetButtonMode(1, 3);
+	}
+	
+}
+
+void Win :: EnableNewTabButton() {
+
+	navview->SetButtonMode(4, 0);
+
+}
+
+void Win :: SetFocusOnUrlView() {
+	
+	navview->SetFocusOnUrlView();
+
+}
+
+BRect Win :: GetBoundsOfUrlView() const {
+	
+	return navview->GetBoundsOfUrlView();
+	
 }

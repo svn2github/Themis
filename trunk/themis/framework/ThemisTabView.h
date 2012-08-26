@@ -41,7 +41,6 @@ class ThemisTabView : public BTabView {
 		void CreateCloseTabViewButton();
 		void DynamicTabs(bool newtab);
 		void SetFakeSingleView();
-		void SetNavButtonsByTabHistory();
 		void SetNormalTabView();
 		float GetTabWidth() const;
 		void DisableFakeSingleView();
@@ -50,6 +49,9 @@ class ThemisTabView : public BTabView {
 		const char * GetNextHistoryEntry();
 		void SetHistoryDepth(int8 aDepth);
 		void ClearHistory();
+		bool CurrentAtBackOfHistory() const;
+		bool CurrentAtEndOfHistory() const;
+		int32 GetHistoryCount() const;
 
 };
 
