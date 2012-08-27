@@ -48,6 +48,9 @@
 class BPopUpMenu;
 class BHandler;
 
+// Defines used for messaging.
+#define DTD_CHANGED_PARSER		'dtdp'
+
 /// Class to view the preferences of the HTML parser addon.
 
 /**

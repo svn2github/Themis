@@ -48,6 +48,9 @@
 class BPopUpMenu;
 class BHandler;
 
+// Defines used for messaging.
+#define CSS_CHANGED_PARSER		'cssp'
+
 /// Class to view the preferences of the CSS parser addon.
 
 /**
