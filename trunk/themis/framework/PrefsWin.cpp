@@ -12,6 +12,7 @@
 #include <app/Application.h>
 #include <interface/CheckBox.h>
 #include <interface/TextControl.h>
+#include <String.h>
 
 // Themis headers
 #include "app.h"
