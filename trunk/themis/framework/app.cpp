@@ -30,6 +30,7 @@ Project Start Date: October 18, 2000
 // BeOS headers
 #include <Alert.h>
 #include <Directory.h>
+#include <File.h>
 #include <Screen.h>
 #include <be/storage/FindDirectory.h>
 #include <be/storage/Path.h>
