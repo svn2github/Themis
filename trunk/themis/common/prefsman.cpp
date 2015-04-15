@@ -20,7 +20,7 @@ PrefsManager::PrefsManager(const char *PREF_FILENAME, int32 FLAGS)
 		settingsFilePath.Append(this->pref_filename,false);
 		BEntry settingsFileEntry(settingsFilePath.Path(),true);
 //		printf("Settings File Path: %s\tExists? %s\n",settingsFilePath.Path(),settingsFileEntry.Exists()?"yes":"no");
-		status_t error = get_ref_for_path(settingsFilePath.Path(), &this->ref);
+		get_ref_for_path(settingsFilePath.Path(), &this->ref);
 		BPath testPath(&this->ref);
 		//printf("Test result: %s\n",testPath.Path());
 		if( (FLAGS & PrefsManager::FLAG_CREATE_FILE) != 0 )
