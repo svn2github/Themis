@@ -44,7 +44,7 @@ AuthType::AuthType(void)
 	char key[17];
 	memset(key,0,17);
 	bigtime_t curtime=real_time_clock(),systime=system_time();
-	sprintf(key,"%08x%08x",(uint32)curtime,(uint32)systime);
+	sprintf(key,"%08lx%08lx",(uint32)curtime,(uint32)systime);
 	cryptSetAttributeString(cryptContext,CRYPT_CTXINFO_KEY,key,16);
 	memset(key,0,17);
 }
@@ -54,7 +54,7 @@ AuthType::AuthType(const char *host,uint16 port, const char *uri,const char *use
 	char key[17];
 	memset(key,0,17);
 	bigtime_t curtime=real_time_clock(),systime=system_time();
-	sprintf(key,"%08x%08x",(uint32)curtime,(uint32)systime);
+	sprintf(key,"%08lx%08lx",(uint32)curtime,(uint32)systime);
 	cryptSetAttributeString(cryptContext,CRYPT_CTXINFO_KEY,key,16);
 	auth_realm=auth_user=NULL;
 	auth_pass=NULL;
