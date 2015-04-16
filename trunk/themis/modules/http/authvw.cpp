@@ -35,13 +35,8 @@ Project Start Date: October 18, 2000
 #include "authtypebasic.h"
 #include "authtypedigest.h"
 
-class tcplayer;
-
 extern HTTPv4 *HTTP;
 
-#ifndef NEWNET
-extern tcplayer *__TCP;
-#endif
 authview::authview(BRect frame)
 	:BView(frame,"authview",B_FOLLOW_ALL,B_WILL_DRAW|B_NAVIGABLE_JUMP){
 		SetViewColor(216,216,216);
