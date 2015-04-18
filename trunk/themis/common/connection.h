@@ -60,8 +60,8 @@ namespace _Themis_Networking_ {
 	*/
 	class Connection {
 		private:
-			const uint32 InitialBufferSize;
-			uint32 BufferSize;
+			const int32 InitialBufferSize;
+			int32 BufferSize;
 			unsigned char * ReadBuffer;
 			static int32 SystemReady;
 		

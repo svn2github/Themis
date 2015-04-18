@@ -863,7 +863,7 @@ void Connection::RetrieveData() {
 			total_bytes_received+=bytes;
 			TCPMan->AddBytesReceived(bytes);
 			AppendData(ReadBuffer, bytes);
-			if ((uint32)bytes == BufferSize) {
+			if (bytes == BufferSize) {
 				// We might have been able to receive more if we had a bigger buffer
 				// Make it a bit bigger
 				BufferSize += InitialBufferSize;
