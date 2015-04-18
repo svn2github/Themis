@@ -60,6 +60,9 @@ namespace _Themis_Networking_ {
 	*/
 	class Connection {
 		private:
+			const uint32 InitialBufferSize;
+			uint32 BufferSize;
+			unsigned char * ReadBuffer;
 			static int32 SystemReady;
 		
 			friend class TCPManager; //lazy man's hack for the moment, to get

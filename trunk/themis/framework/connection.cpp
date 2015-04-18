@@ -148,9 +148,10 @@ void Connection::NotifyDisconnect() {
 	
 }
 
-Connection::Connection(NetworkableObject *NetObject,const char *host, uint16 port,bool secure,bool async) {
+Connection::Connection(NetworkableObject *NetObject,const char *host, uint16 port,bool secure,bool async) : InitialBufferSize(4096) {
 	Init();
 //	lock=new BLocker(true);
+	BufferSize = InitialBufferSize;
 	owner=NetObject;
 	if (host!=NULL) {
 		
@@ -165,6 +166,7 @@ Connection::Connection(NetworkableObject *NetObject,const char *host, uint16 por
 	use_ssl=secure;
 	
 	nonblocking=async;
+	ReadBuffer = NULL;
 }
 Connection::~Connection() {
 	//printf("Connection: Connection to %s is going away.\n",host_name);
@@ -197,6 +199,8 @@ ssl_country_name=NULL;
 		owner->DestroyingConnectionObject(this);
 		owner=NULL;
 	}
+	
+	delete[] ReadBuffer;
 	
 }
 void Connection::OwnerRelease() {
@@ -789,28 +793,28 @@ void Connection::RetrieveData() {
 //	printf("[RetrieveData]\n");
 //	fflush(stdout);
 //	BAutolock alock(lock);
-		if (lock.LockWithTimeout(15000)==B_OK) {
-		int32 size=1048576;
-		int32 bytes=0;
-		unsigned char *data=new unsigned char[size];
-			if (!IsInUse())
-			{
-				if (use_ssl) {
-					try {
-						cryptPopData(cryptSession,(unsigned char*)data,size,(int*)&bytes);
-					}
-					catch(...) {
-					}
-			
-				} else				
-					bytes=recv(socket_id,(char *)data, size,0);
-				delete data;
-				size=0;
-				bytes=0;
-				lock.Unlock();
-				return;
-			}
-		memset(data,0,size);
+	if (lock.LockWithTimeout(15000)==B_OK) {
+		uint32 bytes=0;
+		if (!ReadBuffer) {
+			// No buffer created yet
+			ReadBuffer = new unsigned char[BufferSize];
+		}
+	
+		if (!IsInUse())
+		{
+			if (use_ssl) {
+				try {
+					cryptPopData(cryptSession,(unsigned char*)ReadBuffer, BufferSize, (int*)&bytes);
+				}
+				catch(...) {
+				}
+		
+			} else				
+				bytes=recv(socket_id,(char *)ReadBuffer, BufferSize, 0);
+			bytes=0;
+			lock.Unlock();
+			return;
+		}
 		if (socket_id>=0) {
 			if (!nonblocking)
 			{//set the socket to non-blocking mode for the receive then set back
@@ -820,13 +824,13 @@ void Connection::RetrieveData() {
 			
 			if (use_ssl) {
 				try {
-					cryptPopData(cryptSession,(unsigned char*)data,size,(int*)&bytes);
+					cryptPopData(cryptSession,(unsigned char*)ReadBuffer, BufferSize, (int*)&bytes);
 				}
 				catch(...) {
 				}
 		
 			} else				
-				bytes=recv(socket_id,(char *)data, size,0);
+				bytes=recv(socket_id,(char *)ReadBuffer, BufferSize,0);
 			if (!nonblocking)
 			{//set the socket to non-blocking mode for the receive then set back
 				int option=0;
@@ -855,10 +859,22 @@ void Connection::RetrieveData() {
 			} else {
 				bytes_per_second=session_bytes_received/(tdiff/1.0);
 			}
-			printf("Estimated Bytes Per Second: %1.4f\n",bytes_per_second);
+			printf("Estimated Bytes Per Second: %1.4f, bytes received: %li\n",bytes_per_second, bytes);
 			total_bytes_received+=bytes;
 			TCPMan->AddBytesReceived(bytes);
-			AppendData(data,bytes);
+			AppendData(ReadBuffer, bytes);
+			if (bytes == BufferSize) {
+				// We might have been able to receive more if we had a bigger buffer
+				// Make it a bit bigger
+				BufferSize += InitialBufferSize;
+				printf("Resizing receive buffer to %li\n", BufferSize);
+				delete[] ReadBuffer;
+				ReadBuffer = new unsigned char[BufferSize];
+			}
+			else {
+				// Buffer was big enough. Just reset the bytes written
+				memset(ReadBuffer, 0, bytes);
+			}
 			lastusedtime=real_time_clock();
 			
 //			if (owner!=NULL)
@@ -895,9 +911,6 @@ void Connection::RetrieveData() {
 		}
 		
 		
-		memset(data,0,size);
-		delete data;
-		data=NULL;
 		lock.Unlock();
 		}
 	//	printf("Connection::Retrieve() is done.\n");
