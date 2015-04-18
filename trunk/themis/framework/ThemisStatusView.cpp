@@ -191,9 +191,10 @@ ThemisStatusView::SetLoadingInfo(
 	const char* status_text )
 {
 	fDocumentBar->SetValue( doc_progress, "" );
-	fStatusText.SetTo( status_text );
-	
-	Draw( Bounds() );
+	if (fStatusText.Compare(status_text)) {
+		fStatusText.SetTo(status_text);
+		Draw(Bounds());
+	}
 }
 
 void
