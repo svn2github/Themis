@@ -794,7 +794,7 @@ void Connection::RetrieveData() {
 //	fflush(stdout);
 //	BAutolock alock(lock);
 	if (lock.LockWithTimeout(15000)==B_OK) {
-		uint32 bytes=0;
+		int32 bytes=0;
 		if (!ReadBuffer) {
 			// No buffer created yet
 			ReadBuffer = new unsigned char[BufferSize];
@@ -863,7 +863,7 @@ void Connection::RetrieveData() {
 			total_bytes_received+=bytes;
 			TCPMan->AddBytesReceived(bytes);
 			AppendData(ReadBuffer, bytes);
-			if (bytes == BufferSize) {
+			if ((uint32)bytes == BufferSize) {
 				// We might have been able to receive more if we had a bigger buffer
 				// Make it a bit bigger
 				BufferSize += InitialBufferSize;
