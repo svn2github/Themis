@@ -198,7 +198,6 @@ ssize_t DiskCacheObject::Write(uint32 usertoken, void *buffer, size_t size)
 				file->Lock();
 				bytes=file->WriteAt(writelockowner->WritePosition(),buffer,size);
 				writelockowner->SetWritePosition(writelockowner->WritePosition()+bytes);
-				file->Sync();
 				file->Unlock();
 			}
 		}
