@@ -544,9 +544,11 @@ void Connection::Init() {
 	AddToList(this);
 }
 bool Connection::IsBufferEmpty() {
+	bool empty = false;
 	BAutolock alock(lock);
 	if (alock.IsLocked())
-	return mBuffers->IsEmpty();
+		empty = mBuffers->IsEmpty();
+	return empty;
 }
 
 int32 Connection::SessionID() {
@@ -648,6 +650,7 @@ off_t Connection::BytesReceived(bool session) {
 	return bytes;
 }
 off_t Connection::Send(void *data, off_t size) {
+	printf("Sending data\n");
 	off_t bytes=0L;
 	BAutolock alock(lock);
 	if (alock.IsLocked()){
