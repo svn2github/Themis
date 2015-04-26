@@ -45,7 +45,7 @@ Project Start Date: October 18, 2000
 extern BMessage *HTTPSettings;
 
 //!The size of the receive buffer.
-#define BUFFER_SIZE 10240
+#define BUFFER_SIZE 16384
 
 extern HTTPv4 *HTTP;
 using namespace _Themis_Networking_;
@@ -640,7 +640,6 @@ uint32 HTTPv4::DataIsWaiting(Connection *connection)
 	unsigned char *buffer=(unsigned char*)malloc(BUFFER_SIZE);
 	off_t bytes_received=0L/*,data_size=0L*/;
 	off_t buffer_size=BUFFER_SIZE;
-	memset(buffer,0,BUFFER_SIZE);//we do an initial wipe of memory just to start things off fresh
 		printf("\nrequest lock achieved\n");
 		if (connection->DataSize()>0)
 		{
@@ -683,7 +682,6 @@ uint32 HTTPv4::DataIsWaiting(Connection *connection)
 				current=current->next;
 			}
 		}
-		memset(buffer,0,BUFFER_SIZE);
 		free(buffer);
 		request_lock.Unlock();
 		printf("\nrequest_lock released\n");

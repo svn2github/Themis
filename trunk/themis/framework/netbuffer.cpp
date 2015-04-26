@@ -34,6 +34,7 @@ Project Start Date: October 18, 2000
 */
 #include "netbuffer.h"
 
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <Autolock.h>
@@ -44,10 +45,10 @@ Buffer::Buffer() {
 	Init();
 	lock=new BLocker(true);
 }
-Buffer::Buffer(void *data, off_t size) {
+Buffer::Buffer(void *data, off_t size, off_t buffer_size) {
 	Init();
 	lock=new BLocker(true);
-	SetData(data,size);
+	SetData(data, size, buffer_size);
 }
 Buffer::~Buffer() {
 	if ((data_size!=0) || (buffer!=NULL)) {
@@ -57,6 +58,7 @@ Buffer::~Buffer() {
 }
 void Buffer::Init() {
 	data_size=0L;
+	mBufferSize = 0L;
 	buffer=NULL;
 	been_read=false;
 }
@@ -119,25 +121,22 @@ off_t Buffer::GetData(void *data, off_t max_size) {
 	}
 	return num;
 }
-off_t Buffer::SetData(void *data, off_t size) {
-	off_t num=0L;
+off_t Buffer::SetData(void *data, off_t size, off_t buffer_size) {
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
-		if (buffer!=NULL) {
-			if (size!=data_size) {
-				memset(buffer,0,data_size);
-				delete buffer;
-				buffer=NULL;
-				buffer=new unsigned char[size];
+		if (buffer != NULL) {
+			if (buffer_size != mBufferSize) {
+				printf("Changing buffer to new size: %lli\n", buffer_size);
+				delete[] buffer;
+				buffer = new unsigned char[buffer_size];
 			}
-			memset(buffer,0,size);
 		} else {
-			buffer=new unsigned char[size];
-			memset(buffer,0,size);
+			buffer = new unsigned char[buffer_size];
 		}
-		memcpy(buffer,(unsigned char*)data,size);
-		num=data_size=size;
-		been_read=false;
+		memcpy(buffer, (unsigned char*)data, size);
+		data_size = size;
+		been_read = false;
+		mBufferSize = buffer_size;
 	}
-	return num;
+	return data_size;
 }

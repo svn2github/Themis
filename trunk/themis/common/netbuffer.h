@@ -59,6 +59,12 @@ can retrieve it through the Connection class.
 		
 		
 		*/
+			off_t mBufferSize;
+		/*!
+		\brief The size of the data in the internal buffer.
+		
+		
+		*/
 			off_t data_size;
 		/*!
 		\brief Has the data been read?
@@ -94,7 +100,7 @@ can retrieve it through the Connection class.
 		This version of the constructor will copy data passed in into the internal
 		buffer. The buffer is 100% usable after construction.
 		*/
-			Buffer(void *data, off_t size);
+			Buffer(void *data, off_t size, off_t buffer_size);
 		/*!
 		\brief The destructor.
 		
@@ -141,7 +147,7 @@ can retrieve it through the Connection class.
 		
 		This function makes a copy of the data that is being passed in.
 		*/
-			off_t SetData(void *data,off_t size);
+			off_t SetData(void *data,off_t size, off_t buffer_size);
 		/*!
 		\brief Empties the buffer's data.
 		

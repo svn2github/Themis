@@ -50,6 +50,9 @@ Project Start Date: October 18, 2000
 
 #include <netdb.h>
 
+// Declarations
+class BufferPool;
+
 namespace _Themis_Networking_ {
 	class TCPManager;
 	class NetworkableObject;
@@ -86,21 +89,6 @@ namespace _Themis_Networking_ {
 	
 	*/
 			sockaddr_in sa;
-	/*!
-	\brief 
-	
-	
-	*/
-			struct buffer_list_st {
-				Buffer *buffer;
-				buffer_list_st *next;
-			};
-	/*!
-	\brief 
-	
-	
-	*/
-			buffer_list_st *buffer_in;
 		
 	/*!
 	\brief 
@@ -203,6 +191,7 @@ namespace _Themis_Networking_ {
 			volatile int32 notified_connect;
 			volatile int32 notified_disconnect;
 			volatile int32 already_connected;
+			BufferPool * mBuffers;
 		
 		public:
 			uint16 EncryptionBits();

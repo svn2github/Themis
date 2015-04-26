@@ -38,6 +38,10 @@ Project Start Date: October 18, 2000
 #include <posix/sys/select.h>
 #define closesocket close
 #endif
+
+// Themis headers
+#include "BufferPool.hpp"
+
 using namespace _Themis_Networking_;
 
 BList *Connection::ConnectionList=NULL;
@@ -152,6 +156,7 @@ Connection::Connection(NetworkableObject *NetObject,const char *host, uint16 por
 	Init();
 //	lock=new BLocker(true);
 	BufferSize = InitialBufferSize;
+	mBuffers = new BufferPool();
 	owner=NetObject;
 	if (host!=NULL) {
 		
@@ -201,6 +206,7 @@ ssl_country_name=NULL;
 	}
 	
 	delete[] ReadBuffer;
+	delete mBuffers;
 	
 }
 void Connection::OwnerRelease() {
@@ -516,7 +522,6 @@ void Connection::Init() {
 	session_bytes_out=0L;
 	socket_id=-1;
 	memset(&sa,0,sizeof(sa));
-	buffer_in=NULL;
 	session_id=0;
 	owner=NULL;
 	in_use=0;
@@ -539,12 +544,9 @@ void Connection::Init() {
 	AddToList(this);
 }
 bool Connection::IsBufferEmpty() {
-	bool emptied=false;
 	BAutolock alock(lock);
 	if (alock.IsLocked())
-		if (buffer_in==NULL)
-			emptied=true;
-	return emptied;
+	return mBuffers->IsEmpty();
 }
 
 int32 Connection::SessionID() {
@@ -585,91 +587,41 @@ double Connection::BytesPerSecond(){
 }
 
 status_t Connection::AppendData(void *data, off_t size) {
-	fflush(stdout);
-	status_t status=B_BUSY;
 //	BAutolock alock(lock);
 //	if (alock.IsLocked()) {
 
-		buffer_list_st *current=buffer_in;
-		if (current==NULL) {
-			buffer_in=new buffer_list_st;
-			current=buffer_in;
-		} else {
-			while (current->next!=NULL)
-				current=current->next;
-			current->next=new buffer_list_st;
-			current=current->next;
-		}
-		current->next=NULL;
-		current->buffer=new Buffer(data,size);
-		status=B_OK;
-		lastusedtime=real_time_clock();
-		//printf("[Connection::AppendData] Buffer is now %Ld bytes long\n",DataSize());
+	mBuffers->AppendData(data, size, BufferSize);
+	lastusedtime = real_time_clock();
+	//printf("[Connection::AppendData] Buffer is now %Ld bytes long\n",DataSize());
 //	}
-	return status;
+	return B_OK;
 }
 off_t Connection::Receive(void *data, off_t max_size) {
 	//printf("[Receive]\n");
-	fflush(stdout);
 	off_t size=0L;
 //	BAutolock alock(lock);
 	if (lock.LockWithTimeout(10000)==B_OK) {
-		buffer_list_st *current=buffer_in;
-		buffer_list_st *prev;
-		memset((unsigned char*)data,0,max_size);
-		int32 bytes;
-		while (current!=NULL) {
-			if (current->buffer==NULL)
-				break;
-			if ((size+current->buffer->Size())>max_size) {
-				break;
-			}
-			bytes=0;
-			//printf("[Receive] at most %Ld can be read now.\n", max_size-size);
-			bytes=current->buffer->GetData((unsigned char*)data+size,max_size-size);
-			size+=bytes;
-			//printf("[Receive] %ld (%Ld) bytes were copied into protocol buffer.\n",bytes,size);
-			prev=current;
-			current=current->next;
-			delete prev->buffer;
-			delete prev;
-			prev=NULL;
-		}
-		buffer_in=current;
-		lastusedtime=real_time_clock();
-		session_bytes_out+=size;
+		size = mBuffers->Receive(data, max_size);
+		lastusedtime = real_time_clock();
+		session_bytes_out += size;
 		//printf("[Connection::Receive] %Ld bytes have been transferred to owner. %Ld bytes left in buffer.\n\n",session_bytes_received,DataSize());
-		fflush(stdout);
 		lock.Unlock();
 	}
 	return size;
 }
+
 off_t Connection::DataSize() {
 	off_t size=0L;
-	if (lock.LockWithTimeout(15000)==B_OK) {
-		buffer_list_st *current=buffer_in;
-		while(current!=NULL) {
-			if (current->buffer!=NULL)
-				size+=current->buffer->Size();
-			current=current->next;
-		}
-		lock.Unlock();
+	if (lock.LockWithTimeout(15000) == B_OK) {
+		size = mBuffers->DataSize();
 	}
 	return size;	
 }
+
 void Connection::EmptyBuffer() {
 	BAutolock alock(lock);
 	if (alock.IsLocked()) {
-		if (buffer_in!=NULL) {
-			buffer_list_st *next;
-			while (buffer_in!=NULL) {
-				next=buffer_in->next;
-				delete buffer_in->buffer;
-				delete buffer_in;
-				buffer_in=next;
-			}
-			
-		}
+		mBuffers->EmptyBuffer();
 		lastusedtime=real_time_clock();
 	}
 }
