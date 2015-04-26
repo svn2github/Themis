@@ -563,41 +563,29 @@ uint32 HTTPv4::ConnectionTerminated(Connection *connection)
 			if (current->connection==connection)
 			{
 				current->internal_status|=STATUS_CONNECTION_CLOSED;
-				if ((current->internal_status&STATUS_CONNECTED_TO_SERVER)==0)
-				{//we never got connected before we got the terminated notification
-					if ((current->internal_status&STATUS_NO_RESPONSE_FROM_SERVER)==0)
+				if ((current->internal_status&STATUS_CONNECTED_TO_SERVER)==0) {
+					//We never got connected before we got the terminated notification.
+					//Maybe the server isn't up or listening...
+					BMessage disconnect(SH_LOADING_PROGRESS);
+					disconnect.AddInt32("command",COMMAND_INFO);
+					disconnect.AddInt32("site_id",current->site_id);
+					disconnect.AddInt32("url_id",current->url_id);
+					disconnect.AddString("url",current->url);
+					disconnect.AddInt64("bytes-received",current->bytes_received);
+					disconnect.AddBool("request_done",true);
+					disconnect.AddBool("secure",current->secure);
+					disconnect.AddBool("aborted",true);
+					if (current->content_type!=NULL)
 					{
-						//The original attempt to connect to the server asynchronously failed.
-						//Try again synchronously.
-//						printf("HTTPv4: Switching to synchronous socket for host %s\n",current->host);
-						//tcp_manager->Disconnect(connection);//DoneWithSession(connection);
-						current->connection->OwnerRelease();
-						current->connection=NULL;
-						current->internal_status^=(STATUS_CONNECTION_CLOSED|STATUS_NO_RESPONSE_FROM_SERVER);
-//						current->connection=tcp_manager->CreateConnection(this,current->host,current->port,current->secure,false);
-					} else
-					{
-						//The synchronous attempt also failed... Maybe the server isn't up or listening...
-						BMessage disconnect(SH_LOADING_PROGRESS);
-						disconnect.AddInt32("command",COMMAND_INFO);
-						disconnect.AddInt32("site_id",current->site_id);
-						disconnect.AddInt32("url_id",current->url_id);
-						disconnect.AddString("url",current->url);
-						disconnect.AddInt64("bytes-received",current->bytes_received);
-						disconnect.AddBool("request_done",true);
-						disconnect.AddBool("secure",current->secure);
-						disconnect.AddBool("aborted",true);
-						if (current->content_type!=NULL)
-						{
-							disconnect.AddString("content-type",current->content_type);
-							disconnect.AddString("mime-type",current->content_type);
-						}
-						Broadcast(MS_TARGET_ALL,&disconnect);
-						current->connection->OwnerRelease();
-						current->connection=NULL;
-					//	tcp_manager->DoneWithSession(connection);
-						current->internal_status|=(STATUS_NO_RESPONSE_FROM_SERVER|STATUS_NO_DATA_FROM_SERVER|STATUS_CONNECTION_CLOSED);
+						disconnect.AddString("content-type",current->content_type);
+						disconnect.AddString("mime-type",current->content_type);
 					}
+					Broadcast(MS_TARGET_ALL,&disconnect);
+					current->connection->OwnerRelease();
+					current->connection=NULL;
+				//	tcp_manager->DoneWithSession(connection);
+					current->internal_status|=(STATUS_NO_RESPONSE_FROM_SERVER|STATUS_NO_DATA_FROM_SERVER|STATUS_CONNECTION_CLOSED);
+					DoneWithRequest(current);
 				} else
 				{//connected to server successfully, now disconnecting...
 					current->internal_status|=STATUS_CONNECTION_CLOSED;
