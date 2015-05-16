@@ -280,7 +280,7 @@ class HTTPv4: public ProtocolPlugClass
 		
 		BList *request_queue;//!< BList object containing build_request_st records to be converted into http_request_info_st records by the BuildRequest() function.
 		AuthManager *auth_manager;//!< Pointer to the authorization/authentication manager.
-		volatile int32 _terminate_;//!< A flag to terminate all processing in HTTP, used to prepare for shutdown.
+		int32 _terminate_;//!< A flag to terminate all processing in HTTP, used to prepare for shutdown.
 		/*!
 			\brief Sets the various variables and flags to a known state.
 		*/

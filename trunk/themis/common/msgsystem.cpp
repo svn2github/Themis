@@ -45,7 +45,7 @@ BMessageQueue *MessageSystem::MS_MQueue=NULL;
 BLocker MessageSystem::msgsyslock;
 sem_id MessageSystem::process_sem=0;
 sem_id MessageSystem::transmit_sem=0;
-volatile int32 MessageSystem::_Quit_Thread_=0;
+int32 MessageSystem::_Quit_Thread_=0;
 thread_id MessageSystem::_ProcessThread_=0;
 volatile uint32 MessageSystem::_messages_sent_=0;
 volatile uint32 MessageSystem::_message_targets_=0;
@@ -148,7 +148,7 @@ int32 MessageSystem::_ProcessBroadcasts_(void *data)
 				broadcaster->broadcast_successful_receives=0;
 				MessageSystem *member;
 				msgsysclient_st *verifier;
-				volatile int32 member_found;
+				int32 member_found;
 				BString member_name;
 //				printf("Message sender is %s\n",broadcaster->MsgSysObjectName());
 				while (cur!=NULL) {

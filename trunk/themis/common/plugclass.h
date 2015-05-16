@@ -130,7 +130,7 @@ class PlugClass: public MessageSystem {
 		BMessage *InitInfo;
 		//!This is a reference to the Plug-in Manager. 
 		plugman *PlugMan;
-		volatile int32 Cancel;
+		int32 Cancel;
 		bool uses_heartbeat;
 
 	public:

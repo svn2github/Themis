@@ -67,7 +67,7 @@ class App : public BApplication {
 		//! The Preferences window.
 		PrefsWin * fPrefsWin;
 		//! Checks to see if the QuitRequested function has been called.
-		volatile int32 fQR_called;
+		int32 fQR_called;
 		//! A counter for the generated unique IDs.
 		int32 fIDCounter;
 		//! The SiteHandler object.

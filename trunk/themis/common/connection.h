@@ -188,9 +188,9 @@ namespace _Themis_Networking_ {
 			int32 last_error;
 			double bytes_per_second;
 			bigtime_t first_data_received_time;
-			volatile int32 notified_connect;
-			volatile int32 notified_disconnect;
-			volatile int32 already_connected;
+			int32 notified_connect;
+			int32 notified_disconnect;
+			int32 already_connected;
 			BufferPool * mBuffers;
 		
 		public:

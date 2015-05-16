@@ -59,7 +59,7 @@ multiple connections to multiple hosts quickly and efficiently.
 
 
 */
-			volatile int32 _quitter_;
+			int32 _quitter_;
 /*!
 \brief Initializes the TCPManager object.
 

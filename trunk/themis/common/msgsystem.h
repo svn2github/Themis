@@ -185,7 +185,7 @@ to the target(s)'s message queue.
 
 
 */
-		static volatile int32 _Quit_Thread_;
+		static int32 _Quit_Thread_;
 /*!
 \brief The main thread function of the broadcast system.
 
@@ -260,12 +260,12 @@ This is the number of targets that received the most recently broadcast message.
 \brief 
 
 */
-		volatile int32 _ms_receiver_quit_;
+		int32 _ms_receiver_quit_;
 /*!
 \brief 
 
 */
-		volatile int32 _msg_receiver_running_;
+		int32 _msg_receiver_running_;
 /*!
 \brief 
 
@@ -275,7 +275,7 @@ This is the number of targets that received the most recently broadcast message.
 	
 		BLocker local_msg_sys_lock;
 		
-		volatile int32 _broadcast_complete_;
+		int32 _broadcast_complete_;
 	
 	public:
 		static const int32 DEBUG_INFO_MSG='dbim';
