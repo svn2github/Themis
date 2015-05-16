@@ -511,7 +511,7 @@ $(BASE_INSTALL_DIR)Themis: framework/themis.rsrc frameworkdepends commondepends 
 #$(BASE_INSTALL_DIR)Themis: frameworkdepends commondepends frameworkobjects commonobjects
 	@echo "Linking Themis."
 	@$(CC) -o$(BASE_INSTALL_DIR)Themis $(foreach file,$(notdir $(FRAMEWORKSOURCES:.cpp=.o)),$(FRAMEWORK_OBJECT_DIR)$(file)) $(foreach file,$(notdir $(COMMONSOURCES:.cpp=.o)),$(COMMON_OBJECT_DIR)$(file)) -Xlinker $(LDFLAGS) -L ./ \
-		-L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) $(NETWORKLIBS) $(STDLIBS) -Xlinker -soname=_APP_  -O0 -lcl -lstdc++.r4 -ltranslation  # -ldom /boot/develop/lib/x86/i386-mcount.o
+		-L $(BASE_APP_LIB_INSTALL_DIR) $(NETWORKLIBS) $(STDLIBS) -Xlinker -soname=_APP_  -O0 -lcl -lstdc++.r4 -ltranslation  # -ldom /boot/develop/lib/x86/i386-mcount.o
 	@echo "Done linking, adding resource file."
 	@xres -o $(BASE_INSTALL_DIR)Themis framework/themis.rsrc
 	@mimeset -F $(BASE_INSTALL_DIR)Themis
@@ -561,7 +561,7 @@ $(COMMON_OBJECT_DIR)%.o: common/%.cpp $(COMMON_DEPENDS_DIR)%.d
 fileaddon: framework $(BASE_ADDON_INSTALL_DIR)file_protocol.so
 $(BASE_ADDON_INSTALL_DIR)file_protocol.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(FILEPROTOCOLSOURCES),$(BASE_ADDONS_OBJECT_DIR)FileProtocol/$(notdir $(file:.cpp=.o)))
 	@echo "Linking file protocol..."
-	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)file_protocol.so $(foreach file,$(notdir $(FILEPROTOCOLSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)FileProtocol/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=file_protocol.so -L ./ -L $(BELIBRARIES)  $(STDLIBS) -lstdc++.r4 _APP_
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)file_protocol.so $(foreach file,$(notdir $(FILEPROTOCOLSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)FileProtocol/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=file_protocol.so -L ./ $(STDLIBS) -lstdc++.r4 _APP_
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)file_protocol.so
 	@echo "File Protocol plug-in compiled and linked successfully."
 $(BASE_ADDONS_DEPENDS_DIR)FileProtocol/%.d: $(BASE_ADDON_SOURCE_DIR)FileProtocol/%.cpp 
@@ -577,7 +577,7 @@ endif
 csspaddon: framework $(BASE_ADDON_INSTALL_DIR)css_parser.so domlib domstylelib
 $(BASE_ADDON_INSTALL_DIR)css_parser.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(CSSPARSERSOURCES),$(BASE_ADDONS_OBJECT_DIR)CSSParser/$(notdir $(file:.cpp=.o)))
 	@echo "Linking css parser..."
-	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)css_parser.so $(foreach file,$(notdir $(CSSPARSERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)CSSParser/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=css_parser.so -L ./ -L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR)  $(STDLIBS) -lstdc++.r4 -ldomstyle -ldom _APP_
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)css_parser.so $(foreach file,$(notdir $(CSSPARSERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)CSSParser/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=css_parser.so -L ./ -L $(BASE_APP_LIB_INSTALL_DIR)  $(STDLIBS) -lstdc++.r4 -ldomstyle -ldom _APP_
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)css_parser.so
 	@echo "CSS Parser plug-in compiled and linked successfully."
 	@mkdir -p /boot/home/config/settings/Themis/css
@@ -596,7 +596,7 @@ endif
 msgvaddon: msgvaddon $(BASE_ADDON_INSTALL_DIR)message_viewer.so
 $(BASE_ADDON_INSTALL_DIR)message_viewer.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(MESSAGEVIEWERSOURCES),$(BASE_ADDONS_OBJECT_DIR)MsgViewer/$(notdir $(file:.cpp=.o)))
 	@echo "Linking Message Viewer..."
-	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)message_viewer.so $(foreach file,$(notdir $(MESSAGEVIEWERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)MsgViewer/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=file_protocol.so -L ./ -L $(BELIBRARIES)  $(STDLIBS) -lstdc++.r4 _APP_
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)message_viewer.so $(foreach file,$(notdir $(MESSAGEVIEWERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)MsgViewer/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=file_protocol.so -L ./  $(STDLIBS) -lstdc++.r4 _APP_
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)message_viewer.so
 	@echo "Message Viewer plug-in compiled and linked successfully."
 $(BASE_ADDONS_DEPENDS_DIR)MsgViewer/%.d: $(BASE_ADDON_SOURCE_DIR)MsgViewer/%.cpp 
@@ -613,7 +613,7 @@ endif
 cacheaddon: framework $(BASE_ADDON_INSTALL_DIR)cache.so
 $(BASE_ADDON_INSTALL_DIR)cache.so: $(BASE_INSTALL_DIR)Themis $(COMMONOBJ) $(foreach file,$(notdir $(CACHEADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)cache/$(file)) #cacheaddondepends cacheaddonobjects
 	@echo "Linking cache add-on" 
-	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)cache.so $(foreach file,$(notdir $(CACHEADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)cache/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=cache.so -L ./ -L $(BELIBRARIES)  $(STDLIBS) _APP_
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)cache.so $(foreach file,$(notdir $(CACHEADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)cache/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=cache.so -L ./ $(STDLIBS) _APP_
 	@echo "Cache add-on is now linked. Doing mimeset."
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)cache.so
 	@echo "Cache plug-in compiled and linked successfully."
@@ -641,7 +641,7 @@ $(BASE_ADDONS_OBJECT_DIR)cache/%.o: $(BASE_ADDON_SOURCE_DIR)cache/%.cpp $(BASE_A
 testplug: framework $(BASE_ADDON_INSTALL_DIR)testplug.so
 $(BASE_ADDON_INSTALL_DIR)testplug.so: $(BASE_INSTALL_DIR)Themis $(COMMONOBJ) $(foreach file,$(notdir $(TESTPLUGSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)testplug/$(file)) #testplugdepends testplugobjects
 	@echo "Linking testplug" 
-	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)testplug.so $(foreach file,$(notdir $(TESTPLUGSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)testplug/$(file))  -nostart -Xlinker $(LDFLAGS) -soname=testplug.so -L ./ -L $(BELIBRARIES) -lbe -ltextencoding -lroot -ltranslation _APP_
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)testplug.so $(foreach file,$(notdir $(TESTPLUGSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)testplug/$(file))  -nostart -Xlinker $(LDFLAGS) -soname=testplug.so -L ./ -lbe -ltextencoding -lroot -ltranslation _APP_
 	@echo "testplug add-on is now linked. Doing mimeset."
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)cache.so
 	@echo "testplug plug-in compiled and linked successfully."
@@ -669,7 +669,7 @@ $(BASE_ADDONS_OBJECT_DIR)testplug/%.o: $(BASE_ADDON_SOURCE_DIR)testplug/%.cpp $(
 imagehaddon: framework $(BASE_ADDON_INSTALL_DIR)image_handler.so
 $(BASE_ADDON_INSTALL_DIR)image_handler.so: $(BASE_INSTALL_DIR)Themis $(COMMONOBJ) $(foreach file,$(notdir $(IMAGEHSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)imageh/$(file)) #commondepends imagehdepends commonobjects imagehobjects
 	@echo "Linking image handler" 
-	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)image_handler.so $(foreach file,$(notdir $(IMAGEHSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)imageh/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=image_handler.so -L ./ -L $(BELIBRARIES)  -lbe -lroot -ltranslation _APP_
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)image_handler.so $(foreach file,$(notdir $(IMAGEHSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)imageh/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=image_handler.so -L ./ -lbe -lroot -ltranslation _APP_
 	@echo "image handler add-on is now linked. Doing mimeset."
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)cache.so
 	@echo "Image Handler plug-in compiled and linked successfully."
@@ -698,7 +698,7 @@ $(BASE_ADDONS_OBJECT_DIR)imageh/%.o: $(BASE_ADDON_SOURCE_DIR)imageh/%.cpp $(BASE
 htmlpaddon: framework $(BASE_ADDON_INSTALL_DIR)html_parser.so domlib
 $(BASE_ADDON_INSTALL_DIR)html_parser.so:  $(BASE_INSTALL_DIR)Themis $(foreach file,$(HTMLPARSERSOURCES),$(BASE_ADDONS_OBJECT_DIR)HTMLParser/$(notdir $(file:.cpp=.o))) #domlib htmlparserdepends htmlparserobjects
 	@echo "Linking HTML Parser add-on $@" 
-	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)html_parser.so $(foreach file,$(notdir $(HTMLPARSERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)HTMLParser/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=html_parser.so -L ./ -L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR)  -lbe -lroot -ldom -lstdc++.r4 _APP_
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)html_parser.so $(foreach file,$(notdir $(HTMLPARSERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)HTMLParser/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=html_parser.so -L ./ -L $(BASE_APP_LIB_INSTALL_DIR)  -lbe -lroot -ldom -lstdc++.r4 _APP_
 	@echo "HTML Parser add-on is now linked. Doing mimeset."
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)html_parser.so
 	@echo "HTML Parser plug-in compiled and linked successfully."
@@ -730,7 +730,7 @@ $(BASE_ADDONS_OBJECT_DIR)HTMLParser/%.o: $(BASE_ADDON_SOURCE_DIR)HTMLParser/%.cp
 domvaddon: framework $(BASE_ADDON_INSTALL_DIR)DOMView.so domlib
 $(BASE_ADDON_INSTALL_DIR)DOMView.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(DOMVIEWSOURCES),$(BASE_ADDONS_OBJECT_DIR)DOMView/$(notdir $(file:.cpp=.o))) #commondepends domvdepends commonobjects domvobjects
 	@echo "Linking DOM View add-on" 
-	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)DOMView.so $(foreach file,$(notdir $(DOMVIEWSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)DOMView/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=DOMView.so -L ./ -L $(BELIBRARIES) -L$(BASE_APP_LIB_INSTALL_DIR)  -lbe -lroot -ldom -lstdc++.r4 _APP_
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)DOMView.so $(foreach file,$(notdir $(DOMVIEWSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)DOMView/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=DOMView.so -L ./ -L$(BASE_APP_LIB_INSTALL_DIR)  -lbe -lroot -ldom -lstdc++.r4 _APP_
 	@echo "DOM View add-on is now linked. Doing mimeset."
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)DOMView.so
 	@echo "DOM View plug-in compiled and linked successfully."
@@ -758,7 +758,7 @@ $(BASE_ADDONS_OBJECT_DIR)DOMView/%.o: $(BASE_ADDON_SOURCE_DIR)DOMView/%.cpp $(BA
 cssvaddon: framework $(BASE_ADDON_INSTALL_DIR)css_viewer.so domlib
 $(BASE_ADDON_INSTALL_DIR)css_viewer.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(CSSVIEWERSOURCES),$(BASE_ADDONS_OBJECT_DIR)CSSViewer/$(notdir $(file:.cpp=.o)))
 	@echo "Linking CSS Viewer add-on" 
-	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)css_viewer.so $(foreach file,$(notdir $(CSSVIEWERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)CSSViewer/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=css_viewer.so -L ./ -L $(BELIBRARIES) -L$(BASE_APP_LIB_INSTALL_DIR)  -lbe -lroot -ldomstyle -ldom -lstdc++.r4 _APP_
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)css_viewer.so $(foreach file,$(notdir $(CSSVIEWERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)CSSViewer/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=css_viewer.so -L ./ -L$(BASE_APP_LIB_INSTALL_DIR)  -lbe -lroot -ldomstyle -ldom -lstdc++.r4 _APP_
 	@echo "CSS Viewer add-on is now linked. Doing mimeset."
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)css_viewer.so
 	@echo "CSS Viewer plug-in compiled and linked successfully."
@@ -786,7 +786,7 @@ $(BASE_ADDONS_OBJECT_DIR)CSSViewer/%.o: $(BASE_ADDON_SOURCE_DIR)CSSViewer/%.cpp 
 cssraddon: framework $(BASE_ADDON_INSTALL_DIR)css_renderer.so domlib domstylelib
 $(BASE_ADDON_INSTALL_DIR)css_renderer.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(CSSRENDERERSOURCES),$(BASE_ADDONS_OBJECT_DIR)CSSRenderer/$(notdir $(file:.cpp=.o)))
 	@echo "Linking CSS Renderer add-on" 
-	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)css_renderer.so $(foreach file,$(notdir $(CSSRENDERERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)CSSRenderer/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=css_renderer.so -L ./ -L $(BELIBRARIES) -L$(BASE_APP_LIB_INSTALL_DIR)  -lbe -lroot -ltranslation -ldomstyle -ldom -lstdc++.r4 _APP_
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)css_renderer.so $(foreach file,$(notdir $(CSSRENDERERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)CSSRenderer/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=css_renderer.so -L ./ -L$(BASE_APP_LIB_INSTALL_DIR)  -lbe -lroot -ltranslation -ldomstyle -ldom -lstdc++.r4 _APP_
 	@echo "CSS Renderer add-on is now linked. Doing mimeset."
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)css_renderer.so
 	@echo "CSS Renderer plug-in compiled and linked successfully."
@@ -814,7 +814,7 @@ $(BASE_ADDONS_OBJECT_DIR)CSSRenderer/%.o: $(BASE_ADDON_SOURCE_DIR)CSSRenderer/%.
 httpaddon: framework $(BASE_ADDON_INSTALL_DIR)http_plugin.so
 $(BASE_ADDON_INSTALL_DIR)http_plugin.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(notdir $(HTTPADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)http/$(file)) #commondepends httpaddondepends commonobjects httpaddonobjects
 	@echo "Linking http add-on" 
-	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)http_plugin.so  $(foreach file,$(notdir $(HTTPADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)http/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=http_plugin.so -L ./ -L$(BASE_APP_LIB_INSTALL_DIR) -lz -lcl -L $(BELIBRARIES)  $(NETWORKLIBS) $(STDLIBS) -ltranslation  _APP_
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)http_plugin.so  $(foreach file,$(notdir $(HTTPADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)http/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=http_plugin.so -L ./ -L$(BASE_APP_LIB_INSTALL_DIR) -lz -lcl $(NETWORKLIBS) $(STDLIBS) -ltranslation  _APP_
 	@echo "HTTP add-on is now linked. Doing mimeset."
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)http_plugin.so
 	@echo "HTTP plug-in compiled and linked successfully."
@@ -844,7 +844,7 @@ $(BASE_ADDONS_OBJECT_DIR)http/%.o: $(BASE_ADDON_SOURCE_DIR)http/%.cpp $(BASE_ADD
 cookieaddon: framework $(BASE_ADDON_INSTALL_DIR)cookie_plugin.so
 $(BASE_ADDON_INSTALL_DIR)cookie_plugin.so: $(BASE_INSTALL_DIR)Themis $(COMMONOBJ) $(foreach file,$(notdir $(COOKIEADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)cookie/$(file)) #commondepends cookieaddondepends commonobjects cookieaddonobjects
 	@echo "Linking cookie add-on"
-	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)cookie_plugin.so  $(foreach file,$(notdir $(COOKIEADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)cookie/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=cookie_plugin.so -L ./ -L $(BELIBRARIES) -lbe -lroot -ltextencoding _APP_
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)cookie_plugin.so  $(foreach file,$(notdir $(COOKIEADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)cookie/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=cookie_plugin.so -L ./ -lbe -lroot -ltextencoding _APP_
 	@echo "Cookie add-on is now linked. Doing mimeset."
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)cookie_plugin.so
 	@echo "Cookie plug-in compiled and linked successfully."
@@ -871,7 +871,7 @@ $(BASE_ADDON_INSTALL_DIR)js_plugin.so: $(BASE_INSTALL_DIR)Themis $(COMMONOBJ) $(
 	@echo "Copying Javscript library and supporting libraries to install directory."
 	@$(shell if [ "$(NETWORKING)" == "BONE" ] ; then /bin/unzip -uqd Themis/lib/ javascript/bone_jslibs.zip ; else /bin/unzip -uqd Themis/lib/ javascript/netserver_jslibs.zip ; fi )
 	@echo "Linking Javascript add-on"
-	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)js_plugin.so $(foreach file,$(notdir $(JSADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)js/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=js_plugin.so -L ./ -L javascript/ -L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) -lbe -lroot -ltextencoding -ljs -ldom _APP_
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)js_plugin.so $(foreach file,$(notdir $(JSADDONSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)js/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=js_plugin.so -L ./ -L javascript/ -L $(BASE_APP_LIB_INSTALL_DIR) -lbe -lroot -ltextencoding -ljs -ldom _APP_
 	@echo "Javascript add-on is now linked. Doing mimeset."
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)js_plugin.so
 	@echo "Javascript plug-in compiled and linked successfully."
@@ -898,7 +898,7 @@ $(BASE_ADDONS_OBJECT_DIR)js/%.o: $(BASE_ADDON_SOURCE_DIR)js/%.cpp $(BASE_ADDONS_
 domlib: framework $(BASE_APP_LIB_INSTALL_DIR)libdom.so
 $(BASE_APP_LIB_INSTALL_DIR)libdom.so: $(foreach file,$(notdir $(DOMLIBRARYSOURCES:.cpp=.o)),$(DOMLIBRARY_OBJECT_DIR)$(file)) #domlibdepends domlibobjects
 	@echo "Linking DOM Library"
-	@$(CC) -o $(BASE_APP_LIB_INSTALL_DIR)libdom.so $(foreach file,$(notdir $(DOMLIBRARYSOURCES:.cpp=.o)),$(DOMLIBRARY_OBJECT_DIR)$(file)) -nostart -Xlinker $(LDFLAGS) -shared -Xlinker -soname=libdom.so -L ./ -L $(BELIBRARIES) -L $(DOMLIBRARY_OBJECT_DIR) -lstdc++.r4
+	@$(CC) -o $(BASE_APP_LIB_INSTALL_DIR)libdom.so $(foreach file,$(notdir $(DOMLIBRARYSOURCES:.cpp=.o)),$(DOMLIBRARY_OBJECT_DIR)$(file)) -nostart -Xlinker $(LDFLAGS) -shared -Xlinker -soname=libdom.so -L ./ -L $(DOMLIBRARY_OBJECT_DIR) -lstdc++.r4
 	@echo "DOM Library is now linked. Doing mimeset."
 	@mimeset -F $(BASE_APP_LIB_INSTALL_DIR)libdom.so
 	@echo "DOM Library compiled and linked successfully."
@@ -921,7 +921,7 @@ $(DOMLIBRARY_OBJECT_DIR)%.o: framework/DOM/%.cpp $(DOMLIBRARY_DEPENDS_DIR)%.d
 
 #DOM Test application
 domtest: framework domlib domtestdepends domtestobjects
-	@$(CC) -o $(BASE_INSTALL_DIR)DOMTest $(foreach file,$(notdir $(DOMTESTSOURCES:.cpp=.o)),$(DOMLIBRARY_OBJECT_DIR)$(file)) -Xlinker $(LDFLAGS) -L ./ -L $(BELIBRARIES) -L $(BASE_APP_LIB_INSTALL_DIR) -lbe -ldom -lstdc++.r4
+	@$(CC) -o $(BASE_INSTALL_DIR)DOMTest $(foreach file,$(notdir $(DOMTESTSOURCES:.cpp=.o)),$(DOMLIBRARY_OBJECT_DIR)$(file)) -Xlinker $(LDFLAGS) -L ./ -L $(BASE_APP_LIB_INSTALL_DIR) -lbe -ldom -lstdc++.r4
 	@echo "DOM Test application is now linked. Doing mimeset."
 	@mimeset -F $(BASE_INSTALL_DIR)DOMTest
 	@echo "DOM Test application compiled and linked successfully."
@@ -938,7 +938,7 @@ domtestobjects: $(foreach file,$(DOMTESTSOURCES),$(DOMLIBRARY_OBJECT_DIR)$(notdi
 domstylelib: framework $(BASE_APP_LIB_INSTALL_DIR)libdomstyle.so domlib
 $(BASE_APP_LIB_INSTALL_DIR)libdomstyle.so: $(foreach file,$(notdir $(DOMSTYLELIBRARYSOURCES:.cpp=.o)),$(DOMSTYLELIBRARY_OBJECT_DIR)$(file))
 	@echo "Linking DOMStyle Library"
-	@$(CC) -o $(BASE_APP_LIB_INSTALL_DIR)libdomstyle.so $(foreach file,$(notdir $(DOMSTYLELIBRARYSOURCES:.cpp=.o)),$(DOMSTYLELIBRARY_OBJECT_DIR)$(file)) -nostart -Xlinker $(LDFLAGS) -shared -Xlinker -soname=libdomstyle.so -L ./ -L $(BELIBRARIES) -L$(BASE_APP_LIB_INSTALL_DIR) -L $(DOMSTYLELIBRARY_OBJECT_DIR) -lstdc++.r4 -ldom
+	@$(CC) -o $(BASE_APP_LIB_INSTALL_DIR)libdomstyle.so $(foreach file,$(notdir $(DOMSTYLELIBRARYSOURCES:.cpp=.o)),$(DOMSTYLELIBRARY_OBJECT_DIR)$(file)) -nostart -Xlinker $(LDFLAGS) -shared -Xlinker -soname=libdomstyle.so -L ./ -L$(BASE_APP_LIB_INSTALL_DIR) -L $(DOMSTYLELIBRARY_OBJECT_DIR) -lstdc++.r4 -ldom
 	@echo "DOMStyle Library is now linked. Doing mimeset."
 	@mimeset -F $(BASE_APP_LIB_INSTALL_DIR)libdomstyle.so
 	@echo "DOMStyle Library compiled and linked successfully."
