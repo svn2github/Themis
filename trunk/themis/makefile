@@ -104,7 +104,10 @@ COMMONSOURCES= \
 	common/BasePrefsView.cpp \
 	common/BaseEntry.cpp \
 	common/DOMEntry.cpp \
-	common/CSSDOMEntry.cpp
+	common/CSSDOMEntry.cpp \
+	common/ColumnListView.cpp \
+	common/ColumnTypes.cpp \
+	common/ColorTools.cpp
 #add similar lines for new plugins, libraries, etc.
 HTTPADDONSOURCES= \
 	http/optionshandler.cpp \
@@ -225,10 +228,7 @@ MESSAGEVIEWERSOURCES= \
 	MsgViewer/MsgTextView.cpp
 CSSVIEWERSOURCES= \
 	CSSViewer/CSSView.cpp \
-	CSSViewer/CSSViewer.cpp \
-	CSSViewer/ColumnListView.cpp \
-	CSSViewer/ColumnTypes.cpp \
-	CSSViewer/ColorTools.cpp
+	CSSViewer/CSSViewer.cpp
 CSSRENDERERSOURCES= \
 	CSSRenderer/CSSRenderer.cpp \
 	CSSRenderer/CSSRendererView.cpp \
