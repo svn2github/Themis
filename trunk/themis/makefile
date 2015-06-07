@@ -756,9 +756,9 @@ $(BASE_ADDONS_OBJECT_DIR)DOMView/%.o: $(BASE_ADDON_SOURCE_DIR)DOMView/%.cpp $(BA
 
 #cssviewer add-on
 cssvaddon: framework $(BASE_ADDON_INSTALL_DIR)css_viewer.so domlib
-$(BASE_ADDON_INSTALL_DIR)css_viewer.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(CSSVIEWERSOURCES),$(BASE_ADDONS_OBJECT_DIR)CSSViewer/$(notdir $(file:.cpp=.o)))
+$(BASE_ADDON_INSTALL_DIR)css_viewer.so: $(BASE_INSTALL_DIR)Themis $(foreach file,$(CSSVIEWERSOURCES),$(BASE_ADDONS_OBJECT_DIR)CSSViewer/$(notdir $(file:.cpp=.o))) common/ColorTools.cpp common/ColumnListView.cpp common/ColumnTypes.cpp
 	@echo "Linking CSS Viewer add-on" 
-	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)css_viewer.so $(foreach file,$(notdir $(CSSVIEWERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)CSSViewer/$(file)) -nostart -Xlinker $(LDFLAGS) -soname=css_viewer.so -L ./ -L$(BASE_APP_LIB_INSTALL_DIR)  -lbe -lroot -ldomstyle -ldom -lstdc++.r4 _APP_
+	@$(CC) -o$(BASE_ADDON_INSTALL_DIR)css_viewer.so $(foreach file,$(notdir $(CSSVIEWERSOURCES:.cpp=.o)),$(BASE_ADDONS_OBJECT_DIR)CSSViewer/$(file)) $(COMMON_OBJECT_DIR)ColorTools.o $(COMMON_OBJECT_DIR)ColumnListView.o $(COMMON_OBJECT_DIR)ColumnTypes.o -nostart -Xlinker $(LDFLAGS) -soname=css_viewer.so -L ./ -L$(BASE_APP_LIB_INSTALL_DIR)  -lbe -lroot -ldomstyle -ldom -lstdc++.r4 _APP_
 	@echo "CSS Viewer add-on is now linked. Doing mimeset."
 	@mimeset -F $(BASE_ADDON_INSTALL_DIR)css_viewer.so
 	@echo "CSS Viewer plug-in compiled and linked successfully."
