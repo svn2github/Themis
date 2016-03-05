@@ -38,7 +38,6 @@
 #include <SupportDefs.h>
 #include <Handler.h>
 #include <Window.h>
-#include <OutlineListView.h>
 #include <ListView.h>
 #include <PopUpMenu.h>
 
@@ -50,6 +49,7 @@ class BStringItem;
 
 // Declarations of Themis classes
 class TTextView;
+class TOutlineListView;
 
 // Namespaces used
 using namespace std;
@@ -61,7 +61,7 @@ const int32 TEXT_MENU_CHANGED = 'tmcd';
 class DOMView : public BWindow {
 
 	private:
-		BOutlineListView * mTree;
+		TOutlineListView * mTree;
 		BListView * mAttributes;
 		BListView * mValues;
 		BPopUpMenu * mTextMenu;

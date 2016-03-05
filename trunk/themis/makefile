@@ -107,7 +107,8 @@ COMMONSOURCES= \
 	common/CSSDOMEntry.cpp \
 	common/ColumnListView.cpp \
 	common/ColumnTypes.cpp \
-	common/ColorTools.cpp
+	common/ColorTools.cpp \
+	common/TOutlineListView.cpp
 #add similar lines for new plugins, libraries, etc.
 HTTPADDONSOURCES= \
 	http/optionshandler.cpp \

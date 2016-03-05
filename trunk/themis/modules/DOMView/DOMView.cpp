@@ -55,6 +55,7 @@
 
 // Themis headers
 #include "TTextView.hpp"
+#include "TOutlineListView.hpp"
 
 DOMView :: DOMView(TDocumentPtr aDocument)
 		: BWindow(BRect(100, 100, 450, 400),
@@ -76,7 +77,7 @@ DOMView :: DOMView(TDocumentPtr aDocument)
 	treeRect.bottom -= B_H_SCROLL_BAR_HEIGHT;
 	treeRect.right -= 200;
 	treeRect.right -= B_V_SCROLL_BAR_WIDTH;
-	mTree = new BOutlineListView(treeRect,
+	mTree = new TOutlineListView(treeRect,
 								 "DOMView",
 								 B_SINGLE_SELECTION_LIST,
 								 B_FOLLOW_ALL_SIDES);

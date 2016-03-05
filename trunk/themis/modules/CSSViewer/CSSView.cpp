@@ -58,6 +58,7 @@
 #include "ColumnListView.h"
 #include "ColumnTypes.h"
 #include "TTextView.hpp"
+#include "TOutlineListView.hpp"
 
 
 // Constants used
@@ -87,7 +88,7 @@ CSSView :: CSSView(CSSStyleSheetPtr aStyleSheet)
 	treeRect.bottom -= B_H_SCROLL_BAR_HEIGHT;
 	treeRect.right -= 350;
 	treeRect.right -= B_V_SCROLL_BAR_WIDTH;
-	mTree = new BOutlineListView(treeRect,
+	mTree = new TOutlineListView(treeRect,
 								 "CSSView",
 								 B_SINGLE_SELECTION_LIST,
 								 B_FOLLOW_ALL_SIDES);

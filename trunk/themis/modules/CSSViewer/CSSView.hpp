@@ -38,7 +38,6 @@
 #include <SupportDefs.h>
 #include <Handler.h>
 #include <Window.h>
-#include <OutlineListView.h>
 
 // DOM Style headers
 #include "CSSStyleSheet.hpp"
@@ -46,11 +45,12 @@
 // Declarations of Themis classes
 class TTextView;
 class BColumnListView;
+class TOutlineListView;
 
 class CSSView : public BWindow {
 
 	private:
-		BOutlineListView * mTree;
+		TOutlineListView * mTree;
 		CSSStyleSheetPtr mStyleSheet;
 		BStringItem * mMediaItem;
 		BStringItem * mGeneralItem;
