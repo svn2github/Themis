@@ -76,13 +76,13 @@ inline rgb_color make_color(uint8 red, uint8 green, uint8 blue, uint8 alpha=255)
 	c.alpha = alpha;
 	return c;
 }
-#endif
 
 // Mix two colors together, ignoring their relative alpha channels.
 // If amount is 0, the result is color1; if 255, the result is color2;
 // if another value, it is somewhere in-between.  The resulting alpha
 // channel is mixed exactly like the other color channels.
 rgb_color mix_color(rgb_color color1, rgb_color color2, uint8 amount);
+#endif
 
 // Blend two colors together, weighting by their relative alpha channels.
 // The resulting color is the same as mix_color(), except that the amount
