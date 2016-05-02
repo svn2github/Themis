@@ -118,6 +118,17 @@ HTMLParserPrefsView :: HTMLParserPrefsView(BRect aFrame,
 	BRect rect = mMainBox->Bounds();
 	rect.InsetBy(kItemSpacing, kItemSpacing);
 	rect.top += kBBoxExtraInset;
+
+#ifndef __HAIKU__
+	// ResizeToPreferred of a BMenuField is broken on BeOS,
+	// so we do something ourselves
+	font_height height;
+	GetFontHeight(&height);
+	// Set the menu height to the font height + a number of pixels
+	// around the text.
+	float menuHeight = height.ascent + height.descent + height.leading + 6;
+	rect.bottom = rect.top + menuHeight;
+#endif	
 					
 	BMenuField* dtdmenufield = new BMenuField(
 		rect,
@@ -126,6 +137,12 @@ HTMLParserPrefsView :: HTMLParserPrefsView(BRect aFrame,
 		true,
 		B_FOLLOW_TOP,
 		B_WILL_DRAW);
+
+#ifdef __HAIKU__
+	// We can use the normal way to resize the BMenuField to the right size
+	// on Haiku
+	dtdmenufield->ResizeToPreferred();
+#endif	
 	dtdmenufield->SetDivider(be_plain_font->StringWidth("Document Type Definition:") + kItemSpacing);
 	mMainBox->AddChild(dtdmenufield);
 
