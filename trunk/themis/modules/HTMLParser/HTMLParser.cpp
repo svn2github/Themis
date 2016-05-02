@@ -16,6 +16,7 @@
 #include <Message.h>
 #include <DataIO.h>
 #include <storage/Directory.h>
+#include <storage/Path.h>
 
 // HTMLParser headers
 #include "HTMLParser.h"
@@ -40,6 +41,10 @@
 HTMLParser * parser;
 BMessage ** appSettings_p;
 BMessage * appSettings;
+
+// Constants used
+const char* const kPreferredDTD = "HTML.4.0.Transitional.DTD";
+
 
 status_t Initialize(void * aInfo) {
 	
@@ -168,13 +173,48 @@ void HTMLParser :: ReplySupportedMimeTypes(BMessage * aMessage) {
 
 string HTMLParser :: GetDTDPathFromSettings() const {
 
-	const char * path = NULL;
+	string result = "";
+	const char * dtdPath = NULL;
 	
 	if (appSettings != NULL) {
-		appSettings->FindString(kPrefsActiveDTDPath, &path);
+		status_t found = appSettings->FindString(kPrefsActiveDTDPath, &dtdPath);
+		if (found != B_OK) {
+			// Not set yet, find one in the DTD directory.
+			BString dtdDir;
+			appSettings->FindString(kPrefsSettingsDirectory, &dtdDir);
+			dtdDir.Append("/dtd/");
+					
+			BDirectory dir(dtdDir.String());
+			if(dir.InitCheck() != B_OK) {
+				printf("DTD directory (%s) not found!\n", dtdDir.String());
+				result = "";
+			}
+			else {
+				BEntry entry;
+				char name[B_FILE_NAME_LENGTH];
+				bool foundPreferredDTD = false;
+				while (dir.GetNextEntry(&entry, false) != B_ENTRY_NOT_FOUND && !foundPreferredDTD) {
+					BPath path;
+					entry.GetPath(&path);
+					entry.GetName(name);
+					BString dtd = name;
+					if (dtd.Compare(kPreferredDTD) == 0)
+						// This is our preferred DTD, use it.
+						foundPreferredDTD = true;
+				}
+				dtdDir.Append(name);
+				// Add it to the settings, so we don't have to do this the next time.
+				appSettings->AddString(kPrefsActiveDTDPath, dtdDir.String());
+				// Convert to a C++ string to return
+				result = dtdDir.String();
+			}
+		}
+		else {
+			result = dtdPath;
+		}
 	}
 
-	return path;
+	return result;
 
 }
 
