@@ -76,6 +76,8 @@ class CSSParserPlugin : public BHandler, public PlugClass {
 		CSSParser * mParser;
 		// List of mimetypes supported.
 		vector<string> mMimeTypes;
+		
+		void LoadCSSFile(BMessage * aMessage);
 
 		// Function to find out if a message was sent by the cache.
 		bool MessageSentByCache(BMessage * aMessage);

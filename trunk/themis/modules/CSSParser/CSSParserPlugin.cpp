@@ -219,9 +219,11 @@ void CSSParserPlugin :: NotifyParseFinished(CSSStyleSheetPtr aStyleSheet,
 	int32 siteId = 0;
 	int32 urlId = 0;
 	int32 domId = 0;
-	aOriginalMessage->FindInt32("site_id", &siteId);
-	aOriginalMessage->FindInt32("url_id", &urlId);
-	aOriginalMessage->FindInt32("dom_id", &domId);
+	if (aOriginalMessage != NULL) {
+		aOriginalMessage->FindInt32("site_id", &siteId);
+		aOriginalMessage->FindInt32("url_id", &urlId);
+		aOriginalMessage->FindInt32("dom_id", &domId);
+	}
 
 	/* Get an unique ID from the app for the DOM entry */
 	int32 cssId = ((App *)be_app)->GetNewID();
@@ -243,46 +245,51 @@ void CSSParserPlugin :: NotifyParseFinished(CSSStyleSheetPtr aStyleSheet,
 
 }
 
+void CSSParserPlugin :: LoadCSSFile(BMessage * aMessage) {
+
+	if (appSettings != NULL) {
+		BString path;
+		appSettings->FindString(kPrefsActiveCSSPath, &path);
+		if (path == NULL) {
+			// No path set, try to find the first css file and set it.
+			BString cssDir;
+			AppSettings->FindString(kPrefsSettingsDirectory, &cssDir);
+			cssDir.Append("/css/");
+					
+			BDirectory dir(cssDir.String());
+			if(dir.InitCheck() != B_OK) {
+				printf("CSS directory (%s) not found!\n", cssDir.String());
+				printf("Setting CSSToUsePath to \"none\"\n");
+				AppSettings->AddString(kPrefsActiveCSSPath, kNoCSSFoundString);
+			}
+			else {
+				BEntry entry;
+				if (dir.GetNextEntry(&entry, false) != B_ENTRY_NOT_FOUND) {
+					BPath cssPath;
+					entry.GetPath(&cssPath);
+					path = cssPath.Path();
+					AppSettings->AddString(kPrefsActiveCSSPath, path);
+				}
+			}
+		}
+	
+		if (path.String() != NULL) {
+			string cssLoad = "Loading new CSS file: ";
+			cssLoad += path.String();
+			Debug(cssLoad.c_str(), PlugID());
+			CSSStyleSheetPtr document = mParser->parse(path.String());
+			mDocuments.push_back(document);
+			NotifyParseFinished(document, "cssdom", aMessage);
+		}
+	}
+
+}
+
 void CSSParserPlugin :: MessageReceived(BMessage * aMessage) {
 
 	switch (aMessage->what) {
 		case CSS_CHANGED_PARSER: {
-			Debug("Request to change base css file", PlugID());
-			if (appSettings != NULL) {
-				BString path;
-				appSettings->FindString(kPrefsActiveCSSPath, &path);
-				if (path == NULL) {
-					// No path set, try to find the first css file and set it.
-					BString cssDir;
-					AppSettings->FindString(kPrefsSettingsDirectory, &cssDir);
-					cssDir.Append("/css/");
-							
-					BDirectory dir(cssDir.String());
-					if(dir.InitCheck() != B_OK) {
-						printf("CSS directory (%s) not found!\n", cssDir.String());
-						printf("Setting CSSToUsePath to \"none\"\n");
-						AppSettings->AddString(kPrefsActiveCSSPath, kNoCSSFoundString);
-					}
-					else {
-						BEntry entry;
-						if (dir.GetNextEntry(&entry, false) != B_ENTRY_NOT_FOUND) {
-							BPath cssPath;
-							entry.GetPath(&cssPath);
-							path = cssPath.Path();
-							AppSettings->AddString(kPrefsActiveCSSPath, path);
-						}
-					}
-				}
-
-				if (path.String() != NULL) {
-					string cssLoad = "Loading new CSS file: ";
-					cssLoad += path.String();
-					Debug(cssLoad.c_str(), PlugID());
-					CSSStyleSheetPtr document = mParser->parse(path.String());
-					mDocuments.push_back(document);
-					NotifyParseFinished(document, "cssdom", aMessage);
-				}
-			}
+			LoadCSSFile(aMessage);
 			break;
 		}
 		default: {
@@ -369,17 +376,7 @@ status_t CSSParserPlugin :: ReceiveBroadcast(BMessage * aMessage) {
 						// Check if we already have the base css file loaded.
 						if (mDocuments.size() == 0) {
 							// Not loaded yet. Load it now.
-							if (appSettings != NULL) {
-								const char * path;
-								appSettings->FindString(kPrefsActiveCSSPath, &path);
-								string cssLoad = "Loading new CSS file: ";
-								cssLoad += path;
-								printf("%s\n", cssLoad.c_str());
-								Debug(cssLoad.c_str(), PlugID());
-								CSSStyleSheetPtr document = mParser->parse(path);
-								mDocuments.push_back(document);
-								NotifyParseFinished(document, "cssdom", aMessage);
-							}
+							LoadCSSFile(aMessage);
 						}
 						else {
 							// Assuming the default stylesheet is parsed first!!!
