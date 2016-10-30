@@ -30,7 +30,7 @@ Project Start Date: October 18, 2000
 #include <string.h>
 #include <Autolock.h>
 #include <stdio.h>
-CacheUser::CacheUser(uint32 broadcast_target,uint32 usertoken,const char *Name) {
+CacheUser::CacheUser(uint32 broadcast_target,uint32 usertoken,const char *Name) : lock(true) {
 	broadcast_id=broadcast_target;
 	if (Name!=NULL) {
 		name=new char[strlen(Name)+1];
@@ -42,7 +42,6 @@ CacheUser::CacheUser(uint32 broadcast_target,uint32 usertoken,const char *Name) 
 //	printf("\tCacheUser: %ld %p - %s\n",id,name,name);
 	next=prev=NULL;
 	readpos=writepos=0L;
-	lock=new BLocker(true);
 	
 }
 CacheUser::CacheUser(CacheUser *cu) {
@@ -76,7 +75,6 @@ CacheUser::~CacheUser() {
 		delete name;
 		name=NULL;
 	}
-//	delete lock;
 	
 }
 uint32 CacheUser::BroadcastID() {
