@@ -227,9 +227,7 @@ void plugman :: UnloadPlugin(image_id aId, PlugClass * aPlugin) {
 
 	if (aPlugin->IsHandler()) {
 		RemoveHandler(aPlugin->Handler());
-		BMessenger messenger(aPlugin->Handler());
-		// Use a synchronous message to quit. Don't care about the result?
-		messenger.SendMessage(&quitMessage, &replyMessage);
+		delete aPlugin;
 		
 	}
 	else if (aPlugin->IsLooper()) {
