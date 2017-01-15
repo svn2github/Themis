@@ -76,7 +76,7 @@ class plugman : public BLooper {
 		void LoadPlugin(BEntry & aEntry);
 		void LoadDirectory(const char * aDirectory);
 
-		void UnloadPlugin(image_id aId, PlugClass * aPlugin);
+		void UnloadPlugin(image_id aId, PlugClass * aPlugin, const char * aPath);
 		void UnloadPlugin(const char * aPath);
 		//! Unload all plug-ins currently in memory.
 		/*!

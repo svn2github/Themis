@@ -220,10 +220,13 @@ void plugman :: LoadDirectory(const char * aDirectory) {
 
 }
 
-void plugman :: UnloadPlugin(image_id aId, PlugClass * aPlugin) {
+void plugman :: UnloadPlugin(image_id aId, PlugClass * aPlugin, const char * aPath) {
 
 	BMessage quitMessage(B_QUIT_REQUESTED);
 	BMessage replyMessage(B_QUIT_REQUESTED);
+
+	int32 type = aPlugin->Type();
+	uint32 plugID = aPlugin->PlugID();
 
 	if (aPlugin->IsHandler()) {
 		RemoveHandler(aPlugin->Handler());
@@ -249,23 +252,37 @@ void plugman :: UnloadPlugin(image_id aId, PlugClass * aPlugin) {
 			delete aPlugin;
 		}
 	}
-	unload_add_on(aId);
+	mPlugins.erase(aPath);
 
+	map<string, pair<image_id, PlugClass *> >::iterator i = mPlugins.begin();
+	BMessage * msg = new BMessage(PlugInUnLoaded);
+	msg->AddInt32("type", type);
+	msg->AddInt32("command", COMMAND_INFO);
+	msg->AddInt32("plugid", plugID);
+	while (i != mPlugins.end()) {
+		PlugClass * plugin = (*i).second.second;
+		if (plugin) {
+			plugin->ReceiveBroadcast(msg);
+		}
+		i++;
+	}
+	delete msg;
+
+	unload_add_on(aId);
 }
 
 void plugman :: UnloadPlugin(const char * aPath) {
 
 	string pathString(aPath);
 	map<string, pair<image_id, PlugClass *> >::iterator i = mPlugins.find(pathString);
-	UnloadPlugin((*i).second.first, (*i).second.second);
-
+	UnloadPlugin((*i).second.first, (*i).second.second, aPath);
 }
 
 void plugman :: UnloadAllPlugins() {
 
 	map<string, pair<image_id, PlugClass *> >::iterator i = mPlugins.begin();
 	while (i != mPlugins.end()) {
-		UnloadPlugin((*i).second.first, (*i).second.second);
+		UnloadPlugin((*i).second.first, (*i).second.second, (*i).first.c_str());
 		i++;
 	}
 	
