@@ -890,17 +890,13 @@ status_t HTTPv4::ReceiveBroadcast(BMessage *msg)
 				}break;
 				case PlugInUnLoaded:
 				{
-					PlugClass *plugin_object=NULL;
-					msg->FindPointer("plugin",(void**)&plugin_object);
-					if (plugin_object!=NULL)
+					int32 plugID;
+					msg->FindInt32("plugid", &plugID);
+					if (plugID == 'cash')
 					{
-						if (plugin_object->PlugID()=='cash')
-						{
-							cache_user_token=0;
-							CacheSystem=NULL;
-							Debug("Cache System was just unloaded. I'm useless without it!");
-							
-						}
+						cache_user_token=0;
+						CacheSystem=NULL;
+						Debug("Cache System was just unloaded. I'm useless without it!");
 						
 					}
 					status=B_OK;
