@@ -33,8 +33,6 @@ Project Start Date: October 18, 2000
 CachePlug::CachePlug(BMessage *info,const char *msg_sys_name)
 	:PlugClass(info,msg_sys_name)
 {
-	lock=new BLocker(true); // set up the locking support
-	autolock=new BAutolock(lock);// automatically lock when a thread takes control
 	user_token_value=0;
 	object_token_value=0;
 	userlist=NULL;
@@ -50,8 +48,6 @@ CachePlug::~CachePlug()
 			userlist=cur;
 		}
 	}
-	delete autolock;
-	delete lock;
 }
 uint32 CachePlug::Register(uint32 broadcast_target,const char* name) 
 {

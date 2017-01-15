@@ -54,8 +54,6 @@ class CachePlug:public PlugClass {
 		uint32 user_token_value; //!< the current user token value; increments with each call to Register
 		int32 object_token_value; //!< the current cache object token value; increments when requested URLs are found or cache items are created
 		CacheUser *userlist;//!< the linked list of registered cache users
-		BLocker *lock; //!< This object is the locking mechanism used by the autolock.
-		BAutolock *autolock; //!< This object automatically locks the cache system when a new thread attempts to access it.
 	public:
 		CachePlug(BMessage *info=NULL,const char *msg_sys_name=NULL);
 		virtual ~CachePlug();
