@@ -409,7 +409,7 @@ void PrefsListView :: AttachedToWindow() {
 			type = plugin->Type();
 			name = plugin->SettingsViewLabel();
 			if (name != NULL) {
-				if (type != TARGET_PARSER) {
+				if (type & TARGET_PARSER) {
 					fListView->AddItem(
 						new PrefsListItem(
 							name,
